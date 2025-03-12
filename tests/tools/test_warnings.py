@@ -1,11 +1,8 @@
-import warnings
-
 import numpy as np
 import pytest
 
 from parcels import (
     AdvectionRK4,
-    AdvectionRK4_3D,
     AdvectionRK45,
     FieldSet,
     FieldSetWarning,
@@ -17,6 +14,8 @@ from parcels import (
 from tests.utils import TEST_DATA
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="From_pop is not supported during v4-alpha development. This will be reconsidered in v4.")
 def test_fieldset_warning_pop():
     filenames = str(TEST_DATA / "POPtestdata_time.nc")
     variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
@@ -49,22 +48,7 @@ def test_file_warnings(tmp_zarrfile):
         pset.execute(AdvectionRK4, runtime=3, dt=1, output_file=pfile)
 
 
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="https://github.com/OceanParcels/Parcels/pull/1908#issuecomment-2698014941")
 def test_kernel_warnings():
-    # positive scaling factor for W
-    filenames = str(TEST_DATA / "POPtestdata_time.nc")
-    variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
-    dimensions = {"lon": "lon", "lat": "lat", "depth": "w_deps", "time": "time"}
-    with warnings.catch_warnings():
-        # ignore FieldSetWarnings (tested in test_fieldset_warnings)
-        warnings.simplefilter("ignore", FieldSetWarning)
-        fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
-        fieldset.W._scaling_factor = 0.01
-        pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=[0], lat=[0], depth=[0], time=[0])
-        with pytest.warns(KernelWarning):
-            pset.execute(AdvectionRK4_3D, runtime=1, dt=1)
-
     # RK45 warnings
     lat = [0, 1, 5, 10]
     lon = [0, 1, 5, 10]

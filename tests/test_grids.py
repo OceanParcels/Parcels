@@ -111,6 +111,8 @@ def test_time_format_in_grid():
         RectilinearZGrid(lon, lat, time=time)
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="negate_depth removed in v4")
 def test_negate_depth():
     depth = np.linspace(0, 5, 10, dtype=np.float32)
     fieldset = FieldSet.from_data(
@@ -576,6 +578,8 @@ def test_cgrid_uniform_3dvel_spherical(vert_mode, time):
     assert abs(pset[0].vertical - 1) < 1e-3
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="From_pop is not supported during v4-alpha development. This will be reconsidered in v4.")
 @pytest.mark.parametrize("vert_discretisation", ["zlevel", "slevel", "slevel2"])
 def test_popgrid(vert_discretisation):
     if vert_discretisation == "zlevel":
@@ -869,7 +873,7 @@ def test_bgrid_indexing_3D(gridindexingtype, withtime):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
-@pytest.mark.parametrize("gridindexingtype", ["pop", "mom5"])
+@pytest.mark.parametrize("gridindexingtype", ["mom5"])  # TODO v4: add pop in params?
 @pytest.mark.parametrize("extrapolation", [True, False])
 def test_bgrid_interpolation(gridindexingtype, extrapolation):
     xi, yi = 3, 2
@@ -974,4 +978,4 @@ def test_bgrid_interpolation(gridindexingtype, extrapolation):
             if extrapolation:
                 assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
             else:
-                assert np.allclose(pset.Wvel[0], -w * convfactor)
+                assert np.allclose(pset.Wvel[0], w * convfactor)

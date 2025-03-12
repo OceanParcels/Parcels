@@ -9,7 +9,7 @@ import numpy as np
 
 from parcels._compat import MPI
 from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
-from parcels.field import Field, NestedField, VectorField
+from parcels.field import Field, VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
@@ -35,7 +35,7 @@ class FieldSet:
         in custom kernels.
     """
 
-    def __init__(self, U: Field | NestedField | None, V: Field | NestedField | None, fields=None):
+    def __init__(self, U: Field | None, V: Field | None, fields=None):
         self.gridset = GridSet()
         self._completed: bool = False
         self._particlefile: ParticleFile | None = None
@@ -150,7 +150,7 @@ class FieldSet:
         v = fields.pop("V", None)
         return cls(u, v, fields=fields)
 
-    def add_field(self, field: Field | NestedField, name: str | None = None):
+    def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
         Parameters
@@ -166,8 +166,6 @@ class FieldSet:
         --------
         For usage examples see the following tutorials:
 
-        * `Nested Fields <../examples/tutorial_NestedFields.ipynb>`__
-
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
@@ -179,11 +177,6 @@ class FieldSet:
 
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
-        if isinstance(field, NestedField):
-            setattr(self, name, field)
-            for fld in field:
-                self.gridset.add_grid(fld)
-                fld.fieldset = self
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
@@ -222,21 +215,12 @@ class FieldSet:
             if isinstance(v, Field) and (v not in self.get_fields()):
                 self.add_field(v)
         vfield.fieldset = self
-        if isinstance(vfield, NestedField):
-            for f in vfield:
-                f.fieldset = self
 
     def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
-            if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField("UV", self.U, self.V))
-            else:
-                self.add_vector_field(VectorField("UV", self.U, self.V))
+            self.add_vector_field(VectorField("UV", self.U, self.V))
         if not hasattr(self, "UVW") and hasattr(self, "W"):
-            if isinstance(self.U, NestedField):
-                self.add_vector_field(NestedField("UVW", self.U, self.V, self.W))
-            else:
-                self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
+            self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
     def _check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
@@ -268,13 +252,8 @@ class FieldSet:
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError("Not all velocity Fields have the same gridindexingtype")
 
-        if isinstance(self.U, NestedField):
-            w = self.W if hasattr(self, "W") else [None] * len(self.U)
-            for U, V, W in zip(self.U, self.V, w, strict=True):
-                check_velocityfields(U, V, W)
-        else:
-            W = self.W if hasattr(self, "W") else None
-            check_velocityfields(self.U, self.V, W)
+        W = self.W if hasattr(self, "W") else None
+        check_velocityfields(self.U, self.V, W)
 
         for g in self.gridset.grids:
             g._check_zonal_periodic()
@@ -288,7 +267,7 @@ class FieldSet:
         self._add_UVfield()
 
         for f in self.get_fields():
-            if isinstance(f, (VectorField, NestedField)) or f._dataFiles is None:
+            if isinstance(f, VectorField) or f._dataFiles is None:
                 continue
         self._completed = True
 
@@ -518,8 +497,6 @@ class FieldSet:
             gridindexingtype="nemo",
             **kwargs,
         )
-        if hasattr(fieldset, "W"):
-            fieldset.W.set_scaling_factor(-1.0)
         return fieldset
 
     @classmethod
@@ -755,113 +732,6 @@ class FieldSet:
         )
 
     @classmethod
-    def from_pop(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
-        depth_units="m",
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files of POP fields.
-            It is assumed that the velocities in the POP fields is in cm/s.
-
-        Parameters
-        ----------
-        filenames :
-            Dictionary mapping variables to file(s). The
-            filepath may contain wildcards to indicate multiple files,
-            or be a list of file.
-            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
-            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries ``{var:{dim:[files]}}``
-            time values are in ``filenames[data]``
-        variables : dict
-            Dictionary mapping variables to variable names in the netCDF file(s).
-            Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions : dict
-            Dictionary mapping data dimensions (lon,
-            lat, depth, time, data) to dimensions in the netCF file(s).
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable.
-            Watch out: POP is discretised on a B-grid:
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
-
-                +-----------------------------+-----------------------------+-----------------------------+
-                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
-                +-----------------------------+-----------------------------+-----------------------------+
-
-            In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
-            T node is at the cell centre and interpolated constant per cell as a C-grid.
-            In 3D: U and V nodes are at the middle of the cell vertical edges,
-            They are interpolated bilinearly (independently of z) in the cell.
-            W nodes are at the centre of the horizontal interfaces.
-            They are interpolated linearly (as a function of z) in the cell.
-            T node is at the cell centre, and constant per cell.
-            Note that Parcels assumes that the length of the depth dimension (at the W-points)
-            is one larger than the size of the velocity and tracer fields in the depth dimension.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        tracer_interp_method : str
-            Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_pop() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
-        depth_units :
-            The units of the vertical dimension. Default in Parcels is 'm',
-            but many POP outputs are in 'cm'
-        **kwargs :
-            Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
-
-        """
-        if "creation_log" not in kwargs.keys():
-            kwargs["creation_log"] = "from_pop"
-        fieldset = cls.from_b_grid_dataset(
-            filenames,
-            variables,
-            dimensions,
-            mesh=mesh,
-            allow_time_extrapolation=allow_time_extrapolation,
-            tracer_interp_method=tracer_interp_method,
-            gridindexingtype="pop",
-            **kwargs,
-        )
-        if hasattr(fieldset, "U"):
-            fieldset.U.set_scaling_factor(0.01)  # cm/s to m/s
-        if hasattr(fieldset, "V"):
-            fieldset.V.set_scaling_factor(0.01)  # cm/s to m/s
-        if hasattr(fieldset, "W"):
-            if depth_units == "m":
-                fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
-                warnings.warn(
-                    "Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'.",
-                    FieldSetWarning,
-                    stacklevel=2,
-                )
-            elif depth_units == "cm":
-                fieldset.W.set_scaling_factor(-1.0)  # change the W direction but keep W in cm/s because depth is in cm
-            else:
-                raise SyntaxError("'depth_units' has to be 'm' or 'cm'")
-        return fieldset
-
-    @classmethod
     def from_mom5(
         cls,
         filenames,
@@ -942,8 +812,6 @@ class FieldSet:
             gridindexingtype="mom5",
             **kwargs,
         )
-        if hasattr(fieldset, "W"):
-            fieldset.W.set_scaling_factor(-1)
         return fieldset
 
     @classmethod
@@ -1033,7 +901,7 @@ class FieldSet:
             Default is False if dimensions includes time, else True
         tracer_interp_method : str
             Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_pop() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
+            Note that in the case of from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
         **kwargs :
             Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
         """
@@ -1211,12 +1079,6 @@ class FieldSet:
             if type(v) in [Field, VectorField]:
                 if v not in fields:
                     fields.append(v)
-            elif isinstance(v, NestedField):
-                if v not in fields:
-                    fields.append(v)
-                for v2 in v:
-                    if v2 not in fields:
-                        fields.append(v2)
         return fields
 
     def add_constant(self, name, value):
