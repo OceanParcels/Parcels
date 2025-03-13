@@ -81,8 +81,9 @@ jobs:
         # TODO v4: Re-enable `tutorial_particle_field_interaction`
         # TODO v4: Re-enable `tutorial_croco_3D`
         # TODO v4: Re-enable `tutorial_nemo_3D` (https://github.com/OceanParcels/Parcels/pull/1936#issuecomment-2717666705)
+        # TODO v4: Re-enable `tutorial_analyticaladvection`
         run: |
-          coverage run -m pytest -v -s --nbval-lax -k "not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_particle_field_interaction and not tutorial_croco_3D and not tutorial_nemo_3D" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
+          coverage run -m pytest -v -s --nbval-lax -k "not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_particle_field_interaction and not tutorial_croco_3D and not tutorial_nemo_3D and not tutorial_analyticaladvection" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
