@@ -58,6 +58,7 @@ class Grid:
         self._lon = lon
         self._lat = lat
         self.time = time
+        self.tdim = time.size
         self._time_origin = TimeConverter() if time_origin is None else time_origin
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
@@ -182,7 +183,6 @@ class RectilinearGrid(Grid):
             assert len(time.shape) == 1, "time is not a vector"
 
         super().__init__(lon, lat, time, time_origin, mesh)
-        self.tdim = self.time.size
 
     @property
     def xdim(self):
@@ -326,7 +326,6 @@ class CurvilinearGrid(Grid):
         lon = lon.squeeze()
         lat = lat.squeeze()
         super().__init__(lon, lat, time, time_origin, mesh)
-        self.tdim = self.time.size
 
     @property
     def xdim(self):

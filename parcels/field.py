@@ -36,12 +36,11 @@ from parcels.tools.statuscodes import (
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
-    TimeExtrapolationError,
     _raise_field_out_of_bound_error,
 )
 from parcels.tools.warnings import FieldSetWarning
 
-from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear
+from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear, _search_time_index
 from .fieldfilebuffer import (
     NetcdfFileBuffer,
 )
@@ -543,7 +542,7 @@ class Field:
         return data
 
     def _search_indices(self, time, z, y, x, particle=None, search2D=False):
-        tau, ti = self._search_time_index(time)
+        tau, ti = _search_time_index(self.grid, time, self.allow_time_extrapolation)
 
         if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(
@@ -601,38 +600,6 @@ class Field:
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
             e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
             raise e
-
-    def _search_time_index(self, time):
-        """Find and return the index and relative coordinate in the time array associated with a given time.
-
-        Note that we normalize to either the first or the last index
-        if the sampled value is outside the time value range.
-        """
-        if not self.allow_time_extrapolation and (time < self.grid.time[0] or time > self.grid.time[-1]):
-            raise TimeExtrapolationError(time, field=self)
-        time_index = self.grid.time <= time
-
-        if time_index.all():
-            # If given time > last known field time, use
-            # the last field frame without interpolation
-            ti = len(self.grid.time) - 1
-        elif np.logical_not(time_index).all():
-            # If given time < any time in the field, use
-            # the first field frame without interpolation
-            ti = 0
-        else:
-            ti = time_index.argmin() - 1 if time_index.any() else 0
-        if self.grid.tdim == 1:
-            tau = 0
-        elif ti == len(self.grid.time) - 1:
-            tau = 1
-        else:
-            tau = (
-                (time - self.grid.time[ti]) / (self.grid.time[ti + 1] - self.grid.time[ti])
-                if self.grid.time[ti] != self.grid.time[ti + 1]
-                else 0
-            )
-        return tau, ti
 
     def _check_velocitysampling(self):
         if self.name in ["U", "V", "W"]:

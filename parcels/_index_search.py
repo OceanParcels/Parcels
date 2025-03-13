@@ -14,6 +14,7 @@ from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
     _raise_field_sampling_error,
+    _raise_time_extrapolation_error,
 )
 
 from .grid import GridType
@@ -21,6 +22,35 @@ from .grid import GridType
 if TYPE_CHECKING:
     from .field import Field
     from .grid import Grid
+
+
+def _search_time_index(grid: Grid, time: float, allow_time_extrapolation=True):
+    """Find and return the index and relative coordinate in the time array associated with a given time.
+
+    Note that we normalize to either the first or the last index
+    if the sampled value is outside the time value range.
+    """
+    if not allow_time_extrapolation and (time < grid.time[0] or time > grid.time[-1]):
+        _raise_time_extrapolation_error(time, field=None)
+    time_index = grid.time <= time
+
+    if time_index.all():
+        # If given time > last known field time, use
+        # the last field frame without interpolation
+        ti = len(grid.time) - 1
+    elif np.logical_not(time_index).all():
+        # If given time < any time in the field, use
+        # the first field frame without interpolation
+        ti = 0
+    else:
+        ti = int(time_index.argmin() - 1) if time_index.any() else 0
+    if grid.tdim == 1:
+        tau = 0
+    elif ti == len(grid.time) - 1:
+        tau = 1
+    else:
+        tau = (time - grid.time[ti]) / (grid.time[ti + 1] - grid.time[ti]) if grid.time[ti] != grid.time[ti + 1] else 0
+    return tau, ti
 
 
 def search_indices_vertical_z(grid: Grid, gridindexingtype: GridIndexingType, z: float):
