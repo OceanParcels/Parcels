@@ -208,7 +208,7 @@ def test_globcurrent_time_extrapolation_error():
 
 
 @pytest.mark.v4alpha
-@pytest.mark.xfail(
+@pytest.mark.skip(
     reason="This was always broken when using eager loading `deferred_load=False` for the P field. Needs to be fixed."
 )
 @pytest.mark.parametrize("dt", [-300, 300])

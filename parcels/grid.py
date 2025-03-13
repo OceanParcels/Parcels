@@ -59,7 +59,6 @@ class Grid:
         self._lat = lat
         self.time = time
         self.tdim = time.size
-        self.time_full = self.time  # needed for deferred_loaded Fields
         self._time_origin = TimeConverter() if time_origin is None else time_origin
         assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
