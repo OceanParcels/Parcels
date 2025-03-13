@@ -207,14 +207,6 @@ def test_peninsula_fieldset_AnalyticalAdvection(mesh, tmpdir):
     assert (err_adv <= 3.0e2).all()
 
 
-def fieldsetfile(mesh, tmpdir):
-    """Generate fieldset files for peninsula test."""
-    filename = tmpdir.join("peninsula")
-    fieldset = peninsula_fieldset(100, 50, mesh=mesh)
-    fieldset.write(filename)
-    return filename
-
-
 def test_peninsula_file(tmpdir):
     """Open fieldset files and execute."""
     data_folder = parcels.download_example_dataset("Peninsula_data")
@@ -294,24 +286,10 @@ Example of particle advection around an idealised peninsula"""
     )
     args = p.parse_args(args)
 
-    filename = "peninsula"
     if args.fieldset is not None:
         fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh="flat")
     else:
         fieldset = peninsula_fieldset(100, 50, mesh="flat")
-    fieldset.write(filename)
-
-    # Open fieldset file set
-    filenames = {
-        "U": f"{filename}U.nc",
-        "V": f"{filename}V.nc",
-        "P": f"{filename}P.nc",
-    }
-    variables = {"U": "vozocrtx", "V": "vomecrty", "P": "P"}
-    dimensions = {"lon": "nav_lon", "lat": "nav_lat", "time": "time_counter"}
-    fieldset = parcels.FieldSet.from_netcdf(
-        filenames, variables, dimensions, allow_time_extrapolation=True
-    )
 
     outfile = "Peninsula"
 

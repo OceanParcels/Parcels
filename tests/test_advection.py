@@ -459,7 +459,6 @@ def test_stationary_eddy_vertical():
     pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
     exp_lon = [truth_stationary(x, z, pset[0].time)[0] for x, z in zip(lon, depth, strict=True)]
     exp_depth = [truth_stationary(x, z, pset[0].time)[1] for x, z in zip(lon, depth, strict=True)]
-    print(pset, exp_lon)
     assert np.allclose(pset.lon, exp_lon, rtol=1e-5)
     assert np.allclose(pset.lat, lat, rtol=1e-5)
     assert np.allclose(pset.depth, exp_depth, rtol=1e-5)

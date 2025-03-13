@@ -6,7 +6,6 @@ from glob import glob
 
 import numpy as np
 
-from parcels._compat import MPI
 from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
 from parcels.field import Field, VectorField
 from parcels.grid import Grid
@@ -14,7 +13,6 @@ from parcels.gridset import GridSet
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import fieldset_repr
 from parcels.tools.converters import TimeConverter
-from parcels.tools.loggers import logger
 from parcels.tools.warnings import FieldSetWarning
 
 __all__ = ["FieldSet"]
@@ -1002,26 +1000,6 @@ class FieldSet:
         `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
         setattr(self, name, value)
-
-    def write(self, filename):
-        """Write FieldSet to NetCDF file using NEMO convention.
-
-        Parameters
-        ----------
-        filename : str
-            Basename of the output fileset.
-        """
-        if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
-            logger.info(f"Generating FieldSet output with basename: {filename}")
-
-            if hasattr(self, "U"):
-                self.U.write(filename, varname="vozocrtx")
-            if hasattr(self, "V"):
-                self.V.write(filename, varname="vomecrty")
-
-            for v in self.get_fields():
-                if isinstance(v, Field) and (v.name != "U") and (v.name != "V"):
-                    v.write(filename)
 
     def computeTimeChunk(self, time=0.0, dt=1):
         """Load a chunk of three data time steps into the FieldSet.
