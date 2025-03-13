@@ -390,13 +390,9 @@ class Field:
             ) as filebuffer:
                 filebuffer.name = variable[1]
                 depth = filebuffer.depth
-                data_full_zdim = filebuffer.data_full_zdim
         else:
             indices["depth"] = np.array([0])
             depth = np.zeros(1)
-            data_full_zdim = 1
-
-        kwargs["data_full_zdim"] = data_full_zdim
 
         if len(data_filenames) > 1 and "time" not in dimensions:
             raise RuntimeError("Multiple files given but no time dimension specified")
@@ -421,7 +417,6 @@ class Field:
             dimensions,
             indices,
             interp_method=interp_method,
-            data_full_zdim=data_full_zdim,
         ) as filebuffer:
             # If Field.from_netcdf is called directly, it may not have a 'data' dimension
             # In that case, assume that 'name' is the data dimension

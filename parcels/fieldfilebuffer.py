@@ -17,7 +17,6 @@ class NetcdfFileBuffer:
         indices,
         *,
         interp_method: InterpMethodOption = "linear",
-        data_full_zdim=None,
         gridindexingtype="nemo",
     ):
         self.filename: PathLike | list[PathLike] = filename
@@ -26,7 +25,6 @@ class NetcdfFileBuffer:
         self.dataset = None
         self.interp_method = interp_method
         self.gridindexingtype = gridindexingtype
-        self.data_full_zdim = data_full_zdim
 
     def __enter__(self):
         self.dataset = open_xarray_dataset(self.filename)
@@ -58,6 +56,8 @@ class NetcdfFileBuffer:
 
     @property
     def zdim(self):
+        if "depth" not in self.dimensions:
+            return 1
         depth = self.dataset[self.dimensions["depth"]]
         zdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
         if self.gridindexingtype in ["croco"]:
@@ -84,23 +84,14 @@ class NetcdfFileBuffer:
 
     @property
     def depth(self):
+        self.indices["depth"] = range(self.zdim)
         if "depth" in self.dimensions:
-            depth = self.dataset[self.dimensions["depth"]]
-            self.data_full_zdim = self.zdim
-            self.indices["depth"] = range(self.zdim)
-            return depth
-        else:
-            self.indices["depth"] = [0]
-            return np.zeros(1)
+            return self.dataset[self.dimensions["depth"]]
+        return np.zeros(1)
 
     @property
-    def depth_dimensions(self):
-        if "depth" in self.dimensions:
-            data = self.dataset[self.name]
-            depthsize = data.shape[-3]
-            self.data_full_zdim = depthsize
-            self.indices["depth"] = range(depthsize)
-            return np.empty((0, self.zdim) + data.shape[-2:])
+    def data_full_zdim(self):
+        return self.zdim
 
     def _check_extend_depth(self, data, dim):
         return (
