@@ -43,7 +43,7 @@ def _search_time_index(grid: Grid, time: float, allow_time_extrapolation=True):
         # the first field frame without interpolation
         ti = 0
     else:
-        ti = time_index.argmin() - 1 if time_index.any() else 0
+        ti = int(time_index.argmin() - 1) if time_index.any() else 0
     if grid.tdim == 1:
         tau = 0
     elif ti == len(grid.time) - 1:
