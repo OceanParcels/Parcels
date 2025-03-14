@@ -1078,10 +1078,7 @@ class ParticleSet:
 
             if abs(time - next_output) < tol:
                 if output_file:
-                    if output_file._is_analytical:  # output analytical solution at later time
-                        output_file.write_latest_locations(self, time)
-                    else:
-                        output_file.write(self, time_at_startofloop)
+                    output_file.write(self, time_at_startofloop)
                 if np.isfinite(outputdt):
                     next_output += outputdt * np.sign(dt)
 
