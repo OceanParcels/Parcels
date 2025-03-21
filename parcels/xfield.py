@@ -114,8 +114,8 @@ class XField:
     def _interp_template(
         self,
         ti: int,
-        zi: int,
         ei: int,
+        bcoords: np.ndarray,
         t: Union[np.float32,np.float64],
         z: Union[np.float32,np.float64],
         y: Union[np.float32,np.float64],
@@ -126,7 +126,7 @@ class XField:
     
     def _validate_interp_function(self, func: Callable):
         """Ensures that the function has the correct signature."""
-        expected_params = ["ti", "zi", "ei", "t", "z", "y", "x"]
+        expected_params = ["ti", "ei", "bcoords", "t", "z", "y", "x"]
         expected_return_types = (np.float32,np.float64)
 
         sig = inspect.signature(func)
@@ -160,7 +160,9 @@ class XField:
         self._validate_dataarray(data)
 
         self._parent_mesh = data.attributes["mesh"]
+        self._mesh_type = data.attributes["mesh_type"]
         self._location = data.attributes["location"]
+
         # Set the vertical location
         if "nz1" in data.dims:
             self._vertical_location = "center"
@@ -177,11 +179,151 @@ class XField:
         self.igrid = -1 # Default the grid index to -1
         self.fieldtype = self.name if fieldtype is None else fieldtype
 
+        if self._mesh_type == "flat" or (self.fieldtype not in unitconverters_map.keys()):
+            self.units = UnitConverter()
+        elif self._mesh_type == "spherical":
+            self.units = unitconverters_map[self.fieldtype]
+        else:
+            raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
+        
         self.fieldset: XFieldSet | None = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.data["time"]) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
+
+    def __repr__(self):
+        return field_repr(self)
+
+    @property
+    def grid(self):
+        if type(self.data) is ux.UxDataArray:
+            return self.data.uxgrid
+        else:
+            return self.data # To do : need to decide on what to return for xarray.DataArray objects
+        
+    @property
+    def lat(self):
+        if type(self.data) is ux.UxDataArray:
+            if self._location == "node":
+                return self.data.uxgrid.node_lat
+            elif self._location == "face":
+                return self.data.uxgrid.face_lat
+            elif self._location == "edge":
+                return self.data.uxgrid.edge_lat
+        else:
+            if self._location == "node":
+                return self.data.node_lat
+            elif self._location == "face":
+                return self.data.face_lat
+            elif self._location == "x_edge":
+                return self.data.face_lat
+            elif self._location == "y_edge":
+                return self.data.node_lat
+
+    @property
+    def lon(self):
+        if type(self.data) is ux.UxDataArray:
+            if self._location == "node":
+                return self.data.uxgrid.node_lon
+            elif self._location == "face":
+                return self.data.uxgrid.face_lon
+            elif self._location == "edge":
+                return self.data.uxgrid.edge_lon
+        else:
+            if self._location == "node":
+                return self.data.node_lon
+            elif self._location == "face":
+                return self.data.face_lon
+            elif self._location == "x_edge":
+                return self.data.node_lon
+            elif self._location == "y_edge":
+                return self.data.face_lon
+
+    @property
+    def depth(self):
+        if type(self.data) is ux.UxDataArray:
+            if self._vertical_location == "center":
+                return self.data.uxgrid.nz1
+            elif self._vertical_location == "face":
+                return self.data.uxgrid.nz
+        else:
+            if self._vertical_location == "center":
+                return self.data.nz1
+            elif self._vertical_location == "face":
+                return self.data.nz
+
+    @property
+    def interp_method(self):
+        return self._interp_method 
+
+    @interp_method.setter
+    def interp_method(self, method: Callable):
+        self._validate_interp_function(method)
+        self._interp_method = method
+
+    # @property
+    # def gridindexingtype(self):
+    #     return self._gridindexingtype
+    def _search_indices(self, time, z, y, x, ei=None, search2D=False):
+
+        tau, ti = self._search_time_index(time) # To do : Need to implement this method
+
+        if type(self.data) is ux.UxDataArray:
+            bcoords, ei = self._search_indices_unstructured(z, y, x, ei=ei, search2D=search2D) # To do : Need to implement this method
+        else:
+            bcoords, ei = self._search_indices_structured(z, y, x, ei=ei, search2D=search2D) # To do : Need to implement this method
+        return bcoords, ei, ti 
+    
+    def _interpolate(self, time, z, y, x, ei=None):
+
+        try:
+            bcoords, ei, ti = self._search_indices(time, z, y, x, ei=ei)
+            val = self._interp_method(ti, ei, bcoords, time, z, y, x)
+
+            if np.isnan(val):
+                # Detect Out-of-bounds sampling and raise exception
+                _raise_field_out_of_bound_error(z, y, x)
+            else:
+                return val
+            
+        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
+            e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
+            raise e
+
+    def _check_velocitysampling(self):
+        if self.name in ["U", "V", "W"]:
+            warnings.warn(
+                "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
+    def __getitem__(self, key):
+        self._check_velocitysampling()
+        try:
+            if _isParticle(key):
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+            else:
+                return self.eval(*key)
+        except tuple(AllParcelsErrorCodes.keys()) as error:
+            return _deal_with_errors(error, key, vector_type=None)
+        
+    def eval(self, time, z, y, x, ei=None, applyConversion=True):
+        """Interpolate field values in space and time.
+
+        We interpolate linearly in time and apply implicit unit
+        conversion to the result. Note that we defer to
+        scipy.interpolate to perform spatial interpolation.
+        """
+
+        value = self._interpolate(time, z, y, x, ei=ei)
+
+        if applyConversion:
+            return self.units.to_target(value, z, y, x)
+        else:
+            return value
+
 
     def _validate_dataarray(self):
         """ Verifies that all the required attributes are present in the xarray.DataArray or
@@ -201,7 +343,7 @@ class XField:
             )
         
         # Validate attributes
-        required_keys = ["location", "mesh"]
+        required_keys = ["location", "mesh", "mesh_type"]
         for key in required_keys:
             if key not in self.data.attrs.keys():
                 raise ValueError(
