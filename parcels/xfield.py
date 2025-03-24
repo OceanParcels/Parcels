@@ -252,6 +252,25 @@ class XField:
                 return self.data.nz
 
     @property
+    def nx(self):
+        if type(self.data) is xr.DataArray:
+            if "face_lon" in self.data.dims:
+                return self.data.sizes["face_lon"]
+            elif "node_lon" in self.data.dims:
+                return self.data.sizes["node_lon"]
+        else:
+            return 0 # To do : Discuss what we want to return for uxdataarray obj
+    @property
+    def ny(self):
+        if type(self.data) is xr.DataArray:
+            if "face_lat" in self.data.dims:
+                return self.data.sizes["face_lat"]
+            elif "node_lat" in self.data.dims:
+                return self.data.sizes["node_lat"]
+        else:
+            return 0 # To do : Discuss what we want to return for uxdataarray obj
+       
+    @property
     def interp_method(self):
         return self._interp_method 
 
@@ -321,7 +340,62 @@ class XField:
             return self.units.to_target(value, z, y, x)
         else:
             return value
-  
+      
+    def _rescale_and_set_minmax(self, data):
+        data[np.isnan(data)] = 0
+        return data
+
+    def ravel_index(self, zi, yi, xi):
+        """Return the flat index of the given grid points.
+        Only used when working with fields on a structured grid.
+
+        Parameters
+        ----------
+        zi : int
+            z index
+        yi : int
+            y index
+        xi : int
+            x index
+
+        Returns
+        -------
+        int
+            flat index
+        """
+        if type(self.data) is xr.DataArray:
+            return xi + self.nx * (yi + self.ny * zi)
+        else:
+            return None
+
+    def unravel_index(self, ei):
+        """Return the zi, yi, xi indices for a given flat index.
+        Only used when working with fields on a structured grid.
+
+        Parameters
+        ----------
+        ei : int
+            The flat index to be unraveled.
+
+        Returns
+        -------
+        zi : int
+            The z index.
+        yi : int
+            The y index.
+        xi : int
+            The x index.
+        """
+        if type(self.data) is xr.DataArray:
+            _ei = ei[self.igrid]
+            zi = _ei // (self.nx * self.ny)
+            _ei = _ei % (self.nx * self.ny)
+            yi = _ei // self.nx
+            xi = _ei % self.nx
+            return zi, yi, xi
+        else:
+            return None,None,None # To do : Discuss what we want to return for uxdataarray
+
     def _validate_dataarray(self):
         """ Verifies that all the required attributes are present in the xarray.DataArray or
          uxarray.UxDataArray object."""
