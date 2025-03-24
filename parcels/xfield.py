@@ -87,7 +87,7 @@ class XField:
 
     The xarray.DataArray or uxarray.UxDataArray object contains the field data and metadata.
         * dims: (time, [nz1 | nz], [face_lat | node_lat | edge_lat], [face_lon | node_lon | edge_lon])
-        * attrs: (location, mesh)
+        * attrs: (location, mesh, mesh_type)
 
     When using a xarray.DataArray object,
     * The xarray.DataArray object must have the "location" and "mesh" attributes set.
@@ -149,7 +149,6 @@ class XField:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
-        fieldtype=None,
         interp_method: Callable | None = None,
         allow_time_extrapolation: bool | None = None,
     ):
@@ -177,12 +176,11 @@ class XField:
             self._interp_method = interp_method
 
         self.igrid = -1 # Default the grid index to -1
-        self.fieldtype = self.name if fieldtype is None else fieldtype
 
-        if self._mesh_type == "flat" or (self.fieldtype not in unitconverters_map.keys()):
+        if self._mesh_type == "flat" or (self.name not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self._mesh_type == "spherical":
-            self.units = unitconverters_map[self.fieldtype]
+            self.units = unitconverters_map[self.name]
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
         
@@ -323,8 +321,7 @@ class XField:
             return self.units.to_target(value, z, y, x)
         else:
             return value
-
-
+  
     def _validate_dataarray(self):
         """ Verifies that all the required attributes are present in the xarray.DataArray or
          uxarray.UxDataArray object."""
