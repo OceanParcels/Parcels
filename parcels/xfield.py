@@ -292,11 +292,11 @@ class XField:
             bcoords, ei = self._search_indices_structured(z, y, x, ei=ei, search2D=search2D) # To do : Need to implement this method
         return bcoords, ei, ti 
     
-    def _interpolate(self, time, z, y, x, ei=None):
+    def _interpolate(self, time, z, y, x, ei):
 
         try:
-            bcoords, ei, ti = self._search_indices(time, z, y, x, ei=ei)
-            val = self._interp_method(ti, ei, bcoords, time, z, y, x)
+            bcoords, _ei, ti = self._search_indices(time, z, y, x, ei=ei)
+            val = self._interp_method(ti, _ei, bcoords, time, z, y, x)
 
             if np.isnan(val):
                 # Detect Out-of-bounds sampling and raise exception
@@ -333,8 +333,12 @@ class XField:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
+        if ei is None:
+            _ei = 0
+        else:
+            _ei = ei[self.igrid]
 
-        value = self._interpolate(time, z, y, x, ei=ei)
+        value = self._interpolate(time, z, y, x, ei=_ei)
 
         if applyConversion:
             return self.units.to_target(value, z, y, x)
@@ -451,7 +455,52 @@ class XField:
 
 class XVectorField:
     """XVectorField class that holds vector field data needed to execute particles."""
-    def __init__(self, name: str, U: XField, V: XField, W: XField | None = None):
+
+     
+     @staticmethod
+    def _vector_interp_template(
+        self,
+        ti: int,
+        ei: int,
+        bcoords: np.ndarray,
+        t: Union[np.float32,np.float64],
+        z: Union[np.float32,np.float64],
+        y: Union[np.float32,np.float64],
+        x: Union[np.float32,np.float64]
+    )-> Union[np.float32,np.float64]:
+        """ Template function used for the signature check of the lateral interpolation methods."""
+        return 0.0
+    
+    def _validate_vector_interp_function(self, func: Callable):
+        """Ensures that the function has the correct signature."""
+        expected_params = ["ti", "ei", "bcoords", "t", "z", "y", "x"]
+        expected_return_types = (np.float32,np.float64)
+
+        sig = inspect.signature(func)
+        params = list(sig.parameters.keys())
+
+        # Check the parameter names and count
+        if params != expected_params:
+            raise TypeError(
+                f"Function must have parameters {expected_params}, but got {params}"
+            )
+
+        # Check return annotation if present
+        return_annotation = sig.return_annotation
+        if return_annotation not in (inspect.Signature.empty, *expected_return_types):
+            raise TypeError(
+                f"Function must return a float, but got {return_annotation}"
+            )
+        
+    def __init__(
+            self,
+            name: str,
+            U: XField,
+            V: XField,
+            W: XField | None = None,
+            vector_interp_method: Callable | None = None
+        ):
+        
         self.name = name
         self.U = U
         self.V = V
@@ -462,6 +511,13 @@ class XVectorField:
         else:
             self.vector_type = "2D"
 
+        # Setting the interpolation method dynamically
+        if vector_interp_method is None:
+            self._vector_interp_method = None
+        else:
+            self._validate_vector_interp_function(vector_interp_method)
+            self._interp_method = vector_interp_method
+
     def __repr__(self):
         return f"""<{type(self).__name__}>
     name: {self.name!r}
@@ -469,6 +525,14 @@ class XVectorField:
     V: {default_repr(self.V)}
     W: {default_repr(self.W)}"""
 
+    @property
+    def vector_interp_method(self):
+        return self._vector_interp_method 
+
+    @vector_interp_method.setter
+    def vector_interp_method(self, method: Callable):
+        self._validate_vector_interp_function(method)
+        self._vector_interp_method = method
 
     # @staticmethod
     # To do : def _check_grid_dimensions(grid1, grid2):
@@ -478,6 +542,48 @@ class XVectorField:
     #         and np.allclose(grid1.depth, grid2.depth)
     #         and np.allclose(grid1.time, grid2.time)
     #     )
+    def _interpolate(self, time, z, y, x, ei):
+
+        bcoords, _ei, ti = self._search_indices(time, z, y, x, ei=ei)
+
+        if self._vector_interp_method is None:
+            u = self.U.eval(time, z, y, x, _ei, applyConversion=False)
+            v = self.V.eval(time, z, y, x, _ei, applyConversion=False)
+            if "3D" in self.vector_type:
+                w = self.W.eval(time, z, y, x, ei, applyConversion=False)
+                return (u, v, w)
+            else:
+                return (u, v, 0)
+        else:
+            (u,v,w) = self._vector_interp_method(ti, _ei, bcoords, time, z, y, x)
+            return (u, v, w)
+
+            
+    def eval(self, time, z, y, x, ei=None, applyConversion=True):
+
+        if ei is None:
+            _ei = 0
+        else:
+            _ei = ei[self.igrid]
+
+        (u,v,w) = self._interpolate(time, z, y, x, _ei)
+
+        if applyConversion:
+            u = self.U.units.to_target(u, z, y, x)
+            v = self.V.units.to_target(v, z, y, x)
+            if "3D" in self.vector_type:
+                w = self.W.units.to_target(w, z, y, x)
+            
+        return (u, v, w)
+
+    def __getitem__(self,key):
+        try:
+            if _isParticle(key):
+                return self.eval(key.time, key.depth, key.lat, key.lon, key.ei)
+            else:
+                return self.eval(*key)
+        except tuple(AllParcelsErrorCodes.keys()) as error:
+            return _deal_with_errors(error, key, vector_type=self.vector_type)
 
 
 # Private helper routines
