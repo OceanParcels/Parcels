@@ -279,7 +279,6 @@ class FieldSet:
         filenames,
         variables,
         dimensions,
-        fieldtype=None,
         mesh: Mesh = "spherical",
         allow_time_extrapolation: bool | None = None,
         **kwargs,
@@ -305,9 +304,6 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable
             (e.g. dimensions['U'], dimensions['V'], etc).
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
@@ -353,7 +349,6 @@ class FieldSet:
             # Use dimensions[var] if it's a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
-            fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
 
             grid = None
 
@@ -364,7 +359,6 @@ class FieldSet:
                 grid=grid,
                 mesh=mesh,
                 allow_time_extrapolation=allow_time_extrapolation,
-                fieldtype=fieldtype,
                 **kwargs,
             )
 
@@ -426,9 +420,6 @@ class FieldSet:
             (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
             In 3D, the depth is the one corresponding to W nodes
             The gridindexingtype is set to 'nemo'. See also the Grid indexing documentation on oceanparcels.org
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
@@ -635,9 +626,6 @@ class FieldSet:
             which are located on the corners of the cells.
             (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
             In 3D, the depth is the one corresponding to W nodes.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
@@ -738,9 +726,6 @@ class FieldSet:
             Note that W is normally directed upward in MOM5, but Parcels requires W
             in the positive z-direction (downward) so W is multiplied by -1.
             T node is at the cell centre, and constant per cell.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also the `Unit converters tutorial <../examples/tutorial_unitconverters.ipynb>`__:
@@ -841,9 +826,6 @@ class FieldSet:
             W nodes are at the centre of the horizontal interfaces.
             They are interpolated linearly (as a function of z) in the cell.
             T node is at the cell centre, and constant per cell.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
@@ -908,9 +890,6 @@ class FieldSet:
             Note that dimensions can also be a dictionary of dictionaries if
             dimension names are different for each variable
             (e.g. dimensions['U'], dimensions['V'], etc).
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:

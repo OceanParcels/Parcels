@@ -13,10 +13,6 @@ from parcels import (
     Variable,
 )
 from parcels.field import Field, VectorField
-from parcels.tools.converters import (
-    GeographicPolar,
-    UnitConverter,
-)
 from tests.utils import TEST_DATA
 
 
@@ -161,31 +157,6 @@ def test_fieldset_from_modulefile():
         FieldSet.from_modulefile(nemo_error_fname, modulename="none_returning_function")
 
 
-def test_field_from_netcdf_fieldtypes():
-    filenames = {
-        "varU": {
-            "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
-            "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
-            "data": str(TEST_DATA / "Uu_eastward_nemo_cross_180lon.nc"),
-        },
-        "varV": {
-            "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
-            "lat": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
-            "data": str(TEST_DATA / "Vv_eastward_nemo_cross_180lon.nc"),
-        },
-    }
-    variables = {"varU": "U", "varV": "V"}
-    dimensions = {"lon": "glamf", "lat": "gphif"}
-
-    # first try without setting fieldtype
-    fset = FieldSet.from_nemo(filenames, variables, dimensions)
-    assert isinstance(fset.varU.units, UnitConverter)
-
-    # now try with setting fieldtype
-    fset = FieldSet.from_nemo(filenames, variables, dimensions, fieldtype={"varU": "U", "varV": "V"})
-    assert isinstance(fset.varU.units, GeographicPolar)
-
-
 def test_fieldset_from_agrid_dataset():
     filenames = {
         "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
@@ -250,8 +221,8 @@ def test_add_duplicate_field(dupobject):
             fieldset.add_field(field2)
 
 
-@pytest.mark.parametrize("fieldtype", ["normal", "vector"])
-def test_add_field_after_pset(fieldtype):
+@pytest.mark.parametrize("field_type", ["normal", "vector"])
+def test_add_field_after_pset(field_type):
     data, dimensions = generate_fieldset_data(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
     pset = ParticleSet(fieldset, Particle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
@@ -259,9 +230,9 @@ def test_add_field_after_pset(fieldtype):
     field2 = Field("field2", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     vfield = VectorField("vfield", field1, field2)
     with pytest.raises(RuntimeError):
-        if fieldtype == "normal":
+        if field_type == "normal":
             fieldset.add_field(field1)
-        elif fieldtype == "vector":
+        elif field_type == "vector":
             fieldset.add_vector_field(vfield)
 
 

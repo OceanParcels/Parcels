@@ -123,8 +123,6 @@ class Field:
     grid : parcels.grid.Grid
         :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
         mesh and time_origin information. Can be constructed from any of the Grid objects
-    fieldtype : str
-        Type of Field to be used for UnitConverter (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
     time_origin : parcels.tools.converters.TimeConverter
         Time origin of the time axis (only if grid is None)
     interp_method : str
@@ -148,7 +146,6 @@ class Field:
         time=None,
         grid=None,
         mesh: Mesh = "flat",
-        fieldtype=None,
         time_origin: TimeConverter | None = None,
         interp_method: InterpMethod = "linear",
         allow_time_extrapolation: bool | None = None,
@@ -170,13 +167,12 @@ class Field:
                 time_origin = TimeConverter(0)
             self._grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
-        self.fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == "flat" or (self.fieldtype not in unitconverters_map.keys()):
-            self.units = UnitConverter()
-        elif self.grid.mesh == "spherical":
-            self.units = unitconverters_map[self.fieldtype]
-        else:
-            raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
+        self.units = UnitConverter()
+        if self.grid.mesh == "spherical":
+            try:
+                self.units = unitconverters_map[self.name]
+            except KeyError:
+                pass
         if isinstance(interp_method, dict):
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
@@ -215,6 +211,16 @@ class Field:
 
     def __repr__(self) -> str:
         return field_repr(self)
+
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, value):
+        if not isinstance(value, UnitConverter):
+            raise ValueError(f"Units must be a UnitConverter object, got {type(value)}")
+        self._units = value
 
     @property
     def grid(self):
