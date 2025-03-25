@@ -167,10 +167,12 @@ class Field:
                 time_origin = TimeConverter(0)
             self._grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
-        if self.grid.mesh == "spherical" and self.name in unitconverters_map.keys():
-            self.units = unitconverters_map[self.name]
-        else:
-            self.units = UnitConverter()
+        self.units = UnitConverter()
+        if self.grid.mesh == "spherical":
+            try:
+                self.units = unitconverters_map[self.name]
+            except KeyError:
+                pass
         if isinstance(interp_method, dict):
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
