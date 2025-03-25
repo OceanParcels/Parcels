@@ -7,6 +7,8 @@ import dask.array as da
 import numpy as np
 import xarray as xr
 import uxarray as ux
+from uxarray.grid.neighbors import _barycentric_coordinates
+
 
 import parcels.tools.interpolation_utils as i_u
 from parcels._compat import add_note
@@ -42,7 +44,7 @@ from parcels.tools.warnings import FieldSetWarning
 import inspect
 from typing import Callable, Union
 
-#from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear, _search_time_index
+from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear, _search_time_index
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -149,6 +151,7 @@ class XField:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
+        mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
         allow_time_extrapolation: bool | None = None,
     ):
@@ -159,7 +162,7 @@ class XField:
         self._validate_dataarray(data)
 
         self._parent_mesh = data.attributes["mesh"]
-        self._mesh_type = data.attributes["mesh_type"]
+        self._mesh_type = mesh_type
         self._location = data.attributes["location"]
 
         # Set the vertical location
@@ -184,11 +187,15 @@ class XField:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
         
-        self.fieldset: XFieldSet | None = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.data["time"]) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
+
+        if type(self.data) is ux.UxDataArray:
+            self._spatialhash = self.data.uxgrid.get_spatial_hash()
+        else:
+            self._spatialhash = None
 
     def __repr__(self):
         return field_repr(self)
@@ -269,7 +276,13 @@ class XField:
                 return self.data.sizes["node_lat"]
         else:
             return 0 # To do : Discuss what we want to return for uxdataarray obj
-       
+    @property
+    def n_face(self):
+        if type(self.data) is ux.uxDataArray:
+            return self.data.uxgrid.n_face
+        else:
+            return 0 # To do : Discuss what we want to return for dataarray obj
+ 
     @property
     def interp_method(self):
         return self._interp_method 
@@ -282,6 +295,80 @@ class XField:
     # @property
     # def gridindexingtype(self):
     #     return self._gridindexingtype
+
+    def _get_ux_barycentric_coordinates(self, y, x, fi):
+        "Checks if a point is inside a given face id. Used for unstructured grids."
+
+        # Check if particle is in the same face, otherwise search again.
+        n_nodes = self.data.uxgrid.n_nodes_per_face[fi].to_numpy()
+        node_ids = self.data.uxgrid.face_node_connectivity[fi, 0:n_nodes]
+        nodes = np.column_stack(
+            (
+                np.deg2rad(self.data.uxgrid.node_lon[node_ids].to_numpy()),
+                np.deg2rad(self.data.uxgrid.node_lat[node_ids].to_numpy()),
+            )
+        )
+
+        coord = np.deg2rad([x, y])
+        bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
+        err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(
+                    np.dot(bcoord, nodes[:, 1]) - coord[1]
+                )
+        return bcoord, err
+
+
+    def _search_indices_unstructured(self, z, y, x, ei=None, search2D=False):
+
+        tol = 1e-10
+        if ei is None:
+            # Search using global search
+            fi, bcoords = self._spatialhash.query([[x,y]]) # Get the face id for the particle  
+            if fi == -1:
+                raise FieldOutOfBoundError(z, y, x) # To do : how to handle lost particle ??
+            # To do : Do the vertical grid search
+            # zi = self._vertical_search(z)
+            zi = 0 # For now
+            return bcoords, self.ravel_index(zi, 0, fi)
+        else:
+            zi, fi = self.unravel_index(ei[self.igrid]) # Get the z, and face index of the particle
+            # Search using nearest neighbors
+            bcoords, err = self._get_ux_barycentric_coordinates(y, x, fi)
+
+            if  ((bcoords >= 0).all()) and ((bcoords <= 1.0).all()) and err < tol:
+                # To do: Do the vertical grid search
+                return bcoords, ei
+            else:
+                # In this case we need to search the neighbors
+                for neighbor in self.data.uxgrid.face_face_connectivity[fi,:]:
+                    bcoords, err = self._get_ux_barycentric_coordinates(y, x, neighbor)
+                    if  ((bcoords >= 0).all()) and ((bcoords <= 1.0).all()) and err < tol:
+                        # To do: Do the vertical grid search
+                        return bcoords, self.ravel_index(zi, 0, neighbor)
+
+                # If we reach this point, we do a global search as a last ditch effort the particle is out of bounds
+                fi, bcoords = self._spatialhash.query([[x,y]]) # Get the face id for the particle  
+                if fi == -1:
+                    raise FieldOutOfBoundError(z, y, x) # To do : how to handle lost particle ??
+        
+
+    def _search_indices_structured(self, z, y, x, ei=None, search2D=False):
+        
+        # To do, determine grid type from xarray.coords shapes
+        # Rectilinear uses 1-D array for lat and lon
+        # Curvilinear uses 2-D array for lat and lon
+        if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]: 
+            (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(
+                self, z, y, x,particle=particle, search2D=search2D
+            )
+        else:
+            (zeta, eta, xsi, zi, yi, xi) = _search_indices_curvilinear(
+                self, z, y, x, ei=ei, search2D=search2D
+            )
+
+        # To do : Calcualte barycentric coordinates from zeta, eta, xsi
+
+        return (zeta, eta, xsi, zi, yi, xi)
+        
     def _search_indices(self, time, z, y, x, ei=None, search2D=False):
 
         tau, ti = self._search_time_index(time) # To do : Need to implement this method
@@ -334,7 +421,7 @@ class XField:
         scipy.interpolate to perform spatial interpolation.
         """
         if ei is None:
-            _ei = 0
+            _ei = None
         else:
             _ei = ei[self.igrid]
 
@@ -351,7 +438,6 @@ class XField:
 
     def ravel_index(self, zi, yi, xi):
         """Return the flat index of the given grid points.
-        Only used when working with fields on a structured grid.
 
         Parameters
         ----------
@@ -360,7 +446,7 @@ class XField:
         yi : int
             y index
         xi : int
-            x index
+            x index. When using an unstructured grid, this is the face index (fi)
 
         Returns
         -------
@@ -370,7 +456,7 @@ class XField:
         if type(self.data) is xr.DataArray:
             return xi + self.nx * (yi + self.ny * zi)
         else:
-            return None
+            return xi + self.n_face*zi
 
     def unravel_index(self, ei):
         """Return the zi, yi, xi indices for a given flat index.
@@ -398,7 +484,10 @@ class XField:
             xi = _ei % self.nx
             return zi, yi, xi
         else:
-            return None,None,None # To do : Discuss what we want to return for uxdataarray
+            _ei = ei[self.igrid]
+            zi = _ei // self.n_face
+            fi = _ei % self.n_face
+            return zi, fi
 
     def _validate_dataarray(self):
         """ Verifies that all the required attributes are present in the xarray.DataArray or
@@ -418,7 +507,7 @@ class XField:
             )
         
         # Validate attributes
-        required_keys = ["location", "mesh", "mesh_type"]
+        required_keys = ["location", "mesh"]
         for key in required_keys:
             if key not in self.data.attrs.keys():
                 raise ValueError(
@@ -584,47 +673,3 @@ class XVectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
-
-
-# Private helper routines
-def _barycentric_coordinates(nodes, point):
-    """
-    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
-    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
-    barycentric coordinates, which is only valid for convex polygons.
-
-    Parameters
-    ----------
-        nodes : numpy.ndarray
-            Spherical coordinates (lon,lat) of each corner node of a face
-        point : numpy.ndarray
-            Spherical coordinates (lon,lat) of the point
-    Returns
-    -------
-    numpy.ndarray
-        Barycentric coordinates corresponding to each vertex.
-
-    """
-    n = len(nodes)
-    sum_wi = 0
-    w = []
-
-    for i in range(0, n):
-        vim1 = nodes[i - 1]
-        vi = nodes[i]
-        vi1 = nodes[(i + 1) % n]
-        a0 = _triangle_area(vim1, vi, vi1)
-        a1 = _triangle_area(point, vim1, vi)
-        a2 = _triangle_area(point, vi, vi1)
-        sum_wi += a0 / (a1 * a2)
-        w.append(a0 / (a1 * a2))
-
-    barycentric_coords = [w_i / sum_wi for w_i in w]
-
-    return barycentric_coords
-
-def _triangle_area(A, B, C):
-    """
-    Compute the area of a triangle given by three points.
-    """
-    return 0.5 * (A[0] * (B[1] - C[1]) + B[0] * (C[1] - A[1]) + C[0] * (A[1] - B[1]))
