@@ -211,6 +211,16 @@ class Field:
         return field_repr(self)
 
     @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, value):
+        if not isinstance(value, UnitConverter):
+            raise ValueError(f"Units must be a UnitConverter object, got {type(value)}")
+        self._units = value
+
+    @property
     def grid(self):
         return self._grid
 
