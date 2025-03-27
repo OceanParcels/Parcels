@@ -99,6 +99,7 @@ def search_indices_vertical_z(depth, gridindexingtype: GridIndexingType, z: floa
     return (zi, zeta)
 
 
+## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_vertical_s function
 def search_indices_vertical_s(
     grid: Grid,
     interp_method: InterpMethodOption,
@@ -175,32 +176,31 @@ def search_indices_vertical_s(
 
 
 def _search_indices_rectilinear(
-    field: Field, time: float, z: float, y: float, x: float, ti: int, particle=None, search2D=False
+    field: Field, time: datetime, z: float, y: float, x: float, ti: int, ei:int=None, search2D=False
 ):
-    grid = field.grid
-
-    if grid.xdim > 1 and (not grid.zonal_periodic):
-        if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
+    # To do : If ei is provided, check if particle is in the same cell
+    if field.xdim > 1 and (not field.zonal_periodic):
+        if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]: # To do : implement lonlat_minmax at field level
             _raise_field_out_of_bound_error(z, y, x)
-    if grid.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]):
+    if field.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]): # To do : implement lonlat_minmax at field level
         _raise_field_out_of_bound_error(z, y, x)
 
-    if grid.xdim > 1:
-        if grid.mesh != "spherical":
-            lon_index = grid.lon < x
+    if field.xdim > 1:
+        if field._mesh_type != "spherical":
+            lon_index = field.lon < x
             if lon_index.all():
-                xi = len(grid.lon) - 2
+                xi = len(field.lon) - 2
             else:
                 xi = lon_index.argmin() - 1 if lon_index.any() else 0
-            xsi = (x - grid.lon[xi]) / (grid.lon[xi + 1] - grid.lon[xi])
+            xsi = (x - field.lon[xi]) / (field.lon[xi + 1] - field.lon[xi])
             if xsi < 0:
                 xi -= 1
-                xsi = (x - grid.lon[xi]) / (grid.lon[xi + 1] - grid.lon[xi])
+                xsi = (x - field.lon[xi]) / (field.lon[xi + 1] - field.lon[xi])
             elif xsi > 1:
                 xi += 1
-                xsi = (x - grid.lon[xi]) / (grid.lon[xi + 1] - grid.lon[xi])
+                xsi = (x - field.lon[xi]) / (field.lon[xi + 1] - field.lon[xi])
         else:
-            lon_fixed = grid.lon.copy()
+            lon_fixed = field.lon.copy()
             indices = lon_fixed >= lon_fixed[0]
             if not indices.all():
                 lon_fixed[indices.argmin() :] += 360
@@ -222,32 +222,33 @@ def _search_indices_rectilinear(
     else:
         xi, xsi = -1, 0
 
-    if grid.ydim > 1:
-        lat_index = grid.lat < y
+    if field.ydim > 1:
+        lat_index = field.lat < y
         if lat_index.all():
-            yi = len(grid.lat) - 2
+            yi = len(field.lat) - 2
         else:
             yi = lat_index.argmin() - 1 if lat_index.any() else 0
 
-        eta = (y - grid.lat[yi]) / (grid.lat[yi + 1] - grid.lat[yi])
+        eta = (y - field.lat[yi]) / (field.lat[yi + 1] - field.lat[yi])
         if eta < 0:
             yi -= 1
-            eta = (y - grid.lat[yi]) / (grid.lat[yi + 1] - grid.lat[yi])
+            eta = (y - field.lat[yi]) / (field.lat[yi + 1] - field.lat[yi])
         elif eta > 1:
             yi += 1
-            eta = (y - grid.lat[yi]) / (grid.lat[yi + 1] - grid.lat[yi])
+            eta = (y - field.lat[yi]) / (field.lat[yi + 1] - field.lat[yi])
     else:
         yi, eta = -1, 0
 
-    if grid.zdim > 1 and not search2D:
-        if grid._gtype == GridType.RectilinearZGrid:
+    if field.zdim > 1 and not search2D:
+        if field._gtype == GridType.RectilinearZGrid:
             try:
                 (zi, zeta) = search_indices_vertical_z(field.grid, field.gridindexingtype, z)
             except FieldOutOfBoundError:
                 _raise_field_out_of_bound_error(z, y, x)
             except FieldOutOfBoundSurfaceError:
                 _raise_field_out_of_bound_surface_error(z, y, x)
-        elif grid._gtype == GridType.RectilinearSGrid:
+        elif field._gtype == GridType.RectilinearSGrid:
+            ## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_vertical_s function
             (zi, zeta) = search_indices_vertical_s(field.grid, field.interp_method, time, z, y, x, ti, yi, xi, eta, xsi)
     else:
         zi, zeta = -1, 0
@@ -255,12 +256,12 @@ def _search_indices_rectilinear(
     if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
         _raise_field_sampling_error(z, y, x)
 
-    if particle:
-        particle.ei[field.igrid] = field.ravel_index(zi, yi, xi)
+    _ei = field.ravel_index(zi, yi, xi)
 
-    return (zeta, eta, xsi, zi, yi, xi)
+    return (zeta, eta, xsi, _ei)
 
 
+## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_curvilinear
 def _search_indices_curvilinear(field: Field, time, z, y, x, ti, particle=None, search2D=False):
     if particle:
         zi, yi, xi = field.unravel_index(particle.ei)

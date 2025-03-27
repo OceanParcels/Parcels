@@ -124,6 +124,7 @@ class Field:
         ti: int,
         ei: int,
         bcoords: np.ndarray,
+        tau: Union[np.float32,np.float64],
         t: Union[np.float32,np.float64],
         z: Union[np.float32,np.float64],
         y: Union[np.float32,np.float64],
@@ -134,7 +135,7 @@ class Field:
     
     def _validate_interp_function(self, func: Callable):
         """Ensures that the function has the correct signature."""
-        expected_params = ["ti", "ei", "bcoords", "t", "z", "y", "x"]
+        expected_params = ["ti", "ei", "bcoords", "tau", "t", "z", "y", "x"]
         expected_return_types = (np.float32,np.float64)
 
         sig = inspect.signature(func)
@@ -289,7 +290,7 @@ class Field:
                 return self.data.nz
 
     @property
-    def nx(self):
+    def xdim(self):
         if type(self.data) is xr.DataArray:
             if "face_lon" in self.data.dims:
                 return self.data.sizes["face_lon"]
@@ -298,7 +299,7 @@ class Field:
         else:
             return 0 # To do : Discuss what we want to return for uxdataarray obj
     @property
-    def ny(self):
+    def ydim(self):
         if type(self.data) is xr.DataArray:
             if "face_lat" in self.data.dims:
                 return self.data.sizes["face_lat"]
@@ -306,6 +307,16 @@ class Field:
                 return self.data.sizes["node_lat"]
         else:
             return 0 # To do : Discuss what we want to return for uxdataarray obj
+        
+    @property
+    def zdim(self):
+        if "nz1" in self.data.dims:
+            return self.data.sizes["nz1"]
+        elif "nz" in self.data.dims:
+            return self.data.sizes["nz"]
+        else:
+            return 0
+        
     @property
     def n_face(self):
         if type(self.data) is ux.uxDataArray:
@@ -388,27 +399,34 @@ class Field:
                 self, z, y, x,ei=ei, search2D=search2D
             )
         else:
-            (zeta, eta, xsi, zi, yi, xi) = _search_indices_curvilinear(
-                self, z, y, x, ei=ei, search2D=search2D
-            )
+            ## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_curvilinear
+            # (zeta, eta, xsi, zi, yi, xi) = _search_indices_curvilinear(
+            #     self, z, y, x, ei=ei, search2D=search2D
+            # )
+            raise NotImplementedError("Curvilinear grid search not implemented yet")
 
         return (zeta, eta, xsi, zi, yi, xi)
         
     def _search_indices(self, time: datetime, z, y, x, ei=None, search2D=False):
 
-        tau, ti = self._search_time_index(time) # To do : Need to implement this method
+        tau, ti = _search_time_index(self,time,self.allow_time_extrapolation)
+
+        if ei is None:
+            _ei = None
+        else:
+            _ei = ei[self.igrid]
 
         if type(self.data) is ux.UxDataArray:
-            bcoords, ei = self._search_indices_unstructured(z, y, x, ei=ei, search2D=search2D) # To do : Need to implement this method
+            bcoords, ei = self._search_indices_unstructured(z, y, x, ei=_ei, search2D=search2D)
         else:
-            bcoords, ei = self._search_indices_structured(z, y, x, ei=ei, search2D=search2D) # To do : Need to implement this method
-        return bcoords, ei, ti 
+            bcoords, ei = self._search_indices_structured(z, y, x, ei=_ei, search2D=search2D)
+        return bcoords, ei, tau, ti 
     
     def _interpolate(self, time: datetime, z, y, x, ei):
 
         try:
-            bcoords, _ei, ti = self._search_indices(time, z, y, x, ei=ei)
-            val = self._interp_method(ti, _ei, bcoords, time, z, y, x)
+            bcoords, _ei, tau, ti = self._search_indices(time, z, y, x, ei=ei)
+            val = self._interp_method(ti, _ei, bcoords, tau, time, z, y, x)
 
             if np.isnan(val):
                 # Detect Out-of-bounds sampling and raise exception
@@ -479,7 +497,7 @@ class Field:
             flat index
         """
         if type(self.data) is xr.DataArray:
-            return xi + self.nx * (yi + self.ny * zi)
+            return xi + self.xdim * (yi + self.ydim * zi)
         else:
             return xi + self.n_face*zi
 
@@ -503,10 +521,10 @@ class Field:
         """
         if type(self.data) is xr.DataArray:
             _ei = ei[self.igrid]
-            zi = _ei // (self.nx * self.ny)
-            _ei = _ei % (self.nx * self.ny)
-            yi = _ei // self.nx
-            xi = _ei % self.nx
+            zi = _ei // (self.xdim * self.ydim)
+            _ei = _ei % (self.xdim * self.ydim)
+            yi = _ei // self.xdim
+            xi = _ei % self.xdim
             return zi, yi, xi
         else:
             _ei = ei[self.igrid]
