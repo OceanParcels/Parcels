@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+from datetime import datetime
 
 from parcels._typing import (
     GridIndexingType,
@@ -21,73 +22,80 @@ from .grid import GridType
 
 if TYPE_CHECKING:
     from .field import Field
-    from .grid import Grid
+    #from .grid import Grid
 
 
-def _search_time_index(grid: Grid, time: float, allow_time_extrapolation=True):
+def _search_time_index(field: Field, time: datetime , allow_time_extrapolation=True):
     """Find and return the index and relative coordinate in the time array associated with a given time.
 
+    Parameters
+    ----------
+    field: Field
+
+    time: datetime
+        This is the amount of time, in seconds (time_delta), in unix epoch
     Note that we normalize to either the first or the last index
     if the sampled value is outside the time value range.
     """
-    if not allow_time_extrapolation and (time < grid.time[0] or time > grid.time[-1]):
+    if not allow_time_extrapolation and (time < field.data.time[0] or time > field.data.time[-1]):
         _raise_time_extrapolation_error(time, field=None)
-    time_index = grid.time <= time
+    time_index = field.data.time <= time
 
     if time_index.all():
         # If given time > last known field time, use
         # the last field frame without interpolation
-        ti = len(grid.time) - 1
+        ti = len(field.data.time) - 1
+
     elif np.logical_not(time_index).all():
         # If given time < any time in the field, use
         # the first field frame without interpolation
         ti = 0
     else:
         ti = int(time_index.argmin() - 1) if time_index.any() else 0
-    if grid.tdim == 1:
+    if len(field.data.time)== 1:
         tau = 0
-    elif ti == len(grid.time) - 1:
+    elif ti == len(field.data.time) - 1:
         tau = 1
     else:
-        tau = (time - grid.time[ti]) / (grid.time[ti + 1] - grid.time[ti]) if grid.time[ti] != grid.time[ti + 1] else 0
+        tau = (time - field.data.time[ti]).total_seconds() / (field.data.time[ti + 1] - field.data.time[ti]).total_seconds() if field.data.time[ti] != field.data.time[ti + 1] else 0
     return tau, ti
 
 
-def search_indices_vertical_z(grid: Grid, gridindexingtype: GridIndexingType, z: float):
-    if grid.depth[-1] > grid.depth[0]:
-        if z < grid.depth[0]:
+def search_indices_vertical_z(depth, gridindexingtype: GridIndexingType, z: float):
+    if depth[-1] > depth[0]:
+        if z < depth[0]:
             # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
-            if gridindexingtype == "mom5" and z > 2 * grid.depth[0] - grid.depth[1]:
-                return (-1, z / grid.depth[0])
+            if gridindexingtype == "mom5" and z > 2 * depth[0] - depth[1]:
+                return (-1, z / depth[0])
             else:
                 _raise_field_out_of_bound_surface_error(z, None, None)
-        elif z > grid.depth[-1]:
+        elif z > depth[-1]:
             # In case of CROCO, allow particles in last (uppermost) layer using depth[-1]
             if gridindexingtype in ["croco"] and z < 0:
                 return (-2, 1)
             _raise_field_out_of_bound_error(z, None, None)
-        depth_indices = grid.depth < z
-        if z >= grid.depth[-1]:
-            zi = len(grid.depth) - 2
+        depth_indices = depth < z
+        if z >= depth[-1]:
+            zi = len(depth) - 2
         else:
-            zi = depth_indices.argmin() - 1 if z > grid.depth[0] else 0
+            zi = depth_indices.argmin() - 1 if z > depth[0] else 0
     else:
-        if z > grid.depth[0]:
+        if z > depth[0]:
             _raise_field_out_of_bound_surface_error(z, None, None)
-        elif z < grid.depth[-1]:
+        elif z < depth[-1]:
             _raise_field_out_of_bound_error(z, None, None)
-        depth_indices = grid.depth > z
-        if z <= grid.depth[-1]:
-            zi = len(grid.depth) - 2
+        depth_indices = depth > z
+        if z <= depth[-1]:
+            zi = len(depth) - 2
         else:
-            zi = depth_indices.argmin() - 1 if z < grid.depth[0] else 0
-    zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
+            zi = depth_indices.argmin() - 1 if z < depth[0] else 0
+    zeta = (z - depth[zi]) / (depth[zi + 1] - depth[zi])
     while zeta > 1:
         zi += 1
-        zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
+        zeta = (z - depth[zi]) / (depth[zi + 1] - depth[zi])
     while zeta < 0:
         zi -= 1
-        zeta = (z - grid.depth[zi]) / (grid.depth[zi + 1] - grid.depth[zi])
+        zeta = (z - depth[zi]) / (depth[zi + 1] - depth[zi])
     return (zi, zeta)
 
 

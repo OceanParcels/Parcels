@@ -7,145 +7,72 @@ from glob import glob
 import numpy as np
 
 from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
-from parcels.field import Field, VectorField
-from parcels.grid import Grid
-from parcels.gridset import GridSet
+from parcels.xfield import XField, XVectorField
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import fieldset_repr
+from parcels.tools._helpers import fieldset_repr, default_repr
 from parcels.tools.converters import TimeConverter
 from parcels.tools.warnings import FieldSetWarning
 
-__all__ = ["FieldSet"]
+import xarray as xr
+import uxarray as ux
+
+__all__ = ["XFieldSet"]
 
 
-class FieldSet:
-    """FieldSet class that holds hydrodynamic data needed to execute particles.
-
+class XFieldSet:
+    """XFieldSet class that holds hydrodynamic data needed to execute particles.
+    
     Parameters
     ----------
-    U : parcels.field.Field
-        Field object for zonal velocity component
-    V : parcels.field.Field
-        Field object for meridional velocity component
-    fields : dict mapping str to Field
-        Additional fields to include in the FieldSet. These fields can be used
-        in custom kernels.
+    ds : xarray.Dataset | uxarray.UxDataset)
+        xarray.Dataset and/or uxarray.UxDataset objects containing the field data.
+
+    Notes
+    -----
+    The `ds` object is a xarray.Dataset or uxarray.UxDataset object. 
+    In XArray terminology, the (Ux)Dataset holds multiple (Ux)DataArray objects. 
+    Each (Ux)DataArray object is a single "field" that is associated with their own
+    dimensions and coordinates within the (Ux)Dataset.
+
+    A (Ux)Dataset object is associated with a single mesh, which can have multiple
+    types of "points" (multiple "grids") (e.g. for UxDataSets, these are "face_lon", 
+    "face_lat", "node_lon", "node_lat", "edge_lon", "edge_lat"). Each (Ux)DataArray is 
+    registered to a specific set of points on the mesh.
+
+    For UxDataset objects, each `UXDataArray.attributes` field dictionary contains 
+    the necessary metadata to help determine which set of points a field is registered
+    to and what parent model the field is associated with. Parcels uses this metadata
+    during execution for interpolation.  Each `UXDataArray.attributes` field dictionary
+    must have: 
+      * "location" key set to "face", "node", or "edge" to define which pairing of points a field is associated with.
+      * "mesh" key to define which parent model the fields are associated with (e.g. "fesom_mesh", "icon_mesh")
+
     """
 
-    def __init__(self, U: Field | None, V: Field | None, fields=None):
-        self.gridset = GridSet()
-        self._completed: bool = False
-        self._particlefile: ParticleFile | None = None
-        if U:
-            self.add_field(U, "U")
-            # see #1663 for type-ignore reason
-            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin  # type: ignore
-        if V:
-            self.add_field(V, "V")
+    def __init__(self, ds: xr.Dataset | ux.UxDataset):
+        self.ds = ds
 
-        # Add additional fields as attributes
-        if fields:
-            for name, field in fields.items():
-                self.add_field(field, name)
+        self._completed: bool = False
+        # Create pointers to each (Ux)DataArray
+        for field in self.ds.data_vars:
+            setattr(self, field, XField(field,self.ds[field]))
 
         self._add_UVfield()
 
     def __repr__(self):
         return fieldset_repr(self)
+    
+    # @property
+    # def particlefile(self):
+    #     return self._particlefile
 
-    @property
-    def particlefile(self):
-        return self._particlefile
+    # @staticmethod
+    # def checkvaliddimensionsdict(dims):
+    #     for d in dims:
+    #         if d not in ["lon", "lat", "depth", "time"]:
+    #             raise NameError(f"{d} is not a valid key in the dimensions dictionary")
 
-    @staticmethod
-    def checkvaliddimensionsdict(dims):
-        for d in dims:
-            if d not in ["lon", "lat", "depth", "time"]:
-                raise NameError(f"{d} is not a valid key in the dimensions dictionary")
-
-    @classmethod
-    def from_data(
-        cls,
-        data,
-        dimensions,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        **kwargs,
-    ):
-        """Initialise FieldSet object from raw data.
-
-        Parameters
-        ----------
-        data :
-            Dictionary mapping field names to numpy arrays.
-            Note that at least a 'U' and 'V' numpy array need to be given, and that
-            the built-in Advection kernels assume that U and V are in m/s.
-            Data shape is either [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-        dimensions : dict
-            Dictionary mapping field dimensions (lon,
-            lat, depth, time) to numpy arrays.
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable
-            (e.g. dimensions['U'], dimensions['V'], etc).
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        **kwargs :
-            Keyword arguments passed to the :class:`Field` constructor.
-
-        Examples
-        --------
-        For usage examples see the following tutorials:
-
-        * `Analytical advection <../examples/tutorial_analyticaladvection.ipynb>`__
-
-        * `Diffusion <../examples/tutorial_diffusion.ipynb>`__
-
-        * `Interpolation <../examples/tutorial_interpolation.ipynb>`__
-
-        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
-        """
-        fields = {}
-        for name, datafld in data.items():
-            # Use dimensions[name] if dimensions is a dict of dicts
-            dims = dimensions[name] if name in dimensions else dimensions
-            cls.checkvaliddimensionsdict(dims)
-
-            if allow_time_extrapolation is None:
-                allow_time_extrapolation = False if "time" in dims else True
-
-            lon = dims["lon"]
-            lat = dims["lat"]
-            depth = np.zeros(1, dtype=np.float32) if "depth" not in dims else dims["depth"]
-            time = np.zeros(1, dtype=np.float64) if "time" not in dims else dims["time"]
-            time = np.array(time)
-            if isinstance(time[0], np.datetime64):
-                time_origin = TimeConverter(time[0])
-                time = np.array([time_origin.reltime(t) for t in time])
-            else:
-                time_origin = kwargs.pop("time_origin", TimeConverter(0))
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-
-            fields[name] = Field(
-                name,
-                datafld,
-                grid=grid,
-                allow_time_extrapolation=allow_time_extrapolation,
-                **kwargs,
-            )
-        u = fields.pop("U", None)
-        v = fields.pop("V", None)
-        return cls(u, v, fields=fields)
-
-    def add_field(self, field: Field, name: str | None = None):
+    def add_field(self, field: XField, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
         Parameters
@@ -174,7 +101,6 @@ class FieldSet:
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
         else:
             setattr(self, name, field)
-            self.gridset.add_grid(field)
 
     def add_constant_field(self, name: str, value: float, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
@@ -194,69 +120,68 @@ class FieldSet:
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
-        self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
+        import pandas as pd
+
+        time = pd.to_datetime(['2000-01-01'])
+        values = np.zeros((1,1,1,1), dtype=np.float32) + value
+        data = xr.DataArray(
+            data=values,
+            name=name,
+            dims='null',
+            coords = [time,[0],[0],[0]],
+            attrs=dict(
+                description="null",
+                units="null",
+                location="node",
+                mesh=f"constant",
+                mesh_type=mesh
+        ))
+        self.add_field(
+            XField(
+                name,
+                data,
+                interp_method=None, # To do : Need to define an interpolation method for constants
+                allow_time_extrapolation=True
+            )
+        )
 
     def add_vector_field(self, vfield):
         """Add a :class:`parcels.field.VectorField` object to the FieldSet.
 
         Parameters
         ----------
-        vfield : parcels.VectorField
-            class:`parcels.field.VectorField` object to be added
+        vfield : parcels.XVectorField
+            class:`parcels.xfieldset.XVectorField` object to be added
         """
         setattr(self, vfield.name, vfield)
         for v in vfield.__dict__.values():
-            if isinstance(v, Field) and (v not in self.get_fields()):
+            if isinstance(v, XField) and (v not in self.get_fields()):
                 self.add_field(v)
 
+    def get_fields(self) -> list[XField | XVectorField]:
+        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
+        objects associated with this FieldSet.
+        """
+        fields = []
+        for v in self.__dict__.values():
+            if type(v) in [XField, XVectorField]:
+                if v not in fields:
+                    fields.append(v)
+        return fields
+    
     def _add_UVfield(self):
-        if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
-            self.add_vector_field(VectorField("UV", self.U, self.V))
-        if not hasattr(self, "UVW") and hasattr(self, "W"):
-            self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
+        if not hasattr(self, "UV") and hasattr(self, "u") and hasattr(self, "v"):
+            self.add_xvector_field(XVectorField("UV", self.u, self.v))
+        if not hasattr(self, "UVW") and hasattr(self, "w"):
+            self.add_xvector_field(XVectorField("UVW", self.u, self.v, self.w))
 
     def _check_complete(self):
-        assert self.U, 'FieldSet does not have a Field named "U"'
-        assert self.V, 'FieldSet does not have a Field named "V"'
+        assert self.u, 'FieldSet does not have a Field named "u"'
+        assert self.v, 'FieldSet does not have a Field named "v"'
         for attr, value in vars(self).items():
-            if type(value) is Field:
+            if type(value) is XField:
                 assert value.name == attr, f"Field {value.name}.name ({attr}) is not consistent"
 
-        def check_velocityfields(U, V, W):
-            if (U.interp_method == "cgrid_velocity" and V.interp_method != "cgrid_velocity") or (
-                U.interp_method != "cgrid_velocity" and V.interp_method == "cgrid_velocity"
-            ):
-                raise ValueError("If one of U,V.interp_method='cgrid_velocity', the other should be too")
-
-            if "linear_invdist_land_tracer" in [U.interp_method, V.interp_method]:
-                raise NotImplementedError(
-                    "interp_method='linear_invdist_land_tracer' is not implemented for U and V Fields"
-                )
-
-            if U.interp_method == "cgrid_velocity":
-                if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
-                    raise NotImplementedError(
-                        "C-grid velocities require longitude and latitude dimensions at least length 2"
-                    )
-
-            if U.gridindexingtype not in ["nemo", "mitgcm", "mom5", "pop", "croco"]:
-                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm', 'mom5', 'pop' or 'croco'")
-
-            if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
-                raise ValueError("Not all velocity Fields have the same gridindexingtype")
-
-        W = self.W if hasattr(self, "W") else None
-        check_velocityfields(self.U, self.V, W)
-
-        for g in self.gridset.grids:
-            g._check_zonal_periodic()
-            if len(g.time) == 1:
-                continue
-            assert isinstance(
-                g.time_origin.time_origin, type(self.time_origin.time_origin)
-            ), "time origins of different grids must be have the same type"
-            g.time = g.time + self.time_origin.reltime(g.time_origin)
-            g._time_origin = self.time_origin
         self._add_UVfield()
 
         self._completed = True
@@ -272,713 +197,96 @@ class FieldSet:
             if not os.path.exists(fp):
                 raise OSError(f"FieldSet file not found: {fp}")
         return paths
-
-    @classmethod
-    def from_netcdf(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        fieldtype=None,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files.
-
-        Parameters
-        ----------
-        filenames :
-            Dictionary mapping variables to file(s). The
-            filepath may contain wildcards to indicate multiple files
-            or be a list of file.
-            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
-            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries ``{var:{dim:[files]}}``.
-            time values are in ``filenames[data]``
-        variables : dict
-            Dictionary mapping variables to variable names in the netCDF file(s).
-            Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions : dict
-            Dictionary mapping data dimensions (lon,
-            lat, depth, time, data) to dimensions in the netCF file(s).
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable
-            (e.g. dimensions['U'], dimensions['V'], etc).
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None) (Default value = None)
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        interp_method : str
-            Method for interpolation. Options are 'linear' (default), 'nearest',
-            'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
-        gridindexingtype : str
-            The type of gridindexing. Either 'nemo' (default), 'mitgcm', 'mom5', 'pop', or 'croco' are supported.
-            See also the Grid indexing documentation on oceanparcels.org
-        **kwargs :
-            Keyword arguments passed to the :class:`parcels.Field` constructor.
-
-
-        Examples
-        --------
-        For usage examples see the following tutorials:
-
-        * `Basic Parcels setup <../examples/parcels_tutorial.ipynb>`__
-
-        * `Argo floats <../examples/tutorial_Argofloats.ipynb>`__
-
-        * `Time-evolving depth dimensions <../examples/tutorial_timevaryingdepthdimensions.ipynb>`__
-
-        """
-        fields: dict[str, Field] = {}
-        for var, name in variables.items():
-            # Resolve all matching paths for the current variable
-            paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
-            if type(paths) is not dict:
-                paths = cls._parse_wildcards(paths, filenames, var)
-            else:
-                for dim, p in paths.items():
-                    paths[dim] = cls._parse_wildcards(p, filenames, var)
-
-            # Use dimensions[var] if it's a dict of dicts
-            dims = dimensions[var] if var in dimensions else dimensions
-            cls.checkvaliddimensionsdict(dims)
-            fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
-
-            grid = None
-
-            fields[var] = Field.from_netcdf(
-                paths,
-                (var, name),
-                dims,
-                grid=grid,
-                mesh=mesh,
-                allow_time_extrapolation=allow_time_extrapolation,
-                fieldtype=fieldtype,
-                **kwargs,
-            )
-
-        u = fields.pop("U", None)
-        v = fields.pop("V", None)
-        return cls(u, v, fields=fields)
-
-    @classmethod
-    def from_nemo(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
-
-        See `here <../examples/tutorial_nemo_curvilinear.ipynb>`__
-        for a detailed tutorial on the setup for 2D NEMO fields and `here <../examples/tutorial_nemo_3D.ipynb>`__
-        for the tutorial on the setup for 3D NEMO fields.
-
-        See `here <../examples/documentation_indexing.ipynb>`__
-        for a more detailed explanation of the different methods that can be used for c-grid datasets.
-
-        Parameters
-        ----------
-        filenames :
-            Dictionary mapping variables to file(s). The
-            filepath may contain wildcards to indicate multiple files,
-            or be a list of file.
-            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
-            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries ``{var:{dim:[files]}}``
-            time values are in ``filenames[data]``
-        variables : dict
-            Dictionary mapping variables to variable names in the netCDF file(s).
-            Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions : dict
-            Dictionary mapping data dimensions (lon,
-            lat, depth, time, data) to dimensions in the netCF file(s).
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable.
-            Watch out: NEMO is discretised on a C-grid:
-            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html). ::
-
-                +-----------------------------+-----------------------------+-----------------------------+
-                |                             |         V[k,j+1,i+1]        |                             |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |                             |         V[k,j,i+1]          |                             |
-                +-----------------------------+-----------------------------+-----------------------------+
-
-            To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
-            which are located on the corners of the cells.
-            (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
-            In 3D, the depth is the one corresponding to W nodes
-            The gridindexingtype is set to 'nemo'. See also the Grid indexing documentation on oceanparcels.org
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        tracer_interp_method : str
-            Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-            Note that in the case of from_nemo() and from_c_grid_dataset(), the velocity fields are default to 'cgrid_velocity'
-        **kwargs :
-            Keyword arguments passed to the :func:`Fieldset.from_c_grid_dataset` constructor.
-
-        """
-        if kwargs.pop("gridindexingtype", "nemo") != "nemo":
-            raise ValueError(
-                "gridindexingtype must be 'nemo' in FieldSet.from_nemo(). Use FieldSet.from_c_grid_dataset otherwise"
-            )
-        fieldset = cls.from_c_grid_dataset(
-            filenames,
-            variables,
-            dimensions,
-            mesh=mesh,
-            allow_time_extrapolation=allow_time_extrapolation,
-            tracer_interp_method=tracer_interp_method,
-            gridindexingtype="nemo",
-            **kwargs,
-        )
-        return fieldset
-
-    @classmethod
-    def from_mitgcm(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files of MITgcm fields.
-        All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-        gridindexing is set to 'mitgcm' for grids that have the shape::
-
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j+1,i]          |                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
-            +-----------------------------+-----------------------------+-----------------------------+
-            |                             |         V[k,j,i]            |                             |
-            +-----------------------------+-----------------------------+-----------------------------+
-
-        For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
-        Note that vertical velocity (W) is assumed positive in the positive z direction (which is upward in MITgcm)
-        """
-        if kwargs.pop("gridindexingtype", "mitgcm") != "mitgcm":
-            raise ValueError(
-                "gridindexingtype must be 'mitgcm' in FieldSet.from_mitgcm(). Use FieldSet.from_c_grid_dataset otherwise"
-            )
-        fieldset = cls.from_c_grid_dataset(
-            filenames,
-            variables,
-            dimensions,
-            mesh=mesh,
-            allow_time_extrapolation=allow_time_extrapolation,
-            tracer_interp_method=tracer_interp_method,
-            gridindexingtype="mitgcm",
-            **kwargs,
-        )
-        return fieldset
-
-    @classmethod
-    def from_croco(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        hc: float | None = None,
-        mesh="spherical",
-        allow_time_extrapolation=None,
-        tracer_interp_method="cgrid_tracer",
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files of CROCO fields.
-        All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
-        in order to scale the vertical coordinate in CROCO, the following fields are required:
-        the bathymetry (``h``), the sea-surface height (``zeta``), the S-coordinate stretching curves
-        at W-points (``Cs_w``), and the stretching parameter (``hc``).
-        The horizontal interpolation uses the MITgcm grid indexing as described in FieldSet.from_mitgcm().
-
-        In 3D, when there is a ``depth`` dimension, the sigma grid scaling means that FieldSet.from_croco()
-        requires variables ``H: h`` and ``Zeta: zeta``, ``Cs_w: Cs_w``, as well as the stretching parameter ``hc``
-        (as an extra input) parameter to work.
-
-        See `the CROCO 3D tutorial <../examples/tutorial_croco_3D.ipynb>`__ for more infomation.
-        """
-        if kwargs.pop("gridindexingtype", "croco") != "croco":
-            raise ValueError(
-                "gridindexingtype must be 'croco' in FieldSet.from_croco(). Use FieldSet.from_c_grid_dataset otherwise"
-            )
-
-        dimsU = dimensions["U"] if "U" in dimensions else dimensions
-        croco3D = True if "depth" in dimsU else False
-
-        if croco3D:
-            if "W" in variables and variables["W"] == "omega":
-                warnings.warn(
-                    "Note that Parcels expects 'w' for vertical velicites in 3D CROCO fields.\nSee https://docs.oceanparcels.org/en/latest/examples/tutorial_croco_3D.html for more information",
-                    FieldSetWarning,
-                    stacklevel=2,
-                )
-            if "H" not in variables:
-                raise ValueError("FieldSet.from_croco() requires a bathymetry field 'H' for 3D CROCO fields")
-            if "Zeta" not in variables:
-                raise ValueError("FieldSet.from_croco() requires a free-surface field 'Zeta' for 3D CROCO fields")
-            if "Cs_w" not in variables:
-                raise ValueError(
-                    "FieldSet.from_croco() requires the S-coordinate stretching curves at W-points 'Cs_w' for 3D CROCO fields"
-                )
-
-        interp_method = {}
-        for v in variables:
-            if v in ["U", "V"]:
-                interp_method[v] = "cgrid_velocity"
-            elif v in ["W", "H"]:
-                interp_method[v] = "linear"
-            else:
-                interp_method[v] = tracer_interp_method
-
-        # Suppress the warning about the velocity interpolation since it is ok for CROCO
-        warnings.filterwarnings(
-            "ignore",
-            "Sampling of velocities should normally be done using fieldset.UV or fieldset.UVW object; tread carefully",
-        )
-
-        fieldset = cls.from_netcdf(
-            filenames,
-            variables,
-            dimensions,
-            mesh=mesh,
-            allow_time_extrapolation=allow_time_extrapolation,
-            interp_method=interp_method,
-            gridindexingtype="croco",
-            **kwargs,
-        )
-        if croco3D:
-            if hc is None:
-                raise ValueError("FieldSet.from_croco() requires the hc parameter for 3D CROCO fields")
-            fieldset.add_constant("hc", hc)
-        return fieldset
-
-    @classmethod
-    def from_c_grid_dataset(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        tracer_interp_method: InterpMethodOption = "cgrid_tracer",
-        gridindexingtype: GridIndexingType = "nemo",
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
-
-        See `here <../examples/documentation_indexing.ipynb>`__
-        for a more detailed explanation of the different methods that can be used for c-grid datasets.
-
-        Parameters
-        ----------
-        filenames :
-            Dictionary mapping variables to file(s). The
-            filepath may contain wildcards to indicate multiple files,
-            or be a list of file.
-            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
-            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries ``{var:{dim:[files]}}``
-            time values are in ``filenames[data]``
-        variables : dict
-            Dictionary mapping variables to variable
-            names in the netCDF file(s).
-        dimensions : dict
-            Dictionary mapping data dimensions (lon,
-            lat, depth, time, data) to dimensions in the netCF file(s).
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable.
-            Watch out: NEMO is discretised on a C-grid:
-            U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ). ::
-
-                +-----------------------------+-----------------------------+-----------------------------+
-                |                             |         V[k,j+1,i+1]        |                             |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |                             |         V[k,j,i+1]          |                             |
-                +-----------------------------+-----------------------------+-----------------------------+
-
-            To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
-            which are located on the corners of the cells.
-            (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
-            In 3D, the depth is the one corresponding to W nodes.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        tracer_interp_method : str
-            Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-            Note that in the case of from_nemo() and from_c_grid_dataset(), the velocity fields are default to 'cgrid_velocity'
-        gridindexingtype : str
-            The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo(), 'mitgcm' in FieldSet.from_mitgcm() or 'croco' in FieldSet.from_croco().
-            See also the Grid indexing documentation on oceanparcels.org (Default value = 'nemo')
-        **kwargs :
-            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
-        """
-        if "U" in dimensions and "V" in dimensions and dimensions["U"] != dimensions["V"]:
-            raise ValueError(
-                "On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
-                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
-            )
-        if "U" in dimensions and "W" in dimensions and dimensions["U"] != dimensions["W"]:
-            raise ValueError(
-                "On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
-                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
-            )
-        if "interp_method" in kwargs.keys():
-            raise TypeError("On a C-grid, the interpolation method for velocities should not be overridden")
-
-        interp_method = {}
-        for v in variables:
-            if v in ["U", "V", "W"]:
-                interp_method[v] = "cgrid_velocity"
-            else:
-                interp_method[v] = tracer_interp_method
-
-        return cls.from_netcdf(
-            filenames,
-            variables,
-            dimensions,
-            mesh=mesh,
-            allow_time_extrapolation=allow_time_extrapolation,
-            interp_method=interp_method,
-            gridindexingtype=gridindexingtype,
-            **kwargs,
-        )
-
-    @classmethod
-    def from_mom5(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files of MOM5 fields.
-
-        Parameters
-        ----------
-        filenames :
-            Dictionary mapping variables to file(s). The
-            filepath may contain wildcards to indicate multiple files,
-            or be a list of file.
-            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
-            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries ``{var:{dim:[files]}}``
-            time values are in ``filenames[data]``
-        variables : dict
-            Dictionary mapping variables to variable names in the netCDF file(s).
-            Note that the built-in Advection kernels assume that U and V are in m/s
-        dimensions : dict
-            Dictionary mapping data dimensions (lon,
-            lat, depth, time, data) to dimensions in the netCF file(s).
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable. ::
-
-                +-------------------------------+-------------------------------+-------------------------------+
-                |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
-                +-------------------------------+-------------------------------+-------------------------------+
-                |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
-                +-------------------------------+-------------------------------+-------------------------------+
-                |U[k,j,i],V[k,j,i]              |                               |U[k,j,i+1],V[k,j,i+1]          |
-                +-------------------------------+-------------------------------+-------------------------------+
-
-            In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
-            T node is at the cell centre and interpolated constant per cell as a C-grid.
-            In 3D: U and V nodes are at the middle of the cell vertical edges,
-            They are interpolated bilinearly (independently of z) in the cell.
-            W nodes are at the centre of the horizontal interfaces, but below the U and V.
-            They are interpolated linearly (as a function of z) in the cell.
-            Note that W is normally directed upward in MOM5, but Parcels requires W
-            in the positive z-direction (downward) so W is multiplied by -1.
-            T node is at the cell centre, and constant per cell.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also the `Unit converters tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        tracer_interp_method : str
-            Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_mom5() and from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
-        **kwargs :
-            Keyword arguments passed to the :func:`Fieldset.from_b_grid_dataset` constructor.
-        """
-        fieldset = cls.from_b_grid_dataset(
-            filenames,
-            variables,
-            dimensions,
-            mesh=mesh,
-            allow_time_extrapolation=allow_time_extrapolation,
-            tracer_interp_method=tracer_interp_method,
-            gridindexingtype="mom5",
-            **kwargs,
-        )
-        return fieldset
-
-    @classmethod
-    def from_a_grid_dataset(cls, filenames, variables, dimensions, **kwargs):
-        """
-        Load a FieldSet from an A-grid dataset, which is the default grid type.
-
-        Parameters
-        ----------
-        filenames :
-            Path(s) to the input files.
-        variables :
-            Dictionary of the variables in the NetCDF file.
-        dimensions :
-            Dictionary of the dimensions in the NetCDF file.
-        **kwargs :
-            Additional keyword arguments for `from_netcdf()`.
-
-        Returns
-        -------
-        FieldSet
-            A FieldSet object.
-        """
-        return cls.from_netcdf(filenames, variables, dimensions, **kwargs)
-
-    @classmethod
-    def from_b_grid_dataset(
-        cls,
-        filenames,
-        variables,
-        dimensions,
-        mesh: Mesh = "spherical",
-        allow_time_extrapolation: bool | None = None,
-        tracer_interp_method: InterpMethodOption = "bgrid_tracer",
-        **kwargs,
-    ):
-        """Initialises FieldSet object from NetCDF files of Bgrid fields.
-
-        Parameters
-        ----------
-        filenames :
-            Dictionary mapping variables to file(s). The
-            filepath may contain wildcards to indicate multiple files,
-            or be a list of file.
-            filenames can be a list ``[files]``, a dictionary ``{var:[files]}``,
-            a dictionary ``{dim:[files]}`` (if lon, lat, depth and/or data not stored in same files as data),
-            or a dictionary of dictionaries ``{var:{dim:[files]}}``
-            time values are in ``filenames[data]``
-        variables : dict
-            Dictionary mapping variables to variable
-            names in the netCDF file(s).
-        dimensions : dict
-            Dictionary mapping data dimensions (lon,
-            lat, depth, time, data) to dimensions in the netCF file(s).
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable.
-            U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www2.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ). ::
-
-                +-----------------------------+-----------------------------+-----------------------------+
-                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
-                +-----------------------------+-----------------------------+-----------------------------+
-                |U[k,j,i],V[k,j,i]            |                             |U[k,j,i+1],V[k,j,i+1]        |
-                +-----------------------------+-----------------------------+-----------------------------+
-
-            In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
-            T node is at the cell centre and interpolated constant per cell as a C-grid.
-            In 3D: U and V nodes are at the midlle of the cell vertical edges,
-            They are interpolated bilinearly (independently of z) in the cell.
-            W nodes are at the centre of the horizontal interfaces.
-            They are interpolated linearly (as a function of z) in the cell.
-            T node is at the cell centre, and constant per cell.
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        tracer_interp_method : str
-            Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
-            Note that in the case of from_b_grid_dataset(), the velocity fields are default to 'bgrid_velocity'
-        **kwargs :
-            Keyword arguments passed to the :func:`Fieldset.from_netcdf` constructor.
-        """
-        if "U" in dimensions and "V" in dimensions and dimensions["U"] != dimensions["V"]:
-            raise ValueError(
-                "On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
-                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
-            )
-        if "U" in dimensions and "W" in dimensions and dimensions["U"] != dimensions["W"]:
-            raise ValueError(
-                "On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
-                "See also https://docs.oceanparcels.org/en/latest/examples/documentation_indexing.html"
-            )
-
-        interp_method = {}
-        for v in variables:
-            if v in ["U", "V"]:
-                interp_method[v] = "bgrid_velocity"
-            elif v in ["W"]:
-                interp_method[v] = "bgrid_w_velocity"
-            else:
-                interp_method[v] = tracer_interp_method
-
-        return cls.from_netcdf(
-            filenames,
-            variables,
-            dimensions,
-            mesh=mesh,
-            allow_time_extrapolation=allow_time_extrapolation,
-            interp_method=interp_method,
-            **kwargs,
-        )
-
-    @classmethod
-    def from_xarray_dataset(cls, ds, variables, dimensions, mesh="spherical", allow_time_extrapolation=None, **kwargs):
-        """Initialises FieldSet data from xarray Datasets.
-
-        Parameters
-        ----------
-        ds : xr.Dataset
-            xarray Dataset.
-            Note that the built-in Advection kernels assume that U and V are in m/s
-        variables : dict
-            Dictionary mapping parcels variable names to data variables in the xarray Dataset.
-        dimensions : dict
-            Dictionary mapping data dimensions (lon,
-            lat, depth, time, data) to dimensions in the xarray Dataset.
-            Note that dimensions can also be a dictionary of dictionaries if
-            dimension names are different for each variable
-            (e.g. dimensions['U'], dimensions['V'], etc).
-        fieldtype :
-            Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
-            (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
-        mesh : str
-            String indicating the type of mesh coordinates and
-            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
-
-            1. spherical (default): Lat and lon in degree, with a
-               correction for zonal velocity U near the poles.
-            2. flat: No conversion, lat/lon are assumed to be in m.
-        allow_time_extrapolation : bool
-            boolean whether to allow for extrapolation
-            (i.e. beyond the last available time snapshot)
-            Default is False if dimensions includes time, else True
-        **kwargs :
-            Keyword arguments passed to the :func:`Field.from_xarray` constructor.
-        """
-        fields = {}
-
-        for var, name in variables.items():
-            dims = dimensions[var] if var in dimensions else dimensions
-            cls.checkvaliddimensionsdict(dims)
-
-            fields[var] = Field.from_xarray(
-                ds[name],
-                var,
-                dims,
-                mesh=mesh,
-                allow_time_extrapolation=allow_time_extrapolation,
-                **kwargs,
-            )
-        u = fields.pop("U", None)
-        v = fields.pop("V", None)
-        return cls(u, v, fields=fields)
-
-    @classmethod
-    def from_modulefile(cls, filename, modulename="create_fieldset", **kwargs):
-        """Initialises FieldSet data from a file containing a python module file with a create_fieldset() function.
-
-        Parameters
-        ----------
-        filename: path to a python file containing at least a function which returns a FieldSet object.
-        modulename: name of the function in the python file that returns a FieldSet object. Default is "create_fieldset".
-        """
-        # check if filename exists
-        if not os.path.exists(filename):
-            raise OSError(f"FieldSet module file {filename} does not exist")
-
-        # Importing the source file directly (following https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly)
-        spec = importlib.util.spec_from_file_location(modulename, filename)
-        fieldset_module = importlib.util.module_from_spec(spec)
-        sys.modules[modulename] = fieldset_module
-        spec.loader.exec_module(fieldset_module)
-
-        if not hasattr(fieldset_module, modulename):
-            raise OSError(f"{filename} does not contain a {modulename} function")
-        fieldset = getattr(fieldset_module, modulename)(**kwargs)
-        if not isinstance(fieldset, FieldSet):
-            raise OSError(f"Module {filename}.{modulename} does not return a FieldSet object")
-        return fieldset
-
-    def get_fields(self) -> list[Field | VectorField]:
-        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
-        objects associated with this FieldSet.
-        """
-        fields = []
-        for v in self.__dict__.values():
-            if type(v) in [Field, VectorField]:
-                if v not in fields:
-                    fields.append(v)
-        return fields
+    
+    # @classmethod
+    # def from_netcdf(
+    #     cls,
+    #     filenames,
+    #     variables,
+    #     dimensions,
+    #     fieldtype=None,
+    #     mesh: Mesh = "spherical",
+    #     allow_time_extrapolation: bool | None = None,
+    #     **kwargs,
+    # ):
+        
+    # @classmethod
+    # def from_nemo(
+    #     cls,
+    #     filenames,
+    #     variables,
+    #     dimensions,
+    #     mesh: Mesh = "spherical",
+    #     allow_time_extrapolation: bool | None = None,
+    #     tracer_interp_method: InterpMethodOption = "cgrid_tracer",
+    #     **kwargs,
+    # ):
+           
+    # @classmethod
+    # def from_mitgcm(
+    #     cls,
+    #     filenames,
+    #     variables,
+    #     dimensions,
+    #     mesh: Mesh = "spherical",
+    #     allow_time_extrapolation: bool | None = None,
+    #     tracer_interp_method: InterpMethodOption = "cgrid_tracer",
+    #     **kwargs,
+    # ):
+
+    # @classmethod
+    # def from_croco(
+    #     cls,
+    #     filenames,
+    #     variables,
+    #     dimensions,
+    #     hc: float | None = None,
+    #     mesh="spherical",
+    #     allow_time_extrapolation=None,
+    #     tracer_interp_method="cgrid_tracer",
+    #     **kwargs,
+    # ):
+
+    # @classmethod
+    # def from_c_grid_dataset(
+    #     cls,
+    #     filenames,
+    #     variables,
+    #     dimensions,
+    #     mesh: Mesh = "spherical",
+    #     allow_time_extrapolation: bool | None = None,
+    #     tracer_interp_method: InterpMethodOption = "cgrid_tracer",
+    #     gridindexingtype: GridIndexingType = "nemo",
+    #     **kwargs,
+    # ):
+
+
+    # @classmethod
+    # def from_mom5(
+    #     cls,
+    #     filenames,
+    #     variables,
+    #     dimensions,
+    #     mesh: Mesh = "spherical",
+    #     allow_time_extrapolation: bool | None = None,
+    #     tracer_interp_method: InterpMethodOption = "bgrid_tracer",
+    #     **kwargs,
+    # ):
+
+    # @classmethod
+    # def from_a_grid_dataset(cls, filenames, variables, dimensions, **kwargs):
+
+    # @classmethod
+    # def from_b_grid_dataset(
+    #     cls,
+    #     filenames,
+    #     variables,
+    #     dimensions,
+    #     mesh: Mesh = "spherical",
+    #     allow_time_extrapolation: bool | None = None,
+    #     tracer_interp_method: InterpMethodOption = "bgrid_tracer",
+    #     **kwargs,
+    # ):
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are
@@ -1001,29 +309,29 @@ class FieldSet:
         """
         setattr(self, name, value)
 
-    def computeTimeChunk(self, time=0.0, dt=1):
-        """Load a chunk of three data time steps into the FieldSet.
-        This is used when FieldSet uses data imported from netcdf,
-        with default option deferred_load. The loaded time steps are at or immediatly before time
-        and the two time steps immediately following time if dt is positive (and inversely for negative dt)
+    # def computeTimeChunk(self, time=0.0, dt=1):
+    #     """Load a chunk of three data time steps into the FieldSet.
+    #     This is used when FieldSet uses data imported from netcdf,
+    #     with default option deferred_load. The loaded time steps are at or immediatly before time
+    #     and the two time steps immediately following time if dt is positive (and inversely for negative dt)
 
-        Parameters
-        ----------
-        time :
-            Time around which the FieldSet data are to be loaded.
-            Time is provided as a double, relatively to Fieldset.time_origin.
-            Default is 0.
-        dt :
-            time step of the integration scheme, needed to set the direction of time chunk loading.
-            Default is 1.
-        """
-        nextTime = np.inf if dt > 0 else -np.inf
+    #     Parameters
+    #     ----------
+    #     time :
+    #         Time around which the FieldSet data are to be loaded.
+    #         Time is provided as a double, relatively to Fieldset.time_origin.
+    #         Default is 0.
+    #     dt :
+    #         time step of the integration scheme, needed to set the direction of time chunk loading.
+    #         Default is 1.
+    #     """
+    #     nextTime = np.inf if dt > 0 else -np.inf
 
-        if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
-            return nextTime
-        else:
-            nSteps = int((nextTime - time) / dt)
-            if nSteps == 0:
-                return nextTime
-            else:
-                return time + nSteps * dt
+    #     if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
+    #         return nextTime
+    #     else:
+    #         nSteps = int((nextTime - time) / dt)
+    #         if nSteps == 0:
+    #             return nextTime
+    #         else:
+    #             return time + nSteps * dt
