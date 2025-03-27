@@ -8,6 +8,7 @@ import numpy as np
 import xarray as xr
 import uxarray as ux
 from uxarray.grid.neighbors import _barycentric_coordinates
+from datetime import datetime
 
 
 import parcels.tools.interpolation_utils as i_u
@@ -49,10 +50,15 @@ from ._index_search import _search_indices_curvilinear, _search_indices_rectilin
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from parcels.xfieldset import XFieldSet
+    from parcels.fieldset import FieldSet
 
-__all__ = ["XField", "XVectorField"]
+__all__ = ["Field", "VectorField", "GridType"]
 
+class GridType(IntEnum):
+    RectilinearZGrid = 0
+    RectilinearSGrid = 1
+    CurvilinearZGrid = 2
+    CurvilinearSGrid = 3
 
 def _isParticle(key):
     if hasattr(key, "obs_written"):
@@ -76,9 +82,9 @@ def _deal_with_errors(error, key, vector_type: VectorType):
     else:
         return 0
     
-class XField:
-    """The XField class that holds scalar field data. 
-    The `XField` object is a wrapper around a xarray.DataArray or uxarray.UxDataArray object. 
+class Field:
+    """The Field class that holds scalar field data. 
+    The `Field` object is a wrapper around a xarray.DataArray or uxarray.UxDataArray object. 
     Additionally, it holds a dynamic Callable procedure that is used to interpolate the field data.
     During initialization, the user can supply a custom interpolation method that is used to interpolate the field data,
     so long as the interpolation method has the correct signature.
@@ -194,8 +200,32 @@ class XField:
 
         if type(self.data) is ux.UxDataArray:
             self._spatialhash = self.data.uxgrid.get_spatial_hash()
+            self._gtype = None
         else:
             self._spatialhash = None
+            # Set the grid type
+            if "x_g" in self.data.coords : 
+                lon = self.data.x_g
+            else:
+                lon = self.data.x_c
+            
+            if "nz1" in self.data.coords : 
+                depth = self.data.nz1
+            elif "nz" in self.data.coords :
+                depth = self.data.nz
+            else :
+                depth = None
+
+            if len(lon.shape) <= 1:
+                if depth is None or len(depth.shape) <=1:
+                    self._gtype = GridType.RectilinearZGrid
+                else:
+                    self._gtype = GridType.RectilinearSGrid
+            else:
+                if depth is None or len(depth.shape) <=1:
+                    self._gtype = GridType.CurvilinearZGrid
+                else:
+                    self._gtype = GridType.CurvilinearSGrid                
 
     def __repr__(self):
         return field_repr(self)
@@ -353,23 +383,18 @@ class XField:
 
     def _search_indices_structured(self, z, y, x, ei=None, search2D=False):
         
-        # To do, determine grid type from xarray.coords shapes
-        # Rectilinear uses 1-D array for lat and lon
-        # Curvilinear uses 2-D array for lat and lon
-        if self.grid._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]: 
+        if self._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]: 
             (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(
-                self, z, y, x,particle=particle, search2D=search2D
+                self, z, y, x,ei=ei, search2D=search2D
             )
         else:
             (zeta, eta, xsi, zi, yi, xi) = _search_indices_curvilinear(
                 self, z, y, x, ei=ei, search2D=search2D
             )
 
-        # To do : Calcualte barycentric coordinates from zeta, eta, xsi
-
         return (zeta, eta, xsi, zi, yi, xi)
         
-    def _search_indices(self, time, z, y, x, ei=None, search2D=False):
+    def _search_indices(self, time: datetime, z, y, x, ei=None, search2D=False):
 
         tau, ti = self._search_time_index(time) # To do : Need to implement this method
 
@@ -379,7 +404,7 @@ class XField:
             bcoords, ei = self._search_indices_structured(z, y, x, ei=ei, search2D=search2D) # To do : Need to implement this method
         return bcoords, ei, ti 
     
-    def _interpolate(self, time, z, y, x, ei):
+    def _interpolate(self, time: datetime, z, y, x, ei):
 
         try:
             bcoords, _ei, ti = self._search_indices(time, z, y, x, ei=ei)
@@ -413,7 +438,7 @@ class XField:
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=None)
         
-    def eval(self, time, z, y, x, ei=None, applyConversion=True):
+    def eval(self, time: datetime, z, y, x, ei=None, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -542,11 +567,11 @@ class XField:
         return key in self.data
     
 
-class XVectorField:
-    """XVectorField class that holds vector field data needed to execute particles."""
+class VectorField:
+    """VectorField class that holds vector field data needed to execute particles."""
 
      
-     @staticmethod
+    @staticmethod
     def _vector_interp_template(
         self,
         ti: int,
@@ -584,9 +609,9 @@ class XVectorField:
     def __init__(
             self,
             name: str,
-            U: XField,
-            V: XField,
-            W: XField | None = None,
+            U: Field,
+            V: Field,
+            W: Field | None = None,
             vector_interp_method: Callable | None = None
         ):
         
