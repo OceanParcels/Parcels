@@ -7,7 +7,7 @@ from glob import glob
 import numpy as np
 
 from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
-from parcels.xfield import XField, XVectorField
+from parcels.field import Field, VectorField
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import fieldset_repr, default_repr
 from parcels.tools.converters import TimeConverter
@@ -16,11 +16,11 @@ from parcels.tools.warnings import FieldSetWarning
 import xarray as xr
 import uxarray as ux
 
-__all__ = ["XFieldSet"]
+__all__ = ["FieldSet"]
 
 
-class XFieldSet:
-    """XFieldSet class that holds hydrodynamic data needed to execute particles.
+class FieldSet:
+    """FieldSet class that holds hydrodynamic data needed to execute particles.
     
     Parameters
     ----------
@@ -55,9 +55,16 @@ class XFieldSet:
         self._completed: bool = False
         # Create pointers to each (Ux)DataArray
         for field in self.ds.data_vars:
-            setattr(self, field, XField(field,self.ds[field]))
+            setattr(self, field, Field(field,self.ds[field]))
+            # To do : Set the "time_origin" as a datetime object that is the minimum `time` in all of the Field objects
+
+        if "time" in self.ds.coords:
+            self.time_origin = self.ds.time.min().data
+        else:
+            raise ValueError("FieldSet must have a 'time' coordinate")
 
         self._add_UVfield()
+
 
     def __repr__(self):
         return fieldset_repr(self)
@@ -72,7 +79,7 @@ class XFieldSet:
     #         if d not in ["lon", "lat", "depth", "time"]:
     #             raise NameError(f"{d} is not a valid key in the dimensions dictionary")
 
-    def add_field(self, field: XField, name: str | None = None):
+    def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
         Parameters
@@ -120,9 +127,8 @@ class XFieldSet:
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
-        import pandas as pd
 
-        time = pd.to_datetime(['2000-01-01'])
+        time = 0.0
         values = np.zeros((1,1,1,1), dtype=np.float32) + value
         data = xr.DataArray(
             data=values,
@@ -137,7 +143,7 @@ class XFieldSet:
                 mesh_type=mesh
         ))
         self.add_field(
-            XField(
+            Field(
                 name,
                 data,
                 interp_method=None, # To do : Need to define an interpolation method for constants
@@ -150,36 +156,36 @@ class XFieldSet:
 
         Parameters
         ----------
-        vfield : parcels.XVectorField
-            class:`parcels.xfieldset.XVectorField` object to be added
+        vfield : parcels.VectorField
+            class:`parcels.FieldSet.VectorField` object to be added
         """
         setattr(self, vfield.name, vfield)
         for v in vfield.__dict__.values():
-            if isinstance(v, XField) and (v not in self.get_fields()):
+            if isinstance(v, Field) and (v not in self.get_fields()):
                 self.add_field(v)
 
-    def get_fields(self) -> list[XField | XVectorField]:
+    def get_fields(self) -> list[Field | VectorField]:
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
         objects associated with this FieldSet.
         """
         fields = []
         for v in self.__dict__.values():
-            if type(v) in [XField, XVectorField]:
+            if type(v) in [Field, VectorField]:
                 if v not in fields:
                     fields.append(v)
         return fields
     
     def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "u") and hasattr(self, "v"):
-            self.add_xvector_field(XVectorField("UV", self.u, self.v))
+            self.add_Vector_field(VectorField("UV", self.u, self.v))
         if not hasattr(self, "UVW") and hasattr(self, "w"):
-            self.add_xvector_field(XVectorField("UVW", self.u, self.v, self.w))
+            self.add_Vector_field(VectorField("UVW", self.u, self.v, self.w))
 
     def _check_complete(self):
         assert self.u, 'FieldSet does not have a Field named "u"'
         assert self.v, 'FieldSet does not have a Field named "v"'
         for attr, value in vars(self).items():
-            if type(value) is XField:
+            if type(value) is Field:
                 assert value.name == attr, f"Field {value.name}.name ({attr}) is not consistent"
 
         self._add_UVfield()
