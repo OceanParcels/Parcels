@@ -176,14 +176,14 @@ class FieldSet:
         return fields
     
     def _add_UVfield(self):
-        if not hasattr(self, "UV") and hasattr(self, "u") and hasattr(self, "v"):
-            self.add_Vector_field(VectorField("UV", self.u, self.v))
-        if not hasattr(self, "UVW") and hasattr(self, "w"):
-            self.add_Vector_field(VectorField("UVW", self.u, self.v, self.w))
+        if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
+            self.add_Vector_field(VectorField("UV", self.U, self.V))
+        if not hasattr(self, "UVW") and hasattr(self, "W"):
+            self.add_Vector_field(VectorField("UVW", self.U, self.V, self.W))
 
     def _check_complete(self):
-        assert self.u, 'FieldSet does not have a Field named "u"'
-        assert self.v, 'FieldSet does not have a Field named "v"'
+        assert self.U, 'FieldSet does not have a Field named "U"'
+        assert self.V, 'FieldSet does not have a Field named "V"'
         for attr, value in vars(self).items():
             if type(value) is Field:
                 assert value.name == attr, f"Field {value.name}.name ({attr}) is not consistent"
