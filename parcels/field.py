@@ -44,6 +44,7 @@ from parcels.tools.statuscodes import (
 from parcels.tools.warnings import FieldSetWarning
 import inspect
 from typing import Callable, Union
+from enum import IntEnum
 
 from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear, _search_time_index
 
@@ -166,11 +167,11 @@ class Field:
         self.name = name
         self.data = data
 
-        self._validate_dataarray(data)
+        self._validate_dataarray()
 
-        self._parent_mesh = data.attributes["mesh"]
+        self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
-        self._location = data.attributes["location"]
+        self._location = data.attrs["location"]
 
         # Set the vertical location
         if "nz1" in data.dims:

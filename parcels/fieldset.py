@@ -177,9 +177,9 @@ class FieldSet:
     
     def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
-            self.add_Vector_field(VectorField("UV", self.U, self.V))
+            self.add_vector_field(VectorField("UV", self.U, self.V))
         if not hasattr(self, "UVW") and hasattr(self, "W"):
-            self.add_Vector_field(VectorField("UVW", self.U, self.V, self.W))
+            self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
     def _check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
