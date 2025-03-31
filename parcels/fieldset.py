@@ -56,8 +56,9 @@ class FieldSet:
         # Create pointers to each (Ux)DataArray
         for field in self.ds.data_vars:
             setattr(self, field, Field(field,self.ds[field]))
-            # To do : Set the "time_origin" as a datetime object that is the minimum `time` in all of the Field objects
 
+        self._gridset_size = len(self.ds.data_vars)
+        
         if "time" in self.ds.coords:
             self.time_origin = self.ds.time.min().data
         else:
@@ -69,6 +70,33 @@ class FieldSet:
     def __repr__(self):
         return fieldset_repr(self)
     
+    def dimrange(self, dim):
+        """Returns maximum value of a dimension (lon, lat, depth or time)
+        on 'left' side and minimum value on 'right' side for all grids
+        in a gridset. Useful for finding e.g. longitude range that
+        overlaps on all grids in a gridset.
+        """
+        maxleft, minright = (-np.inf, np.inf)
+        dim2ds = {
+            "depth": ["nz1","nz"],
+            "lat": ["node_lat", "face_lat", "edge_lat"],
+            "lon": ["node_lon", "face_lon", "edge_lon"],
+            "time": ["time"]
+        }
+        for field in self.ds.data_vars:
+            for d in dim2ds[dim]: # check all possible dimensions
+                if d in self.ds[field].dims:
+                    if dim == "depth":
+                        maxleft = max(maxleft, self.ds[field][d].min().data)
+                        minright = min(minright, self.ds[field][d].max().data)
+                    else:
+                        maxleft = max(maxleft, self.ds[field][d].data[0])
+                        minright = min(minright, self.ds[field][d].data[-1])
+        maxleft = 0 if maxleft == -np.inf else maxleft  # if all len(dim) == 1
+        minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
+
+        return maxleft, minright
+    
     # @property
     # def particlefile(self):
     #     return self._particlefile
@@ -78,7 +106,10 @@ class FieldSet:
     #     for d in dims:
     #         if d not in ["lon", "lat", "depth", "time"]:
     #             raise NameError(f"{d} is not a valid key in the dimensions dictionary")
-
+    @property
+    def gridset_size(self):
+        return self._gridset_size
+    
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
@@ -98,6 +129,7 @@ class FieldSet:
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
+    
         if self._completed:
             raise RuntimeError(
                 "FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?"
@@ -108,6 +140,7 @@ class FieldSet:
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
         else:
             setattr(self, name, field)
+            self._gridset_size += 1 
 
     def add_constant_field(self, name: str, value: float, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
