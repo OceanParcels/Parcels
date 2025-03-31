@@ -15,6 +15,7 @@ from parcels.tools.warnings import FieldSetWarning
 
 import xarray as xr
 import uxarray as ux
+from typing import List, Union
 
 __all__ = ["FieldSet"]
 
@@ -49,21 +50,30 @@ class FieldSet:
 
     """
 
-    def __init__(self, ds: xr.Dataset | ux.UxDataset):
-        self.ds = ds
+    def __init__(self, datasets: List[Union[xr.Dataset,ux.UxDataset]]):
+        self.datasets = datasets
 
         self._completed: bool = False
+        self._gridset_size: int = 0
+        self._fieldnames = []
+        time_origin = None
         # Create pointers to each (Ux)DataArray
-        for field in self.ds.data_vars:
-            setattr(self, field, Field(field,self.ds[field]))
+        for ds in datasets:
+            for field in ds.data_vars:
+                self.add_field(Field(field, ds[field]),field)
+                self._gridset_size += 1
+                self._fieldnames.append(field)
+                #setattr(self, field, Field(field,self.ds[field]), field)
 
-        self._gridset_size = len(self.ds.data_vars)
-        
-        if "time" in self.ds.coords:
-            self.time_origin = self.ds.time.min().data
-        else:
-            raise ValueError("FieldSet must have a 'time' coordinate")
-
+            if "time" in ds.coords:
+                if time_origin is None:
+                    time_origin = ds.time.min().data
+                else:
+                    time_origin = min(time_origin, ds.time.min().data)
+            else:
+                raise ValueError("Each dataset must have a 'time' coordinate")
+            
+        self.time_origin = time_origin
         self._add_UVfield()
 
 
@@ -83,15 +93,16 @@ class FieldSet:
             "lon": ["node_lon", "face_lon", "edge_lon"],
             "time": ["time"]
         }
-        for field in self.ds.data_vars:
-            for d in dim2ds[dim]: # check all possible dimensions
-                if d in self.ds[field].dims:
-                    if dim == "depth":
-                        maxleft = max(maxleft, self.ds[field][d].min().data)
-                        minright = min(minright, self.ds[field][d].max().data)
-                    else:
-                        maxleft = max(maxleft, self.ds[field][d].data[0])
-                        minright = min(minright, self.ds[field][d].data[-1])
+        for ds in self.datasets:
+            for field in ds.data_vars:
+                for d in dim2ds[dim]: # check all possible dimensions
+                    if d in ds[field].dims:
+                        if dim == "depth":
+                            maxleft = max(maxleft, ds[field][d].min().data)
+                            minright = min(minright, ds[field][d].max().data)
+                        else:
+                            maxleft = max(maxleft, ds[field][d].data[0])
+                            minright = min(minright, ds[field][d].data[-1])
         maxleft = 0 if maxleft == -np.inf else maxleft  # if all len(dim) == 1
         minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
 
@@ -141,6 +152,7 @@ class FieldSet:
         else:
             setattr(self, name, field)
             self._gridset_size += 1 
+            self._fieldnames.append(name)
 
     def add_constant_field(self, name: str, value: float, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
