@@ -5,6 +5,8 @@ from parcels import (
     FieldSet,
     ParticleSet,
     Particle,
+    UXPiecewiseConstantFace,
+    UXPiecewiseLinearNode,
 )
 import os
 
@@ -40,5 +42,23 @@ def test_fesom_in_particleset():
     pset = ParticleSet(fieldset, pclass=Particle)
 
 
-# if __name__ == "__main__":
-#     test_fesom_in_particleset()
+def test_set_interp_methods():
+    grid_path = f"{V4_TEST_DATA}/fesom_channel.nc"
+    data_path = [
+        f"{V4_TEST_DATA}/u.fesom_channel.nc",
+        f"{V4_TEST_DATA}/v.fesom_channel.nc",
+        f"{V4_TEST_DATA}/w.fesom_channel.nc",
+    ]
+    ds = ux.open_mfdataset(grid_path, data_path)
+    ds = ds.rename_vars({"u": "U", "v": "V", "w": "W"})
+    fieldset = FieldSet([ds])
+    # Set the interpolation method for each field
+    fieldset.U.interp_method = UXPiecewiseConstantFace
+    fieldset.V.interp_method = UXPiecewiseConstantFace
+    fieldset.W.interp_method = UXPiecewiseLinearNode
+
+   # pset = ParticleSet(fieldset, pclass=Particle)
+   # pset.execute(associate_interp_function, endtime=timedelta(days=1), dt=timedelta(hours=1))   
+
+if __name__ == "__main__":
+    test_set_interp_methods()
