@@ -457,17 +457,17 @@ class Field:
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=None)
         
-    def eval(self, time: datetime, z, y, x, ei=None, applyConversion=True):
+    def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        if ei is None:
+        if particle is None:
             _ei = None
         else:
-            _ei = ei[self.igrid]
+            _ei = particle.ei[self.igrid]
 
         value = self._interpolate(time, z, y, x, ei=_ei)
 
@@ -683,7 +683,7 @@ class VectorField:
             u = self.U.eval(time, z, y, x, _ei, applyConversion=False)
             v = self.V.eval(time, z, y, x, _ei, applyConversion=False)
             if "3D" in self.vector_type:
-                w = self.W.eval(time, z, y, x, ei, applyConversion=False)
+                w = self.W.eval(time, z, y, x, _ei, applyConversion=False)
                 return (u, v, w)
             else:
                 return (u, v, 0)
