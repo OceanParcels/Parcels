@@ -45,7 +45,6 @@ from parcels.tools.warnings import FieldSetWarning
 import inspect
 from typing import Callable, Union
 from enum import IntEnum
-
 from ._index_search import _search_indices_curvilinear, _search_indices_rectilinear, _search_time_index
 
 if TYPE_CHECKING:
@@ -134,26 +133,27 @@ class Field:
         """ Template function used for the signature check of the lateral interpolation methods."""
         return 0.0
     
-    def _validate_interp_function(self, func: Callable):
+    def _validate_interp_function(self, func: Callable) -> bool:
         """Ensures that the function has the correct signature."""
-        expected_params = ["ti", "ei", "bcoords", "tau", "t", "z", "y", "x"]
-        expected_return_types = (np.float32,np.float64)
+        template_sig = inspect.signature(self._interp_template)
+        func_sig = inspect.signature(func)
 
-        sig = inspect.signature(func)
-        params = list(sig.parameters.keys())
+        if len(template_sig.parameters) != len(func_sig.parameters):
+            return False
 
-        # Check the parameter names and count
-        if params != expected_params:
-            raise TypeError(
-                f"Function must have parameters {expected_params}, but got {params}"
-            )
+        for ((name1, param1), (name2, param2)) in zip(template_sig.parameters.items(), func_sig.parameters.items()):
+            if param1.kind != param2.kind:
+                return False
+            if param1.annotation != param2.annotation:
+                return False
 
-        # Check return annotation if present
-        return_annotation = sig.return_annotation
-        if return_annotation not in (inspect.Signature.empty, *expected_return_types):
-            raise TypeError(
-                f"Function must return a float, but got {return_annotation}"
-            )
+        return_annotation = func_sig.return_annotation
+        template_return = template_sig.return_annotation
+
+        if return_annotation != template_return:
+            return False
+
+        return True
 
     def __init__(
         self,
