@@ -3,19 +3,6 @@
 import warnings
 from collections import OrderedDict
 from collections.abc import Iterable
-
-# from .duck_array_ops import _apply_boundary_condition, _pad_array, concatenate
-# from .grid_ufunc import (
-#     GridUFunc,
-#     _check_data_input,
-#     _GridUFuncSignature,
-#     _has_chunked_core_dims,
-#     _maybe_unpack_vector_component,
-#     _reattach_coords,
-#     apply_as_grid_ufunc,
-# )
-# from .metrics import iterate_axis_combinations
-# from .padding import pad
 from typing import (
     Any,
 )
