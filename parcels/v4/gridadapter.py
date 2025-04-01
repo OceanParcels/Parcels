@@ -35,25 +35,35 @@ class GridAdapter(Grid):
 
     @property
     def lon(self):
-        return get_left_fpoints(self.axes["X"])
+        try:
+            axis = self.axes["X"]
+        except KeyError:
+            return None
+        return get_left_fpoints(axis)
 
     @property
     def lat(self):
-        return get_left_fpoints(self.axes["Y"])
+        try:
+            axis = self.axes["Y"]
+        except KeyError:
+            return None
+        return get_left_fpoints(axis)
 
     @property
     def depth(self):
         try:
-            return get_left_fpoints(self.axes["Z"])
+            axis = self.axes["Z"]
         except KeyError:
             return None
+        return get_left_fpoints(axis)
 
     @property
     def time(self):
         try:
-            return get_time(self.axes["T"])
+            axis = self.axes["T"]
         except KeyError:
             return None
+        return get_time(axis)
 
     @property
     def xdim(self):
