@@ -1,3 +1,5 @@
+import numpy.typing as npt
+
 from parcels.v4.grid import Axis, Grid
 
 
@@ -19,21 +21,39 @@ def get_dimensionality(axis: Axis | None) -> int:
     return pos_to_dim[pos](n)
 
 
+def get_left_fpoints(axis: Axis) -> npt.NDArray:
+    return axis._ds[axis.coords["left"]].values
+
+
+def get_time(axis: Axis) -> npt.NDArray:
+    return axis._ds[axis.coords["center"]].values
+
+
 class GridAdapter(Grid):
     def __init__(self, ds, *args, **kwargs):
         super().__init__(ds, *args, **kwargs)
 
     @property
-    def lon(self): ...
+    def lon(self):
+        return get_left_fpoints(self.axes["X"])
 
     @property
-    def lat(self): ...
+    def lat(self):
+        return get_left_fpoints(self.axes["Y"])
 
     @property
-    def depth(self): ...
+    def depth(self):
+        try:
+            return get_left_fpoints(self.axes["Z"])
+        except KeyError:
+            return None
 
     @property
-    def time(self): ...
+    def time(self):
+        try:
+            return get_time(self.axes["T"])
+        except KeyError:
+            return None
 
     @property
     def xdim(self):

@@ -46,18 +46,13 @@ ds_2d_left = xr.Dataset(
 )
 
 
-@pytest.fixture
-def grid():
-    return
-
-
 TestCase = namedtuple("TestCase", ["Grid", "attr", "expected"])
 
 test_cases = [
-    # TestCase(ds_2d_left, "lon", ds_2d_left.XC.values),
-    # TestCase(ds_2d_left, "lat", ds_2d_left.YC.values),
-    # TestCase(ds_2d_left, "depth", None),
-    # TestCase(ds_2d_left, "time", None),
+    TestCase(ds_2d_left, "lon", ds_2d_left.XG.values),
+    TestCase(ds_2d_left, "lat", ds_2d_left.YG.values),
+    TestCase(ds_2d_left, "depth", ds_2d_left.ZG.values),
+    TestCase(ds_2d_left, "time", ds_2d_left.time.values),
     TestCase(ds_2d_left, "xdim", N),
     TestCase(ds_2d_left, "ydim", 2 * N),
     TestCase(ds_2d_left, "zdim", 3 * N),
@@ -69,7 +64,7 @@ def assert_equal(actual, expected):
     if expected is None:
         assert actual is None
     else:
-        assert np.allclose(actual, expected)
+        np.testing.assert_allclose(actual, expected)
 
 
 @pytest.mark.parametrize("ds, attr, expected", test_cases)
