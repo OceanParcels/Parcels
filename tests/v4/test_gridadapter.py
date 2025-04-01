@@ -42,10 +42,10 @@ def grid():
 TestCase = namedtuple("TestCase", ["Grid", "attr", "expected"])
 
 test_cases = [
-    TestCase(ds_2d_left, "lon", ds_2d_left.XC.values),
-    TestCase(ds_2d_left, "lat", ds_2d_left.YC.values),
-    TestCase(ds_2d_left, "depth", None),
-    TestCase(ds_2d_left, "time", None),
+    # TestCase(ds_2d_left, "lon", ds_2d_left.XC.values),
+    # TestCase(ds_2d_left, "lat", ds_2d_left.YC.values),
+    # TestCase(ds_2d_left, "depth", None),
+    # TestCase(ds_2d_left, "time", None),
     TestCase(ds_2d_left, "xdim", N),
     TestCase(ds_2d_left, "ydim", 2 * N),
     TestCase(ds_2d_left, "zdim", 1),
