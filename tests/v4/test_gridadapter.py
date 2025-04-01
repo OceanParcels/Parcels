@@ -7,11 +7,12 @@ import xarray as xr
 from parcels.v4.gridadapter import GridAdapter
 
 N = 100
+T = 10
 
 ds_2d_left = xr.Dataset(
     {
-        "data_g": (["YG", "XG"], np.random.rand(2 * N, N)),
-        "data_c": (["YC", "XC"], np.random.rand(2 * N, N)),
+        "data_g": (["time", "YG", "XG"], np.random.rand(10, 2 * N, N)),
+        "data_c": (["time", "YC", "XC"], np.random.rand(10, 2 * N, N)),
     },
     coords={
         "XG": (
@@ -30,6 +31,7 @@ ds_2d_left = xr.Dataset(
             2 * np.pi / (2 * N) * (np.arange(0, 2 * N) + 0.5),
             {"axis": "Y"},
         ),
+        "time": (["time"], np.arange(T), {"axis": "T"}),
     },
 )
 
@@ -49,7 +51,7 @@ test_cases = [
     TestCase(ds_2d_left, "xdim", N),
     TestCase(ds_2d_left, "ydim", 2 * N),
     TestCase(ds_2d_left, "zdim", 1),
-    TestCase(ds_2d_left, "tdim", 1),
+    TestCase(ds_2d_left, "tdim", T),
 ]
 
 
