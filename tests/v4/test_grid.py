@@ -3,7 +3,7 @@ import pytest
 import xarray as xr
 
 from parcels.gridv4 import Axis, Grid
-from tests.v4.datasets import (
+from tests.v4.xgcm_datasets import (
     all_2d,  # noqa: F401
     all_datasets,  # noqa: F401
     datasets,

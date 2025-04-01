@@ -242,7 +242,8 @@ def nonperiodic_2d(request):
 
 def datasets_grid_metric(grid_type):
     """Uniform grid test dataset.
-    Should eventually be extended to nonuniform grid"""
+    Should eventually be extended to nonuniform grid
+    """
     xt = np.arange(4)
     xu = xt + 0.5
     yt = np.arange(5)
