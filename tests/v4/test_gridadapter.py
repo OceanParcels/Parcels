@@ -11,8 +11,8 @@ T = 10
 
 ds_2d_left = xr.Dataset(
     {
-        "data_g": (["time", "YG", "XG"], np.random.rand(10, 2 * N, N)),
-        "data_c": (["time", "YC", "XC"], np.random.rand(10, 2 * N, N)),
+        "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+        "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
     },
     coords={
         "XG": (
@@ -30,6 +30,16 @@ ds_2d_left = xr.Dataset(
             ["YC"],
             2 * np.pi / (2 * N) * (np.arange(0, 2 * N) + 0.5),
             {"axis": "Y"},
+        ),
+        "ZG": (
+            ["ZG"],
+            np.arange(3 * N),
+            {"axis": "Z", "c_grid_axis_shift": -0.5},
+        ),
+        "ZC": (
+            ["ZC"],
+            np.arange(3 * N) + 0.5,
+            {"axis": "Z"},
         ),
         "time": (["time"], np.arange(T), {"axis": "T"}),
     },
@@ -50,7 +60,7 @@ test_cases = [
     # TestCase(ds_2d_left, "time", None),
     TestCase(ds_2d_left, "xdim", N),
     TestCase(ds_2d_left, "ydim", 2 * N),
-    TestCase(ds_2d_left, "zdim", 1),
+    TestCase(ds_2d_left, "zdim", 3 * N),
     TestCase(ds_2d_left, "tdim", T),
 ]
 
