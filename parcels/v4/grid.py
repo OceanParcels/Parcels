@@ -22,13 +22,6 @@ from typing import (
 
 from . import comodo
 
-try:
-    import numba  # type: ignore
-
-    from .transform import conservative_interpolation, linear_interpolation
-except ImportError:
-    numba = None
-
 _VALID_BOUNDARY = [None, "fill", "extend", "periodic"]
 
 

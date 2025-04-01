@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels.gridv4 import Axis, Grid
+from parcels.v4.grid import Axis, Grid
 from tests.v4.xgcm_datasets import (
     all_2d,  # noqa: F401
     all_datasets,  # noqa: F401

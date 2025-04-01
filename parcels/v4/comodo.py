@@ -81,7 +81,7 @@ def get_axis_positions_and_coords(ds, axis_name):
     if len(coords_without_axis_shift) == 0:
         raise ValueError("Couldn't find a center coordinate for axis %s" % axis_name)
     elif len(coords_without_axis_shift) > 1:
-        raise ValueError("Found two coordinates without " "`c_grid_axis_shift` attribute for axis %s" % axis_name)
+        raise ValueError("Found two coordinates without `c_grid_axis_shift` attribute for axis %s" % axis_name)
     center_coord_name = list(coords_without_axis_shift)[0]
     # the length of the center coord is key to decoding the other coords
     axis_len = coord_len[center_coord_name]
@@ -103,15 +103,13 @@ def get_axis_positions_and_coords(ds, axis_name):
             if clen == axis_len:
                 axis_coords["left"] = name
             else:
-                raise ValueError(
-                    "Left coordinate %s has incompatible " "length %g (axis_len=%g)" % (name, clen, axis_len)
-                )
+                raise ValueError("Left coordinate %s has incompatible length %g (axis_len=%g)" % (name, clen, axis_len))
         elif shift == axis_shift_right:
             if clen == axis_len:
                 axis_coords["right"] = name
             else:
                 raise ValueError(
-                    "Right coordinate %s has incompatible " "length %g (axis_len=%g)" % (name, clen, axis_len)
+                    "Right coordinate %s has incompatible length %g (axis_len=%g)" % (name, clen, axis_len)
                 )
         else:
             if shift not in valid_axis_shifts:
@@ -124,9 +122,7 @@ def get_axis_positions_and_coords(ds, axis_name):
                     "`c_grid_axis_shift` must be one of: %s" % (name, repr(shift), valids)
                 )
             else:
-                raise ValueError(
-                    "Coordinate %s has missing " "`c_grid_axis_shift` attribute `%s`" % (name, repr(shift))
-                )
+                raise ValueError("Coordinate %s has missing `c_grid_axis_shift` attribute `%s`" % (name, repr(shift)))
     return axis_coords
 
 
