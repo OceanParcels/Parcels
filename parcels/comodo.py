@@ -15,7 +15,6 @@ def assert_valid_comodo(ds):
     ----------
     ds : xarray.dataset
     """
-
     # TODO: implement
     assert True
 
@@ -42,7 +41,6 @@ def get_axis_coords(ds, axis_name):
     coord_name : list
         The names of the coordinate matching that axis
     """
-
     coord_names = []
     for d in ds.dims:
         axis = ds[d].attrs.get("axis")
@@ -74,24 +72,16 @@ def get_axis_positions_and_coords(ds, axis_name):
             except TypeError:
                 return True
 
-    axis_shift = {
-        name: _maybe_fix_type(coord.attrs.get("c_grid_axis_shift"))
-        for name, coord in coords.items()
-    }
+    axis_shift = {name: _maybe_fix_type(coord.attrs.get("c_grid_axis_shift")) for name, coord in coords.items()}
     coord_len = {name: len(coord) for name, coord in coords.items()}
 
     # look for the center coord, which is required
     # this list will potentially contain "center", "inner", and "outer" points
-    coords_without_axis_shift = {
-        name: coord_len[name] for name, shift in axis_shift.items() if not shift
-    }
+    coords_without_axis_shift = {name: coord_len[name] for name, shift in axis_shift.items() if not shift}
     if len(coords_without_axis_shift) == 0:
         raise ValueError("Couldn't find a center coordinate for axis %s" % axis_name)
     elif len(coords_without_axis_shift) > 1:
-        raise ValueError(
-            "Found two coordinates without "
-            "`c_grid_axis_shift` attribute for axis %s" % axis_name
-        )
+        raise ValueError("Found two coordinates without " "`c_grid_axis_shift` attribute for axis %s" % axis_name)
     center_coord_name = list(coords_without_axis_shift)[0]
     # the length of the center coord is key to decoding the other coords
     axis_len = coord_len[center_coord_name]
@@ -114,16 +104,14 @@ def get_axis_positions_and_coords(ds, axis_name):
                 axis_coords["left"] = name
             else:
                 raise ValueError(
-                    "Left coordinate %s has incompatible "
-                    "length %g (axis_len=%g)" % (name, clen, axis_len)
+                    "Left coordinate %s has incompatible " "length %g (axis_len=%g)" % (name, clen, axis_len)
                 )
         elif shift == axis_shift_right:
             if clen == axis_len:
                 axis_coords["right"] = name
             else:
                 raise ValueError(
-                    "Right coordinate %s has incompatible "
-                    "length %g (axis_len=%g)" % (name, clen, axis_len)
+                    "Right coordinate %s has incompatible " "length %g (axis_len=%g)" % (name, clen, axis_len)
                 )
         else:
             if shift not in valid_axis_shifts:
@@ -133,13 +121,11 @@ def get_axis_positions_and_coords(ds, axis_name):
                 raise ValueError(
                     "Coordinate %s has invalid "
                     "`c_grid_axis_shift` attribute `%s`. "
-                    "`c_grid_axis_shift` must be one of: %s"
-                    % (name, repr(shift), valids)
+                    "`c_grid_axis_shift` must be one of: %s" % (name, repr(shift), valids)
                 )
             else:
                 raise ValueError(
-                    "Coordinate %s has missing "
-                    "`c_grid_axis_shift` attribute `%s`" % (name, repr(shift))
+                    "Coordinate %s has missing " "`c_grid_axis_shift` attribute `%s`" % (name, repr(shift))
                 )
     return axis_coords
 

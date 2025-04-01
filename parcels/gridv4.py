@@ -1,17 +1,8 @@
 """This Grid object is adapted from xgcm.Grid, removing a lot of the code that is not needed for Parcels."""
 
-import functools
-import inspect
-import itertools
-import operator
 import warnings
 from collections import OrderedDict
-
-import numpy as np
-import xarray as xr
-from dask.array import Array as Dask_Array
-
-from . import comodo
+from collections.abc import Iterable
 
 # from .duck_array_ops import _apply_boundary_condition, _pad_array, concatenate
 # from .grid_ufunc import (
@@ -27,16 +18,9 @@ from . import comodo
 # from .padding import pad
 from typing import (
     Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
 )
+
+from . import comodo
 
 try:
     import numba  # type: ignore
@@ -134,11 +118,10 @@ class Axis:
         fill_value : float, optional
             The value to use in the boundary condition when `boundary='fill'`.
 
-        REFERENCES
+        References
         ----------
         .. [1] Comodo Conventions https://web.archive.org/web/20160417032300/http://pycomodo.forge.imag.fr/norm.html
         """
-
         self._ds = ds
         self.name = axis_name
         self._periodic = periodic
@@ -253,7 +236,7 @@ class Axis:
             if coord_name in da.dims:
                 return position, coord_name
 
-        raise KeyError("None of the DataArray's dims %s were found in axis " "coords." % repr(da.dims))
+        raise KeyError("None of the DataArray's dims %s were found in axis coords." % repr(da.dims))
 
     def _get_axis_dim_num(self, da):
         """Return the dimension number of the axis coordinate in a DataArray."""
@@ -334,7 +317,7 @@ class Grid:
             Optionally a dict mapping axis name to seperate values for each axis
             can be passed.
 
-        REFERENCES
+        References
         ----------
         .. [1] Comodo Conventions https://web.archive.org/web/20160417032300/http://pycomodo.forge.imag.fr/norm.html
         """
@@ -479,11 +462,11 @@ class Grid:
 
     def _as_axis_kwarg_mapping(
         self,
-        kwargs: Union[Any, Dict[str, Any]],
-        axes: Optional[Iterable[str]] = None,
+        kwargs: Any | dict[str, Any],
+        axes: Iterable[str] | None = None,
         ax_property_name=None,
-        default_value: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        default_value: Any | None = None,
+    ) -> dict[str, Any]:
         """Convert kwarg input into dict for each available axis
         E.g. for a grid with 2 axes for the keyword argument `periodic`
         periodic = True --> periodic = {'X': True, 'Y':True}
@@ -493,7 +476,7 @@ class Grid:
         if axes is None:
             axes = self.axes
 
-        parsed_kwargs: Dict[str, Any] = dict()
+        parsed_kwargs: dict[str, Any] = dict()
 
         if isinstance(kwargs, dict):
             parsed_kwargs = kwargs
@@ -526,9 +509,8 @@ class Grid:
         """Check a dictionary of face connections to make sure all the links are
         consistent.
         """
-
         if len(fc) > 1:
-            raise ValueError("Only one face dimension is supported for now. " "Instead found %r" % repr(fc.keys()))
+            raise ValueError("Only one face dimension is supported for now. Instead found %r" % repr(fc.keys()))
 
         # we will populate this with the axes we find in face_connections
         axis_connections = {}
@@ -563,9 +545,9 @@ class Grid:
                     if ax_n not in self.axes:
                         raise KeyError("axis %r is not a valid axis" % ax_n)
                     if idx not in self._ds[facedim].values:
-                        raise IndexError("%r is not a valid index for face" "dimension %r" % (idx, facedim))
+                        raise IndexError("%r is not a valid index for face dimension %r" % (idx, facedim))
                     if idx_n not in self._ds[facedim].values:
-                        raise IndexError("%r is not a valid index for face" "dimension %r" % (idx, facedim))
+                        raise IndexError("%r is not a valid index for face dimension %r" % (idx, facedim))
                     # check for consistent links from / to neighbor
                     if (idx_n != fidx) or (ax_n != axis) or (rev_n != rev):
                         raise ValueError(
