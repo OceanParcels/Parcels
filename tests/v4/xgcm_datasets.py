@@ -360,6 +360,6 @@ def datasets_grid_metric(grid_type):
     elif grid_type == "C":
         ds = _add_metrics(xr.Dataset({"u": u_c, "v": v_c, "wt": wt, "tracer": tr, "timeseries": timeseries}))
     else:
-        raise ValueError("Invalid input [%s] for `grid_type`. Only supports `B` and `C` at the moment " % grid_type)
+        raise ValueError(f"Invalid input [{grid_type}] for `grid_type`. Only supports `B` and `C` at the moment ")
 
     return ds, coords, metrics

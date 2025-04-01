@@ -70,7 +70,7 @@ class Axis:
         ds,
         axis_name,
         periodic=True,
-        default_shifts={},
+        default_shifts=None,
         coords=None,
         boundary=None,
         fill_value=None,
@@ -115,6 +115,8 @@ class Axis:
         ----------
         .. [1] Comodo Conventions https://web.archive.org/web/20160417032300/http://pycomodo.forge.imag.fr/norm.html
         """
+        if default_shifts is None:
+            default_shifts = {}
         self._ds = ds
         self.name = axis_name
         self._periodic = periodic
@@ -208,7 +210,7 @@ class Axis:
 
     def __repr__(self):
         is_periodic = "periodic" if self._periodic else "not periodic"
-        summary = ["<xgcm.Axis '%s' (%s, boundary=%r)>" % (self.name, is_periodic, self.boundary)]
+        summary = [f"<xgcm.Axis '{self.name}' ({is_periodic}, boundary={self.boundary!r})>"]
         summary.append("Axis Coordinates:")
         summary += self._coord_desc()
         return "\n".join(summary)
@@ -216,9 +218,9 @@ class Axis:
     def _coord_desc(self):
         summary = []
         for name, cname in self.coords.items():
-            coord_info = "  * %-8s %s" % (name, cname)
+            coord_info = f"  * {name:<8} {cname}"
             if name in self._default_shifts:
-                coord_info += " --> %s" % self._default_shifts[name]
+                coord_info += f" --> {self._default_shifts[name]}"
             summary.append(coord_info)
         return summary
 
@@ -229,7 +231,7 @@ class Axis:
             if coord_name in da.dims:
                 return position, coord_name
 
-        raise KeyError("None of the DataArray's dims %s were found in axis coords." % repr(da.dims))
+        raise KeyError(f"None of the DataArray's dims {da.dims!r} were found in axis coords.")
 
     def _get_axis_dim_num(self, da):
         """Return the dimension number of the axis coordinate in a DataArray."""
@@ -248,7 +250,7 @@ class Grid:
         ds,
         check_dims=True,
         periodic=True,
-        default_shifts={},
+        default_shifts=None,
         face_connections=None,
         coords=None,
         metrics=None,
@@ -314,6 +316,8 @@ class Grid:
         ----------
         .. [1] Comodo Conventions https://web.archive.org/web/20160417032300/http://pycomodo.forge.imag.fr/norm.html
         """
+        if default_shifts is None:
+            default_shifts = {}
         self._ds = ds
         self._check_dims = check_dims
 
@@ -322,6 +326,7 @@ class Grid:
             "The `xgcm.Axis` class will be deprecated in the future. "
             "Please make sure to use the `xgcm.Grid` methods for your work instead.",
             category=DeprecationWarning,
+            stacklevel=2,
         )
         # This will show up every time, but I think that is fine
 
@@ -332,6 +337,7 @@ class Grid:
                 "of array padding and avoid confusion with "
                 "physical boundary conditions (e.g. ocean land boundary).",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
 
         # Deprecation Warnigns
@@ -340,6 +346,7 @@ class Grid:
                 "The `periodic` argument will be deprecated. "
                 "To preserve previous behavior supply `boundary = 'periodic'.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
 
         if fill_value:
@@ -347,6 +354,7 @@ class Grid:
                 "The default fill_value will be changed to nan (from 0.0 previously) "
                 "in future versions. Provide `fill_value=0.0` to preserve previous behavior.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
 
         extrapolate_warning = False
@@ -359,6 +367,7 @@ class Grid:
             warnings.warn(
                 "The `boundary='extrapolate'` option will no longer be supported in future releases.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
 
         if coords:
@@ -503,7 +512,7 @@ class Grid:
         consistent.
         """
         if len(fc) > 1:
-            raise ValueError("Only one face dimension is supported for now. Instead found %r" % repr(fc.keys()))
+            raise ValueError(f"Only one face dimension is supported for now. Instead found {repr(fc.keys())!r}")
 
         # we will populate this with the axes we find in face_connections
         axis_connections = {}
@@ -529,25 +538,25 @@ class Grid:
                         neighbor_link = face_links[idx][ax][correct_position]
                     except (KeyError, IndexError):
                         raise KeyError(
-                            "Couldn't find a face link for face %r"
-                            "in axis %r at position %r" % (idx, ax, correct_position)
+                            f"Couldn't find a face link for face {idx!r}"
+                            f"in axis {ax!r} at position {correct_position!r}"
                         )
                     idx_n, ax_n, rev_n = neighbor_link
                     if ax not in self.axes:
-                        raise KeyError("axis %r is not a valid axis" % ax)
+                        raise KeyError(f"axis {ax!r} is not a valid axis")
                     if ax_n not in self.axes:
-                        raise KeyError("axis %r is not a valid axis" % ax_n)
+                        raise KeyError(f"axis {ax_n!r} is not a valid axis")
                     if idx not in self._ds[facedim].values:
-                        raise IndexError("%r is not a valid index for face dimension %r" % (idx, facedim))
+                        raise IndexError(f"{idx!r} is not a valid index for face dimension {facedim!r}")
                     if idx_n not in self._ds[facedim].values:
-                        raise IndexError("%r is not a valid index for face dimension %r" % (idx, facedim))
+                        raise IndexError(f"{idx!r} is not a valid index for face dimension {facedim!r}")
                     # check for consistent links from / to neighbor
-                    if (idx_n != fidx) or (ax_n != axis) or (rev_n != rev):
+                    if (idx_n != fidx) or (ax_n != axis) or (rev_n != rev):  # noqa: B023 # TODO: fix?
                         raise ValueError(
                             "Face link mismatch: neighbor doesn't"
                             " correctly link back to this face. "
-                            "face: %r, axis: %r, position: %r, "
-                            "rev: %r, link: %r, neighbor_link: %r" % (fidx, axis, position, rev, link, neighbor_link)
+                            f"face: {fidx!r}, axis: {axis!r}, position: {position!r}, "  # noqa: B023 # TODO: fix?
+                            f"rev: {rev!r}, link: {link!r}, neighbor_link: {neighbor_link!r}"
                         )
                     # convert the axis name to an acutal axis object
                     actual_axis = self.axes[ax]
@@ -605,6 +614,6 @@ class Grid:
         summary = ["<xgcm.Grid>"]
         for name, axis in self.axes.items():
             is_periodic = "periodic" if axis._periodic else "not periodic"
-            summary.append("%s Axis (%s, boundary=%r):" % (name, is_periodic, axis.boundary))
+            summary.append(f"{name} Axis ({is_periodic}, boundary={axis.boundary!r}):")
             summary += axis._coord_desc()
         return "\n".join(summary)
