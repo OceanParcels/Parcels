@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from parcels.tools.converters import TimeConverter
 from parcels.v4.gridadapter import GridAdapter
 
 N = 100
@@ -57,12 +58,15 @@ test_cases = [
     TestCase(ds_2d_left, "ydim", 2 * N),
     TestCase(ds_2d_left, "zdim", 3 * N),
     TestCase(ds_2d_left, "tdim", T),
+    TestCase(ds_2d_left, "time_origin", TimeConverter(ds_2d_left.time.values[0])),
 ]
 
 
 def assert_equal(actual, expected):
     if expected is None:
         assert actual is None
+    elif isinstance(expected, TimeConverter):
+        assert actual == expected
     else:
         np.testing.assert_allclose(actual, expected)
 

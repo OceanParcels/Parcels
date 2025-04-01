@@ -1,5 +1,6 @@
 import numpy.typing as npt
 
+from parcels.tools.converters import TimeConverter
 from parcels.v4.grid import Axis, Grid
 
 
@@ -82,7 +83,8 @@ class GridAdapter(Grid):
         return get_dimensionality(self.axes.get("T"))
 
     @property
-    def time_origin(self): ...
+    def time_origin(self):
+        return TimeConverter(self.time[0])
 
     @property
     def mesh(self): ...  # ? hmmm
