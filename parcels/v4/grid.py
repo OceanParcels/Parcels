@@ -210,7 +210,7 @@ class Axis:
 
     def __repr__(self):
         is_periodic = "periodic" if self._periodic else "not periodic"
-        summary = [f"<xgcm.Axis '{self.name}' ({is_periodic}, boundary={self.boundary!r})>"]
+        summary = [f"<parcels.Axis '{self.name}' ({is_periodic}, boundary={self.boundary!r})>"]
         summary.append("Axis Coordinates:")
         summary += self._coord_desc()
         return "\n".join(summary)
@@ -241,7 +241,7 @@ class Axis:
 
 class Grid:
     """
-    An object with multiple :class:`xgcm.Axis` objects representing different
+    An object with multiple :class:`parcels.Axis` objects representing different
     independent axes.
     """
 
@@ -320,15 +320,6 @@ class Grid:
             default_shifts = {}
         self._ds = ds
         self._check_dims = check_dims
-
-        # Deprecation Warnigns
-        warnings.warn(
-            "The `xgcm.Axis` class will be deprecated in the future. "
-            "Please make sure to use the `xgcm.Grid` methods for your work instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        # This will show up every time, but I think that is fine
 
         if boundary:
             warnings.warn(
@@ -611,7 +602,7 @@ class Grid:
                 self._metrics[metric_axes].append(metric_var)
 
     def __repr__(self):
-        summary = ["<xgcm.Grid>"]
+        summary = ["<parcels.Grid>"]
         for name, axis in self.axes.items():
             is_periodic = "periodic" if axis._periodic else "not periodic"
             summary.append(f"{name} Axis ({is_periodic}, boundary={axis.boundary!r}):")
