@@ -40,7 +40,6 @@ class Grid:
         time_origin: TimeConverter | None,
         mesh: Mesh,
     ):
-        self._ti = -1
         lon = np.array(lon)
         lat = np.array(lat)
         time = np.zeros(1, dtype=np.float64) if time is None else time
