@@ -3,15 +3,16 @@ import pytest
 import xarray as xr
 
 from parcels.gridv4 import Axis, Grid
-
-from tests.v4.datasets import all_2d  # noqa: F401
-from tests.v4.datasets import all_datasets  # noqa: F401
-from tests.v4.datasets import datasets  # noqa: F401
-from tests.v4.datasets import datasets_grid_metric  # noqa: F401
-from tests.v4.datasets import nonperiodic_1d  # noqa: F401
-from tests.v4.datasets import nonperiodic_2d  # noqa: F401
-from tests.v4.datasets import periodic_1d  # noqa: F401
-from tests.v4.datasets import periodic_2d  # noqa: F401
+from tests.v4.datasets import (
+    all_2d,  # noqa: F401
+    all_datasets,  # noqa: F401
+    datasets,
+    datasets_grid_metric,  # noqa: F401
+    nonperiodic_1d,  # noqa: F401
+    nonperiodic_2d,  # noqa: F401
+    periodic_1d,  # noqa: F401
+    periodic_2d,  # noqa: F401
+)
 
 
 # helper function to produce axes from datasets
@@ -81,7 +82,7 @@ def test_create_axis_no_coords(all_datasets):
         ax1 = axis_objs[axis_name]
 
         assert ax1.name == ax2.name
-        for pos, coord in ax1.coords.items():
+        for pos in ax1.coords.keys():
             assert pos in ax2.coords
         assert ax1._periodic == ax2._periodic
         assert ax1._default_shifts == ax2._default_shifts
@@ -91,33 +92,19 @@ def test_create_axis_no_coords(all_datasets):
 def test_axis_repr(all_datasets):
     ds, periodic, expected = all_datasets
     axis_objs = _get_axes(ds)
-    for ax_name, axis in axis_objs.items():
+    for axis in axis_objs.values():
         r = repr(axis).split("\n")
         assert r[0].startswith("<xgcm.Axis")
-    # TODO: make this more complete
 
 
 def test_get_position_name(all_datasets):
     ds, periodic, expected = all_datasets
     axis_objs = _get_axes(ds)
-    for ax_name, axis in axis_objs.items():
+    for axis in axis_objs.values():
         # create a dataarray with each axis coordinate
         for position, coord in axis.coords.items():
             da = 1 * ds[coord]
             assert axis._get_position_name(da) == (position, coord)
-
-
-# helper functions for padding arrays
-# this feels silly...I'm basically just re-coding the function in order to
-# test it
-def _pad_left(data, boundary, fill_value=0.0):
-    pad_val = data[0] if boundary == "extend" else fill_value
-    return np.hstack([pad_val, data])
-
-
-def _pad_right(data, boundary, fill_value=0.0):
-    pad_val = data[-1] if boundary == "extend" else fill_value
-    return np.hstack([data, pad_val])
 
 
 def test_axis_errors():
