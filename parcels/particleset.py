@@ -199,7 +199,7 @@ class ParticleSet:
             if time[0] and not np.allclose(time, time[0]):
                 raise ValueError("All Particle.time should be the same when repeatdt is not None")
             self._repeatpclass = pclass
-            self._repeatkwargs = kwargs
+            self._repeatkwargs = kwargs.copy()
             self._repeatkwargs.pop("partition_function", None)
 
         ngrids = fieldset.gridset.size
