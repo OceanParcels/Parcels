@@ -32,6 +32,7 @@ dependencies = [
   "pytest",
   "scipy",
   "xarray",
+  "pooch",
 ]
 
 [project.urls]
