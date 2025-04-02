@@ -1,3 +1,4 @@
+import numpy as np
 import numpy.typing as npt
 
 from parcels.tools.converters import TimeConverter
@@ -39,7 +40,7 @@ class GridAdapter(Grid):
         try:
             axis = self.axes["X"]
         except KeyError:
-            return None
+            return np.zeros(1)
         return get_left_fpoints(axis)
 
     @property
@@ -47,7 +48,7 @@ class GridAdapter(Grid):
         try:
             axis = self.axes["Y"]
         except KeyError:
-            return None
+            return np.zeros(1)
         return get_left_fpoints(axis)
 
     @property
@@ -55,7 +56,7 @@ class GridAdapter(Grid):
         try:
             axis = self.axes["Z"]
         except KeyError:
-            return None
+            return np.zeros(1)
         return get_left_fpoints(axis)
 
     @property
@@ -63,7 +64,7 @@ class GridAdapter(Grid):
         try:
             axis = self.axes["T"]
         except KeyError:
-            return None
+            return np.zeros(1)
         return get_time(axis)
 
     @property
