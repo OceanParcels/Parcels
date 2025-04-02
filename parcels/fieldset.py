@@ -1,28 +1,20 @@
-import importlib.util
 import os
-import sys
-import warnings
 from glob import glob
 
 import numpy as np
-
-from parcels._typing import GridIndexingType, InterpMethodOption, Mesh
-from parcels.field import Field, VectorField
-from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import fieldset_repr, default_repr
-from parcels.tools.converters import TimeConverter
-from parcels.tools.warnings import FieldSetWarning
-
-import xarray as xr
 import uxarray as ux
-from typing import List, Union
+import xarray as xr
+
+from parcels._typing import Mesh
+from parcels.field import Field, VectorField
+from parcels.tools._helpers import fieldset_repr
 
 __all__ = ["FieldSet"]
 
 
 class FieldSet:
     """FieldSet class that holds hydrodynamic data needed to execute particles.
-    
+
     Parameters
     ----------
     ds : xarray.Dataset | uxarray.UxDataset)
@@ -30,27 +22,27 @@ class FieldSet:
 
     Notes
     -----
-    The `ds` object is a xarray.Dataset or uxarray.UxDataset object. 
-    In XArray terminology, the (Ux)Dataset holds multiple (Ux)DataArray objects. 
+    The `ds` object is a xarray.Dataset or uxarray.UxDataset object.
+    In XArray terminology, the (Ux)Dataset holds multiple (Ux)DataArray objects.
     Each (Ux)DataArray object is a single "field" that is associated with their own
     dimensions and coordinates within the (Ux)Dataset.
 
     A (Ux)Dataset object is associated with a single mesh, which can have multiple
-    types of "points" (multiple "grids") (e.g. for UxDataSets, these are "face_lon", 
-    "face_lat", "node_lon", "node_lat", "edge_lon", "edge_lat"). Each (Ux)DataArray is 
+    types of "points" (multiple "grids") (e.g. for UxDataSets, these are "face_lon",
+    "face_lat", "node_lon", "node_lat", "edge_lon", "edge_lat"). Each (Ux)DataArray is
     registered to a specific set of points on the mesh.
 
-    For UxDataset objects, each `UXDataArray.attributes` field dictionary contains 
+    For UxDataset objects, each `UXDataArray.attributes` field dictionary contains
     the necessary metadata to help determine which set of points a field is registered
     to and what parent model the field is associated with. Parcels uses this metadata
     during execution for interpolation.  Each `UXDataArray.attributes` field dictionary
-    must have: 
+    must have:
       * "location" key set to "face", "node", or "edge" to define which pairing of points a field is associated with.
       * "mesh" key to define which parent model the fields are associated with (e.g. "fesom_mesh", "icon_mesh")
 
     """
 
-    def __init__(self, datasets: List[Union[xr.Dataset,ux.UxDataset]]):
+    def __init__(self, datasets: list[xr.Dataset | ux.UxDataset]):
         self.datasets = datasets
 
         self._completed: bool = False
@@ -60,10 +52,10 @@ class FieldSet:
         # Create pointers to each (Ux)DataArray
         for ds in datasets:
             for field in ds.data_vars:
-                self.add_field(Field(field, ds[field]),field)
+                self.add_field(Field(field, ds[field]), field)
                 self._gridset_size += 1
                 self._fieldnames.append(field)
-                #setattr(self, field, Field(field,self.ds[field]), field)
+                # setattr(self, field, Field(field,self.ds[field]), field)
 
             if "time" in ds.coords:
                 if time_origin is None:
@@ -72,14 +64,13 @@ class FieldSet:
                     time_origin = min(time_origin, ds.time.min().data)
             else:
                 raise ValueError("Each dataset must have a 'time' coordinate")
-            
+
         self.time_origin = time_origin
         self._add_UVfield()
 
-
     def __repr__(self):
         return fieldset_repr(self)
-    
+
     def dimrange(self, dim):
         """Returns maximum value of a dimension (lon, lat, depth or time)
         on 'left' side and minimum value on 'right' side for all grids
@@ -88,14 +79,14 @@ class FieldSet:
         """
         maxleft, minright = (-np.inf, np.inf)
         dim2ds = {
-            "depth": ["nz1","nz"],
+            "depth": ["nz1", "nz"],
             "lat": ["node_lat", "face_lat", "edge_lat"],
             "lon": ["node_lon", "face_lon", "edge_lon"],
-            "time": ["time"]
+            "time": ["time"],
         }
         for ds in self.datasets:
             for field in ds.data_vars:
-                for d in dim2ds[dim]: # check all possible dimensions
+                for d in dim2ds[dim]:  # check all possible dimensions
                     if d in ds[field].dims:
                         if dim == "depth":
                             maxleft = max(maxleft, ds[field][d].min().data)
@@ -107,7 +98,7 @@ class FieldSet:
         minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
 
         return maxleft, minright
-    
+
     # @property
     # def particlefile(self):
     #     return self._particlefile
@@ -120,7 +111,7 @@ class FieldSet:
     @property
     def gridset_size(self):
         return self._gridset_size
-    
+
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
@@ -140,7 +131,6 @@ class FieldSet:
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
-    
         if self._completed:
             raise RuntimeError(
                 "FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?"
@@ -151,7 +141,7 @@ class FieldSet:
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
         else:
             setattr(self, name, field)
-            self._gridset_size += 1 
+            self._gridset_size += 1
             self._fieldnames.append(name)
 
     def add_constant_field(self, name: str, value: float, mesh: Mesh = "flat"):
@@ -172,27 +162,21 @@ class FieldSet:
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
-
         time = 0.0
-        values = np.zeros((1,1,1,1), dtype=np.float32) + value
+        values = np.zeros((1, 1, 1, 1), dtype=np.float32) + value
         data = xr.DataArray(
             data=values,
             name=name,
-            dims='null',
-            coords = [time,[0],[0],[0]],
-            attrs=dict(
-                description="null",
-                units="null",
-                location="node",
-                mesh=f"constant",
-                mesh_type=mesh
-        ))
+            dims="null",
+            coords=[time, [0], [0], [0]],
+            attrs=dict(description="null", units="null", location="node", mesh="constant", mesh_type=mesh),
+        )
         self.add_field(
             Field(
                 name,
                 data,
-                interp_method=None, # To do : Need to define an interpolation method for constants
-                allow_time_extrapolation=True
+                interp_method=None,  # To do : Need to define an interpolation method for constants
+                allow_time_extrapolation=True,
             )
         )
 
@@ -219,7 +203,7 @@ class FieldSet:
                 if v not in fields:
                     fields.append(v)
         return fields
-    
+
     def _add_UVfield(self):
         if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
             self.add_vector_field(VectorField("UV", self.U, self.V))
@@ -248,7 +232,7 @@ class FieldSet:
             if not os.path.exists(fp):
                 raise OSError(f"FieldSet file not found: {fp}")
         return paths
-    
+
     # @classmethod
     # def from_netcdf(
     #     cls,
@@ -260,7 +244,7 @@ class FieldSet:
     #     allow_time_extrapolation: bool | None = None,
     #     **kwargs,
     # ):
-        
+
     # @classmethod
     # def from_nemo(
     #     cls,
@@ -272,7 +256,7 @@ class FieldSet:
     #     tracer_interp_method: InterpMethodOption = "cgrid_tracer",
     #     **kwargs,
     # ):
-           
+
     # @classmethod
     # def from_mitgcm(
     #     cls,
@@ -310,7 +294,6 @@ class FieldSet:
     #     gridindexingtype: GridIndexingType = "nemo",
     #     **kwargs,
     # ):
-
 
     # @classmethod
     # def from_mom5(

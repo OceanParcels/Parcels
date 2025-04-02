@@ -1,14 +1,14 @@
+import os
 
 import uxarray as ux
-from datetime import timedelta
+
 from parcels import (
     FieldSet,
-    ParticleSet,
     Particle,
+    ParticleSet,
     UXPiecewiseConstantFace,
     UXPiecewiseLinearNode,
 )
-import os
 
 # Get path of this script
 V4_TEST_DATA = f"{os.path.dirname(__file__)}/test_data"
@@ -29,6 +29,7 @@ def test_fesom_fieldset():
     # Check that the fieldset has the expected properties
     assert fieldset.datasets[0] == ds
 
+
 def test_fesom_in_particleset():
     grid_path = f"{V4_TEST_DATA}/fesom_channel.nc"
     data_path = [
@@ -39,7 +40,10 @@ def test_fesom_in_particleset():
     ds = ux.open_mfdataset(grid_path, data_path)
     ds = ds.rename_vars({"u": "U", "v": "V", "w": "W"})
     fieldset = FieldSet([ds])
+    # Check that the fieldset has the expected properties
+    assert fieldset.datasets[0] == ds
     pset = ParticleSet(fieldset, pclass=Particle)
+    assert pset.fieldset == fieldset
 
 
 def test_set_interp_methods():
@@ -57,8 +61,9 @@ def test_set_interp_methods():
     fieldset.V.interp_method = UXPiecewiseConstantFace
     fieldset.W.interp_method = UXPiecewiseLinearNode
 
-   # pset = ParticleSet(fieldset, pclass=Particle)
-   # pset.execute(associate_interp_function, endtime=timedelta(days=1), dt=timedelta(hours=1))   
+
+# pset = ParticleSet(fieldset, pclass=Particle)
+# pset.execute(associate_interp_function, endtime=timedelta(days=1), dt=timedelta(hours=1))
 
 if __name__ == "__main__":
     test_set_interp_methods()

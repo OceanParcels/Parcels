@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import numpy as np
-from datetime import datetime
 
 from parcels._typing import (
     GridIndexingType,
@@ -22,10 +22,10 @@ from .grid import GridType
 
 if TYPE_CHECKING:
     from .field import Field
-    #from .grid import Grid
+    # from .grid import Grid
 
 
-def _search_time_index(field: Field, time: datetime , allow_time_extrapolation=True):
+def _search_time_index(field: Field, time: datetime, allow_time_extrapolation=True):
     """Find and return the index and relative coordinate in the time array associated with a given time.
 
     Parameters
@@ -52,12 +52,17 @@ def _search_time_index(field: Field, time: datetime , allow_time_extrapolation=T
         ti = 0
     else:
         ti = int(time_index.argmin() - 1) if time_index.any() else 0
-    if len(field.data.time)== 1:
+    if len(field.data.time) == 1:
         tau = 0
     elif ti == len(field.data.time) - 1:
         tau = 1
     else:
-        tau = (time - field.data.time[ti]).total_seconds() / (field.data.time[ti + 1] - field.data.time[ti]).total_seconds() if field.data.time[ti] != field.data.time[ti + 1] else 0
+        tau = (
+            (time - field.data.time[ti]).total_seconds()
+            / (field.data.time[ti + 1] - field.data.time[ti]).total_seconds()
+            if field.data.time[ti] != field.data.time[ti + 1]
+            else 0
+        )
     return tau, ti
 
 
@@ -101,7 +106,7 @@ def search_indices_vertical_z(depth, gridindexingtype: GridIndexingType, z: floa
 
 ## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_vertical_s function
 def search_indices_vertical_s(
-    grid: Grid,
+    field: Field,
     interp_method: InterpMethodOption,
     time: float,
     z: float,
@@ -116,32 +121,32 @@ def search_indices_vertical_s(
     if interp_method in ["bgrid_velocity", "bgrid_w_velocity", "bgrid_tracer"]:
         xsi = 1
         eta = 1
-    if time < grid.time[ti]:
+    if time < field.time[ti]:
         ti -= 1
-    if grid._z4d:  # type: ignore[attr-defined]
-        if ti == len(grid.time) - 1:
+    if field._z4d:  # type: ignore[attr-defined]
+        if ti == len(field.time) - 1:
             depth_vector = (
-                (1 - xsi) * (1 - eta) * grid.depth[-1, :, yi, xi]
-                + xsi * (1 - eta) * grid.depth[-1, :, yi, xi + 1]
-                + xsi * eta * grid.depth[-1, :, yi + 1, xi + 1]
-                + (1 - xsi) * eta * grid.depth[-1, :, yi + 1, xi]
+                (1 - xsi) * (1 - eta) * field.depth[-1, :, yi, xi]
+                + xsi * (1 - eta) * field.depth[-1, :, yi, xi + 1]
+                + xsi * eta * field.depth[-1, :, yi + 1, xi + 1]
+                + (1 - xsi) * eta * field.depth[-1, :, yi + 1, xi]
             )
         else:
             dv2 = (
-                (1 - xsi) * (1 - eta) * grid.depth[ti : ti + 2, :, yi, xi]
-                + xsi * (1 - eta) * grid.depth[ti : ti + 2, :, yi, xi + 1]
-                + xsi * eta * grid.depth[ti : ti + 2, :, yi + 1, xi + 1]
-                + (1 - xsi) * eta * grid.depth[ti : ti + 2, :, yi + 1, xi]
+                (1 - xsi) * (1 - eta) * field.depth[ti : ti + 2, :, yi, xi]
+                + xsi * (1 - eta) * field.depth[ti : ti + 2, :, yi, xi + 1]
+                + xsi * eta * field.depth[ti : ti + 2, :, yi + 1, xi + 1]
+                + (1 - xsi) * eta * field.depth[ti : ti + 2, :, yi + 1, xi]
             )
-            tt = (time - grid.time[ti]) / (grid.time[ti + 1] - grid.time[ti])
+            tt = (time - field.time[ti]) / (field.time[ti + 1] - field.time[ti])
             assert tt >= 0 and tt <= 1, "Vertical s grid is being wrongly interpolated in time"
             depth_vector = dv2[0, :] * (1 - tt) + dv2[1, :] * tt
     else:
         depth_vector = (
-            (1 - xsi) * (1 - eta) * grid.depth[:, yi, xi]
-            + xsi * (1 - eta) * grid.depth[:, yi, xi + 1]
-            + xsi * eta * grid.depth[:, yi + 1, xi + 1]
-            + (1 - xsi) * eta * grid.depth[:, yi + 1, xi]
+            (1 - xsi) * (1 - eta) * field.depth[:, yi, xi]
+            + xsi * (1 - eta) * field.depth[:, yi, xi + 1]
+            + xsi * eta * field.depth[:, yi + 1, xi + 1]
+            + (1 - xsi) * eta * field.depth[:, yi + 1, xi]
         )
     z = np.float32(z)  # type: ignore # TODO: remove type ignore once we migrate to float64
 
@@ -176,13 +181,15 @@ def search_indices_vertical_s(
 
 
 def _search_indices_rectilinear(
-    field: Field, time: datetime, z: float, y: float, x: float, ti: int, ei:int=None, search2D=False
+    field: Field, time: datetime, z: float, y: float, x: float, ti: int, ei: int | None = None, search2D=False
 ):
     # To do : If ei is provided, check if particle is in the same cell
     if field.xdim > 1 and (not field.zonal_periodic):
-        if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]: # To do : implement lonlat_minmax at field level
+        if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:  # To do : implement lonlat_minmax at field level
             _raise_field_out_of_bound_error(z, y, x)
-    if field.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]): # To do : implement lonlat_minmax at field level
+    if field.ydim > 1 and (
+        y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]
+    ):  # To do : implement lonlat_minmax at field level
         _raise_field_out_of_bound_error(z, y, x)
 
     if field.xdim > 1:
@@ -266,8 +273,8 @@ def _search_indices_curvilinear(field: Field, time, z, y, x, ti, particle=None, 
     if particle:
         zi, yi, xi = field.unravel_index(particle.ei)
     else:
-        xi = int(field.grid.xdim / 2) - 1
-        yi = int(field.grid.ydim / 2) - 1
+        xi = int(field.xdim / 2) - 1
+        yi = int(field.ydim / 2) - 1
     xsi = eta = -1.0
     grid = field.grid
     invA = np.array([[1, 0, 0, 0], [-1, 1, 0, 0], [-1, 0, 0, 1], [1, -1, 1, -1]])
@@ -275,12 +282,12 @@ def _search_indices_curvilinear(field: Field, time, z, y, x, ti, particle=None, 
     it = 0
     tol = 1.0e-10
     if not grid.zonal_periodic:
-        if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
+        if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:
             if grid.lon[0, 0] < grid.lon[0, -1]:
                 _raise_field_out_of_bound_error(z, y, x)
             elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
                 _raise_field_out_of_bound_error(z, y, x)
-    if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
+    if y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]:
         _raise_field_out_of_bound_error(z, y, x)
 
     while xsi < -tol or xsi > 1 + tol or eta < -tol or eta > 1 + tol:
