@@ -10,7 +10,8 @@ from parcels.tools._v3to4 import patch_dataset_v4_compat
 
 __all__ = ["download_example_dataset", "get_data_home", "list_example_datasets"]
 
-example_data_files = {
+DATA_URL = "http://oceanparcels.org/examples-data"
+EXAMPLE_DATA_FILES = {
     "MovingEddies_data": [
         "moving_eddiesP.nc",
         "moving_eddiesU.nc",
@@ -79,9 +80,6 @@ example_data_files = {
 }
 
 
-example_data_url = "http://oceanparcels.org/examples-data"
-
-
 def get_data_home(data_home=None):
     """Return a path to the cache directory for example datasets.
 
@@ -109,7 +107,7 @@ def list_example_datasets() -> list[str]:
     datasets : list of str
         The names of the available example datasets.
     """
-    return list(example_data_files.keys())
+    return list(EXAMPLE_DATA_FILES.keys())
 
 
 def download_example_dataset(dataset: str, data_home=None):
@@ -133,9 +131,9 @@ def download_example_dataset(dataset: str, data_home=None):
         Path to the folder containing the downloaded dataset files.
     """
     # Dev note: `dataset` is assumed to be a folder name with netcdf files
-    if dataset not in example_data_files:
+    if dataset not in EXAMPLE_DATA_FILES:
         raise ValueError(
-            f"Dataset {dataset!r} not found. Available datasets are: " + ", ".join(example_data_files.keys())
+            f"Dataset {dataset!r} not found. Available datasets are: " + ", ".join(EXAMPLE_DATA_FILES.keys())
         )
 
     cache_folder = get_data_home(data_home)
@@ -144,10 +142,10 @@ def download_example_dataset(dataset: str, data_home=None):
     if not dataset_folder.exists():
         dataset_folder.mkdir(parents=True)
 
-    for filename in example_data_files[dataset]:
+    for filename in EXAMPLE_DATA_FILES[dataset]:
         filepath = dataset_folder / filename
         if not filepath.exists():
-            url = f"{example_data_url}/{dataset}/{filename}"
+            url = f"{DATA_URL}/{dataset}/{filename}"
             urlretrieve(url, str(filepath))
 
             should_patch = dataset == "GlobCurrent_example_data"
