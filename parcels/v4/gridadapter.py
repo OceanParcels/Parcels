@@ -1,3 +1,5 @@
+from typing import Literal
+
 import numpy as np
 import numpy.typing as npt
 
@@ -86,6 +88,10 @@ class GridAdapter(Grid):
     @property
     def time_origin(self):
         return TimeConverter(self.time[0])
+
+    @property
+    def _z4d(self) -> Literal[0, 1]:
+        return 1 if self.depth.shape == 4 else 0
 
     @property
     def mesh(self): ...  # ? hmmm
