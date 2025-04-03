@@ -9,7 +9,13 @@ from parcels.tools._v3to4 import patch_dataset_v4_compat
 
 __all__ = ["download_example_dataset", "list_example_datasets"]
 
-DATA_URL = "http://oceanparcels.org/examples-data"
+# When modifying existing datasets in a backwards incompatible way,
+# make a new release in the repo and update the DATA_REPO_TAG to the new tag
+DATA_REPO_TAG = "main"
+
+DATA_URL = f"https://github.com/OceanParcels/parcels-data/raw/{DATA_REPO_TAG}/data"
+
+
 EXAMPLE_DATA_FILES: dict[str, list[str]] = {
     "MovingEddies_data": [
         "moving_eddiesP.nc",
