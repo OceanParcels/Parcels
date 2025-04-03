@@ -1,3 +1,5 @@
+"""Test cases that have been vendored from xgcm."""
+
 import numpy as np
 import pytest
 import xarray as xr
