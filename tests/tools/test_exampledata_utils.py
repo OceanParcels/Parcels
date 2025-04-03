@@ -15,7 +15,7 @@ def test_pooch_registry_url_reponse(url):
 
 
 @pytest.mark.parametrize("dataset", list_example_datasets()[:1])
-def test_download_example_dataset(tmp_path, dataset):
+def test_download_example_dataset_folder_creation(tmp_path, dataset):
     dataset_folder_path = download_example_dataset(dataset, data_home=tmp_path)
 
     assert dataset_folder_path.exists()
