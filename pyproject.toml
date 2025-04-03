@@ -222,5 +222,6 @@ module = [
     "cftime",
     "pykdtree.kdtree",
     "netCDF4",
+    "pooch",
 ]
 ignore_missing_imports = true

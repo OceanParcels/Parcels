@@ -101,7 +101,7 @@ def _create_pooch_registry() -> dict[str, None]:
 
     Hashes are set to None for all files.
     """
-    registry = {}
+    registry: dict[str, None] = {}
     for dataset, filenames in EXAMPLE_DATA_FILES.items():
         for filename in filenames:
             registry[f"{dataset}/{filename}"] = None
