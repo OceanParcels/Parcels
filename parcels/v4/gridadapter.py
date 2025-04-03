@@ -25,10 +25,6 @@ def get_dimensionality(axis: Axis | None) -> int:
     return pos_to_dim[pos](n)
 
 
-def get_left_fpoints(axis: Axis) -> npt.NDArray:
-    return axis._ds[axis.coords["left"]].values
-
-
 def get_time(axis: Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
@@ -40,26 +36,26 @@ class GridAdapter(Grid):
     @property
     def lon(self):
         try:
-            axis = self.axes["X"]
+            _ = self.axes["X"]
         except KeyError:
             return np.zeros(1)
-        return get_left_fpoints(axis)
+        return self._ds["lon"].values
 
     @property
     def lat(self):
         try:
-            axis = self.axes["Y"]
+            _ = self.axes["Y"]
         except KeyError:
             return np.zeros(1)
-        return get_left_fpoints(axis)
+        return self._ds["lat"].values
 
     @property
     def depth(self):
         try:
-            axis = self.axes["Z"]
+            _ = self.axes["Z"]
         except KeyError:
             return np.zeros(1)
-        return get_left_fpoints(axis)
+        return self._ds["depth"].values
 
     @property
     def time(self):
