@@ -2,7 +2,7 @@ from collections import namedtuple
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 
 from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
@@ -29,8 +29,11 @@ def assert_equal(actual, expected):
         assert actual is None
     elif isinstance(expected, TimeConverter):
         assert actual == expected
+    elif isinstance(expected, np.ndarray):
+        assert actual.shape == expected.shape
+        assert_allclose(actual, expected)
     else:
-        np.testing.assert_allclose(actual, expected)
+        assert_allclose(actual, expected)
 
 
 @pytest.mark.parametrize("ds, attr, expected", test_cases)
@@ -40,8 +43,22 @@ def test_grid_adapter_properties_ground_truth(ds, attr, expected):
     assert_equal(actual, expected)
 
 
+@pytest.mark.parametrize(
+    "attr",
+    [
+        "lon",
+        "lat",
+        "depth",
+        "time",
+        "xdim",
+        "ydim",
+        "zdim",
+        "tdim",
+        "time_origin",
+    ],
+)
 @pytest.mark.parametrize("ds", datasets.values())
-def test_grid_adapter_against_old(ds):
+def test_grid_adapter_against_old(ds, attr):
     adapter = GridAdapter(ds, periodic=False)
 
     grid = OldGrid.create_grid(
@@ -52,14 +69,6 @@ def test_grid_adapter_against_old(ds):
         time_origin=TimeConverter(ds.time.values[0]),
         mesh="spherical",
     )
-    assert grid.lon.shape == adapter.lon.shape
-    assert grid.lat.shape == adapter.lat.shape
-    assert grid.depth.shape == adapter.depth.shape
-    assert grid.time.shape == adapter.time.shape
-
-    assert_array_equal(grid.lon, adapter.lon)
-    assert_array_equal(grid.lat, adapter.lat)
-    assert_array_equal(grid.depth, adapter.depth)
-    assert_array_equal(grid.time, adapter.time)
-
-    assert grid.time_origin == adapter.time_origin
+    actual = getattr(adapter, attr)
+    expected = getattr(grid, attr)
+    assert_equal(actual, expected)
