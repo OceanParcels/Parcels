@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 
 N = 30
+T = 10
 
 
 def rotated_curvilinear_grid():
@@ -17,14 +18,26 @@ def rotated_curvilinear_grid():
 
     return xr.Dataset(
         {
-            "data_g": (["YG", "XG"], np.random.rand(2 * N, N)),
-            "data_c": (["YC", "XC"], np.random.rand(2 * N, N)),
+            "data_g": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
+            "data_c": (["ZC", "YC", "XC"], np.random.rand(3 * N, 2 * N, N)),
         },
         coords={
             "XG": (["XG"], XG, {"axis": "X", "c_grid_axis_shift": -0.5}),
             "YG": (["YG"], YG, {"axis": "Y", "c_grid_axis_shift": -0.5}),
             "XC": (["XC"], XG + 0.5, {"axis": "X"}),
             "YC": (["YC"], YG + 0.5, {"axis": "Y"}),
+            "ZG": (
+                ["ZG"],
+                np.arange(3 * N),
+                {"axis": "Z", "c_grid_axis_shift": -0.5},
+            ),
+            "ZC": (
+                ["ZC"],
+                np.arange(3 * N) + 0.5,
+                {"axis": "Z"},
+            ),
+            "depth": (["ZG"], np.arange(3 * N), {"axis": "Z"}),
+            "time": (["time"], np.arange(T), {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
@@ -76,14 +89,26 @@ def unrolled_cone_curvilinear_grid():
 
     return xr.Dataset(
         {
-            "data_g": (["YG", "XG"], np.random.rand(2 * N, N)),
-            "data_c": (["YC", "XC"], np.random.rand(2 * N, N)),
+            "data_g": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
+            "data_c": (["ZC", "YC", "XC"], np.random.rand(3 * N, 2 * N, N)),
         },
         coords={
             "XG": (["XG"], XG, {"axis": "X", "c_grid_axis_shift": -0.5}),
             "YG": (["YG"], YG, {"axis": "Y", "c_grid_axis_shift": -0.5}),
             "XC": (["XC"], XG + 0.5, {"axis": "X"}),
             "YC": (["YC"], YG + 0.5, {"axis": "Y"}),
+            "ZG": (
+                ["ZG"],
+                np.arange(3 * N),
+                {"axis": "Z", "c_grid_axis_shift": -0.5},
+            ),
+            "ZC": (
+                ["ZC"],
+                np.arange(3 * N) + 0.5,
+                {"axis": "Z"},
+            ),
+            "depth": (["ZG"], np.arange(3 * N), {"axis": "Z"}),
+            "time": (["time"], np.arange(T), {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
