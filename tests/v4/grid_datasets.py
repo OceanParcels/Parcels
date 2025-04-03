@@ -123,4 +123,42 @@ def unrolled_cone_curvilinear_grid():
     )
 
 
-datasets = {"2d_left_rotated": rotated_curvilinear_grid(), "2d_left_unrolled_cone": unrolled_cone_curvilinear_grid()}
+datasets = {
+    "2d_left_rotated": rotated_curvilinear_grid(),
+    "ds_2d_left": xr.Dataset(
+        {
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
+        },
+        coords={
+            "XG": (
+                ["XG"],
+                2 * np.pi / N * np.arange(0, N),
+                {"axis": "X", "c_grid_axis_shift": -0.5},
+            ),
+            "XC": (["XC"], 2 * np.pi / N * (np.arange(0, N) + 0.5), {"axis": "X"}),
+            "YG": (
+                ["YG"],
+                2 * np.pi / (2 * N) * np.arange(0, 2 * N),
+                {"axis": "Y", "c_grid_axis_shift": -0.5},
+            ),
+            "YC": (
+                ["YC"],
+                2 * np.pi / (2 * N) * (np.arange(0, 2 * N) + 0.5),
+                {"axis": "Y"},
+            ),
+            "ZG": (
+                ["ZG"],
+                np.arange(3 * N),
+                {"axis": "Z", "c_grid_axis_shift": -0.5},
+            ),
+            "ZC": (
+                ["ZC"],
+                np.arange(3 * N) + 0.5,
+                {"axis": "Z"},
+            ),
+            "time": (["time"], np.arange(T), {"axis": "T"}),
+        },
+    ),
+    "2d_left_unrolled_cone": unrolled_cone_curvilinear_grid(),
+}
