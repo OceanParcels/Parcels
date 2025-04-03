@@ -94,7 +94,7 @@ def test_axis_repr(all_datasets):
     axis_objs = _get_axes(ds)
     for axis in axis_objs.values():
         r = repr(axis).split("\n")
-        assert r[0].startswith("<xgcm.Axis")
+        assert r[0].startswith("<parcels.Axis")
 
 
 def test_get_position_name(all_datasets):
@@ -206,7 +206,7 @@ def test_grid_repr(all_datasets):
     ds, periodic, _ = all_datasets
     grid = Grid(ds, periodic=periodic)
     r = repr(grid).split("\n")
-    assert r[0] == "<xgcm.Grid>"
+    assert r[0] == "<parcels.Grid>"
 
 
 def test_grid_dict_input_boundary_fill(nonperiodic_1d):
