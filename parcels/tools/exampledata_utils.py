@@ -15,7 +15,18 @@ DATA_REPO_TAG = "main"
 
 DATA_URL = f"https://github.com/OceanParcels/parcels-data/raw/{DATA_REPO_TAG}/data"
 
-
+# Keys are the dataset names. Values are the filenames in the dataset folder. Note that
+# you can specify subfolders in the dataset folder putting slashes in the filename list.
+# e.g.,
+# "my_dataset": ["file0.nc", "folder1/file1.nc", "folder2/file2.nc"]
+# my_dataset/
+# ├── file0.nc
+# ├── folder1/
+# │   └── file1.nc
+# └── folder2/
+#     └── file2.nc
+#
+# See instructions at https://github.com/OceanParcels/parcels-data for adding new datasets
 EXAMPLE_DATA_FILES: dict[str, list[str]] = {
     "MovingEddies_data": [
         "moving_eddiesP.nc",
