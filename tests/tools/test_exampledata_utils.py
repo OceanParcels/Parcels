@@ -2,13 +2,13 @@ import pytest
 import requests
 
 from parcels.tools.exampledata_utils import (
-    _get_odie,
+    _get_pooch,
     download_example_dataset,
     list_example_datasets,
 )
 
 
-@pytest.mark.parametrize("url", [_get_odie().get_url(filename) for filename in _get_odie().registry.keys()])
+@pytest.mark.parametrize("url", [_get_pooch().get_url(filename) for filename in _get_pooch().registry.keys()])
 def test_pooch_registry_url_reponse(url):
     response = requests.head(url)
     assert not (400 <= response.status_code < 600)

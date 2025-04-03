@@ -111,7 +111,7 @@ def _create_pooch_registry() -> dict[str, None]:
 POOCH_REGISTRY = _create_pooch_registry()
 
 
-def _get_odie(data_home=None):
+def _get_pooch(data_home=None):
     if data_home is None:
         data_home = os.environ.get("PARCELS_EXAMPLE_DATA")
     if data_home is None:
@@ -162,7 +162,7 @@ def download_example_dataset(dataset: str, data_home=None):
         raise ValueError(
             f"Dataset {dataset!r} not found. Available datasets are: " + ", ".join(EXAMPLE_DATA_FILES.keys())
         )
-    odie = _get_odie(data_home=data_home)
+    odie = _get_pooch(data_home=data_home)
 
     cache_folder = Path(odie.path)
     dataset_folder = cache_folder / dataset
