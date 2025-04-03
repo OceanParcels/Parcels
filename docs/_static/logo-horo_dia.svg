@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" viewBox="0 0 859.3 187.5">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+      }
+
+      .cls-2, .cls-3, .cls-4 {
+        isolation: isolate;
+      }
+
+      .cls-5 {
+        clip-path: url(#clippath-1);
+      }
+
+      .cls-6, .cls-3, .cls-4 {
+        fill: #fff;
+      }
+
+      .cls-3 {
+        font-family: Helvetica-Bold, Helvetica;
+        font-weight: 700;
+      }
+
+      .cls-3, .cls-4 {
+        font-size: 76.7px;
+      }
+
+      .cls-4 {
+        font-family: Helvetica-Light, Helvetica;
+        font-weight: 300;
+      }
+
+      .cls-7 {
+        fill: #c8c8c8;
+      }
+
+      .cls-8 {
+        clip-path: url(#clippath);
+      }
+    </style>
+    <clipPath id="clippath">
+      <rect class="cls-1" x="-537.6" y="-715.8" width="2182.7" height="1637"/>
+    </clipPath>
+    <clipPath id="clippath-1">
+      <rect class="cls-1" x="-537.6" y="-715.8" width="2182.7" height="1637"/>
+    </clipPath>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.7.0, SVG Export Plug-In . SVG Version: 1.2.0 Build 136)  -->
+  <g>
+    <g id="svg1">
+      <sodipodi:namedview id="namedview1" bordercolor="#000000" borderopacity="0.25" inkscape:current-layer="g2" inkscape:cx="241.95694" inkscape:cy="93.531044" inkscape:deskcolor="#d1d1d1" inkscape:document-units="mm" inkscape:export-bgcolor="#ffffffff" inkscape:pagecheckerboard="false" inkscape:pageopacity="0.0" inkscape:showpageshadow="2" inkscape:window-height="1212" inkscape:window-maximized="0" inkscape:window-width="1392" inkscape:window-x="139" inkscape:window-y="25" inkscape:zoom="2.860013" labelstyle="default" pagecolor="#ffffff"/>
+      <g id="g9" inkscape:label="Loop3">
+        <g id="g8">
+          <path id="path9" class="cls-7" d="M156.6,85.2c-15.1,0-30.2,1.7-43.4,5.2h4.2v1c12.1-2.8,25.7-4.2,39.2-4.2,20.5,0,41,3.2,56.5,9.6,7.8,3.2,13.6,6.9,17.4,10.7,3.8,3.9,5.6,7.8,5.6,11.8s-1.8,7.9-5.6,11.8c-3.8,3.9-9.6,7.5-17.4,10.7-31.1,12.8-82,12.8-113.1,0-7.8-3.2-13.6-6.9-17.4-10.7-3.8-3.9-5.6-7.8-5.6-11.8s1.8-7.9,5.6-11.8c1.4-1.4,3-2.8,4.9-4.1v-2.4c-2.5,1.6-4.6,3.3-6.3,5.1-4.1,4.1-6.2,8.6-6.2,13.2s2.1,9,6.2,13.2c4.1,4.1,10.1,7.9,18,11.2,31.8,13.1,82.8,13.1,114.6,0,7.9-3.3,14-7.1,18-11.2,4.1-4.1,6.2-8.6,6.2-13.2s-2.1-9-6.2-13.2c-4.1-4.1-10.1-7.9-18-11.2-15.9-6.5-36.6-9.8-57.3-9.8Z"/>
+        </g>
+        <g id="g13">
+          <path id="path14" class="cls-6" d="M122.3,86.6c2.6,2.6,2.6,6.9,0,9.5s-6.9,2.6-9.5,0-2.6-6.9,0-9.5,6.9-2.6,9.5,0Z"/>
+        </g>
+      </g>
+      <g id="g7" inkscape:label="Loop2">
+        <g id="g6">
+          <path id="path7" class="cls-7" d="M166.5,58.4v2.1c21.5.9,42.4,4.7,58.8,11.4,9.4,3.9,16.5,8.4,21.1,13.1,4.6,4.7,6.9,9.6,6.9,14.4s-2.2,9.7-6.9,14.4c-4.6,4.7-11.7,9.2-21.1,13.1-37.8,15.5-99.6,15.5-137.3,0-9.4-3.9-16.5-8.4-21.1-13.1-4.6-4.7-6.9-9.6-6.9-14.4s2.2-9.7,6.9-14.4c4.6-4.7,11.7-9.2,21.1-13.1,13.8-5.7,30.9-9.3,48.8-10.8v-2.1c-18.1,1.5-35.4,5.2-49.5,11-9.6,4-16.9,8.5-21.8,13.5-4.9,5-7.4,10.4-7.4,15.8s2.5,10.8,7.4,15.8c4.9,5,12.2,9.5,21.8,13.5,38.5,15.8,100.4,15.8,138.9,0,9.6-4,16.9-8.5,21.8-13.5,4.9-5,7.4-10.4,7.4-15.8s-2.5-10.8-7.4-15.8-12.2-9.5-21.8-13.5c-16.7-6.9-37.8-10.7-59.5-11.7Z"/>
+        </g>
+        <g id="g14">
+          <path id="path15" class="cls-6" d="M174.3,55.6c2.6,2.6,2.6,6.9,0,9.5s-6.9,2.6-9.5,0-2.6-6.9,0-9.5c2.6-2.6,6.9-2.6,9.5,0Z"/>
+        </g>
+      </g>
+      <g id="g5" inkscape:label="Loop1">
+        <g id="g4">
+          <path id="path5" class="cls-7" d="M156.6,28.3c-31.2,0-62.4,4.9-86.4,14.8-12,4.9-21,10.6-27,16.8-6.1,6.2-9.2,12.8-9.2,19.5s3.1,13.4,9.2,19.5c6.1,6.2,15.1,11.8,27,16.8,47.8,19.7,124.9,19.7,172.7,0,12-4.9,21-10.6,27-16.8,6.1-6.2,9.2-12.8,9.2-19.5s-3.1-13.4-9.2-19.5c-6.1-6.2-15.1-11.8-27-16.8-5.8-2.4-12-4.5-18.6-6.3v2.1c6.3,1.7,12.3,3.8,17.8,6,11.8,4.8,20.6,10.4,26.4,16.3,5.8,5.9,8.6,12,8.6,18.1s-2.8,12.2-8.6,18.1c-5.8,5.9-14.6,11.5-26.4,16.3-47.1,19.4-124.1,19.4-171.2,0-11.8-4.8-20.6-10.4-26.4-16.3-5.8-5.9-8.6-12-8.6-18.1s2.8-12.2,8.6-18.1c5.8-5.9,14.6-11.5,26.4-16.3,23.6-9.7,54.6-14.5,85.6-14.5s25.7.9,38,2.5v-2.1c-12.3-1.7-25.2-2.5-38-2.5Z"/>
+        </g>
+        <g id="g15">
+          <path id="path16" class="cls-6" d="M232.3,33.4c2.6,2.6,2.6,6.9,0,9.5s-6.9,2.6-9.5,0-2.6-6.9,0-9.5,6.9-2.6,9.5,0Z"/>
+        </g>
+      </g>
+      <g class="cls-8">
+        <g id="text3" class="cls-2" inkscape:label="ocean">
+          <text class="cls-4" transform="translate(302.1 130.9)"><tspan x="0" y="0">Ocean</tspan></text>
+        </g>
+      </g>
+      <g class="cls-5">
+        <g id="text4" class="cls-2" inkscape:label="parcels">
+          <text class="cls-3" transform="translate(532.4 130.9)"><tspan x="0" y="0">Parcels</tspan></text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
