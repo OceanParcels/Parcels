@@ -207,6 +207,7 @@ html_theme_options = {
             "type": "fontawesome",
         }
     ],
+    "announcement": "Join the Parcels 10 year anniversary event 🎉 on 1-3 Oct 2025! See <a href='https://oceanparcels.org/10year-event'>our website</a> for details.",
 }
 
 html_context = {
