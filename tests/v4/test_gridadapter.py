@@ -72,3 +72,18 @@ def test_grid_adapter_against_old(ds, attr):
     actual = getattr(adapter, attr)
     expected = getattr(grid, attr)
     assert_equal(actual, expected)
+
+
+@pytest.mark.parametrize("ds", datasets.values())
+def test_grid_adapter_against_old_grid_type(ds):
+    adapter = GridAdapter(ds, periodic=False)
+
+    grid = OldGrid.create_grid(
+        lon=ds.lon.values,
+        lat=ds.lat.values,
+        depth=ds.depth.values,
+        time=ds.time.values,
+        time_origin=TimeConverter(ds.time.values[0]),
+        mesh="spherical",
+    )
+    assert isinstance(grid, adapter.grid_type)

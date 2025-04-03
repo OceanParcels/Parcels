@@ -3,6 +3,7 @@ from typing import Literal
 import numpy as np
 import numpy.typing as npt
 
+from parcels.grid import CurvilinearSGrid, CurvilinearZGrid, RectilinearSGrid, RectilinearZGrid
 from parcels.tools.converters import TimeConverter
 from parcels.v4.grid import Axis, Grid
 
@@ -97,6 +98,24 @@ class GridAdapter(Grid):
 
     @property
     def lonlat_minmax(self): ...  # ? hmmm
+
+    @property
+    def grid_type(self):
+        """This class is created *purely* for compatibility with v3 code and will be removed
+        or changed in future.
+
+        TODO: Remove
+        """
+        if len(self.lon.shape) <= 1:
+            if self.depth is None or len(self.depth.shape) <= 1:
+                return RectilinearZGrid
+            else:
+                return RectilinearSGrid
+        else:
+            if self.depth is None or len(self.depth.shape) <= 1:
+                return CurvilinearZGrid
+            else:
+                return CurvilinearSGrid
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs): ...  # ? hmmm
