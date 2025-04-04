@@ -31,8 +31,9 @@ def get_time(axis: Axis) -> npt.NDArray:
 
 
 class GridAdapter(Grid):
-    def __init__(self, ds, *args, **kwargs):
+    def __init__(self, ds, mesh="flat", *args, **kwargs):
         super().__init__(ds, *args, **kwargs)
+        self.mesh = mesh
 
     @property
     def lon(self):
