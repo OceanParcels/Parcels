@@ -4,7 +4,8 @@ import numpy as np
 import numpy.typing as npt
 
 from parcels.tools.converters import TimeConverter
-from parcels.v4.grid import Axis, Grid
+from parcels.v4.grid import Axis
+from parcels.v4.grid import Grid as NewGrid
 
 
 def get_dimensionality(axis: Axis | None) -> int:
@@ -29,10 +30,19 @@ def get_time(axis: Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
-class GridAdapter(Grid):
+class GridAdapter(NewGrid):
     def __init__(self, ds, mesh="flat", *args, **kwargs):
         super().__init__(ds, *args, **kwargs)
         self.mesh = mesh
+
+        self.lonlat_minmax = np.array(
+            [
+                np.nanmin(self._ds["lon"]),
+                np.nanmax(self._ds["lon"]),
+                np.nanmin(self._ds["lat"]),
+                np.nanmax(self._ds["lat"]),
+            ]
+        )
 
     @property
     def lon(self):
@@ -92,9 +102,6 @@ class GridAdapter(Grid):
 
     @property
     def zonal_periodic(self): ...  # ? hmmm
-
-    @property
-    def lonlat_minmax(self): ...  # ? hmmm
 
     @property
     def _gtype(self):
