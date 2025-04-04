@@ -179,7 +179,7 @@ class Field:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
         if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if len(self.data["time"]) == 1 else False
+            self.allow_time_extrapolation = True if len(getattr(self.data, "time", [])) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
@@ -191,13 +191,17 @@ class Field:
             # Set the grid type
             if "x_g" in self.data.coords:
                 lon = self.data.x_g
-            else:
+            elif "x_c" in self.data.coords:
                 lon = self.data.x_c
+            else:
+                lon = self.data.lon
 
             if "nz1" in self.data.coords:
                 depth = self.data.nz1
             elif "nz" in self.data.coords:
                 depth = self.data.nz
+            elif "depth" in self.data.coords:
+                depth = self.data.depth
             else:
                 depth = None
 
@@ -240,14 +244,7 @@ class Field:
             elif self._location == "edge":
                 return self.data.uxgrid.edge_lat
         else:
-            if self._location == "node":
-                return self.data.node_lat
-            elif self._location == "face":
-                return self.data.face_lat
-            elif self._location == "x_edge":
-                return self.data.face_lat
-            elif self._location == "y_edge":
-                return self.data.node_lat
+            return self.data.lat
 
     @property
     def lon(self):
@@ -259,14 +256,7 @@ class Field:
             elif self._location == "edge":
                 return self.data.uxgrid.edge_lon
         else:
-            if self._location == "node":
-                return self.data.node_lon
-            elif self._location == "face":
-                return self.data.face_lon
-            elif self._location == "x_edge":
-                return self.data.node_lon
-            elif self._location == "y_edge":
-                return self.data.face_lon
+            return self.data.lon
 
     @property
     def depth(self):
@@ -276,10 +266,7 @@ class Field:
             elif self._vertical_location == "face":
                 return self.data.uxgrid.nz
         else:
-            if self._vertical_location == "center":
-                return self.data.nz1
-            elif self._vertical_location == "face":
-                return self.data.nz
+            return self.data.depth
 
     @property
     def xdim(self):
@@ -288,6 +275,8 @@ class Field:
                 return self.data.sizes["face_lon"]
             elif "node_lon" in self.data.dims:
                 return self.data.sizes["node_lon"]
+            else:
+                return self.data.sizes["lon"]
         else:
             return 0  # To do : Discuss what we want to return for uxdataarray obj
 
@@ -298,6 +287,8 @@ class Field:
                 return self.data.sizes["face_lat"]
             elif "node_lat" in self.data.dims:
                 return self.data.sizes["node_lat"]
+            else:
+                return self.data.sizes["lat"]
         else:
             return 0  # To do : Discuss what we want to return for uxdataarray obj
 
@@ -518,18 +509,19 @@ class Field:
         """Verifies that all the required attributes are present in the xarray.DataArray or
         uxarray.UxDataArray object.
         """
-        # Validate dimensions
-        if not ("nz1" in self.data.dims or "nz" in self.data.dims):
-            raise ValueError(
-                f"Field {self.name} is missing a 'nz1' or 'nz' dimension in the field's metadata. "
-                "This attribute is required for xarray.DataArray objects."
-            )
+        if isinstance(self.data, ux.UxDataArray):
+            # Validate dimensions
+            if not ("nz1" in self.data.dims or "nz" in self.data.dims):
+                raise ValueError(
+                    f"Field {self.name} is missing a 'nz1' or 'nz' dimension in the field's metadata. "
+                    "This attribute is required for xarray.DataArray objects."
+                )
 
-        if "time" not in self.data.dims:
-            raise ValueError(
-                f"Field {self.name} is missing a 'time' dimension in the field's metadata. "
-                "This attribute is required for xarray.DataArray objects."
-            )
+            if "time" not in self.data.dims:
+                raise ValueError(
+                    f"Field {self.name} is missing a 'time' dimension in the field's metadata. "
+                    "This attribute is required for xarray.DataArray objects."
+                )
 
         # Validate attributes
         required_keys = ["location", "mesh"]

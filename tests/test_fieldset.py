@@ -86,10 +86,10 @@ def test_fieldset_from_data(xdim, ydim):
     """Simple test for fieldset initialisation from data."""
     data, dimensions = generate_fieldset_data(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
-    assert len(fieldset.U.data.shape) == 3
-    assert len(fieldset.V.data.shape) == 3
-    assert np.allclose(fieldset.U.data[0, :], data["U"], rtol=1e-12)
-    assert np.allclose(fieldset.V.data[0, :], data["V"], rtol=1e-12)
+    assert len(fieldset.U.data.shape) == 2
+    assert len(fieldset.V.data.shape) == 2
+    assert np.allclose(fieldset.U.data, data["U"], rtol=1e-12)
+    assert np.allclose(fieldset.V.data, data["V"], rtol=1e-12)
 
 
 @pytest.mark.v4remove
@@ -111,9 +111,10 @@ def test_fieldset_from_data_timedims(ttype, tdim):
         dimensions["time"] = [np.datetime64("2018-01-01") + np.timedelta64(t, "D") for t in range(tdim)]
     fieldset = FieldSet.from_data(data, dimensions)
     for i, dtime in enumerate(dimensions["time"]):
-        assert fieldset.U.grid.time_origin.fulltime(fieldset.U.grid.time[i]) == dtime
+        assert fieldset.U.time[i] == dtime
 
 
+@pytest.mark.v4alpha
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 50])
 def test_fieldset_from_data_different_dimensions(xdim, ydim):
@@ -134,8 +135,8 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim):
     }
 
     fieldset = FieldSet.from_data(data, dimensions)
-    assert len(fieldset.U.data.shape) == 3
-    assert len(fieldset.V.data.shape) == 3
+    assert len(fieldset.U.data.shape) == 4
+    assert len(fieldset.V.data.shape) == 4
     assert len(fieldset.P.data.shape) == 4
     assert fieldset.P.data.shape == (tdim, zdim, ydim / 2, xdim / 2)
     assert np.allclose(fieldset.U.data, 0.0, rtol=1e-12)

@@ -55,7 +55,6 @@ class FieldSet:
                 self.add_field(Field(field, ds[field]), field)
                 self._gridset_size += 1
                 self._fieldnames.append(field)
-                # setattr(self, field, Field(field,self.ds[field]), field)
 
             if "time" in ds.coords:
                 if time_origin is None:
@@ -63,7 +62,7 @@ class FieldSet:
                 else:
                     time_origin = min(time_origin, ds.time.min().data)
             else:
-                raise ValueError("Each dataset must have a 'time' coordinate")
+                time_origin = 0.0
 
         self.time_origin = time_origin
         self._add_UVfield()
@@ -103,11 +102,12 @@ class FieldSet:
     # def particlefile(self):
     #     return self._particlefile
 
-    # @staticmethod
-    # def checkvaliddimensionsdict(dims):
-    #     for d in dims:
-    #         if d not in ["lon", "lat", "depth", "time"]:
-    #             raise NameError(f"{d} is not a valid key in the dimensions dictionary")
+    @staticmethod
+    def checkvaliddimensionsdict(dims):
+        for d in dims:
+            if d not in ["lon", "lat", "depth", "time"]:
+                raise NameError(f"{d} is not a valid key in the dimensions dictionary")
+
     @property
     def gridset_size(self):
         return self._gridset_size
@@ -232,6 +232,133 @@ class FieldSet:
             if not os.path.exists(fp):
                 raise OSError(f"FieldSet file not found: {fp}")
         return paths
+
+    @classmethod
+    def from_data(
+        cls,
+        data,
+        dimensions,
+        mesh: Mesh = "spherical",
+        allow_time_extrapolation: bool | None = None,
+        **kwargs,
+    ):
+        """Initialise FieldSet object from raw data. Assumes structured grid and uses xarray.dataarray objects.
+
+        Parameters
+        ----------
+        data :
+            Dictionary mapping field names to numpy arrays.
+            Note that at least a 'U' and 'V' numpy array need to be given, and that
+            the built-in Advection kernels assume that U and V are in m/s.
+            Data shape is either [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
+        dimensions : dict
+            Dictionary mapping field dimensions (lon,
+            lat, depth, time) to numpy arrays.
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable
+            (e.g. dimensions['U'], dimensions['V'], etc).
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
+
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        **kwargs :
+            Keyword arguments passed to the :class:`Field` constructor.
+
+        Examples
+        --------
+        For usage examples see the following tutorials:
+
+        * `Analytical advection <../examples/tutorial_analyticaladvection.ipynb>`__
+
+        * `Diffusion <../examples/tutorial_diffusion.ipynb>`__
+
+        * `Interpolation <../examples/tutorial_interpolation.ipynb>`__
+
+        * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__
+        """
+        fields = {}
+        for name, datafld in data.items():
+            # Use dimensions[name] if dimensions is a dict of dicts
+            dims = dimensions[name] if name in dimensions else dimensions
+            cls.checkvaliddimensionsdict(dims)
+
+            if allow_time_extrapolation is None:
+                allow_time_extrapolation = False if "time" in dims else True
+
+            lon = dims["lon"]
+            lat = dims["lat"]
+            depth = np.zeros(1, dtype=np.float32) if "depth" not in dims else dims["depth"]
+            time = np.zeros(1, dtype=np.float64) if "time" not in dims else dims["time"]
+            time = np.array(time)
+
+            if len(datafld.shape) == 2:
+                coords = [lat, lon]
+            elif len(datafld.shape) == 3:
+                if "time" not in dims:
+                    coords = [depth, lat, lon]
+                else:
+                    coords = [time, lat, lon]
+            else:
+                coords = [time, depth, lat, lon]
+
+            fields[name] = xr.DataArray(
+                data=datafld,
+                name=name,
+                dims=dims,
+                coords=coords,
+                attrs=dict(
+                    description="Created with fieldset.from_data",
+                    units="",
+                    location="node",
+                    mesh="Arakawa-A",
+                ),
+            )
+
+        return cls([xr.Dataset(fields)])
+
+    @classmethod
+    def from_xarray_dataset(cls, ds, variables, dimensions, mesh="spherical", allow_time_extrapolation=None, **kwargs):
+        """Initialises FieldSet data from xarray Datasets.
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            xarray Dataset.
+            Note that the built-in Advection kernels assume that U and V are in m/s
+        variables : dict
+            Dictionary mapping parcels variable names to data variables in the xarray Dataset.
+        dimensions : dict
+            Dictionary mapping data dimensions (lon,
+            lat, depth, time, data) to dimensions in the xarray Dataset.
+            Note that dimensions can also be a dictionary of dictionaries if
+            dimension names are different for each variable
+            (e.g. dimensions['U'], dimensions['V'], etc).
+        mesh : str
+            String indicating the type of mesh coordinates and
+            units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
+
+            1. spherical (default): Lat and lon in degree, with a
+               correction for zonal velocity U near the poles.
+            2. flat: No conversion, lat/lon are assumed to be in m.
+        allow_time_extrapolation : bool
+            boolean whether to allow for extrapolation
+            (i.e. beyond the last available time snapshot)
+            Default is False if dimensions includes time, else True
+        **kwargs :
+            Keyword arguments passed to the :func:`Field.from_xarray` constructor.
+        """
+        for var, _name in variables.items():
+            dims = dimensions[var] if var in dimensions else dimensions
+            cls.checkvaliddimensionsdict(dims)
+
+        return cls([ds])
 
     # @classmethod
     # def from_netcdf(
