@@ -10,7 +10,6 @@ __all__ = [
     "CurvilinearSGrid",
     "CurvilinearZGrid",
     "Grid",
-    "GridCode",
     "GridType",
     "RectilinearSGrid",
     "RectilinearZGrid",
@@ -22,11 +21,6 @@ class GridType(IntEnum):
     RectilinearSGrid = 1
     CurvilinearZGrid = 2
     CurvilinearSGrid = 3
-
-
-# GridCode has been renamed to GridType for consistency.
-# TODO: Remove alias in Parcels v4
-GridCode = GridType
 
 
 class Grid:
