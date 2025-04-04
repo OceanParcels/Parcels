@@ -111,7 +111,6 @@ class Grid:
         time,
         time_origin,
         mesh: Mesh,
-        **kwargs,
     ):
         lon = np.array(lon)
         lat = np.array(lat)
@@ -121,14 +120,14 @@ class Grid:
 
         if len(lon.shape) <= 1:
             if depth is None or len(depth.shape) <= 1:
-                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         else:
             if depth is None or len(depth.shape) <= 1:
-                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
 
     def _check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == "flat" or self.lon.size == 1:
