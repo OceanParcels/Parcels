@@ -92,9 +92,6 @@ class GridAdapter(Grid):
         return 1 if self.depth.shape == 4 else 0
 
     @property
-    def mesh(self): ...  # ? hmmm
-
-    @property
     def zonal_periodic(self): ...  # ? hmmm
 
     @property
