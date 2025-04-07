@@ -6,7 +6,7 @@ dependencies:
   # MINIMUM VERSIONS POLICY: keep track of minimum versions
   # for core packages. Dev and conda release builds should use this as reference.
   # Run ci/min_deps_check.py to verify that this file respects the policy.
-  - python=3.10
+  - python=3.11
   - cftime=1.6
   - dask=2022.8
   - matplotlib-base=3.5
