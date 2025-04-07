@@ -27,7 +27,7 @@ dependencies = [
   "dask",
   "psutil",
   "netCDF4",
-  "zarr",
+  "zarr>=3",
   "tqdm",
   "pymbolic",
   "pytest",
