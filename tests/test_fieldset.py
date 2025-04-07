@@ -58,6 +58,7 @@ def to_xarray_dataset(data: dict[str, np.array], dimensions: dict[str, np.array]
     )
 
 
+@pytest.mark.v4remove
 @pytest.fixture
 def multifile_fieldset(tmp_path):
     stem = "test_subsets"
@@ -305,7 +306,7 @@ def assign_dataset_timestamp_dim(ds, timestamp):
     return ds
 
 
-@pytest.mark.v4alpha
+@pytest.mark.v4remove
 def test_fieldset_diffgrids_from_file(tmp_path):
     """Test for subsetting fieldset from file using indices dict."""
     stem = "test_subsets"
