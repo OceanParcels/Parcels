@@ -296,22 +296,31 @@ class FieldSet:
             lat = dims["lat"]
             depth = np.zeros(1, dtype=np.float32) if "depth" not in dims else dims["depth"]
             time = np.zeros(1, dtype=np.float64) if "time" not in dims else dims["time"]
-            time = np.array(time)
 
             if len(datafld.shape) == 2:
-                coords = [lat, lon]
+                if "time" in dims:
+                    coords = [time, lat, lon]
+                    datafld = datafld[np.newaxis, ...]
+                    dims_xr = {"time": time, "lat": lat, "lon": lon}
+                else:
+                    coords = [lat, lon]
+                    dims_xr = {"lat": lat, "lon": lon}
+
             elif len(datafld.shape) == 3:
                 if "time" not in dims:
                     coords = [depth, lat, lon]
+                    dims_xr = {"depth": depth, "lat": lat, "lon": lon}
                 else:
                     coords = [time, lat, lon]
+                    dims_xr = {"time": time, "lat": lat, "lon": lon}
             else:
                 coords = [time, depth, lat, lon]
+                dims_xr = {"time": time, "depth": depth, "lat": lat, "lon": lon}
 
             fields[name] = xr.DataArray(
                 data=datafld,
                 name=name,
-                dims=dims,
+                dims=dims_xr,
                 coords=coords,
                 attrs=dict(
                     description="Created with fieldset.from_data",
