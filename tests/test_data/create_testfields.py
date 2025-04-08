@@ -1,9 +1,5 @@
-import os
-
 import numpy as np
 import xarray as xr
-
-from parcels import FieldSet, GridType
 
 N_OCTAVES = 4
 PERLIN_RES = (32, 8)
@@ -32,7 +28,7 @@ def generate_testfieldset(xdim: int, ydim: int, zdim: int, tdim: int) -> xr.Data
     )
 
 
-def generate_perlin_testfield():
+def generate_perlin_testfield() -> xr.Dataset:
     xdim = 512
     ydim = 128
     tdim = 1
@@ -49,58 +45,10 @@ def generate_perlin_testfield():
     U = U.astype(np.float32)
     V = V.astype(np.float32)
 
-    data = {"U": U, "V": V}
-    dimensions = {"time": time, "lon": lon, "lat": lat}
-
-    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical")
-    # fieldset.write("perlinfields")  # can also be used, but then has a ghost depth dimension
-    write_simple_2Dt(fieldset.U, os.path.join(os.path.dirname(__file__), "perlinfields"), varname="vozocrtx")
-    write_simple_2Dt(fieldset.V, os.path.join(os.path.dirname(__file__), "perlinfields"), varname="vomecrty")
-
-
-def write_simple_2Dt(field, filename, varname=None):
-    """Write a :class:`Field` to a netcdf file
-
-    Parameters
-    ----------
-    field : parcels.field.Field
-        Field to write to file
-    filename : str
-        Base name of the file to write to
-    varname : str, optional
-        Name of the variable to write to file. If None, defaults to field.name
-    """
-    filepath = str(f"{filename}{field.name}.nc")
-    if varname is None:
-        varname = field.name
-
-    # Create DataArray objects for file I/O
-    if field.grid._gtype == GridType.RectilinearZGrid:
-        nav_lon = xr.DataArray(
-            field.grid.lon + np.zeros((field.grid.ydim, field.grid.xdim), dtype=np.float32),
-            coords=[("y", field.grid.lat), ("x", field.grid.lon)],
-        )
-        nav_lat = xr.DataArray(
-            field.grid.lat.reshape(field.grid.ydim, 1) + np.zeros(field.grid.xdim, dtype=np.float32),
-            coords=[("y", field.grid.lat), ("x", field.grid.lon)],
-        )
-    elif field.grid._gtype == GridType.CurvilinearZGrid:
-        nav_lon = xr.DataArray(field.grid.lon, coords=[("y", range(field.grid.ydim)), ("x", range(field.grid.xdim))])
-        nav_lat = xr.DataArray(field.grid.lat, coords=[("y", range(field.grid.ydim)), ("x", range(field.grid.xdim))])
-    else:
-        raise NotImplementedError("Field.write only implemented for RectilinearZGrid and CurvilinearZGrid")
-
-    attrs = {"units": "seconds since " + str(field.grid.time_origin)} if field.grid.time_origin.calendar else {}
-    time_counter = xr.DataArray(field.grid.time, dims=["time_counter"], attrs=attrs)
-    vardata = xr.DataArray(
-        field.data.reshape((field.grid.tdim, field.grid.ydim, field.grid.xdim)), dims=["time_counter", "y", "x"]
+    return xr.Dataset(
+        {"U": (("time", "lat", "lon"), U), "V": (("time", "lat", "lon"), V)},
+        coords={"time": time, "lon": lon, "lat": lat},
     )
-    # Create xarray Dataset and output to netCDF format
-    attrs = {"parcels_mesh": field.grid.mesh}
-    dset = xr.Dataset(
-        {varname: vardata}, coords={"nav_lon": nav_lon, "nav_lat": nav_lat, "time_counter": time_counter}, attrs=attrs
-    )
-    dset.to_netcdf(filepath)
 
 
 if __name__ == "__main__":
