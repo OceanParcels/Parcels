@@ -200,7 +200,7 @@ def test_conversion_3DCROCO():
     lat, lon = ds.y_rho.values[y, x], ds.x_rho.values[y, x]
     ```
     """
-    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
+    fieldset = FieldSet.from_modulefile(TEST_DATA / "modulefile_fieldset_CROCO3D.py")
 
     lat, lon = 78000.0, 38000.0
     s_xroms = np.array([-1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0], dtype=np.float32)
@@ -233,7 +233,7 @@ def test_conversion_3DCROCO():
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="CROCO 3D interpolation is not yet implemented correctly in v4. ")
 def test_advection_3DCROCO():
-    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
+    fieldset = FieldSet.from_modulefile(TEST_DATA / "modulefile_fieldset_CROCO3D.py")
 
     runtime = 1e4
     X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
@@ -253,7 +253,7 @@ def test_advection_3DCROCO():
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
 def test_advection_2DCROCO():
-    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO2D.py")
+    fieldset = FieldSet.from_modulefile(TEST_DATA / "modulefile_fieldset_CROCO2D.py")
 
     runtime = 1e4
     X = np.array([40e3, 80e3, 120e3])

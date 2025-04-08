@@ -589,7 +589,7 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
 @pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
 def test_sampling_3DCROCO():
     data_path = os.path.join(os.path.dirname(__file__), "test_data/")
-    fieldset = FieldSet.from_modulefile(data_path + "fieldset_CROCO3D.py")
+    fieldset = FieldSet.from_modulefile(data_path + "modulefile_fieldset_CROCO3D.py")
 
     SampleP = Particle.add_variable("p", initial=0.0)
 
