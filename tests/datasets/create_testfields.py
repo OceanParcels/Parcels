@@ -46,9 +46,17 @@ def generate_perlin_testfield() -> xr.Dataset:
     U = U.astype(np.float32)
     V = V.astype(np.float32)
 
+    nav_lon, nav_lat = np.meshgrid(lon, lat)
+
     return xr.Dataset(
         {"U": (("time", "lat", "lon"), U), "V": (("time", "lat", "lon"), V)},
-        coords={"time": time, "lon": lon, "lat": lat},
+        coords={
+            "time": time,
+            "lon": lon,
+            "lat": lat,
+            "nav_lon": (("lat", "lon"), nav_lon),
+            "nav_lat": (("lat", "lon"), nav_lat),
+        },
     )
 
 
