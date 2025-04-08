@@ -11,6 +11,9 @@ from parcels.tools.converters import (
 from tests.utils import TEST_DATA
 
 
+@pytest.mark.v4remove(
+    reason="No need for this mapping of field names to nc variable (handled by xarray moving forward)"
+)  # TODO v4: Remove this test and remove Field.from_netcdf entirely
 def test_field_from_netcdf_variables():
     filename = str(TEST_DATA / "perlinfieldsU.nc")
     dims = {"lon": "x", "lat": "y"}
