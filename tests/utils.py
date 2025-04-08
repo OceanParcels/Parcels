@@ -11,6 +11,8 @@ from parcels import FieldSet
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TEST_ROOT = PROJECT_ROOT / "tests"
 TEST_DATA = TEST_ROOT / "test_data"
+FRUIT = ["apple", "banana", "cherry", "date", "peach", "fig", "grape", "honeydew", "kiwi", "lemon"]
+LETTERS = "abcdefghijklmnopqrstuvwxyz"
 
 
 def create_fieldset_unit_mesh(xdim=20, ydim=20, mesh="flat") -> FieldSet:
@@ -116,3 +118,24 @@ def create_fieldset_zeros_simple(xdim=40, ydim=100, withtime=False):
 
 def assert_empty_folder(path: Path):
     assert [p.name for p in path.iterdir()] == []
+
+
+def dump_nc(folder: Path, ds: xr.Dataset) -> Path:
+    """Dump an xarray dataset to a netcdf file and return the path."""
+    assert folder.is_dir()
+    path = folder / f"{_random_phrase()}-{_random_string().upper()}.nc"
+    ds.to_netcdf(path)
+    return path
+
+
+def _random_phrase(length=3) -> str:
+    return "-".join(np.random.choice(FRUIT, size=length))
+
+
+def _random_string(length=3) -> str:
+    return "".join(np.random.choice(LETTERS, size=length))
+
+
+def test_random_phrase():
+    assert len(_random_phrase().split("-")) == 3
+    assert len(_random_phrase(10).split("-")) == 10
