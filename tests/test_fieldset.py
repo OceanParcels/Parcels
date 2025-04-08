@@ -140,8 +140,8 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim):
 
 
 def test_fieldset_from_modulefile():
-    nemo_fname = str(TEST_DATA / "fieldset_nemo.py")
-    nemo_error_fname = str(TEST_DATA / "fieldset_nemo_error.py")
+    nemo_fname = str(TEST_DATA / "modulefile_fieldset_nemo.py")
+    nemo_error_fname = str(TEST_DATA / "modulefile_fieldset_nemo_error.py")
 
     fieldset = FieldSet.from_modulefile(nemo_fname)
 
