@@ -17,31 +17,37 @@ try:
     from parcels.tools import perlin2d as PERLIN
 except:
     PERLIN = None
-noctaves = 4
-perlinres = (32, 8)
-shapescale = (1, 1)
-perlin_persistence = 0.3
-scalefac = 2.0
+N_OCTAVES = 4
+PERLIN_RES = (32, 8)
+SHAPESCALE = (1, 1)
+PERLIN_PERSISTENCE = 0.3
+SCALE_FACTOR = 2.0
 
 
-def generate_testfieldset(xdim, ydim, zdim, tdim):
-    lon = np.linspace(0.0, 2.0, xdim, dtype=np.float32)
-    lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
-    depth = np.linspace(0.0, 0.5, zdim, dtype=np.float32)
-    time = np.linspace(0.0, tdim, tdim, dtype=np.float64)
+def generate_testfieldset(xdim: int, ydim: int, zdim: int, tdim: int) -> xr.Dataset:
+    # TODO: Update function name and incorporate into testing data strategy
     U = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
     V = np.zeros((tdim, zdim, ydim, xdim), dtype=np.float32)
     P = 2.0 * np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
-    data = {"U": U, "V": V, "P": P}
-    dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-    fieldset.write("testfields")
+    return xr.Dataset(
+        {
+            "U": (("time", "depth", "lat", "lon"), U),
+            "V": (("time", "depth", "lat", "lon"), V),
+            "P": (("time", "depth", "lat", "lon"), P),
+        },
+        coords={
+            "lon": np.linspace(0.0, 2.0, xdim, dtype=np.float32),
+            "lat": np.linspace(0.0, 1.0, ydim, dtype=np.float32),
+            "depth": np.linspace(0.0, 0.5, zdim, dtype=np.float32),
+            "time": np.linspace(0.0, tdim, tdim, dtype=np.float64),
+        },
+    )
 
 
 def generate_perlin_testfield():
     img_shape = (
-        int(math.pow(2, noctaves)) * perlinres[0] * shapescale[0],
-        int(math.pow(2, noctaves)) * perlinres[1] * shapescale[1],
+        int(math.pow(2, N_OCTAVES)) * PERLIN_RES[0] * SHAPESCALE[0],
+        int(math.pow(2, N_OCTAVES)) * PERLIN_RES[1] * SHAPESCALE[1],
     )
 
     # Coordinates of the test fieldset (on A-grid in deg)
@@ -52,11 +58,11 @@ def generate_perlin_testfield():
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
     if PERLIN is not None:
-        U = PERLIN.generate_fractal_noise_2d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
-        V = PERLIN.generate_fractal_noise_2d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
+        U = PERLIN.generate_fractal_noise_2d(img_shape, PERLIN_RES, N_OCTAVES, PERLIN_PERSISTENCE) * SCALE_FACTOR
+        V = PERLIN.generate_fractal_noise_2d(img_shape, PERLIN_RES, N_OCTAVES, PERLIN_PERSISTENCE) * SCALE_FACTOR
     else:
-        U = np.ones(img_shape, dtype=np.float32) * scalefac
-        V = np.ones(img_shape, dtype=np.float32) * scalefac
+        U = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
+        V = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
     U = np.transpose(U, (1, 0))
     U = np.expand_dims(U, 0)
     V = np.transpose(V, (1, 0))
