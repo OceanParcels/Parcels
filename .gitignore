@@ -9,7 +9,6 @@ parcels_examples
 *.log
 *.nc
 *.nc4
-!*testfields*.nc
 out-*
 *.c
 *.pyc

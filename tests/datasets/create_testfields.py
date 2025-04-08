@@ -29,6 +29,7 @@ def generate_testfieldset(xdim: int, ydim: int, zdim: int, tdim: int) -> xr.Data
 
 
 def generate_perlin_testfield() -> xr.Dataset:
+    # TODO: Update function name and incorporate into testing data strategy
     xdim = 512
     ydim = 128
     tdim = 1
