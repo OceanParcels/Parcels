@@ -1,22 +1,11 @@
 import math
+import os
 
 import numpy as np
+import xarray as xr
 
 from parcels import FieldSet, GridType
 
-try:
-    from pympler import asizeof
-except:
-    asizeof = None
-
-import os
-
-import xarray as xr
-
-try:
-    from parcels.tools import perlin2d as PERLIN
-except:
-    PERLIN = None
 N_OCTAVES = 4
 PERLIN_RES = (32, 8)
 SHAPESCALE = (1, 1)
@@ -57,21 +46,15 @@ def generate_perlin_testfield():
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
-    if PERLIN is not None:
-        U = PERLIN.generate_fractal_noise_2d(img_shape, PERLIN_RES, N_OCTAVES, PERLIN_PERSISTENCE) * SCALE_FACTOR
-        V = PERLIN.generate_fractal_noise_2d(img_shape, PERLIN_RES, N_OCTAVES, PERLIN_PERSISTENCE) * SCALE_FACTOR
-    else:
-        U = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
-        V = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
+    U = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
+    V = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
     U = np.transpose(U, (1, 0))
     U = np.expand_dims(U, 0)
     V = np.transpose(V, (1, 0))
     V = np.expand_dims(V, 0)
     data = {"U": U, "V": V}
     dimensions = {"time": time, "lon": lon, "lat": lat}
-    if asizeof is not None:
-        print(f"Perlin U-field requires {U.size * U.itemsize} bytes of memory.")
-        print(f"Perlin V-field requires {V.size * V.itemsize} bytes of memory.")
+
     fieldset = FieldSet.from_data(data, dimensions, mesh="spherical")
     # fieldset.write("perlinfields")  # can also be used, but then has a ghost depth dimension
     write_simple_2Dt(fieldset.U, os.path.join(os.path.dirname(__file__), "perlinfields"), varname="vozocrtx")
@@ -121,16 +104,6 @@ def write_simple_2Dt(field, filename, varname=None):
         {varname: vardata}, coords={"nav_lon": nav_lon, "nav_lat": nav_lat, "time_counter": time_counter}, attrs=attrs
     )
     dset.to_netcdf(filepath)
-    if asizeof is not None:
-        mem = 0
-        mem += asizeof.asizeof(field)
-        mem += asizeof.asizeof(field.data[:])
-        mem += asizeof.asizeof(field.grid)
-        mem += asizeof.asizeof(vardata)
-        mem += asizeof.asizeof(nav_lat)
-        mem += asizeof.asizeof(nav_lon)
-        mem += asizeof.asizeof(time_counter)
-        print(f"Field '{field.name}' requires {mem} bytes of memory.")
 
 
 if __name__ == "__main__":
