@@ -893,6 +893,7 @@ def test_bgrid_interpolation(gridindexingtype, extrapolation):
     else:
         zi = 2
     if gridindexingtype == "mom5":
+        # TODO v4: replace with tests.datasets.mom5.get_mom_metadata_rich()
         ufile = str(TEST_DATA / "access-om2-01_u.nc")
         vfile = str(TEST_DATA / "access-om2-01_v.nc")
         wfile = str(TEST_DATA / "access-om2-01_wt.nc")

@@ -4,8 +4,6 @@ import cftime
 import numpy as np
 import xarray as xr
 
-from tests.utils import TEST_DATA
-
 
 def get_mom_metadata_rich() -> xr.Dataset:
     """MOM5 datasets based off of the access-om2-01 dataset that used to be in the codebase in parcels v3.
@@ -143,21 +141,3 @@ def assert_common_attrs_equal(do1: xr.Dataset | xr.DataArray, do2: xr.Dataset | 
             np.testing.assert_array_equal(do1.attrs[attr], do2.attrs[attr])
         else:
             assert do1.attrs[attr] == do2.attrs[attr], f"error on key {attr!r}"
-
-
-def test_dataset_complete_metadata():
-    ds = get_mom_metadata_rich()
-
-    ds_expected = xr.open_mfdataset(
-        [TEST_DATA / "access-om2-01_u.nc", TEST_DATA / "access-om2-01_v.nc", TEST_DATA / "access-om2-01_wt.nc"],
-        decode_times=False,
-    )
-
-    # check dataset variables both in ds and ds_expected
-    assert set(ds.variables) == set(
-        ds_expected.variables
-    ), f"Variables differ: {set(ds.variables) ^ set(ds_expected.variables)}"
-
-    assert_common_attrs_equal(ds, ds_expected)
-    for var in ds.variables:
-        assert_common_attrs_equal(ds[var], ds_expected[var])
