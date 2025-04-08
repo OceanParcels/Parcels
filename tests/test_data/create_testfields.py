@@ -1,4 +1,3 @@
-import math
 import os
 
 import numpy as np
@@ -34,24 +33,22 @@ def generate_testfieldset(xdim: int, ydim: int, zdim: int, tdim: int) -> xr.Data
 
 
 def generate_perlin_testfield():
-    img_shape = (
-        int(math.pow(2, N_OCTAVES)) * PERLIN_RES[0] * SHAPESCALE[0],
-        int(math.pow(2, N_OCTAVES)) * PERLIN_RES[1] * SHAPESCALE[1],
-    )
+    xdim = 512
+    ydim = 128
+    tdim = 1
 
     # Coordinates of the test fieldset (on A-grid in deg)
-    lon = np.linspace(-180.0, 180.0, img_shape[0], dtype=np.float32)
-    lat = np.linspace(-90.0, 90.0, img_shape[1], dtype=np.float32)
+    lon = np.linspace(-180.0, 180.0, xdim, dtype=np.float32)
+    lat = np.linspace(-90.0, 90.0, ydim, dtype=np.float32)
     time = np.zeros(1, dtype=np.float64)
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
-    U = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
-    V = np.ones(img_shape, dtype=np.float32) * SCALE_FACTOR
-    U = np.transpose(U, (1, 0))
-    U = np.expand_dims(U, 0)
-    V = np.transpose(V, (1, 0))
-    V = np.expand_dims(V, 0)
+    U = np.random.rand(tdim, ydim, xdim) * SCALE_FACTOR
+    V = np.random.rand(tdim, ydim, xdim) * SCALE_FACTOR
+    U = U.astype(np.float32)
+    V = V.astype(np.float32)
+
     data = {"U": U, "V": V}
     dimensions = {"time": time, "lon": lon, "lat": lat}
 
