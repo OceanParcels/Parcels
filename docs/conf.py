@@ -195,8 +195,8 @@ numpydoc_validation_checks = {
 html_static_path = ["_static"]
 html_theme_options = {
     "logo": {
-        "image_light": "parcelslogo.png",
-        "image_dark": "parcelslogo-inverted.png",
+        "image_light": "logo-horo.svg",
+        "image_dark": "logo-horo_dia.svg",
     },
     "use_edit_page_button": True,
     "github_url": "https://github.com/OceanParcels/parcels",

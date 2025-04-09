@@ -1,35 +1,21 @@
-from pathlib import Path
-
 import pytest
 import requests
 
 from parcels.tools.exampledata_utils import (
+    _get_pooch,
     download_example_dataset,
     list_example_datasets,
 )
 
 
-@pytest.fixture
-def mock_download(monkeypatch):
-    """Avoid the download, only check the status code and create empty file."""
-
-    def mock_urlretrieve(url, filename):
-        response = requests.head(url)
-
-        if 400 <= response.status_code < 600:
-            raise Exception(f"Failed to access URL: {url}. Status code: {response.status_code}")
-
-        Path(filename).touch()
-
-    monkeypatch.setattr("parcels.tools.exampledata_utils.urlretrieve", mock_urlretrieve)
+@pytest.mark.parametrize("url", [_get_pooch().get_url(filename) for filename in _get_pooch().registry.keys()])
+def test_pooch_registry_url_reponse(url):
+    response = requests.head(url)
+    assert not (400 <= response.status_code < 600)
 
 
-@pytest.mark.usefixtures("mock_download")
-@pytest.mark.parametrize("dataset", list_example_datasets())
-def test_download_example_dataset(tmp_path, dataset):
-    if dataset == "GlobCurrent_example_data":
-        pytest.skip(f"{dataset} too time consuming.")
-
+@pytest.mark.parametrize("dataset", list_example_datasets()[:1])
+def test_download_example_dataset_folder_creation(tmp_path, dataset):
     dataset_folder_path = download_example_dataset(dataset, data_home=tmp_path)
 
     assert dataset_folder_path.exists()

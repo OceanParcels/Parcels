@@ -13,10 +13,6 @@ from parcels import (
     Variable,
 )
 from parcels.field import Field, VectorField
-from parcels.tools.converters import (
-    GeographicPolar,
-    UnitConverter,
-)
 from tests.utils import TEST_DATA
 
 
@@ -194,6 +190,7 @@ def test_field_from_netcdf_fieldtypes():
 
 
 @pytest.mark.v4alpha
+
 def test_fieldset_from_agrid_dataset():
     filenames = {
         "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
@@ -272,9 +269,9 @@ def test_add_field_after_pset(fieldtype):
     field2 = Field("field2", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     vfield = VectorField("vfield", field1, field2)
     with pytest.raises(RuntimeError):
-        if fieldtype == "normal":
+        if field_type == "normal":
             fieldset.add_field(field1)
-        elif fieldtype == "vector":
+        elif field_type == "vector":
             fieldset.add_vector_field(vfield)
 
 

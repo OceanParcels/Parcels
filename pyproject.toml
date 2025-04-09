@@ -8,11 +8,10 @@ description = "Framework for Lagrangian tracking of virtual ocean particles in t
 readme = "README.md"
 dynamic = ["version"]
 authors = [{name = "oceanparcels.org team"}]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {file = "LICENSE.md"}
 classifiers = [
   "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -32,6 +31,7 @@ dependencies = [
   "pytest",
   "scipy",
   "xarray",
+  "pooch",
 ]
 
 [project.urls]
@@ -57,13 +57,12 @@ tests-short = "pytest tests/test_advection.py"
 tests-exclude-v4 = "pytest -m 'not v4alpha and not v4future and not v4remove'"
 
 [tool.pixi.dependencies] #! Keep in sync with environment.yml
-python = ">=3.10"
+python = ">=3.11"
 ffmpeg = ">=3.2.3"
 jupyter = "*"
 matplotlib-base = ">=2.0.2"
 netcdf4 = ">=1.1.9"
 numpy = ">=1.9.1"
-platformdirs = "*"
 psutil = "*"
 pymbolic = "*"
 scipy = ">=0.16.0"
@@ -222,5 +221,6 @@ module = [
     "cftime",
     "pykdtree.kdtree",
     "netCDF4",
+    "pooch",
 ]
 ignore_missing_imports = true

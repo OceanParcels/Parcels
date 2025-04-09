@@ -228,6 +228,16 @@ class Field:
     @property
     def lonlat_minmax(self):
         return self._lonlat_minmax
+      
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, value):
+        if not isinstance(value, UnitConverter):
+            raise ValueError(f"Units must be a UnitConverter object, got {type(value)}")
+        self._units = value
 
     @property
     def lat(self):
@@ -311,10 +321,6 @@ class Field:
     def interp_method(self, method: Callable):
         self._validate_interp_function(method)
         self._interp_method = method
-
-    # @property
-    # def gridindexingtype(self):
-    #     return self._gridindexingtype
 
     def _get_ux_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id. Used for unstructured grids."""

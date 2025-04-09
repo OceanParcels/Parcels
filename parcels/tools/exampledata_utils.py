@@ -1,16 +1,33 @@
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from urllib.request import urlretrieve
 
-import platformdirs
+import pooch
 import xarray as xr
 
 from parcels.tools._v3to4 import patch_dataset_v4_compat
 
-__all__ = ["download_example_dataset", "get_data_home", "list_example_datasets"]
+__all__ = ["download_example_dataset", "list_example_datasets"]
 
-example_data_files = {
+# When modifying existing datasets in a backwards incompatible way,
+# make a new release in the repo and update the DATA_REPO_TAG to the new tag
+DATA_REPO_TAG = "main"
+
+DATA_URL = f"https://github.com/OceanParcels/parcels-data/raw/{DATA_REPO_TAG}/data"
+
+# Keys are the dataset names. Values are the filenames in the dataset folder. Note that
+# you can specify subfolders in the dataset folder putting slashes in the filename list.
+# e.g.,
+# "my_dataset": ["file0.nc", "folder1/file1.nc", "folder2/file2.nc"]
+# my_dataset/
+# ├── file0.nc
+# ├── folder1/
+# │   └── file1.nc
+# └── folder2/
+#     └── file2.nc
+#
+# See instructions at https://github.com/OceanParcels/parcels-data for adding new datasets
+EXAMPLE_DATA_FILES: dict[str, list[str]] = {
     "MovingEddies_data": [
         "moving_eddiesP.nc",
         "moving_eddiesU.nc",
@@ -85,24 +102,32 @@ example_data_files = {
 }
 
 
-example_data_url = "http://oceanparcels.org/examples-data"
+def _create_pooch_registry() -> dict[str, None]:
+    """Collapses the mapping of dataset names to filenames into a pooch registry.
 
-
-def get_data_home(data_home=None):
-    """Return a path to the cache directory for example datasets.
-
-    This directory is used by :func:`load_dataset`.
-
-    If the ``data_home`` argument is not provided, it will use a directory
-    specified by the ``PARCELS_EXAMPLE_DATA`` environment variable (if it exists)
-    or otherwise default to an OS-appropriate user cache location.
+    Hashes are set to None for all files.
     """
+    registry: dict[str, None] = {}
+    for dataset, filenames in EXAMPLE_DATA_FILES.items():
+        for filename in filenames:
+            registry[f"{dataset}/{filename}"] = None
+    return registry
+
+
+POOCH_REGISTRY = _create_pooch_registry()
+
+
+def _get_pooch(data_home=None):
     if data_home is None:
-        data_home = os.environ.get("PARCELS_EXAMPLE_DATA", platformdirs.user_cache_dir("parcels"))
-    data_home = os.path.expanduser(data_home)
-    if not os.path.exists(data_home):
-        os.makedirs(data_home)
-    return data_home
+        data_home = os.environ.get("PARCELS_EXAMPLE_DATA")
+    if data_home is None:
+        data_home = pooch.os_cache("parcels")
+
+    return pooch.create(
+        path=data_home,
+        base_url=DATA_URL,
+        registry=POOCH_REGISTRY,
+    )
 
 
 def list_example_datasets() -> list[str]:
@@ -115,7 +140,7 @@ def list_example_datasets() -> list[str]:
     datasets : list of str
         The names of the available example datasets.
     """
-    return list(example_data_files.keys())
+    return list(EXAMPLE_DATA_FILES.keys())
 
 
 def download_example_dataset(dataset: str, data_home=None):
@@ -139,26 +164,30 @@ def download_example_dataset(dataset: str, data_home=None):
         Path to the folder containing the downloaded dataset files.
     """
     # Dev note: `dataset` is assumed to be a folder name with netcdf files
-    if dataset not in example_data_files:
+    if dataset not in EXAMPLE_DATA_FILES:
         raise ValueError(
-            f"Dataset {dataset!r} not found. Available datasets are: " + ", ".join(example_data_files.keys())
+            f"Dataset {dataset!r} not found. Available datasets are: " + ", ".join(EXAMPLE_DATA_FILES.keys())
         )
+    odie = _get_pooch(data_home=data_home)
 
-    cache_folder = get_data_home(data_home)
-    dataset_folder = Path(cache_folder) / dataset
+    cache_folder = Path(odie.path)
+    dataset_folder = cache_folder / dataset
 
-    if not dataset_folder.exists():
-        dataset_folder.mkdir(parents=True)
-
-    for filename in example_data_files[dataset]:
-        filepath = dataset_folder / filename
-        if not filepath.exists():
-            url = f"{example_data_url}/{dataset}/{filename}"
-            urlretrieve(url, str(filepath))
-
+    for file_name in odie.registry:
+        if file_name.startswith(dataset):
             should_patch = dataset == "GlobCurrent_example_data"
-
-            if should_patch:
-                xr.load_dataset(filepath).pipe(patch_dataset_v4_compat).to_netcdf(filepath)
+            odie.fetch(file_name, processor=v4_compat_patch if should_patch else None)
 
     return dataset_folder
+
+
+def v4_compat_patch(fname, action, pup):
+    """
+    Patch the GlobCurrent example dataset to be compatible with v4.
+
+    See https://www.fatiando.org/pooch/latest/processors.html#creating-your-own-processors
+    """
+    if action == "fetch":
+        return fname
+    xr.load_dataset(fname).pipe(patch_dataset_v4_compat).to_netcdf(fname)
+    return fname
