@@ -32,3 +32,6 @@ def dummy_agrid_dataset():
 def dummy_bgrid_dataset():
     """Dummy b-grid dataset using COMODO grid conventions."""
     return _dummy_same_points_dataset().rename({"depth": "ZC", "lat": "YC", "lon": "XC"})
+
+
+# TODO v4: Consolidate all of this once #1966 is merged
