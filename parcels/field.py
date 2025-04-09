@@ -228,7 +228,7 @@ class Field:
     @property
     def lonlat_minmax(self):
         return self._lonlat_minmax
-      
+
     @property
     def units(self):
         return self._units

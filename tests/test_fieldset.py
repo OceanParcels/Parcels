@@ -190,7 +190,6 @@ def test_field_from_netcdf_fieldtypes():
 
 
 @pytest.mark.v4alpha
-
 def test_fieldset_from_agrid_dataset():
     filenames = {
         "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
