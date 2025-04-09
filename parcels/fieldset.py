@@ -52,7 +52,10 @@ class FieldSet:
         # Create pointers to each (Ux)DataArray
         for ds in datasets:
             for field in ds.data_vars:
-                self.add_field(Field(field, ds[field]), field)
+                if type(ds[field]) is ux.UxDataArray:
+                    self.add_field(Field(field, ds[field], grid=ds[field].uxgrid), field)
+                else:
+                    self.add_field(Field(field, ds[field]), field)
                 self._gridset_size += 1
                 self._fieldnames.append(field)
 

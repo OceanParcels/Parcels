@@ -143,24 +143,21 @@ class Field:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
+        grid: ux.UxGrid | None = None,  # To do : Once parcels.Grid class is added, allow for it to be passed here
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
         allow_time_extrapolation: bool | None = None,
     ):
         self.name = name
         self.data = data
+        self.grid = grid
 
         self._validate_dataarray()
 
         self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
         self._location = data.attrs["location"]
-
-        # Set the vertical location
-        if "nz1" in data.dims:
-            self._vertical_location = "center"
-        elif "nz" in data.dims:
-            self._vertical_location = "face"
+        self._vertical_location = None
 
         # Setting the interpolation method dynamically
         if interp_method is None:
@@ -184,9 +181,14 @@ class Field:
             self.allow_time_extrapolation = allow_time_extrapolation
 
         if type(self.data) is ux.UxDataArray:
-            self._spatialhash = self.data.uxgrid.get_spatial_hash()
+            self._spatialhash = self.grid.get_spatial_hash()
             self._gtype = None
-        else:
+            # Set the vertical location
+            if "nz1" in data.dims:
+                self._vertical_location = "center"
+            elif "nz" in data.dims:
+                self._vertical_location = "face"
+        else:  # To do : This bit probably needs an overhaul once the parcels.Grid class is integrated.
             self._spatialhash = None
             # Set the grid type
             if "x_g" in self.data.coords:
@@ -224,13 +226,6 @@ class Field:
         return field_repr(self)
 
     @property
-    def grid(self):
-        if type(self.data) is ux.UxDataArray:
-            return self.data.uxgrid
-        else:
-            return self.data  # To do : need to decide on what to return for xarray.DataArray objects
-
-    @property
     def lonlat_minmax(self):
         return self._lonlat_minmax
 
@@ -238,11 +233,11 @@ class Field:
     def lat(self):
         if type(self.data) is ux.UxDataArray:
             if self._location == "node":
-                return self.data.uxgrid.node_lat
+                return self.grid.node_lat
             elif self._location == "face":
-                return self.data.uxgrid.face_lat
+                return self.grid.face_lat
             elif self._location == "edge":
-                return self.data.uxgrid.edge_lat
+                return self.grid.edge_lat
         else:
             return self.data.lat
 
@@ -250,11 +245,11 @@ class Field:
     def lon(self):
         if type(self.data) is ux.UxDataArray:
             if self._location == "node":
-                return self.data.uxgrid.node_lon
+                return self.grid.node_lon
             elif self._location == "face":
-                return self.data.uxgrid.face_lon
+                return self.grid.face_lon
             elif self._location == "edge":
-                return self.data.uxgrid.edge_lon
+                return self.grid.edge_lon
         else:
             return self.data.lon
 
@@ -262,9 +257,9 @@ class Field:
     def depth(self):
         if type(self.data) is ux.UxDataArray:
             if self._vertical_location == "center":
-                return self.data.uxgrid.nz1
+                return self.grid.nz1
             elif self._vertical_location == "face":
-                return self.data.uxgrid.nz
+                return self.grid.nz
         else:
             return self.data.depth
 
@@ -304,7 +299,7 @@ class Field:
     @property
     def n_face(self):
         if type(self.data) is ux.uxDataArray:
-            return self.data.uxgrid.n_face
+            return self.grid.n_face
         else:
             return 0  # To do : Discuss what we want to return for dataarray obj
 
@@ -324,12 +319,12 @@ class Field:
     def _get_ux_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id. Used for unstructured grids."""
         # Check if particle is in the same face, otherwise search again.
-        n_nodes = self.data.uxgrid.n_nodes_per_face[fi].to_numpy()
-        node_ids = self.data.uxgrid.face_node_connectivity[fi, 0:n_nodes]
+        n_nodes = self.grid.n_nodes_per_face[fi].to_numpy()
+        node_ids = self.grid.face_node_connectivity[fi, 0:n_nodes]
         nodes = np.column_stack(
             (
-                np.deg2rad(self.data.uxgrid.node_lon[node_ids].to_numpy()),
-                np.deg2rad(self.data.uxgrid.node_lat[node_ids].to_numpy()),
+                np.deg2rad(self.grid.node_lon[node_ids].to_numpy()),
+                np.deg2rad(self.grid.node_lat[node_ids].to_numpy()),
             )
         )
 
@@ -359,7 +354,7 @@ class Field:
                 return bcoords, ei
             else:
                 # In this case we need to search the neighbors
-                for neighbor in self.data.uxgrid.face_face_connectivity[fi, :]:
+                for neighbor in self.grid.face_face_connectivity[fi, :]:
                     bcoords, err = self._get_ux_barycentric_coordinates(y, x, neighbor)
                     if ((bcoords >= 0).all()) and ((bcoords <= 1.0).all()) and err < tol:
                         # To do: Do the vertical grid search
@@ -537,12 +532,12 @@ class Field:
 
     def _validate_uxgrid(self):
         """Verifies that all the required attributes are present in the uxarray.UxDataArray.UxGrid object."""
-        if "Conventions" not in self.data.uxgrid.attrs.keys():
+        if "Conventions" not in self.grid.attrs.keys():
             raise ValueError(
                 f"Field {self.name} is missing a 'Conventions' attribute in the field's metadata. "
                 "This attribute is required for uxarray.UxDataArray objects."
             )
-        if self.data.uxgrid.attrs["Conventions"] != "UGRID-1.0":
+        if self.grid.attrs["Conventions"] != "UGRID-1.0":
             raise ValueError(
                 f"Field {self.name} has a 'Conventions' attribute that is not 'UGRID-1.0'. "
                 "This attribute is required for uxarray.UxDataArray objects."
