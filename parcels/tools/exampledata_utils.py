@@ -32,6 +32,12 @@ example_data_files = {
         "decaying_moving_eddyU.nc",
         "decaying_moving_eddyV.nc",
     ],
+    "FESOM_periodic_channel": [
+        "fesom_channel.nc",
+        "u.fesom_channel.nc",
+        "v.fesom_channel.nc",
+        "w.fesom_channel.nc",
+    ],
     "NemoCurvilinear_data": [
         "U_purely_zonal-ORCA025_grid_U.nc4",
         "V_purely_zonal-ORCA025_grid_V.nc4",
