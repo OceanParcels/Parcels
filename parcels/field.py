@@ -143,7 +143,7 @@ class Field:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
-        grid: ux.UxGrid | None = None,  # To do : Once parcels.Grid class is added, allow for it to be passed here
+        grid: ux.Grid | None = None,  # To do : Once parcels.Grid class is added, allow for it to be passed here
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
         allow_time_extrapolation: bool | None = None,
