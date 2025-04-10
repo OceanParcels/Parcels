@@ -37,7 +37,7 @@ Structure
 This subpackage is broken down into structured and unstructured parts. Each of these have common submodules:
 
 * ``circulation_model`` -> hardcoded datasets with the intention of mimicking datasets from a certain (ocean) circulation model
-* ``general`` -> hardcoded datasets that are general, and not tied to a certain (ocean) circulation model. Instead these focus on the fundamental properties of the dataset
+* ``generic`` -> hardcoded datasets that are generic, and not tied to a certain (ocean) circulation model. Instead these focus on the fundamental properties of the dataset
 * ``generated`` -> functions to generate datasets with varying properties
 * ``utils`` -> any utility functions necessary related to either generating or validating datasets
 
