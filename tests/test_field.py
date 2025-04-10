@@ -12,6 +12,7 @@ from tests.utils import TEST_DATA
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_field_from_netcdf_variables():
     filename = str(TEST_DATA / "perlinfieldsU.nc")
     dims = {"lon": "x", "lat": "y"}
@@ -32,6 +33,7 @@ def test_field_from_netcdf_variables():
 
 
 @pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 def test_field_from_netcdf():
     filenames = {
         "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
@@ -44,6 +46,7 @@ def test_field_from_netcdf():
 
 
 @pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize(
     "calendar, cftime_datetime", zip(_get_cftime_calendars(), _get_cftime_datetimes(), strict=True)
 )
