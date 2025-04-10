@@ -72,9 +72,8 @@ def field_repr(field: Field) -> str:
     """Return a pretty repr for Field"""
     out = f"""<{type(field).__name__}>
     name            : {field.name!r}
-    grid            : {field.grid!r}
+    data            : {field.data!r}
     extrapolate time: {field.allow_time_extrapolation!r}
-    gridindexingtype: {field.gridindexingtype!r}
 """
     return textwrap.dedent(out).strip()
 

@@ -122,7 +122,7 @@ class ParticleSet:
                 if type(self).ngrids.initial < 0:
                     numgrids = ngrids
                     if numgrids is None and fieldset is not None:
-                        numgrids = fieldset.gridset.size
+                        numgrids = fieldset.gridset_size
                     assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
                     type(self).ngrids.initial = numgrids
                 self.ngrids = type(self).ngrids.initial
@@ -148,7 +148,7 @@ class ParticleSet:
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.gridset.dimrange("depth")[0]
+            mindepth = self.fieldset.dimrange("depth")[0]
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_flat_array(depth)
@@ -191,7 +191,7 @@ class ParticleSet:
             self._repeatkwargs = kwargs
             self._repeatkwargs.pop("partition_function", None)
 
-        ngrids = fieldset.gridset.size
+        ngrids = fieldset.gridset_size
 
         # Variables used for interaction kernels.
         inter_dist_horiz = None
@@ -962,7 +962,7 @@ class ParticleSet:
         if runtime is not None and endtime is not None:
             raise RuntimeError("Only one of (endtime, runtime) can be specified")
 
-        mintime, maxtime = self.fieldset.gridset.dimrange("time")
+        mintime, maxtime = self.fieldset.dimrange("time")
 
         default_release_time = mintime if dt >= 0 else maxtime
         if np.any(np.isnan(self.particledata.data["time"])):
@@ -980,7 +980,7 @@ class ParticleSet:
         if runtime is not None:
             endtime = starttime + runtime * np.sign(dt)
         elif endtime is None:
-            mintime, maxtime = self.fieldset.gridset.dimrange("time")
+            mintime, maxtime = self.fieldset.dimrange("time")
             endtime = maxtime if dt >= 0 else mintime
 
         if (abs(endtime - starttime) < 1e-5 or runtime == 0) and dt == 0:
