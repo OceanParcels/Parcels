@@ -20,7 +20,7 @@ Working with specific hardcoded examples:
 
 * Pros
     * the example is stable and self-contained
-    * easy to see exactly what the dataset is, there little to no dependency on other functions defined in the same module
+    * easy to see exactly what the dataset is, there is little to no dependency on other functions defined in the same module
       * datasets don't "break" due to changes in other functions (e.g., grid edges becoming out of sync with grid centres)
 * Cons
     * inflexible for use in tests where you want to test a large range of datasets, or you want to test a specific resolution
