@@ -82,7 +82,6 @@ datasets = {
             ),
         },
     ),
-    # my own invention
     "1d_left": xr.Dataset(
         {"data_g": (["XG"], np.random.rand(N)), "data_c": (["XC"], np.random.rand(N))},
         coords={
