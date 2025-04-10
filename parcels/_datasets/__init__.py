@@ -14,9 +14,9 @@ Developers, note that you should only add functions that create idealised datase
 Parcels Dataset Philosophy
 -------------------------
 
-When adding example datasets, there may be a tension between wanting to add a specific example or wanting to add machinery to generate completely arbitrary datasets (e.g., with different grid resolutions, with different ranges, with different datetimes etc.). There are trade-offs to both approaches:
+When adding datasets, there may be a tension between wanting to add a specific dataset or wanting to add machinery to generate completely parameterised datasets (e.g., with different grid resolutions, with different ranges, with different datetimes etc.). There are trade-offs to both approaches:
 
-Working with specific hardcoded examples:
+Working with specific hardcoded datasets:
 
 * Pros
     * the example is stable and self-contained
@@ -27,17 +27,17 @@ Working with specific hardcoded examples:
 
 Working with generated datasets is the opposite of all the above.
 
-Most of the time we only want a single dataset. For example, for use in a tutorial, or for testing a specific feature of Parcels - such as (in the case of structured grids) checking that the grid from a certain vendor is correctly parsed, or checking that indexing is correctly picked up. As such, one should often opt for hardcoded datasets. These are more stable and easier to see exactly what the dataset is. We may have specific examples that become the default "go to" dataset for testing when we don't care about the specific details of the dataset.
+Most of the time we only want a single dataset. For example, for use in a tutorial, or for testing a specific feature of Parcels - such as (in the case of structured grids) checking that the grid from a certain (ocean) circulation model is correctly parsed, or checking that indexing is correctly picked up. As such, one should often opt for hardcoded datasets. These are more stable and easier to see exactly what the dataset is. We may have specific examples that become the default "go to" dataset for testing when we don't care about the details of the dataset.
 
-Sometimes we may want to test Parcels against a whole range of datasets varying in a certain way - to ensure Parcels works as expected for subspace of possible datasets. For these, we should add machinery to create generated datasets.
+Sometimes we may want to test Parcels against a whole range of datasets varying in a certain way - to ensure Parcels works as expected. For these, we should add machinery to create generated datasets.
 
 Structure
 --------
 
 This subpackage is broken down into structured and unstructured parts. Each of these have common submodules:
 
-* ``providers`` -> hardcoded datasets with the intention of mimicking datasets from a certain provider
-* ``generic`` -> hardcoded datasets that are generic, and not tied to a certain provider (instead focusing on the fundamental properties of the dataset)
+* ``circulation_model`` -> hardcoded datasets with the intention of mimicking datasets from a certain (ocean) circulation model
+* ``general`` -> hardcoded datasets that are general, and not tied to a certain (ocean) circulation model. Instead these focus on the fundamental properties of the dataset
 * ``generated`` -> functions to generate datasets with varying properties
 * ``utils`` -> any utility functions necessary related to either generating or validating datasets
 
