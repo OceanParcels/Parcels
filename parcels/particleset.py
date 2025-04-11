@@ -13,7 +13,7 @@ from tqdm import tqdm
 from parcels._compat import MPI
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.field import Field
-from parcels.grid import CurvilinearGrid, GridType
+from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.interaction.neighborsearch import (
     BruteFlatNeighborSearch,
@@ -430,7 +430,7 @@ class ParticleSet:
         may be quite expensive.
         """
         for i, grid in enumerate(self.fieldset.gridset.grids):
-            if not isinstance(grid, CurvilinearGrid):
+            if grid._gtype != GridType.CurvilinearGrid:
                 continue
 
             tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)

@@ -10,7 +10,6 @@ __all__ = [
     "CurvilinearSGrid",
     "CurvilinearZGrid",
     "Grid",
-    "GridCode",
     "GridType",
     "RectilinearSGrid",
     "RectilinearZGrid",
@@ -24,11 +23,6 @@ class GridType(IntEnum):
     CurvilinearSGrid = 3
 
 
-# GridCode has been renamed to GridType for consistency.
-# TODO: Remove alias in Parcels v4
-GridCode = GridType
-
-
 class Grid:
     """Grid class that defines a (spatial and temporal) grid on which Fields are defined."""
 
@@ -40,7 +34,6 @@ class Grid:
         time_origin: TimeConverter | None,
         mesh: Mesh,
     ):
-        self._ti = -1
         lon = np.array(lon)
         lat = np.array(lat)
         time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -112,7 +105,6 @@ class Grid:
         time,
         time_origin,
         mesh: Mesh,
-        **kwargs,
     ):
         lon = np.array(lon)
         lat = np.array(lat)
@@ -122,14 +114,14 @@ class Grid:
 
         if len(lon.shape) <= 1:
             if depth is None or len(depth.shape) <= 1:
-                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         else:
             if depth is None or len(depth.shape) <= 1:
-                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
 
     def _check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == "flat" or self.lon.size == 1:

@@ -188,6 +188,7 @@ ignore = [
     "D205",
     # do not use bare except, specify exception instead
     "E722",
+    "F811",
 
 
     # TODO: These bugbear issues are to be resolved

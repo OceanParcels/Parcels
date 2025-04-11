@@ -61,6 +61,9 @@ class TimeConverter:
         elif isinstance(time_origin, cftime.datetime):
             self.calendar = time_origin.calendar
 
+    def __eq__(self, other):
+        return self.time_origin == other.time_origin and self.calendar == other.calendar
+
     def reltime(self, time: TimeConverter | np.datetime64 | np.timedelta64 | cftime.datetime) -> float | npt.NDArray:
         """Method to compute the difference, in seconds, between a time and the time_origin
         of the TimeConverter
