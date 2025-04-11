@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+from parcels._datasets.structured.grid_datasets import N, T, datasets
 from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
 from parcels.v4.gridadapter import GridAdapter
-from tests.v4.grid_datasets import N, T, datasets
 
 TestCase = namedtuple("TestCase", ["Grid", "attr", "expected"])
 
