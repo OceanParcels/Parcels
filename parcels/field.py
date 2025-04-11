@@ -152,7 +152,7 @@ class Field:
         self.data = data
         self.grid = grid
 
-        self._validate_dataarray()
+        _validate_dataarray(data, name)
 
         self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
@@ -506,50 +506,6 @@ class Field:
             fi = _ei % self.n_face
             return zi, fi
 
-    def _validate_dataarray(self):
-        """Verifies that all the required attributes are present in the xarray.DataArray or
-        uxarray.UxDataArray object.
-        """
-        if isinstance(self.data, ux.UxDataArray):
-            # Validate dimensions
-            if not ("nz1" in self.data.dims or "nz" in self.data.dims):
-                raise ValueError(
-                    f"Field {self.name} is missing a 'nz1' or 'nz' dimension in the field's metadata. "
-                    "This attribute is required for xarray.DataArray objects."
-                )
-
-            if "time" not in self.data.dims:
-                raise ValueError(
-                    f"Field {self.name} is missing a 'time' dimension in the field's metadata. "
-                    "This attribute is required for xarray.DataArray objects."
-                )
-
-        # Validate attributes
-        required_keys = ["location", "mesh"]
-        for key in required_keys:
-            if key not in self.data.attrs.keys():
-                raise ValueError(
-                    f"Field {self.name} is missing a '{key}' attribute in the field's metadata. "
-                    "This attribute is required for xarray.DataArray objects."
-                )
-
-        if type(self.data) is ux.UxDataArray:
-            self._validate_uxgrid()
-
-    def _validate_uxgrid(self):
-        """Verifies that all the required attributes are present in the uxarray.UxDataArray.UxGrid object."""
-        if "Conventions" not in self.grid.attrs.keys():
-            raise ValueError(
-                f"Field {self.name} is missing a 'Conventions' attribute in the field's metadata. "
-                "This attribute is required for uxarray.UxDataArray objects."
-            )
-        if self.grid.attrs["Conventions"] != "UGRID-1.0":
-            raise ValueError(
-                f"Field {self.name} has a 'Conventions' attribute that is not 'UGRID-1.0'. "
-                "This attribute is required for uxarray.UxDataArray objects."
-                "See https://ugrid-conventions.github.io/ugrid-conventions/ for more information."
-            )
-
     def __getattr__(self, key: str):
         return getattr(self.data, key)
 
@@ -674,3 +630,49 @@ class VectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
+
+
+def _validate_dataarray(data, name):
+    """Verifies that all the required attributes are present in the xarray.DataArray or
+    uxarray.UxDataArray object.
+    """
+    if isinstance(data, ux.UxDataArray):
+        # Validate dimensions
+        if not ("nz1" in data.dims or "nz" in data.dims):
+            raise ValueError(
+                f"Field {name} is missing a 'nz1' or 'nz' dimension in the field's metadata. "
+                "This attribute is required for xarray.DataArray objects."
+            )
+
+        if "time" not in data.dims:
+            raise ValueError(
+                f"Field {name} is missing a 'time' dimension in the field's metadata. "
+                "This attribute is required for xarray.DataArray objects."
+            )
+
+    # Validate attributes
+    required_keys = ["location", "mesh"]
+    for key in required_keys:
+        if key not in data.attrs.keys():
+            raise ValueError(
+                f"Field {name} is missing a '{key}' attribute in the field's metadata. "
+                "This attribute is required for xarray.DataArray objects."
+            )
+
+    if type(data) is ux.UxDataArray:
+        _validate_uxgrid(data.uxgrid, name)
+
+
+def _validate_uxgrid(grid, name):
+    """Verifies that all the required attributes are present in the uxarray.UxDataArray.UxGrid object."""
+    if "Conventions" not in grid.attrs.keys():
+        raise ValueError(
+            f"Field {name} is missing a 'Conventions' attribute in the field's metadata. "
+            "This attribute is required for uxarray.UxDataArray objects."
+        )
+    if grid.attrs["Conventions"] != "UGRID-1.0":
+        raise ValueError(
+            f"Field {name} has a 'Conventions' attribute that is not 'UGRID-1.0'. "
+            "This attribute is required for uxarray.UxDataArray objects."
+            "See https://ugrid-conventions.github.io/ugrid-conventions/ for more information."
+        )
