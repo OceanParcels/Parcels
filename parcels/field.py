@@ -143,7 +143,7 @@ class Field:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
-        grid: ux.UxGrid | None = None,  # To do : Once parcels.Grid class is added, allow for it to be passed here
+        grid: ux.UxGrid | None = None,  # TODO Nick : Once parcels.Grid class is added, allow for it to be passed here
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
         allow_time_extrapolation: bool | None = None,
@@ -188,7 +188,7 @@ class Field:
                 self._vertical_location = "center"
             elif "nz" in data.dims:
                 self._vertical_location = "face"
-        else:  # To do : This bit probably needs an overhaul once the parcels.Grid class is integrated.
+        else:  # TODO Nick : This bit probably needs an overhaul once the parcels.Grid class is integrated.
             self._spatialhash = None
             # Set the grid type
             if "x_g" in self.data.coords:
@@ -283,7 +283,7 @@ class Field:
             else:
                 return self.data.sizes["lon"]
         else:
-            return 0  # To do : Discuss what we want to return for uxdataarray obj
+            return 0  # TODO : Discuss what we want to return as xdim for uxdataarray obj
 
     @property
     def ydim(self):
@@ -295,7 +295,7 @@ class Field:
             else:
                 return self.data.sizes["lat"]
         else:
-            return 0  # To do : Discuss what we want to return for uxdataarray obj
+            return 0  # TODO : Discuss what we want to return as ydim for uxdataarray obj
 
     @property
     def zdim(self):
@@ -311,7 +311,7 @@ class Field:
         if type(self.data) is ux.uxDataArray:
             return self.grid.n_face
         else:
-            return 0  # To do : Discuss what we want to return for dataarray obj
+            return 0  # TODO : Discuss what we want to return as n_face for dataarray obj
 
     @property
     def interp_method(self):
@@ -345,8 +345,8 @@ class Field:
             # Search using global search
             fi, bcoords = self._spatialhash.query([[x, y]])  # Get the face id for the particle
             if fi == -1:
-                raise FieldOutOfBoundError(z, y, x)  # To do : how to handle lost particle ??
-            # To do : Do the vertical grid search
+                raise FieldOutOfBoundError(z, y, x)
+            # TODO Joe : Do the vertical grid search
             # zi = self._vertical_search(z)
             zi = 0  # For now
             return bcoords, self.ravel_index(zi, 0, fi)
@@ -356,26 +356,26 @@ class Field:
             bcoords, err = self._get_ux_barycentric_coordinates(y, x, fi)
 
             if ((bcoords >= 0).all()) and ((bcoords <= 1.0).all()) and err < tol:
-                # To do: Do the vertical grid search
+                # TODO Joe : Do the vertical grid search
                 return bcoords, ei
             else:
                 # In this case we need to search the neighbors
                 for neighbor in self.grid.face_face_connectivity[fi, :]:
                     bcoords, err = self._get_ux_barycentric_coordinates(y, x, neighbor)
                     if ((bcoords >= 0).all()) and ((bcoords <= 1.0).all()) and err < tol:
-                        # To do: Do the vertical grid search
+                        # TODO Joe: Do the vertical grid search
                         return bcoords, self.ravel_index(zi, 0, neighbor)
 
                 # If we reach this point, we do a global search as a last ditch effort the particle is out of bounds
                 fi, bcoords = self._spatialhash.query([[x, y]])  # Get the face id for the particle
                 if fi == -1:
-                    raise FieldOutOfBoundError(z, y, x)  # To do : how to handle lost particle ??
+                    raise FieldOutOfBoundError(z, y, x)
 
     def _search_indices_structured(self, z, y, x, ei=None, search2D=False):
         if self._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(self, z, y, x, ei=ei, search2D=search2D)
         else:
-            ## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_curvilinear
+            ## TODO :  Still need to implement the search_indices_curvilinear
             # (zeta, eta, xsi, zi, yi, xi) = _search_indices_curvilinear(
             #     self, z, y, x, ei=ei, search2D=search2D
             # )
@@ -628,7 +628,7 @@ class VectorField:
         self._vector_interp_method = method
 
     # @staticmethod
-    # To do : def _check_grid_dimensions(grid1, grid2):
+    # TODO : def _check_grid_dimensions(grid1, grid2):
     #     return (
     #         np.allclose(grid1.lon, grid2.lon)
     #         and np.allclose(grid1.lat, grid2.lat)

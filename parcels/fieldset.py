@@ -178,7 +178,7 @@ class FieldSet:
             Field(
                 name,
                 data,
-                interp_method=None,  # To do : Need to define an interpolation method for constants
+                interp_method=None,  # TODO : Need to define an interpolation method for constants
                 allow_time_extrapolation=True,
             )
         )

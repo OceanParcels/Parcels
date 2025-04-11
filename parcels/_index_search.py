@@ -104,7 +104,7 @@ def search_indices_vertical_z(depth, gridindexingtype: GridIndexingType, z: floa
     return (zi, zeta)
 
 
-## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_vertical_s function
+## TODO :  Still need to implement the search_indices_vertical_s function
 def search_indices_vertical_s(
     field: Field,
     interp_method: InterpMethodOption,
@@ -183,13 +183,11 @@ def search_indices_vertical_s(
 def _search_indices_rectilinear(
     field: Field, time: datetime, z: float, y: float, x: float, ti: int, ei: int | None = None, search2D=False
 ):
-    # To do : If ei is provided, check if particle is in the same cell
+    # TODO : If ei is provided, check if particle is in the same cell
     if field.xdim > 1 and (not field.zonal_periodic):
-        if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:  # To do : implement lonlat_minmax at field level
+        if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:
             _raise_field_out_of_bound_error(z, y, x)
-    if field.ydim > 1 and (
-        y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]
-    ):  # To do : implement lonlat_minmax at field level
+    if field.ydim > 1 and (y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]):
         _raise_field_out_of_bound_error(z, y, x)
 
     if field.xdim > 1:
@@ -255,7 +253,7 @@ def _search_indices_rectilinear(
             except FieldOutOfBoundSurfaceError:
                 _raise_field_out_of_bound_surface_error(z, y, x)
         elif field._gtype == GridType.RectilinearSGrid:
-            ## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_vertical_s function
+            ## TODO :  Still need to implement the search_indices_vertical_s function
             (zi, zeta) = search_indices_vertical_s(field.grid, field.interp_method, time, z, y, x, ti, yi, xi, eta, xsi)
     else:
         zi, zeta = -1, 0
@@ -268,7 +266,7 @@ def _search_indices_rectilinear(
     return (zeta, eta, xsi, _ei)
 
 
-## joe@fluidnumerics.com : 3/27/25 : To do :  Still need to implement the search_indices_curvilinear
+## TODO :  Still need to implement the search_indices_curvilinear
 def _search_indices_curvilinear(field: Field, time, z, y, x, ti, particle=None, search2D=False):
     if particle:
         zi, yi, xi = field.unravel_index(particle.ei)
