@@ -46,7 +46,6 @@ class FieldSet:
         self.datasets = datasets
 
         self._completed: bool = False
-        self._gridset_size: int = 0
         self._fieldnames = []
         time_origin = None
         # Create pointers to each (Ux)DataArray
@@ -56,7 +55,6 @@ class FieldSet:
                     self.add_field(Field(field, ds[field], grid=ds[field].uxgrid), field)
                 else:
                     self.add_field(Field(field, ds[field]), field)
-                self._gridset_size += 1
                 self._fieldnames.append(field)
 
             if "time" in ds.coords:
@@ -113,7 +111,7 @@ class FieldSet:
 
     @property
     def gridset_size(self):
-        return self._gridset_size
+        return len(self._fieldnames)
 
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
