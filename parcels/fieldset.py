@@ -1,6 +1,3 @@
-import os
-from glob import glob
-
 import numpy as np
 import uxarray as ux
 import xarray as xr
@@ -221,18 +218,6 @@ class FieldSet:
         self._add_UVfield()
 
         self._completed = True
-
-    @classmethod
-    def _parse_wildcards(cls, paths, filenames, var):
-        if not isinstance(paths, list):
-            paths = sorted(glob(str(paths)))
-        if len(paths) == 0:
-            notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-            raise OSError(f"FieldSet files not found for variable {var}: {notfound_paths}")
-        for fp in paths:
-            if not os.path.exists(fp):
-                raise OSError(f"FieldSet file not found: {fp}")
-        return paths
 
     @classmethod
     def from_data(
