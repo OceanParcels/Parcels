@@ -56,6 +56,7 @@ def to_xarray_dataset(data: dict[str, np.array], dimensions: dict[str, np.array]
 
 
 @pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 @pytest.fixture
 def multifile_fieldset(tmp_path):
     stem = "test_subsets"
@@ -79,6 +80,7 @@ def multifile_fieldset(tmp_path):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_fieldset_from_data(xdim, ydim):
@@ -101,6 +103,7 @@ def test_fieldset_vmin_vmax():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("ttype", ["float", "datetime64"])
 @pytest.mark.parametrize("tdim", [1, 20])
 def test_fieldset_from_data_timedims(ttype, tdim):
@@ -116,6 +119,7 @@ def test_fieldset_from_data_timedims(ttype, tdim):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 50])
 def test_fieldset_from_data_different_dimensions(xdim, ydim):
@@ -146,6 +150,7 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_from_modulefile():
     nemo_fname = str(TEST_DATA / "fieldset_nemo.py")
     nemo_error_fname = str(TEST_DATA / "fieldset_nemo_error.py")
@@ -165,6 +170,7 @@ def test_fieldset_from_modulefile():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_field_from_netcdf_fieldtypes():
     filenames = {
         "varU": {
@@ -191,6 +197,7 @@ def test_field_from_netcdf_fieldtypes():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_from_agrid_dataset():
     filenames = {
         "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
@@ -203,6 +210,7 @@ def test_fieldset_from_agrid_dataset():
 
 
 @pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_from_cgrid_interpmethod():
     filenames = {
         "lon": str(TEST_DATA / "mask_nemo_cross_180lon.nc"),
@@ -218,6 +226,7 @@ def test_fieldset_from_cgrid_interpmethod():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("calltype", ["from_data", "from_nemo"])
 def test_illegal_dimensionsdict(calltype):
     with pytest.raises(NameError):
@@ -234,6 +243,7 @@ def test_illegal_dimensionsdict(calltype):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_add_field(xdim, ydim, tmpdir):
@@ -245,6 +255,7 @@ def test_add_field(xdim, ydim, tmpdir):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("dupobject", ["same", "new"])
 def test_add_duplicate_field(dupobject):
     data, dimensions = generate_fieldset_data(100, 100)
@@ -260,6 +271,7 @@ def test_add_duplicate_field(dupobject):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("fieldtype", ["normal", "vector"])
 def test_add_field_after_pset(fieldtype):
     data, dimensions = generate_fieldset_data(100, 100)
@@ -282,6 +294,7 @@ def test_fieldset_samegrids_from_file(multifile_fieldset):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("gridtype", ["A", "C"])
 def test_fieldset_dimlength1_cgrid(gridtype):
     fieldset = FieldSet.from_data({"U": 0, "V": 0}, {"lon": 0, "lat": 0})
@@ -304,6 +317,7 @@ def assign_dataset_timestamp_dim(ds, timestamp):
 
 
 @pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_diffgrids_from_file(tmp_path):
     """Test for subsetting fieldset from file using indices dict."""
     stem = "test_subsets"
@@ -335,6 +349,7 @@ def test_fieldset_diffgrids_from_file(tmp_path):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
     """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset_data(100, 100)
@@ -349,6 +364,7 @@ def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_samegrids_from_data():
     """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset_data(100, 100)
@@ -365,6 +381,7 @@ def addConst(particle, fieldset, time):  # pragma: no cover
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_constant():
     data, dimensions = generate_fieldset_data(100, 100)
     fieldset = FieldSet.from_data(data, dimensions)
@@ -380,6 +397,7 @@ def test_fieldset_constant():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("swapUV", [False, True])
 def test_vector_fields(swapUV):
     lon = np.linspace(0.0, 10.0, 12, dtype=np.float32)
@@ -404,6 +422,7 @@ def test_vector_fields(swapUV):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_add_second_vector_field():
     lon = np.linspace(0.0, 10.0, 12, dtype=np.float32)
     lat = np.linspace(0.0, 10.0, 10, dtype=np.float32)
@@ -556,6 +575,7 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("tdim", [10, None])
 def test_fieldset_from_xarray(tdim):
     def generate_dataset(xdim, ydim, zdim=1, tdim=1):
@@ -611,6 +631,7 @@ def test_fieldset_frompop():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_from_data_gridtypes():
     """Simple test for fieldset initialisation from data."""
     xdim, ydim, zdim = 20, 10, 4

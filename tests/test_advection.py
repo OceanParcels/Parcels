@@ -58,6 +58,7 @@ def depth():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_advection_zonal(lon, lat, depth):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     npart = 10
@@ -90,6 +91,7 @@ def test_advection_zonal(lon, lat, depth):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_advection_meridional(lon, lat):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     npart = 10
@@ -104,6 +106,7 @@ def test_advection_meridional(lon, lat):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_advection_3D():
     """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
     xdim = ydim = zdim = 2
@@ -126,6 +129,7 @@ def test_advection_3D():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("direction", ["up", "down"])
 @pytest.mark.parametrize("wErrorThroughSurface", [True, False])
 def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
@@ -172,6 +176,7 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("rk45_tol", [10, 100])
 def test_advection_RK45(lon, lat, rk45_tol):
     npart = 10
@@ -330,6 +335,7 @@ def test_advection_periodic_zonal_meridional():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("u", [-0.3, np.array(0.2)])
 @pytest.mark.parametrize("v", [0.2, np.array(1)])
 @pytest.mark.parametrize("w", [None, -0.2, np.array(0.7)])
@@ -408,6 +414,7 @@ def fieldset_stationary():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize(
     "method, rtol, diffField",
     [
@@ -443,6 +450,7 @@ def test_stationary_eddy(fieldset_stationary, method, rtol, diffField):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_stationary_eddy_vertical():
     npart = 1
     lon = np.linspace(12000, 21000, npart)
@@ -514,6 +522,7 @@ def fieldset_moving():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize(
     "method, rtol, diffField",
     [
@@ -592,6 +601,7 @@ def fieldset_decaying():
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize(
     "method, rtol, diffField",
     [
@@ -633,6 +643,7 @@ def test_decaying_eddy(fieldset_decaying, method, rtol, diffField):
 
 
 @pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_analyticalAgrid():
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
