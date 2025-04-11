@@ -145,7 +145,7 @@ class FieldSet:
             self._gridset_size += 1
             self._fieldnames.append(name)
 
-    def add_constant_field(self, name: str, value: float, mesh: Mesh = "flat"):
+    def add_constant_field(self, name: str, value, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
            useful e.g. when using constant horizontal diffusivity
 
@@ -153,8 +153,8 @@ class FieldSet:
         ----------
         name : str
             Name of the :class:`parcels.field.Field` object to be added
-        value : float
-            Value of the constant field (stored as 32-bit float)
+        value :
+            Value of the constant field
         mesh : str
             String indicating the type of mesh coordinates and
             units used during velocity interpolation, see also `this tutorial <../examples/tutorial_unitconverters.ipynb>`__:
@@ -164,7 +164,7 @@ class FieldSet:
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
         time = 0.0
-        values = np.zeros((1, 1, 1, 1), dtype=np.float32) + value
+        values = np.full((1, 1, 1, 1), value)
         data = xr.DataArray(
             data=values,
             name=name,
