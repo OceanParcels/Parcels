@@ -79,7 +79,7 @@ def multifile_fieldset(tmp_path):
     return FieldSet.from_netcdf(files, variables, dimensions)
 
 
-@pytest.mark.v4alpha
+@pytest.mark.v4remove
 @pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 200])
@@ -102,7 +102,7 @@ def test_fieldset_vmin_vmax():
     assert np.isclose(np.amax(fieldset.U.data), 7)
 
 
-@pytest.mark.v4alpha
+@pytest.mark.v4remove
 @pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("ttype", ["float", "datetime64"])
 @pytest.mark.parametrize("tdim", [1, 20])
@@ -118,7 +118,7 @@ def test_fieldset_from_data_timedims(ttype, tdim):
         assert fieldset.U.time[i].data == dtime
 
 
-@pytest.mark.v4alpha
+@pytest.mark.v4remove
 @pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("xdim", [100, 200])
 @pytest.mark.parametrize("ydim", [100, 50])
@@ -225,9 +225,9 @@ def test_fieldset_from_cgrid_interpmethod():
         FieldSet.from_c_grid_dataset(filenames, variable, dimensions, interp_method="partialslip")
 
 
-@pytest.mark.v4alpha
+@pytest.mark.v4future
 @pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("calltype", ["from_data", "from_nemo"])
+@pytest.mark.parametrize("calltype", ["from_nemo"])
 def test_illegal_dimensionsdict(calltype):
     with pytest.raises(NameError):
         if calltype == "from_data":
@@ -248,7 +248,7 @@ def test_illegal_dimensionsdict(calltype):
 @pytest.mark.parametrize("ydim", [100, 200])
 def test_add_field(xdim, ydim, tmpdir):
     data, dimensions = generate_fieldset_data(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
     field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
@@ -259,7 +259,7 @@ def test_add_field(xdim, ydim, tmpdir):
 @pytest.mark.parametrize("dupobject", ["same", "new"])
 def test_add_duplicate_field(dupobject):
     data, dimensions = generate_fieldset_data(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
     field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
     with pytest.raises(RuntimeError):
@@ -275,7 +275,7 @@ def test_add_duplicate_field(dupobject):
 @pytest.mark.parametrize("fieldtype", ["normal", "vector"])
 def test_add_field_after_pset(fieldtype):
     data, dimensions = generate_fieldset_data(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
     pset = ParticleSet(fieldset, Particle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
     field1 = Field("field1", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     field2 = Field("field2", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
@@ -297,7 +297,7 @@ def test_fieldset_samegrids_from_file(multifile_fieldset):
 @pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("gridtype", ["A", "C"])
 def test_fieldset_dimlength1_cgrid(gridtype):
-    fieldset = FieldSet.from_data({"U": 0, "V": 0}, {"lon": 0, "lat": 0})
+    fieldset = FieldSet.from_data({"U": 0, "V": 0}, {"lon": 0, "lat": 0})  # TODO : Remove from_data
     if gridtype == "C":
         fieldset.U.interp_method = "cgrid_velocity"
         fieldset.V.interp_method = "cgrid_velocity"
@@ -353,7 +353,7 @@ def test_fieldset_diffgrids_from_file(tmp_path):
 def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
     """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset_data(100, 100)
-    field_U = FieldSet.from_data(data, dimensions).U
+    field_U = FieldSet.from_data(data, dimensions).U  # TODO : Remove from_data
     field_U.name = "B"
 
     multifile_fieldset.add_field(field_U, "B")
@@ -368,7 +368,7 @@ def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
 def test_fieldset_samegrids_from_data():
     """Test for subsetting fieldset from file using indices dict."""
     data, dimensions = generate_fieldset_data(100, 100)
-    fieldset1 = FieldSet.from_data(data, dimensions)
+    fieldset1 = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
     field_data = fieldset1.U
     field_data.name = "B"
     fieldset1.add_field(field_data, "B")
@@ -384,7 +384,7 @@ def addConst(particle, fieldset, time):  # pragma: no cover
 @pytest.mark.xfail(reason="GH1946")
 def test_fieldset_constant():
     data, dimensions = generate_fieldset_data(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
     westval = -0.2
     eastval = 0.3
     fieldset.add_constant("movewest", westval)
@@ -406,7 +406,7 @@ def test_vector_fields(swapUV):
     V = np.zeros((10, 12), dtype=np.float32)
     data = {"U": U, "V": V}
     dimensions = {"U": {"lat": lat, "lon": lon}, "V": {"lat": lat, "lon": lon}}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")  # TODO : Remove from_data
     if swapUV:  # we test that we can freely edit whatever UV field
         UV = VectorField("UV", fieldset.V, fieldset.U)
         fieldset.add_vector_field(UV)
@@ -430,11 +430,11 @@ def test_add_second_vector_field():
     V = np.zeros((10, 12), dtype=np.float32)
     data = {"U": U, "V": V}
     dimensions = {"U": {"lat": lat, "lon": lon}, "V": {"lat": lat, "lon": lon}}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")  # TODO : Remove from_data
 
     data2 = {"U2": U, "V2": V}
     dimensions2 = {"lon": [ln + 0.1 for ln in lon], "lat": [lt - 0.1 for lt in lat]}
-    fieldset2 = FieldSet.from_data(data2, dimensions2, mesh="flat")
+    fieldset2 = FieldSet.from_data(data2, dimensions2, mesh="flat")  # TODO : Remove from_data
 
     UV2 = VectorField("UV2", fieldset2.U2, fieldset2.V2)
     fieldset.add_vector_field(UV2)
@@ -464,11 +464,11 @@ def test_timestamps(datetype, tmpdir):
         dims1["time"] = np.arange("2005-02-01", "2005-02-11", dtype="datetime64[D]")
         dims2["time"] = np.arange("2005-02-11", "2005-02-15", dtype="datetime64[D]")
 
-    fieldset1 = FieldSet.from_data(data1, dims1)
+    fieldset1 = FieldSet.from_data(data1, dims1)  # TODO : Remove from_data
     fieldset1.U.data[0, :, :] = 2.0
     fieldset1.write(tmpdir.join("file1"))
 
-    fieldset2 = FieldSet.from_data(data2, dims2)
+    fieldset2 = FieldSet.from_data(data2, dims2)  # TODO : Remove from_data
     fieldset2.U.data[0, :, :] = 0.0
     fieldset2.write(tmpdir.join("file2"))
 
@@ -535,7 +535,7 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
         data = {"U": U, "V": V, "W": W, "temp": temp, "D": D}
         fieldset = FieldSet.from_data(
             data, dimensions, mesh="flat", time_periodic=time_periodic, allow_time_extrapolation=True
-        )
+        )  # TODO : Remove from_data
 
     def sampleTemp(particle, fieldset, time):  # pragma: no cover
         particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
@@ -650,7 +650,7 @@ def test_fieldset_from_data_gridtypes():
         depth_s[k, :, :] = depth[k]
 
     # Rectilinear Z grid
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")  # TODO : Remove from_data
     pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     plon = pset.lon
@@ -661,7 +661,7 @@ def test_fieldset_from_data_gridtypes():
 
     # Rectilinear S grid
     dimensions["depth"] = depth_s
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")  # TODO : Remove from_data
     pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
@@ -671,7 +671,7 @@ def test_fieldset_from_data_gridtypes():
     dimensions["lon"] = lonm
     dimensions["lat"] = latm
     dimensions["depth"] = depth
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")  # TODO : Remove from_data
     pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
@@ -679,7 +679,7 @@ def test_fieldset_from_data_gridtypes():
 
     # Curvilinear S grid
     dimensions["depth"] = depth_s
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")  # TODO : Remove from_data
     pset = ParticleSet(fieldset, Particle, [0, 0], [0, 0], [0, 0.4])
     pset.execute(AdvectionRK4, runtime=1.5, dt=0.5)
     assert np.allclose(plon, pset.lon)
