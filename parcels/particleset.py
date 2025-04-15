@@ -430,7 +430,7 @@ class ParticleSet:
         may be quite expensive.
         """
         for i, grid in enumerate(self.fieldset.gridset.grids):
-            if grid._gtype != GridType.CurvilinearGrid:
+            if grid._gtype not in [GridType.CurvilinearZGrid, GridType.CurvilinearSGrid]:
                 continue
 
             tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
