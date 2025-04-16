@@ -56,6 +56,8 @@ def data_2d():
     return create_interpolation_data().isel(depth=0).values
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize(
     "func, eta, xsi, expected",
     [
@@ -74,6 +76,8 @@ def test_raw_2d_interpolation(data_2d, func, eta, xsi, expected):
     assert func(ctx) == expected
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.usefixtures("tmp_interpolator_registry")
 def test_interpolator_override():
     fieldset = create_fieldset_zeros_3d()
@@ -86,6 +90,8 @@ def test_interpolator_override():
         fieldset.U[0, 0.5, 0.5, 0.5]
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.usefixtures("tmp_interpolator_registry")
 def test_full_depth_provided_to_interpolators():
     """The full depth needs to be provided to the interpolation schemes as some interpolators
@@ -105,6 +111,8 @@ def test_full_depth_provided_to_interpolators():
     fieldset.U[0.5, 0.5, 0.5, 0.5]
 
 
+@pytest.mark.v4remove
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize(
     "interp_method",
     [

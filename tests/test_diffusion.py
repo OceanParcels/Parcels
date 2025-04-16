@@ -17,6 +17,8 @@ from parcels import (
 from tests.utils import create_fieldset_zeros_conversion
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 def test_fieldKh_Brownian(mesh):
     xdim = 200
@@ -50,6 +52,8 @@ def test_fieldKh_Brownian(mesh):
     assert np.allclose(np.mean(lats), 0, atol=tol)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("kernel", [AdvectionDiffusionM1, AdvectionDiffusionEM])
 def test_fieldKh_SpatiallyVaryingDiffusion(mesh, kernel):
@@ -83,6 +87,8 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, kernel):
     assert stats.skew(lons) > stats.skew(lats)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("lambd", [1, 5])
 def test_randomexponential(lambd):
     fieldset = create_fieldset_zeros_conversion()
@@ -109,6 +115,8 @@ def test_randomexponential(lambd):
     assert np.allclose(np.mean(depth), expected_mean, rtol=0.1)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("mu", [0.8 * np.pi, np.pi])
 @pytest.mark.parametrize("kappa", [2, 4])
 def test_randomvonmises(mu, kappa):

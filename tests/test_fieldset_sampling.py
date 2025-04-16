@@ -85,6 +85,8 @@ def fieldset_geometric_polar():
     return create_fieldset_geometric_polar()
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_sample(fieldset):
     """Sample the fieldset using indexing notation."""
     xdim, ydim = 120, 80
@@ -98,6 +100,8 @@ def test_fieldset_sample(fieldset):
     assert np.allclose(u_s, lat, rtol=1e-5)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_sample_eval(fieldset):
     """Sample the fieldset using the explicit eval function."""
     xdim, ydim = 60, 60
@@ -120,6 +124,8 @@ def test_fieldset_polar_with_halo(fieldset_geometric_polar):
     assert pset.lon[0] == 0.0
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("zdir", [-1, 1])
 def test_verticalsampling(zdir):
     dims = (4, 2, 2)
@@ -171,6 +177,7 @@ def test_pset_from_field():
     assert np.allclose(pdens / sum(pdens.flatten()), startfield / sum(startfield.flatten()), atol=1e-2)
 
 
+@pytest.mark.v4alpha
 def test_nearest_neighbor_interpolation2D():
     npart = 81
     dims = (2, 2)
@@ -193,6 +200,8 @@ def test_nearest_neighbor_interpolation2D():
     assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5)], 0.0, rtol=1e-5)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_nearest_neighbor_interpolation3D():
     npart = 81
     dims = (2, 2, 2)
@@ -219,6 +228,8 @@ def test_nearest_neighbor_interpolation3D():
     assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5) & (pset.depth < 0.5)], 0.0, rtol=1e-5)
 
 
+@pytest.mark.v4future
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("withDepth", [True, False])
 @pytest.mark.parametrize("arrtype", ["ones", "rand"])
 def test_inversedistance_nearland(withDepth, arrtype):
@@ -260,6 +271,8 @@ def test_inversedistance_nearland(withDepth, arrtype):
     assert success
 
 
+@pytest.mark.v4future
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
 @pytest.mark.parametrize("withW", [False, True])
 @pytest.mark.parametrize("withT", [False, True])
@@ -311,6 +324,8 @@ def test_partialslip_nearland_zonal(boundaryslip, withW, withT):
             assert np.allclose([p.depth for p in pset], 0.1)
 
 
+@pytest.mark.v4future
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
 @pytest.mark.parametrize("withW", [False, True])
 def test_partialslip_nearland_meridional(boundaryslip, withW):
@@ -353,6 +368,8 @@ def test_partialslip_nearland_meridional(boundaryslip, withW):
             assert np.allclose([p.depth for p in pset], 0.1)
 
 
+@pytest.mark.v4future
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("boundaryslip", ["freeslip", "partialslip"])
 def test_partialslip_nearland_vertical(boundaryslip):
     npart = 20
@@ -381,6 +398,8 @@ def test_partialslip_nearland_vertical(boundaryslip):
         assert np.allclose([p.lat for p in pset], 0.1)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_sample_particle():
     """Sample the fieldset using an array of particles."""
     npart = 120
@@ -403,6 +422,8 @@ def test_fieldset_sample_particle():
     assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_sample_geographic(fieldset_geometric):
     """Sample a fieldset with conversion to geographic units (degrees)."""
     npart = 120
@@ -419,6 +440,8 @@ def test_fieldset_sample_geographic(fieldset_geometric):
     assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_sample_geographic_noconvert(fieldset_geometric):
     """Sample a fieldset without conversion to geographic units."""
     npart = 120
@@ -435,6 +458,8 @@ def test_fieldset_sample_geographic_noconvert(fieldset_geometric):
     assert np.allclose(pset.u, lat * 1000 * 1.852 * 60, rtol=1e-6)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_fieldset_sample_geographic_polar(fieldset_geometric_polar):
     """Sample a fieldset with conversion to geographic units and a pole correction."""
     npart = 120
@@ -451,6 +476,8 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar):
     assert np.allclose(pset.u, lat, rtol=1e-2)
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_meridionalflow_spherical():
     """Create uniform NORTHWARD flow on spherical earth and advect particles.
 
@@ -480,6 +507,8 @@ def test_meridionalflow_spherical():
     assert pset.lon[1] - lonstart[1] < 1e-4
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_zonalflow_spherical():
     """Create uniform EASTWARD flow on spherical earth and advect particles.
 
@@ -516,6 +545,8 @@ def test_zonalflow_spherical():
     assert abs(pset.p[1] - p_fld) < 1e-4
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 def test_random_field():
     """Sampling test that tests for overshoots by sampling a field of random numbers between 0 and 1."""
     xdim, ydim = 20, 20
@@ -540,6 +571,8 @@ def test_random_field():
     assert (sampled >= 0.0).all()
 
 
+@pytest.mark.v4alpha
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("allow_time_extrapolation", [True, False])
 def test_sampling_out_of_bounds_time(allow_time_extrapolation):
     xdim, ydim, tdim = 10, 10, 10
@@ -658,6 +691,8 @@ def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir):
     assert np.allclose(pset.sample_var, 10.0)
 
 
+@pytest.mark.v4future
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("npart", [1, 10])
 def test_sampling_multigrids_non_vectorfield(npart):
     xdim, ydim = 100, 200
@@ -697,6 +732,8 @@ def test_sampling_multigrids_non_vectorfield(npart):
     assert np.allclose(pset.sample_var, 10.0)
 
 
+@pytest.mark.v4future
+@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("ugridfactor", [1, 10])
 def test_sampling_multiple_grid_sizes(ugridfactor):
     xdim, ydim = 10, 20
@@ -724,6 +761,8 @@ def test_sampling_multiple_grid_sizes(ugridfactor):
     assert np.all((0 <= pset.xi) & (pset.xi < xdim * ugridfactor))
 
 
+@pytest.mark.v4future
+@pytest.mark.xfail(reason="GH1946")
 def test_multiple_grid_addlater_error():
     xdim, ydim = 10, 20
     U = Field(
