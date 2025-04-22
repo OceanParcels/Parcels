@@ -17,7 +17,7 @@ dependencies: #! Keep in sync with [tool.pixi.dependencies] in pyproject.toml
   - dask>=2.0
   - scikit-learn
   - zarr>=2.11.0,!=2.18.0,<3
-  - uxaray>=2025.3.0
+  - uxarray>=2025.3.0
   - pooch
 
   # Notebooks
