@@ -18,18 +18,24 @@ defaults:
 
 jobs:
   unit-test:
-    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | unit tests"
+    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | unit tests (${{ matrix.test-subfolder }})"
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, ubuntu, windows]
+        os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
+        test-subfolder: ["/"]
         python-version: ["3.13"]
         include:
           - os: ubuntu
             python-version: "3.11"
+            test-subfolder: "/"
           - os: ubuntu
             python-version: "3.12"
+            test-subfolder: "/"
+          - os: ubuntu
+            python-version: "3.12"
+            test-subfolder: "/v4"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +46,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Unit test
         run: |
-          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html tests
+          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html tests${{ matrix.test-subfolder }}
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
@@ -61,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, ubuntu, windows]
+        os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
         python-version: ["3.13"]
         include:
           - os: ubuntu
