@@ -139,7 +139,6 @@ class FieldSet:
             raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
         else:
             setattr(self, name, field)
-            self._gridset_size += 1
             self._fieldnames.append(name)
 
     def add_constant_field(self, name: str, value, mesh: Mesh = "flat"):
