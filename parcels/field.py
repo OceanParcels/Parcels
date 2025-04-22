@@ -10,7 +10,6 @@ import uxarray as ux
 import xarray as xr
 from uxarray.grid.neighbors import _barycentric_coordinates
 
-from parcels._compat import add_note
 from parcels._typing import (
     Mesh,
     VectorType,
@@ -409,7 +408,7 @@ class Field:
                 return val
 
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
-            e = add_note(e, f"Error interpolating field '{self.name}'.", before=True)
+            e.add_note(f"Error interpolating field '{self.name}'.")
             raise e
 
     def _check_velocitysampling(self):

@@ -3,8 +3,6 @@ from typing import Any
 import numpy as np
 import xarray as xr
 
-from parcels._compat import add_note
-
 _SUPPORTED_ATTR_TYPES = int | float | str | np.ndarray
 
 
@@ -34,7 +32,7 @@ def assert_common_attrs_equal(
             else:
                 assert d1[key] == d2[key], f"{d1[key]} != {d2[key]}"
         except AssertionError as e:
-            add_note(e, f"error on key {key!r}")
+            e.add_note(f"error on key {key!r}")
             raise
 
 
