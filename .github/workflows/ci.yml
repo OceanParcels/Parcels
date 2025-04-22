@@ -25,13 +25,10 @@ jobs:
       matrix:
         os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
         test-subfolder: ["/"]
-        python-version: ["3.13"]
+        python-version: ["3.12"]
         include:
           - os: ubuntu
             python-version: "3.11"
-            test-subfolder: "/"
-          - os: ubuntu
-            python-version: "3.12"
             test-subfolder: "/"
           - os: ubuntu
             python-version: "3.12"
@@ -52,7 +49,6 @@ jobs:
         uses: codecov/codecov-action@v5.3.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        if: matrix.python-version == '3.13'
         with:
           flags: unit-tests
       - name: Upload test results
@@ -68,7 +64,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
-        python-version: ["3.13"]
+        python-version: ["3.12"]
         include:
           - os: ubuntu
             python-version: "3.11"
