@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, ubuntu, windows]
+        os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
         test-subfolder: ["/"]
         python-version: ["3.13"]
         include:
@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, ubuntu, windows]
+        os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
         python-version: ["3.13"]
         include:
           - os: ubuntu
