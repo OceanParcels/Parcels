@@ -13,6 +13,7 @@ from uxarray.grid.neighbors import _barycentric_coordinates
 from parcels._typing import (
     Mesh,
     VectorType,
+    assert_valid_mesh,
 )
 from parcels.tools._helpers import default_repr, field_repr
 from parcels.tools.converters import (
@@ -156,6 +157,8 @@ class Field:
             raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
         if not isinstance(grid, (ux.Grid, Grid)):
             raise ValueError(f"Expected `grid` to be a uxarray.Grid or parcels Grid object, got {type(grid)}.")
+
+        assert_valid_mesh(mesh_type)
 
         _assert_compatible_combination(data, grid)
 
@@ -698,10 +701,10 @@ def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux
     if isinstance(data, ux.UxDataArray):
         if not isinstance(grid, ux.Grid):
             raise ValueError(
-                f"Data is a uxarray.UxDataArray, expected `grid` to be a uxarray.Grid object, got {type(grid)}."
+                f"Incompatible data-grid combination. Data is a uxarray.UxDataArray, expected `grid` to be a uxarray.Grid object, got {type(grid)}."
             )
     elif isinstance(data, xr.DataArray):
         if not isinstance(grid, Grid):
             raise ValueError(
-                f"Data is a xarray.DataArray, expected `grid` to be a parcels Grid object, got {type(grid)}."
+                f"Incompatible data-grid combination. Data is a xarray.DataArray, expected `grid` to be a parcels Grid object, got {type(grid)}."
             )
