@@ -26,6 +26,7 @@ from parcels.tools.statuscodes import (
     FieldSamplingError,
     _raise_field_out_of_bound_error,
 )
+from parcels.v4.grid import Grid
 
 from ._index_search import _search_indices_rectilinear, _search_time_index
 
@@ -142,7 +143,7 @@ class Field:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
-        grid: ux.Grid | None = None,  # TODO Nick : Once parcels.Grid class is added, allow for it to be passed here
+        grid: ux.Grid | Grid,
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
         allow_time_extrapolation: bool | None = None,
