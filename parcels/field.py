@@ -148,11 +148,25 @@ class Field:
         interp_method: Callable | None = None,
         allow_time_extrapolation: bool | None = None,
     ):
+        if not isinstance(data, (ux.UxDataArray, xr.DataArray)):
+            raise ValueError(
+                f"Expected `data` to be a uxarray.UxDataArray or xarray.DataArray object, got {type(data)}."
+            )
+        if not isinstance(name, str):
+            raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
+        if not isinstance(grid, (ux.Grid, Grid)):
+            raise ValueError(f"Expected `grid` to be a uxarray.Grid or parcels Grid object, got {type(grid)}.")
+
+        _assert_compatible_combination(data, grid)
+
         self.name = name
         self.data = data
         self.grid = grid
 
-        _validate_dataarray(data, name)
+        if isinstance(data, ux.UxDataArray):
+            _validate_uxdataarray(data, name)
+        else:
+            pass  # TODO v4: Add validation for xr.DataArray objects
 
         self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
@@ -632,23 +646,22 @@ class VectorField:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
 
-def _validate_dataarray(data, name):
+def _validate_uxdataarray(data: ux.UxDataArray, name):
     """Verifies that all the required attributes are present in the xarray.DataArray or
     uxarray.UxDataArray object.
     """
-    if isinstance(data, ux.UxDataArray):
-        # Validate dimensions
-        if not ("nz1" in data.dims or "nz" in data.dims):
-            raise ValueError(
-                f"Field {name} is missing a 'nz1' or 'nz' dimension in the field's metadata. "
-                "This attribute is required for xarray.DataArray objects."
-            )
+    # Validate dimensions
+    if not ("nz1" in data.dims or "nz" in data.dims):
+        raise ValueError(
+            f"Field {name} is missing a 'nz1' or 'nz' dimension in the field's metadata. "
+            "This attribute is required for xarray.DataArray objects."
+        )
 
-        if "time" not in data.dims:
-            raise ValueError(
-                f"Field {name} is missing a 'time' dimension in the field's metadata. "
-                "This attribute is required for xarray.DataArray objects."
-            )
+    if "time" not in data.dims:
+        raise ValueError(
+            f"Field {name} is missing a 'time' dimension in the field's metadata. "
+            "This attribute is required for xarray.DataArray objects."
+        )
 
     # Validate attributes
     required_keys = ["location", "mesh"]
@@ -659,8 +672,7 @@ def _validate_dataarray(data, name):
                 "This attribute is required for xarray.DataArray objects."
             )
 
-    if type(data) is ux.UxDataArray:
-        _validate_uxgrid(data.uxgrid, name)
+    _validate_uxgrid(data.uxgrid, name)
 
 
 def _validate_uxgrid(grid, name):
@@ -676,3 +688,16 @@ def _validate_uxgrid(grid, name):
             "This attribute is required for uxarray.UxDataArray objects."
             "See https://ugrid-conventions.github.io/ugrid-conventions/ for more information."
         )
+
+
+def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux.Grid | Grid):
+    if isinstance(data, ux.UxDataArray):
+        if not isinstance(grid, ux.Grid):
+            raise ValueError(
+                f"Data is a uxarray.UxDataArray, expected `grid` to be a uxarray.Grid object, got {type(grid)}."
+            )
+    elif isinstance(data, xr.DataArray):
+        if not isinstance(grid, Grid):
+            raise ValueError(
+                f"Data is a xarray.DataArray, expected `grid` to be a parcels Grid object, got {type(grid)}."
+            )
