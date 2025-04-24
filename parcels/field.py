@@ -168,7 +168,7 @@ class Field:
 
         try:
             if isinstance(data, ux.UxDataArray):
-                _validate_uxdataarray(data)
+                _assert_valid_uxdataarray(data)
             else:
                 pass  # TODO v4: Add validation for xr.DataArray objects
         except Exception as e:
@@ -653,7 +653,7 @@ class VectorField:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
 
-def _validate_uxdataarray(data: ux.UxDataArray):
+def _assert_valid_uxdataarray(data: ux.UxDataArray):
     """Verifies that all the required attributes are present in the xarray.DataArray or
     uxarray.UxDataArray object.
     """
@@ -679,10 +679,10 @@ def _validate_uxdataarray(data: ux.UxDataArray):
                 "This attribute is required for xarray.DataArray objects."
             )
 
-    _validate_uxgrid(data.uxgrid)
+    _assert_valid_uxgrid(data.uxgrid)
 
 
-def _validate_uxgrid(grid):
+def _assert_valid_uxgrid(grid):
     """Verifies that all the required attributes are present in the uxarray.UxDataArray.UxGrid object."""
     if "Conventions" not in grid.attrs.keys():
         raise ValueError(
