@@ -3,11 +3,13 @@
 import numpy as np
 import xarray as xr
 
+__all__ = ["N", "T", "datasets"]
+
 N = 30
 T = 10
 
 
-def rotated_curvilinear_grid():
+def _rotated_curvilinear_grid():
     XG = np.arange(N)
     YG = np.arange(2 * N)
     LON, LAT = np.meshgrid(XG, YG)
@@ -66,7 +68,7 @@ def _polar_to_cartesian(r, theta):
     return x, y
 
 
-def unrolled_cone_curvilinear_grid():
+def _unrolled_cone_curvilinear_grid():
     # Not a great unrolled cone, but this is good enough for testing
     # you can use matplotlib pcolormesh to plot
     XG = np.arange(N)
@@ -126,7 +128,7 @@ def unrolled_cone_curvilinear_grid():
 
 
 datasets = {
-    "2d_left_rotated": rotated_curvilinear_grid(),
+    "2d_left_rotated": _rotated_curvilinear_grid(),
     "ds_2d_left": xr.Dataset(
         {
             "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
@@ -165,5 +167,5 @@ datasets = {
             "time": (["time"], np.arange(T), {"axis": "T"}),
         },
     ),
-    "2d_left_unrolled_cone": unrolled_cone_curvilinear_grid(),
+    "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
 }
