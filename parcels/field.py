@@ -169,6 +169,7 @@ class Field:
         try:
             if isinstance(data, ux.UxDataArray):
                 _assert_valid_uxdataarray(data)
+                # TODO: For unstructured grids, validate that `data.uxgrid` is the same as `grid`
             else:
                 pass  # TODO v4: Add validation for xr.DataArray objects
         except Exception as e:
