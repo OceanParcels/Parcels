@@ -16,7 +16,6 @@ def create_fieldset():
         file,
         variables,
         dimensions,
-        allow_time_extrapolation=True,
         mesh="flat",
     )
 

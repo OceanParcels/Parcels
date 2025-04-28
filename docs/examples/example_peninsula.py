@@ -217,9 +217,7 @@ def test_peninsula_file(tmpdir):
     }
     variables = {"U": "vozocrtx", "V": "vomecrty", "P": "P"}
     dimensions = {"lon": "nav_lon", "lat": "nav_lat", "time": "time_counter"}
-    fieldset = parcels.FieldSet.from_netcdf(
-        filenames, variables, dimensions, allow_time_extrapolation=True
-    )
+    fieldset = parcels.FieldSet.from_netcdf(filenames, variables, dimensions)
     outfile = tmpdir.join("Peninsula")
     pset = peninsula_example(fieldset, outfile, 5, degree=1)
     # Test advection accuracy by comparing streamline values

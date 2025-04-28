@@ -23,16 +23,9 @@ def set_ofam_fieldset(use_xarray=False):
     }
     if use_xarray:
         ds = xr.open_mfdataset([filenames["U"], filenames["V"]], combine="by_coords")
-        return parcels.FieldSet.from_xarray_dataset(
-            ds, variables, dimensions, allow_time_extrapolation=True
-        )
+        return parcels.FieldSet.from_xarray_dataset(ds, variables, dimensions)
     else:
-        return parcels.FieldSet.from_netcdf(
-            filenames,
-            variables,
-            dimensions,
-            allow_time_extrapolation=True,
-        )
+        return parcels.FieldSet.from_netcdf(filenames, variables, dimensions)
 
 
 @pytest.mark.parametrize("use_xarray", [True, False])

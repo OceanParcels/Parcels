@@ -22,7 +22,6 @@ def create_fieldset():
         file,
         variables,
         dimensions,
-        allow_time_extrapolation=True,
         mesh="flat",
         hc=xr.open_dataset(file).hc.values,
     )

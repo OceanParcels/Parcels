@@ -573,8 +573,7 @@ def test_random_field():
 
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("allow_time_extrapolation", [True, False])
-def test_sampling_out_of_bounds_time(allow_time_extrapolation):
+def test_sampling_out_of_bounds_time():
     xdim, ydim, tdim = 10, 10, 10
 
     dimensions = {
@@ -588,14 +587,11 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
         "P": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * dimensions["time"]),
     }
 
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", allow_time_extrapolation=allow_time_extrapolation)
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=-1.0)
-    if allow_time_extrapolation:
+
+    with pytest.raises(RuntimeError):
         pset.execute(SampleP, endtime=-0.9, dt=0.1)
-        assert np.allclose(pset.p, 0.0, rtol=1e-5)
-    else:
-        with pytest.raises(RuntimeError):
-            pset.execute(SampleP, endtime=-0.9, dt=0.1)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=0)
     pset.execute(SampleP, runtime=0.1, dt=0.1)
@@ -610,12 +606,9 @@ def test_sampling_out_of_bounds_time(allow_time_extrapolation):
     assert np.allclose(pset.p, 1.0, rtol=1e-5)
 
     pset = ParticleSet(fieldset, pclass=pclass(), lon=[0.5], lat=[0.5], time=2.0)
-    if allow_time_extrapolation:
+
+    with pytest.raises(RuntimeError):
         pset.execute(SampleP, runtime=0.1, dt=0.1)
-        assert np.allclose(pset.p, 1.0, rtol=1e-5)
-    else:
-        with pytest.raises(RuntimeError):
-            pset.execute(SampleP, runtime=0.1, dt=0.1)
 
 
 @pytest.mark.v4alpha
@@ -673,7 +666,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(npart, tmpdir):
     files = {"U": ufiles, "V": vfiles, "B": bfiles}
     variables = {"U": "vozocrtx", "V": "vomecrty", "B": "B"}
     dimensions = {"lon": "nav_lon", "lat": "nav_lat"}
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps)
 
     fieldset.add_constant("sample_depth", 2.5)
     assert fieldset.U.grid is fieldset.V.grid

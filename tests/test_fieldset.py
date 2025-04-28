@@ -343,7 +343,7 @@ def test_fieldset_diffgrids_from_file(tmp_path):
     variables = {"U": "U", "V": "V"}
     dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions)
     assert fieldset.gridset.size == 2
     assert fieldset.U.grid != fieldset.V.grid
 
@@ -529,12 +529,11 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
             variables,
             {"U": dimnames, "V": dimnames, "W": dimnames, "temp": dimnames, "D": {"lon": "lon", "lat": "lat"}},
             time_periodic=time_periodic,
-            allow_time_extrapolation=True,
         )
     else:
         data = {"U": U, "V": V, "W": W, "temp": temp, "D": D}
         fieldset = FieldSet.from_data(
-            data, dimensions, mesh="flat", time_periodic=time_periodic, allow_time_extrapolation=True
+            data, dimensions, mesh="flat", time_periodic=time_periodic
         )  # TODO : Remove from_data
 
     def sampleTemp(particle, fieldset, time):  # pragma: no cover
