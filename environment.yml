@@ -28,6 +28,7 @@ dependencies: #! Keep in sync with [tool.pixi.dependencies] in pyproject.toml
   - pytest
   - pytest-html
   - coverage
+  - hypothesis
 
   # Typing
   - mypy
