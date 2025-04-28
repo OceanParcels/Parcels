@@ -79,6 +79,7 @@ trajan = "*"
 # Testing
 nbval = "*"
 pytest = "*"
+hypothesis = "*"
 pytest-html = "*"
 coverage = "*"
 
