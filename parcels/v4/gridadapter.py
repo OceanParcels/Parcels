@@ -30,67 +30,68 @@ def get_time(axis: Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
-class GridAdapter(NewGrid):
-    def __init__(self, ds, mesh="flat", *args, **kwargs):
-        super().__init__(ds, *args, **kwargs)
+class GridAdapter:
+    def __init__(self, grid: NewGrid, mesh="flat"):
+        self.grid = grid
         self.mesh = mesh
 
+        # ! Not ideal... Triggers computation on a throwaway item. If adapter is still needed in codebase, and this is prohibitively expensive, perhaps store GridAdapter on Field object instead of Grid
         self.lonlat_minmax = np.array(
             [
-                np.nanmin(self._ds["lon"]),
-                np.nanmax(self._ds["lon"]),
-                np.nanmin(self._ds["lat"]),
-                np.nanmax(self._ds["lat"]),
+                np.nanmin(self.grid._ds["lon"]),
+                np.nanmax(self.grid._ds["lon"]),
+                np.nanmin(self.grid._ds["lat"]),
+                np.nanmax(self.grid._ds["lat"]),
             ]
         )
 
     @property
     def lon(self):
         try:
-            _ = self.axes["X"]
+            _ = self.grid.axes["X"]
         except KeyError:
             return np.zeros(1)
-        return self._ds["lon"].values
+        return self.grid._ds["lon"].values
 
     @property
     def lat(self):
         try:
-            _ = self.axes["Y"]
+            _ = self.grid.axes["Y"]
         except KeyError:
             return np.zeros(1)
-        return self._ds["lat"].values
+        return self.grid._ds["lat"].values
 
     @property
     def depth(self):
         try:
-            _ = self.axes["Z"]
+            _ = self.grid.axes["Z"]
         except KeyError:
             return np.zeros(1)
-        return self._ds["depth"].values
+        return self.grid._ds["depth"].values
 
     @property
     def time(self):
         try:
-            axis = self.axes["T"]
+            axis = self.grid.axes["T"]
         except KeyError:
             return np.zeros(1)
         return get_time(axis)
 
     @property
     def xdim(self):
-        return get_dimensionality(self.axes.get("X"))
+        return get_dimensionality(self.grid.axes.get("X"))
 
     @property
     def ydim(self):
-        return get_dimensionality(self.axes.get("Y"))
+        return get_dimensionality(self.grid.axes.get("Y"))
 
     @property
     def zdim(self):
-        return get_dimensionality(self.axes.get("Z"))
+        return get_dimensionality(self.grid.axes.get("Z"))
 
     @property
     def tdim(self):
-        return get_dimensionality(self.axes.get("T"))
+        return get_dimensionality(self.grid.axes.get("T"))
 
     @property
     def time_origin(self):
