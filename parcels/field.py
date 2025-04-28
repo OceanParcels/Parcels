@@ -145,7 +145,6 @@ class Field:
         grid: ux.Grid | None = None,  # TODO Nick : Once parcels.Grid class is added, allow for it to be passed here
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
-        allow_time_extrapolation: bool | None = None,
     ):
         self.name = name
         self.data = data
@@ -173,11 +172,6 @@ class Field:
             self.units = unitconverters_map[self.name]
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
-
-        if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if len(getattr(self.data, "time", [])) == 1 else False
-        else:
-            self.allow_time_extrapolation = allow_time_extrapolation
 
         if type(self.data) is ux.UxDataArray:
             self._spatialhash = self.grid.get_spatial_hash()
@@ -383,7 +377,7 @@ class Field:
         return (zeta, eta, xsi, zi, yi, xi)
 
     def _search_indices(self, time: datetime, z, y, x, ei=None, search2D=False):
-        tau, ti = _search_time_index(self, time, self.allow_time_extrapolation)
+        tau, ti = _search_time_index(self, time)
 
         if ei is None:
             _ei = None

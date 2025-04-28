@@ -173,7 +173,6 @@ class FieldSet:
                 name,
                 data,
                 interp_method=None,  # TODO : Need to define an interpolation method for constants
-                allow_time_extrapolation=True,
             )
         )
 

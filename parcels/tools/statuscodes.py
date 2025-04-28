@@ -71,10 +71,7 @@ class TimeExtrapolationError(RuntimeError):
     def __init__(self, time, field=None):
         if field is not None and field.grid.time_origin and time is not None:
             time = field.grid.time_origin.fulltime(time)
-        message = (
-            f"{field.name if field else 'Field'} sampled outside time domain at time {time}."
-            " Try setting allow_time_extrapolation to True."
-        )
+        message = f"{field.name if field else 'Field'} sampled outside time domain at time {time}."
         super().__init__(message)
 
 
