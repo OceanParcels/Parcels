@@ -232,16 +232,8 @@ class Field:
                 else:
                     self._gtype = GridType.CurvilinearSGrid
 
-            self._lonlat_minmax = np.array(
-                [np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32
-            )
-
     def __repr__(self):
         return field_repr(self)
-
-    @property
-    def lonlat_minmax(self):
-        return self._lonlat_minmax
 
     @property
     def units(self):
