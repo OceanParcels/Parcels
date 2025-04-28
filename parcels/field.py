@@ -203,7 +203,6 @@ class Field:
             self.allow_time_extrapolation = allow_time_extrapolation
 
         if type(self.data) is ux.UxDataArray:
-            self._spatialhash = self.grid.get_spatial_hash()
             self._gtype = None
             # Set the vertical location
             if "nz1" in data.dims:
@@ -211,7 +210,6 @@ class Field:
             elif "nz" in data.dims:
                 self._vertical_location = "face"
         else:  # TODO Nick : This bit probably needs an overhaul once the parcels.Grid class is integrated.
-            self._spatialhash = None
             # Set the grid type
             if "x_g" in self.data.coords:
                 lon = self.data.x_g
@@ -365,7 +363,7 @@ class Field:
         tol = 1e-10
         if ei is None:
             # Search using global search
-            fi, bcoords = self._spatialhash.query([[x, y]])  # Get the face id for the particle
+            fi, bcoords = self.grid.get_spatial_hash().query([[x, y]])  # Get the face id for the particle
             if fi == -1:
                 raise FieldOutOfBoundError(z, y, x)
             # TODO Joe : Do the vertical grid search
@@ -389,7 +387,7 @@ class Field:
                         return bcoords, self.ravel_index(zi, 0, neighbor)
 
                 # If we reach this point, we do a global search as a last ditch effort the particle is out of bounds
-                fi, bcoords = self._spatialhash.query([[x, y]])  # Get the face id for the particle
+                fi, bcoords = self.grid.get_spatial_hash().query([[x, y]])  # Get the face id for the particle
                 if fi == -1:
                     raise FieldOutOfBoundError(z, y, x)
 
