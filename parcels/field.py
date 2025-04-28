@@ -10,6 +10,7 @@ import uxarray as ux
 import xarray as xr
 from uxarray.grid.neighbors import _barycentric_coordinates
 
+from parcels._core.utils.unstructured import get_vertical_location_from_dims
 from parcels._typing import (
     Mesh,
     VectorType,
@@ -178,7 +179,6 @@ class Field:
 
         self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
-        self._vertical_location = None
 
         # Setting the interpolation method dynamically
         if interp_method is None:
@@ -203,11 +203,6 @@ class Field:
 
         if type(self.data) is ux.UxDataArray:
             self._gtype = None
-            # Set the vertical location
-            if "nz1" in data.dims:
-                self._vertical_location = "center"
-            elif "nz" in data.dims:
-                self._vertical_location = "face"
         else:  # TODO Nick : This bit probably needs an overhaul once the parcels.Grid class is integrated.
             # Set the grid type
             if "x_g" in self.data.coords:
@@ -285,9 +280,10 @@ class Field:
     @property
     def depth(self):
         if type(self.data) is ux.UxDataArray:
-            if self._vertical_location == "center":
+            vertical_location = get_vertical_location_from_dims(self.data.dims)
+            if vertical_location == "center":
                 return self.grid.nz1
-            elif self._vertical_location == "face":
+            elif vertical_location == "face":
                 return self.grid.nz
         else:
             return self.data.depth
