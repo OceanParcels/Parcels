@@ -178,7 +178,6 @@ class Field:
 
         self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
-        self._location = data.attrs["location"]
         self._vertical_location = None
 
         # Setting the interpolation method dynamically
@@ -262,11 +261,11 @@ class Field:
     @property
     def lat(self):
         if type(self.data) is ux.UxDataArray:
-            if self._location == "node":
+            if self.data.attrs["location"] == "node":
                 return self.grid.node_lat
-            elif self._location == "face":
+            elif self.data.attrs["location"] == "face":
                 return self.grid.face_lat
-            elif self._location == "edge":
+            elif self.data.attrs["location"] == "edge":
                 return self.grid.edge_lat
         else:
             return self.data.lat
@@ -274,11 +273,11 @@ class Field:
     @property
     def lon(self):
         if type(self.data) is ux.UxDataArray:
-            if self._location == "node":
+            if self.data.attrs["location"] == "node":
                 return self.grid.node_lon
-            elif self._location == "face":
+            elif self.data.attrs["location"] == "face":
                 return self.grid.face_lon
-            elif self._location == "edge":
+            elif self.data.attrs["location"] == "edge":
                 return self.grid.edge_lon
         else:
             return self.data.lon
