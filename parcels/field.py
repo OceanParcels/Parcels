@@ -29,6 +29,7 @@ from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
 )
 from parcels.v4.grid import Grid
+from parcels.v4.gridadapter import GridAdapter
 
 from ._index_search import _search_indices_rectilinear, _search_time_index
 
@@ -167,6 +168,13 @@ class Field:
         self.data = data
         self.grid = grid
 
+        # For compatibility with parts of the codebase that rely on v3 definition of Grid.
+        # Should be worked to be removed in v4
+        if isinstance(grid, Grid):
+            self.gridadapter = GridAdapter(grid)
+        else:
+            self.gridadapter = None
+
         try:
             if isinstance(data, ux.UxDataArray):
                 _assert_valid_uxdataarray(data)
@@ -201,37 +209,6 @@ class Field:
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
-        if type(self.data) is ux.UxDataArray:
-            self._gtype = None
-        else:  # TODO Nick : This bit probably needs an overhaul once the parcels.Grid class is integrated.
-            # Set the grid type
-            if "x_g" in self.data.coords:
-                lon = self.data.x_g
-            elif "x_c" in self.data.coords:
-                lon = self.data.x_c
-            else:
-                lon = self.data.lon
-
-            if "nz1" in self.data.coords:
-                depth = self.data.nz1
-            elif "nz" in self.data.coords:
-                depth = self.data.nz
-            elif "depth" in self.data.coords:
-                depth = self.data.depth
-            else:
-                depth = None
-
-            if len(lon.shape) <= 1:
-                if depth is None or len(depth.shape) <= 1:
-                    self._gtype = GridType.RectilinearZGrid
-                else:
-                    self._gtype = GridType.RectilinearSGrid
-            else:
-                if depth is None or len(depth.shape) <= 1:
-                    self._gtype = GridType.CurvilinearZGrid
-                else:
-                    self._gtype = GridType.CurvilinearSGrid
-
     def __repr__(self):
         return field_repr(self)
 
@@ -255,7 +232,7 @@ class Field:
             elif self.data.attrs["location"] == "edge":
                 return self.grid.edge_lat
         else:
-            return self.data.lat
+            return self.gridadapter.lat
 
     @property
     def lon(self):
@@ -267,7 +244,7 @@ class Field:
             elif self.data.attrs["location"] == "edge":
                 return self.grid.edge_lon
         else:
-            return self.data.lon
+            return self.gridadapter.lon
 
     @property
     def depth(self):
@@ -278,40 +255,33 @@ class Field:
             elif vertical_location == "face":
                 return self.grid.nz
         else:
-            return self.data.depth
+            return self.gridadapter.depth
 
     @property
     def xdim(self):
         if type(self.data) is xr.DataArray:
-            if "face_lon" in self.data.dims:
-                return self.data.sizes["face_lon"]
-            elif "node_lon" in self.data.dims:
-                return self.data.sizes["node_lon"]
-            else:
-                return self.data.sizes["lon"]
+            return self.gridadapter.xdim
         else:
-            return 0  # TODO : Discuss what we want to return as xdim for uxdataarray obj
+            raise NotImplementedError("xdim not implemented for unstructured grids")
 
     @property
     def ydim(self):
         if type(self.data) is xr.DataArray:
-            if "face_lat" in self.data.dims:
-                return self.data.sizes["face_lat"]
-            elif "node_lat" in self.data.dims:
-                return self.data.sizes["node_lat"]
-            else:
-                return self.data.sizes["lat"]
+            return self.gridadapter.ydim
         else:
-            return 0  # TODO : Discuss what we want to return as ydim for uxdataarray obj
+            raise NotImplementedError("ydim not implemented for unstructured grids")
 
     @property
     def zdim(self):
-        if "nz1" in self.data.dims:
-            return self.data.sizes["nz1"]
-        elif "nz" in self.data.dims:
-            return self.data.sizes["nz"]
+        if type(self.data) is xr.DataArray:
+            return self.gridadapter.zdim
         else:
-            return 0
+            if "nz1" in self.data.dims:
+                return self.data.sizes["nz1"]
+            elif "nz" in self.data.dims:
+                return self.data.sizes["nz"]
+            else:
+                return 0
 
     @property
     def n_face(self):
@@ -379,7 +349,7 @@ class Field:
                     raise FieldOutOfBoundError(z, y, x)
 
     def _search_indices_structured(self, z, y, x, ei=None, search2D=False):
-        if self._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
+        if self.gridadapter._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
             (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(self, z, y, x, ei=ei, search2D=search2D)
         else:
             ## TODO :  Still need to implement the search_indices_curvilinear
