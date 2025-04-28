@@ -10,18 +10,18 @@ from parcels.tools.converters import TimeConverter
 from parcels.v4.grid import Grid as NewGrid
 from parcels.v4.gridadapter import GridAdapter
 
-TestCase = namedtuple("TestCase", ["Grid", "attr", "expected"])
+GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
 
 test_cases = [
-    TestCase(datasets["ds_2d_left"], "lon", datasets["ds_2d_left"].XG.values),
-    TestCase(datasets["ds_2d_left"], "lat", datasets["ds_2d_left"].YG.values),
-    TestCase(datasets["ds_2d_left"], "depth", datasets["ds_2d_left"].ZG.values),
-    TestCase(datasets["ds_2d_left"], "time", datasets["ds_2d_left"].time.values),
-    TestCase(datasets["ds_2d_left"], "xdim", N),
-    TestCase(datasets["ds_2d_left"], "ydim", 2 * N),
-    TestCase(datasets["ds_2d_left"], "zdim", 3 * N),
-    TestCase(datasets["ds_2d_left"], "tdim", T),
-    TestCase(datasets["ds_2d_left"], "time_origin", TimeConverter(datasets["ds_2d_left"].time.values[0])),
+    GridTestCase(datasets["ds_2d_left"], "lon", datasets["ds_2d_left"].XG.values),
+    GridTestCase(datasets["ds_2d_left"], "lat", datasets["ds_2d_left"].YG.values),
+    GridTestCase(datasets["ds_2d_left"], "depth", datasets["ds_2d_left"].ZG.values),
+    GridTestCase(datasets["ds_2d_left"], "time", datasets["ds_2d_left"].time.values),
+    GridTestCase(datasets["ds_2d_left"], "xdim", N),
+    GridTestCase(datasets["ds_2d_left"], "ydim", 2 * N),
+    GridTestCase(datasets["ds_2d_left"], "zdim", 3 * N),
+    GridTestCase(datasets["ds_2d_left"], "tdim", T),
+    GridTestCase(datasets["ds_2d_left"], "time_origin", TimeConverter(datasets["ds_2d_left"].time.values[0])),
 ]
 
 
