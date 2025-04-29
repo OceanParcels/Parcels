@@ -30,7 +30,7 @@ class TimeInterval:
             raise ValueError(f"Expected right to be a datetime or cftime.datetime, got {type(right)}.")
         if left >= right:
             raise ValueError(f"Expected left to be strictly less than right, got left={left} and right={right}.")
-        if not _is_compatible(left, right):
+        if not is_compatible(left, right):
             raise ValueError(f"Expected left and right to be compatible, got left={left} and right={right}.")
 
         self.left = left
@@ -52,16 +52,16 @@ class TimeInterval:
 
     def intersection(self, other: TimeInterval) -> TimeInterval | None:
         """Return the intersection of two time intervals. Returns None if there is no overlap."""
-        try:
-            start = max(self.left, other.left)
-            end = min(self.right, other.right)
-        except Exception as e:
-            raise ValueError("TimeIntervals are not compatible.") from e
+        if not is_compatible(self.left, other.left):
+            raise ValueError("TimeIntervals are not compatible.")
+
+        start = max(self.left, other.left)
+        end = min(self.right, other.right)
 
         return TimeInterval(start, end) if start <= end else None
 
 
-def _is_compatible(t1: datetime | cftime.datetime, t2: datetime | cftime.datetime) -> bool:
+def is_compatible(t1: datetime | cftime.datetime, t2: datetime | cftime.datetime) -> bool:
     """Checks whether two (cftime.)datetime objects are compatible."""
     try:
         t1 - t2
