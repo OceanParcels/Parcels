@@ -32,8 +32,8 @@ def ds_fesom_channel() -> ux.UxDataset:
 def uv_fesom_channel(ds_fesom_channel) -> VectorField:
     UV = VectorField(
         name="UV",
-        U=Field(name="U", data=ds_fesom_channel.U, grid=ds_fesom_channel.uxgrid),
-        V=Field(name="V", data=ds_fesom_channel.V, grid=ds_fesom_channel.uxgrid),
+        U=Field(name="U", data=ds_fesom_channel.U, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
+        V=Field(name="V", data=ds_fesom_channel.V, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
     )
     return UV
 
@@ -42,9 +42,9 @@ def uv_fesom_channel(ds_fesom_channel) -> VectorField:
 def uvw_fesom_channel(ds_fesom_channel) -> VectorField:
     UVW = VectorField(
         name="UVW",
-        U=Field(name="U", data=ds_fesom_channel.U, grid=ds_fesom_channel.uxgrid),
-        V=Field(name="V", data=ds_fesom_channel.V, grid=ds_fesom_channel.uxgrid),
-        W=Field(name="W", data=ds_fesom_channel.W, grid=ds_fesom_channel.uxgrid),
+        U=Field(name="U", data=ds_fesom_channel.U, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
+        V=Field(name="V", data=ds_fesom_channel.V, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
+        W=Field(name="W", data=ds_fesom_channel.W, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseLinearNode),
     )
     return UVW
 
@@ -72,8 +72,8 @@ def test_set_interp_methods(ds_fesom_channel, uv_fesom_channel):
     assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
 
     # Set the interpolation method for each field
-    fieldset.U.interp_method = UXPiecewiseConstantFace
-    fieldset.V.interp_method = UXPiecewiseConstantFace
+    fieldset.fields["U"].interp_method = UXPiecewiseConstantFace
+    fieldset.fields["V"].interp_method = UXPiecewiseConstantFace
 
 
 def test_fesom_channel(ds_fesom_channel, uvw_fesom_channel):
@@ -83,11 +83,6 @@ def test_fesom_channel(ds_fesom_channel, uvw_fesom_channel):
     assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
     assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
     assert (fieldset.fields["W"] == ds_fesom_channel.W).all()
-
-    # Set the interpolation method for each field
-    fieldset.U.interp_method = UXPiecewiseConstantFace
-    fieldset.V.interp_method = UXPiecewiseConstantFace
-    fieldset.W.interp_method = UXPiecewiseLinearNode
 
     pset = ParticleSet(fieldset, pclass=Particle)
     pset.execute(endtime=timedelta(days=1), dt=timedelta(hours=1))
