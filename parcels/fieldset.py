@@ -1,7 +1,9 @@
+import functools
+
 import numpy as np
 import uxarray as ux
 import xarray as xr
-import functools
+
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
 from parcels.tools._helpers import fieldset_repr
@@ -64,11 +66,10 @@ class FieldSet:
         self.time_origin = time_origin
         self._add_UVfield()
 
-
     @property
     def time_interval(self):
-        """"Returns the valid executable time interval of the FieldSet, 
-        which is the intersection of the time intervals of all fields 
+        """ "Returns the valid executable time interval of the FieldSet,
+        which is the intersection of the time intervals of all fields
         in the FieldSet.
         """
         time_intervals = (f.time_interval for f in self.fields.values())
@@ -76,7 +77,7 @@ class FieldSet:
         # Filter out Nones from constant Fields
         time_intervals = (t for t in time_intervals if t is not None)
         return functools.reduce(lambda x, y: x.intersection(y), time_intervals)
-    
+
     def __repr__(self):
         return fieldset_repr(self)
 
