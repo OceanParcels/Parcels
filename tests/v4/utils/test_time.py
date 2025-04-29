@@ -10,7 +10,6 @@ from hypothesis import strategies as st
 from parcels._core.utils.time import TimeInterval
 
 calendar_strategy = st.sampled_from(["gregorian", "proleptic_gregorian", "365_day", "360_day", "julian", "366_day"])
-closed_strategy = st.sampled_from(["right", "left", "both", "neither"])
 
 
 @st.composite
@@ -33,11 +32,9 @@ def cftime_interval_strategy(draw, left=None):
             max_value=timedelta(days=100 * 365),
         )
     )
-    closed = draw(closed_strategy)
-    return TimeInterval(left, right, closed)
+    return TimeInterval(left, right)
 
 
-@pytest.mark.parametrize("closed", ["right", "left", "both", "neither"])
 @pytest.mark.parametrize(
     "left,right",
     [
@@ -46,23 +43,14 @@ def cftime_interval_strategy(draw, left=None):
         (cftime_datetime(2023, 12, 1, calendar="360_day"), cftime_datetime(2023, 12, 2, calendar="360_day")),
     ],
 )
-def test_time_interval_initialization(left, right, closed):
+def test_time_interval_initialization(left, right):
     """Test that TimeInterval can be initialized with valid inputs."""
-    interval = TimeInterval(left, right, closed)
+    interval = TimeInterval(left, right)
     assert interval.left == left
     assert interval.right == right
-    assert interval.closed == closed
 
     with pytest.raises(ValueError):
-        TimeInterval(right, left, closed)
-
-
-def test_time_interval_invalid_closed():
-    """Test that TimeInterval raises ValueError for invalid closed values."""
-    left = datetime(2023, 1, 1)
-    right = datetime(2023, 1, 2)
-    with pytest.raises(ValueError):
-        TimeInterval(left, right, closed="invalid")
+        TimeInterval(right, left)
 
 
 @given(cftime_interval_strategy())
@@ -71,21 +59,90 @@ def test_time_interval_contains(interval):
     right = interval.right
     middle = left + (right - left) / 2
 
-    if interval.closed in ["left", "both"]:
-        assert left in interval
-    if interval.closed in ["right", "both"]:
-        assert right in interval
-
+    assert left in interval
+    assert right in interval
     assert middle in interval
 
 
 def test_time_interval_repr():
     """Test the string representation of TimeInterval."""
-    interval = TimeInterval(datetime(2023, 1, 1, 12, 0), datetime(2023, 1, 2, 12, 0), "both")
-    expected = "TimeInterval(left=datetime.datetime(2023, 1, 1, 12, 0), right=datetime.datetime(2023, 1, 2, 12, 0), closed='both')"
+    interval = TimeInterval(datetime(2023, 1, 1, 12, 0), datetime(2023, 1, 2, 12, 0))
+    expected = "TimeInterval(left=datetime.datetime(2023, 1, 1, 12, 0), right=datetime.datetime(2023, 1, 2, 12, 0))"
     assert repr(interval) == expected
 
 
 @given(cftime_interval_strategy())
 def test_time_interval_equality(interval):
     assert interval == interval
+
+
+@pytest.mark.parametrize(
+    "interval1,interval2,expected",
+    [
+        pytest.param(
+            TimeInterval(
+                cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+            ),
+            TimeInterval(
+                cftime_datetime(2023, 1, 2, calendar="gregorian"), cftime_datetime(2023, 1, 4, calendar="gregorian")
+            ),
+            TimeInterval(
+                cftime_datetime(2023, 1, 2, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+            ),
+            id="overlapping intervals",
+        ),
+        pytest.param(
+            TimeInterval(
+                cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+            ),
+            TimeInterval(
+                cftime_datetime(2023, 1, 5, calendar="gregorian"), cftime_datetime(2023, 1, 6, calendar="gregorian")
+            ),
+            None,
+            id="non-overlapping intervals",
+        ),
+        pytest.param(
+            TimeInterval(
+                cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+            ),
+            TimeInterval(
+                cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 2, calendar="gregorian")
+            ),
+            TimeInterval(
+                cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 2, calendar="gregorian")
+            ),
+            id="intervals with same start time",
+        ),
+        pytest.param(
+            TimeInterval(
+                cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+            ),
+            TimeInterval(
+                cftime_datetime(2023, 1, 2, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+            ),
+            TimeInterval(
+                cftime_datetime(2023, 1, 2, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+            ),
+            id="intervals with same end time",
+        ),
+    ],
+)
+def test_time_interval_intersection(interval1, interval2, expected):
+    """Test the intersection of two time intervals."""
+    result = interval1.intersection(interval2)
+    if expected is None:
+        assert result is None
+    else:
+        assert result.left == expected.left
+        assert result.right == expected.right
+
+
+def test_time_interval_intersection_different_calendars():
+    interval1 = TimeInterval(
+        cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 3, calendar="gregorian")
+    )
+    interval2 = TimeInterval(
+        cftime_datetime(2023, 1, 1, calendar="365_day"), cftime_datetime(2023, 1, 3, calendar="365_day")
+    )
+    with pytest.raises(ValueError, match="TimeIntervals are not compatible."):
+        interval1.intersection(interval2)
