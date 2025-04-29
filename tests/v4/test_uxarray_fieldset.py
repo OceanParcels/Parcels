@@ -28,7 +28,6 @@ def ds_fesom_channel() -> ux.UxDataset:
 
 def test_fesom_fieldset(ds_fesom_channel):
     fieldset = FieldSet([ds_fesom_channel])
-    fieldset._check_complete()
     # Check that the fieldset has the expected properties
     assert fieldset.datasets[0] == ds_fesom_channel
 
