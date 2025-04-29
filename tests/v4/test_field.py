@@ -36,7 +36,7 @@ def test_field_init_param_types():
     ],
 )
 def test_field_incompatible_combination(data, grid):
-    with pytest.raises(ValueError, msg="Incompatible data-grid combination."):
+    with pytest.raises(ValueError, match="Incompatible data-grid combination."):
         Field(
             name="test_field",
             data=data,
