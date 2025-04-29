@@ -4,8 +4,8 @@ import xarray as xr
 
 from parcels import Field
 from parcels._datasets.structured.generic import datasets as structured_datasets
-from parcels.v4.grid import Grid
 from parcels._datasets.unstructured.generic import datasets as unstructured_datasets
+from parcels.v4.grid import Grid
 
 
 def test_field_init_param_types():

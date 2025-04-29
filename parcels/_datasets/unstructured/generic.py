@@ -1,28 +1,24 @@
-
-import uxarray as ux
-import numpy as np
-import pandas as pd
-
 import math
 
-__all__ = ["datasets", "Nx"]
+import numpy as np
+import pandas as pd
+import uxarray as ux
+
+__all__ = ["Nx", "datasets"]
 
 Nx = 20
 vmax = 1.0
 delta = 0.1
 
+
 def _stommel_gyre_delaunay():
-    lon, lat = np.meshgrid(np.linspace(0, 60.0, Nx, dtype=np.float32),
-                            np.linspace(0, 60.0, Nx, dtype=np.float32))
+    lon, lat = np.meshgrid(np.linspace(0, 60.0, Nx, dtype=np.float32), np.linspace(0, 60.0, Nx, dtype=np.float32))
     lon_flat = lon.ravel()
     lat_flat = lat.ravel()
 
     # mask any point on one of the boundaries
     mask = (
-        np.isclose(lon_flat, 0.0) |
-        np.isclose(lon_flat, 60.0) |
-        np.isclose(lat_flat, 0.0) |
-        np.isclose(lat_flat, 60.0)
+        np.isclose(lon_flat, 0.0) | np.isclose(lon_flat, 60.0) | np.isclose(lat_flat, 0.0) | np.isclose(lat_flat, 60.0)
     )
 
     boundary_points = np.flatnonzero(mask)
@@ -32,33 +28,19 @@ def _stommel_gyre_delaunay():
         method="regional_delaunay",
         boundary_points=boundary_points,
     )
-    
+
     # Define arrays U (zonal), V (meridional) and P (sea surface height)
     U = np.zeros((1, 1, lat.size), dtype=np.float64)
     V = np.zeros((1, 1, lat.size), dtype=np.float64)
     P = np.zeros((1, 1, lat.size), dtype=np.float64)
 
-    for i, (x, y) in enumerate(zip(lon_flat, lat_flat)):
+    for i, (x, y) in enumerate(zip(lon_flat, lat_flat, strict=False)):
         xi = x / 60.0
         yi = y / 60.0
-        
-        P[0, 0, i] = (
-            -vmax*delta
-            * (1 - xi)
-            * (math.exp(-xi / delta) - 1)
-            * np.sin(math.pi * yi)
-        )
-        U[0, 0, i] = (
-            -vmax
-            * (1 - math.exp(-xi / delta) - xi)
-            * np.cos(math.pi * yi)
-        )
-        V[0, 0, i] = (
-            vmax
-            * ((2.0 - xi)*math.exp(-xi / delta) - 1)
-            * np.sin(math.pi * yi)
-        )
 
+        P[0, 0, i] = -vmax * delta * (1 - xi) * (math.exp(-xi / delta) - 1) * np.sin(math.pi * yi)
+        U[0, 0, i] = -vmax * (1 - math.exp(-xi / delta) - xi) * np.cos(math.pi * yi)
+        V[0, 0, i] = vmax * ((2.0 - xi) * math.exp(-xi / delta) - 1) * np.sin(math.pi * yi)
 
     u = ux.UxDataArray(
         data=U,
@@ -70,11 +52,7 @@ def _stommel_gyre_delaunay():
             nz1=(["nz1"], [0]),
         ),
         attrs=dict(
-            description="zonal velocity",
-            units="m/s",
-            location="node",
-            mesh="delaunay",
-            Conventions="UGRID-1.0"
+            description="zonal velocity", units="m/s", location="node", mesh="delaunay", Conventions="UGRID-1.0"
         ),
     )
     v = ux.UxDataArray(
@@ -87,11 +65,7 @@ def _stommel_gyre_delaunay():
             nz1=(["nz1"], [0]),
         ),
         attrs=dict(
-            description="meridional velocity",
-            units="m/s",
-            location="node",
-            mesh="delaunay",
-            Conventions="UGRID-1.0"
+            description="meridional velocity", units="m/s", location="node", mesh="delaunay", Conventions="UGRID-1.0"
         ),
     )
     p = ux.UxDataArray(
@@ -103,13 +77,7 @@ def _stommel_gyre_delaunay():
             time=(["time"], pd.to_datetime(["2000-01-01"])),
             nz1=(["nz1"], [0]),
         ),
-        attrs=dict(
-            description="pressure",
-            units="N/m^2",
-            location="node",
-            mesh="delaunay",
-            Conventions="UGRID-1.0"
-        ),
+        attrs=dict(description="pressure", units="N/m^2", location="node", mesh="delaunay", Conventions="UGRID-1.0"),
     )
 
     return ux.UxDataset({"U": u, "V": v, "p": p}, uxgrid=uxgrid)
