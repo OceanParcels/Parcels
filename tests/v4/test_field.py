@@ -32,7 +32,14 @@ def test_field_init_param_types():
     "data,grid",
     [
         pytest.param(ux.UxDataArray(), Grid(xr.Dataset()), id="uxdata-grid"),
-        pytest.param(xr.DataArray(), ux.UxDataArray().uxgrid, id="xarray-uxgrid"),
+        pytest.param(
+            xr.DataArray(),
+            ux.UxDataArray().uxgrid,
+            id="xarray-uxgrid",
+            marks=pytest.mark.xfail(
+                reason="Replace uxDataArray object with one that actually has a grid (once unstructured example datasets are in the codebase)."
+            ),
+        ),
     ],
 )
 def test_field_incompatible_combination(data, grid):
