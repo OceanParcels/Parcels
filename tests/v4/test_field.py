@@ -3,7 +3,7 @@ import uxarray as ux
 import xarray as xr
 
 from parcels import Field
-from parcels._datasets.structured.grid_datasets import datasets as structured_datasets
+from parcels._datasets.structured.generic import datasets as structured_datasets
 from parcels.v4.grid import Grid
 
 
@@ -36,9 +36,6 @@ def test_field_init_param_types():
             xr.DataArray(),
             ux.UxDataArray().uxgrid,
             id="xarray-uxgrid",
-            marks=pytest.mark.xfail(
-                reason="Replace uxDataArray object with one that actually has a grid (once unstructured example datasets are in the codebase)."
-            ),
         ),
     ],
 )
