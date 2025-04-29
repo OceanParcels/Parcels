@@ -23,9 +23,9 @@ def cftime_datetime_strategy(draw, calendar=None):
 
 
 @st.composite
-def cftime_interval_strategy(draw, left=None):
+def cftime_interval_strategy(draw, left=None, calendar=None):
     if left is None:
-        left = draw(cftime_datetime_strategy())
+        left = draw(cftime_datetime_strategy(calendar=calendar))
     right = left + draw(
         st.timedeltas(
             min_value=timedelta(seconds=1),
@@ -62,6 +62,16 @@ def test_time_interval_contains(interval):
     assert left in interval
     assert right in interval
     assert middle in interval
+
+
+@given(cftime_interval_strategy(calendar="365_day"), cftime_interval_strategy(calendar="365_day"))
+def test_time_interval_intersection_commutative(interval1, interval2):
+    assert interval1.intersection(interval2) == interval2.intersection(interval1)
+
+
+@given(cftime_interval_strategy())
+def test_time_interval_intersection_with_self(interval):
+    assert interval.intersection(interval) == interval
 
 
 def test_time_interval_repr():
