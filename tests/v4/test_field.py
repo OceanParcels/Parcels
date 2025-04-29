@@ -5,6 +5,7 @@ import xarray as xr
 from parcels import Field
 from parcels._datasets.structured.generic import datasets as structured_datasets
 from parcels.v4.grid import Grid
+from parcels._datasets.unstructured.generic import datasets as unstructured_datasets
 
 
 def test_field_init_param_types():
@@ -34,7 +35,7 @@ def test_field_init_param_types():
         pytest.param(ux.UxDataArray(), Grid(xr.Dataset()), id="uxdata-grid"),
         pytest.param(
             xr.DataArray(),
-            ux.UxDataArray().uxgrid,
+            unstructured_datasets["stommel_gyre_delaunay"].uxgrid,
             id="xarray-uxgrid",
         ),
     ],
