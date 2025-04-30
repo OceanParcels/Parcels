@@ -1,9 +1,6 @@
-import uuid
-
 import numpy as np
 import pytest
 
-import parcels
 from parcels import (
     AdvectionRK4,
     FieldOutOfBoundError,
@@ -14,18 +11,6 @@ from parcels import (
 )
 from tests.common_kernels import DeleteParticle, DoNothing, MoveEast, MoveNorth
 from tests.utils import create_fieldset_unit_mesh
-
-
-@pytest.fixture()
-def parcels_cache(monkeypatch, tmp_path_factory):
-    """Dedicated folder parcels used to store cached Kernel C code/libraries and log files."""
-    tmp_path = tmp_path_factory.mktemp(f"c-code-{uuid.uuid4()}")
-
-    def fake_get_cache_dir():
-        return tmp_path
-
-    monkeypatch.setattr(parcels.kernel, "get_cache_dir", fake_get_cache_dir)
-    yield tmp_path
 
 
 @pytest.fixture
