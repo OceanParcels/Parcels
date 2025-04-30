@@ -44,11 +44,6 @@ class FieldSet:
         # TODO Nick : Enforce fields to be list of Field or VectorField objects
         self.fields = {f.name: f for f in fields}
 
-        # Add components of vector fields as individual fields
-        for field in fields:
-            if isinstance(field, VectorField):
-                self.add_vector_field(field)
-
     # TODO : Nick : Add _getattr_ magic method to allow access to fields by name
 
     @property
@@ -163,23 +158,6 @@ class FieldSet:
             )
         )
 
-    def add_vector_field(self, vfield):
-        """Add a :class:`parcels.field.VectorField` object to the FieldSet.
-
-        Parameters
-        ----------
-        vfield : parcels.VectorField
-            class:`parcels.FieldSet.VectorField` object to be added
-        """
-        # If the vector field is not already in the fieldset, add it
-        if vfield.name not in self.fields.keys():
-            self.fields[vfield.name] = vfield
-
-        # Add the vector field components as fields to the fieldset
-        for v in vfield.__dict__.values():
-            if isinstance(v, Field) and (v not in self.get_fields()):
-                self.add_field(v)
-
     def get_fields(self) -> list[Field | VectorField]:
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
         objects associated with this FieldSet.
@@ -190,12 +168,6 @@ class FieldSet:
                 if v not in fields:
                     fields.append(v)
         return fields
-
-    def _add_UVfield(self):
-        if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
-            self.add_vector_field(VectorField("UV", self.U, self.V))
-        if not hasattr(self, "UVW") and hasattr(self, "W"):
-            self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are

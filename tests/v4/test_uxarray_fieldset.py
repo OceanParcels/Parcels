@@ -50,14 +50,14 @@ def uvw_fesom_channel(ds_fesom_channel) -> VectorField:
 
 
 def test_fesom_fieldset(ds_fesom_channel, uv_fesom_channel):
-    fieldset = FieldSet([uv_fesom_channel])
+    fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
     # Check that the fieldset has the expected properties
     assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
     assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
 
 
 def test_fesom_in_particleset(ds_fesom_channel, uv_fesom_channel):
-    fieldset = FieldSet([uv_fesom_channel])
+    fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
     # Check that the fieldset has the expected properties
     assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
     assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
@@ -66,7 +66,7 @@ def test_fesom_in_particleset(ds_fesom_channel, uv_fesom_channel):
 
 
 def test_set_interp_methods(ds_fesom_channel, uv_fesom_channel):
-    fieldset = FieldSet([uv_fesom_channel])
+    fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
     # Check that the fieldset has the expected properties
     assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
     assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
@@ -77,7 +77,7 @@ def test_set_interp_methods(ds_fesom_channel, uv_fesom_channel):
 
 
 def test_fesom_channel(ds_fesom_channel, uvw_fesom_channel):
-    fieldset = FieldSet([uvw_fesom_channel])
+    fieldset = FieldSet([uvw_fesom_channel, uvw_fesom_channel.U, uvw_fesom_channel.V, uvw_fesom_channel.W])
 
     # Check that the fieldset has the expected properties
     assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
