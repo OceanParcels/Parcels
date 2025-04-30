@@ -117,10 +117,7 @@ class FieldSet:
         if name in self.fields:
             raise ValueError(f"FieldSet already has a Field with name '{name}'")
 
-        if hasattr(self, name):  # check if Field with same name already exists when adding new Field
-            raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
-        else:
-            self.fields[name] = field
+        self.fields[name] = field
 
     def add_constant_field(self, name: str, value, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
