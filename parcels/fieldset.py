@@ -1,7 +1,6 @@
 import functools
 
 import numpy as np
-import uxarray as ux
 import xarray as xr
 
 from parcels._typing import Mesh
@@ -41,30 +40,11 @@ class FieldSet:
 
     """
 
-    def __init__(self, datasets: list[Field | VectorField]):
-        self.datasets = datasets
+    def __init__(self, fields: list[Field | VectorField]):
+        # TODO Nick : Enforce fields to be list of Field or VectorField objects
+        self.fields = {f.name: f for f in fields}
 
-        self._fieldnames = []
-        time_origin = None
-        # Create pointers to each (Ux)DataArray
-        for ds in datasets:
-            for field in ds.data_vars:
-                if type(ds[field]) is ux.UxDataArray:
-                    self.add_field(Field(field, ds[field], grid=ds[field].uxgrid), field)
-                else:
-                    self.add_field(Field(field, ds[field]), field)
-                self._fieldnames.append(field)
-
-            if "time" in ds.coords:
-                if time_origin is None:
-                    time_origin = ds.time.min().data
-                else:
-                    time_origin = min(time_origin, ds.time.min().data)
-            else:
-                time_origin = 0.0
-
-        self.time_origin = time_origin
-        self._add_UVfield()
+    # TODO : Nick : Add _getattr_ magic method to allow access to fields by name
 
     @property
     def time_interval(self):
@@ -111,7 +91,7 @@ class FieldSet:
 
     @property
     def gridset_size(self):
-        return len(self._fieldnames)
+        return len(self.fields)
 
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
@@ -137,11 +117,7 @@ class FieldSet:
         if name in self.fields:
             raise ValueError(f"FieldSet already has a Field with name '{name}'")
 
-        if hasattr(self, name):  # check if Field with same name already exists when adding new Field
-            raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
-        else:
-            setattr(self, name, field)
-            self._fieldnames.append(name)
+        self.fields[name] = field
 
     def add_constant_field(self, name: str, value, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
@@ -179,19 +155,6 @@ class FieldSet:
             )
         )
 
-    def add_vector_field(self, vfield):
-        """Add a :class:`parcels.field.VectorField` object to the FieldSet.
-
-        Parameters
-        ----------
-        vfield : parcels.VectorField
-            class:`parcels.FieldSet.VectorField` object to be added
-        """
-        setattr(self, vfield.name, vfield)
-        for v in vfield.__dict__.values():
-            if isinstance(v, Field) and (v not in self.get_fields()):
-                self.add_field(v)
-
     def get_fields(self) -> list[Field | VectorField]:
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
         objects associated with this FieldSet.
@@ -202,12 +165,6 @@ class FieldSet:
                 if v not in fields:
                     fields.append(v)
         return fields
-
-    def _add_UVfield(self):
-        if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
-            self.add_vector_field(VectorField("UV", self.U, self.V))
-        if not hasattr(self, "UVW") and hasattr(self, "W"):
-            self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are

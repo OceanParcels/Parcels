@@ -106,8 +106,6 @@ class ParticleSet:
         self._interaction_kernel = None
 
         self.fieldset = fieldset
-        self.fieldset._check_complete()
-        self.time_origin = fieldset.time_origin
         self._pclass = pclass
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -962,7 +960,7 @@ class ParticleSet:
         if runtime is not None and endtime is not None:
             raise RuntimeError("Only one of (endtime, runtime) can be specified")
 
-        mintime, maxtime = self.fieldset.dimrange("time")
+        mintime, maxtime = self.fieldset.dimrange("time")  # TODO : change to fieldset.time_interval
 
         default_release_time = mintime if dt >= 0 else maxtime
         if np.any(np.isnan(self.particledata.data["time"])):

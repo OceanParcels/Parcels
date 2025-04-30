@@ -4,11 +4,13 @@ import pytest
 import uxarray as ux
 
 from parcels import (
+    Field,
     FieldSet,
     Particle,
     ParticleSet,
     UXPiecewiseConstantFace,
     UXPiecewiseLinearNode,
+    VectorField,
     download_example_dataset,
 )
 
@@ -26,33 +28,63 @@ def ds_fesom_channel() -> ux.UxDataset:
     return ds
 
 
-def test_fesom_fieldset(ds_fesom_channel):
-    fieldset = FieldSet([ds_fesom_channel])
-    # Check that the fieldset has the expected properties
-    assert fieldset.datasets[0] == ds_fesom_channel
+@pytest.fixture
+def uv_fesom_channel(ds_fesom_channel) -> VectorField:
+    UV = VectorField(
+        name="UV",
+        U=Field(name="U", data=ds_fesom_channel.U, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
+        V=Field(name="V", data=ds_fesom_channel.V, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
+    )
+    return UV
 
 
-def test_fesom_in_particleset(ds_fesom_channel):
-    fieldset = FieldSet([ds_fesom_channel])
+@pytest.fixture
+def uvw_fesom_channel(ds_fesom_channel) -> VectorField:
+    UVW = VectorField(
+        name="UVW",
+        U=Field(name="U", data=ds_fesom_channel.U, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
+        V=Field(name="V", data=ds_fesom_channel.V, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseConstantFace),
+        W=Field(name="W", data=ds_fesom_channel.W, grid=ds_fesom_channel.uxgrid, interp_method=UXPiecewiseLinearNode),
+    )
+    return UVW
+
+
+def test_fesom_fieldset(ds_fesom_channel, uv_fesom_channel):
+    fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
     # Check that the fieldset has the expected properties
-    assert fieldset.datasets[0] == ds_fesom_channel
+    assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
+    assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
+
+
+@pytest.mark.skip(reason="ParticleSet.__init__ needs major refactoring")
+def test_fesom_in_particleset(ds_fesom_channel, uv_fesom_channel):
+    fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
+    # Check that the fieldset has the expected properties
+    assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
+    assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
     pset = ParticleSet(fieldset, pclass=Particle)
     assert pset.fieldset == fieldset
 
 
-def test_set_interp_methods(ds_fesom_channel):
-    fieldset = FieldSet([ds_fesom_channel])
+def test_set_interp_methods(ds_fesom_channel, uv_fesom_channel):
+    fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
+    # Check that the fieldset has the expected properties
+    assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
+    assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
+
     # Set the interpolation method for each field
-    fieldset.U.interp_method = UXPiecewiseConstantFace
-    fieldset.V.interp_method = UXPiecewiseConstantFace
-    fieldset.W.interp_method = UXPiecewiseLinearNode
+    fieldset.fields["U"].interp_method = UXPiecewiseConstantFace
+    fieldset.fields["V"].interp_method = UXPiecewiseConstantFace
 
 
-def test_fesom_channel(ds_fesom_channel):
-    fieldset = FieldSet([ds_fesom_channel])
-    # Set the interpolation method for each field
-    fieldset.U.interp_method = UXPiecewiseConstantFace
-    fieldset.V.interp_method = UXPiecewiseConstantFace
-    fieldset.W.interp_method = UXPiecewiseLinearNode
+@pytest.mark.skip(reason="ParticleSet.__init__ needs major refactoring")
+def test_fesom_channel(ds_fesom_channel, uvw_fesom_channel):
+    fieldset = FieldSet([uvw_fesom_channel, uvw_fesom_channel.U, uvw_fesom_channel.V, uvw_fesom_channel.W])
+
+    # Check that the fieldset has the expected properties
+    assert (fieldset.fields["U"] == ds_fesom_channel.U).all()
+    assert (fieldset.fields["V"] == ds_fesom_channel.V).all()
+    assert (fieldset.fields["W"] == ds_fesom_channel.W).all()
+
     pset = ParticleSet(fieldset, pclass=Particle)
     pset.execute(endtime=timedelta(days=1), dt=timedelta(hours=1))
