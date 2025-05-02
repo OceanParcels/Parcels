@@ -185,7 +185,6 @@ class Field:
             e.add_note(f"Error validating field {name!r}.")
             raise e
 
-        self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
 
         # Setting the interpolation method dynamically
