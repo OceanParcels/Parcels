@@ -11,6 +11,7 @@ from scipy.spatial import KDTree
 from tqdm import tqdm
 
 from parcels._compat import MPI
+from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.field import Field
 from parcels.grid import GridType
@@ -25,7 +26,7 @@ from parcels.kernel import Kernel
 from parcels.particle import Particle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import particleset_repr, timedelta_to_float
+from parcels.tools._helpers import timedelta_to_float
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
