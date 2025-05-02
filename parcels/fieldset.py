@@ -112,6 +112,9 @@ class FieldSet:
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
+        if not isinstance(field, (Field, VectorField)):
+            raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {type(field)}")
+
         name = field.name if name is None else name
 
         if name in self.fields:
