@@ -3,9 +3,9 @@ import functools
 import numpy as np
 import xarray as xr
 
+from parcels._reprs import fieldset_repr
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
-from parcels.tools._helpers import fieldset_repr
 
 __all__ = ["FieldSet"]
 

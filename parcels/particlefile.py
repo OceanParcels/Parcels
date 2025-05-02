@@ -10,7 +10,8 @@ import zarr
 
 import parcels
 from parcels._compat import MPI
-from parcels.tools._helpers import default_repr, timedelta_to_float
+from parcels._reprs import default_repr
+from parcels.tools._helpers import timedelta_to_float
 from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]

@@ -11,12 +11,12 @@ import xarray as xr
 from uxarray.grid.neighbors import _barycentric_coordinates
 
 from parcels._core.utils.unstructured import get_vertical_location_from_dims
+from parcels._reprs import default_repr, field_repr
 from parcels._typing import (
     Mesh,
     VectorType,
     assert_valid_mesh,
 )
-from parcels.tools._helpers import default_repr, field_repr
 from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
