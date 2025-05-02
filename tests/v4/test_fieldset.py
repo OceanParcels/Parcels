@@ -63,3 +63,6 @@ def test_fieldset_add_field_already_exists(fieldset):
 @pytest.mark.xfail(reason="FieldSet doesn't yet correctly handle duplicate grids.")
 def test_fieldset_gridset_size(fieldset):
     assert fieldset.gridset_size == 1
+
+
+def test_fieldset_executable_domain(): ...
