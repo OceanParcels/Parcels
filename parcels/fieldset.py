@@ -43,6 +43,7 @@ class FieldSet:
     def __init__(self, fields: list[Field | VectorField]):
         # TODO Nick : Enforce fields to be list of Field or VectorField objects
         self.fields = {f.name: f for f in fields}
+        self.constants = {}
 
     # TODO : Nick : Add _getattr_ magic method to allow access to fields by name
 
@@ -188,7 +189,10 @@ class FieldSet:
         `Diffusion <../examples/tutorial_diffusion.ipynb>`__
         `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
-        setattr(self, name, value)
+        if name in self.constants:
+            raise ValueError(f"FieldSet already has a constant with name '{name}'")
+
+        self.constants[name] = np.float32(value)
 
     # def computeTimeChunk(self, time=0.0, dt=1):
     #     """Load a chunk of three data time steps into the FieldSet.
