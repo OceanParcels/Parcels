@@ -6,6 +6,7 @@ import xarray as xr
 from parcels._reprs import fieldset_repr
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
+from parcels.v4.grid import Grid
 
 __all__ = ["FieldSet"]
 
@@ -148,21 +149,25 @@ class FieldSet:
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
-        time = 0.0
-        values = np.full((1, 1, 1, 1), value)
-        data = xr.DataArray(
-            data=values,
-            name=name,
-            dims="null",
-            coords=[time, [0], [0], [0]],
-            attrs=dict(description="null", units="null", location="node", mesh="constant", mesh_type=mesh),
+        da = xr.DataArray(
+            data=np.full((1, 1, 1, 1), value),
+            dims=["T", "ZG", "YG", "XG"],
+            coords={
+                "ZG": (["ZG"], np.arange(1), {"axis": "Z"}),
+                "YG": (["YG"], np.arange(1), {"axis": "Y"}),
+                "XG": (["XG"], np.arange(1), {"axis": "X"}),
+                "lon": (["XG"], np.arange(1), {"axis": "X"}),
+                "lat": (["YG"], np.arange(1), {"axis": "Y"}),
+                "depth": (["ZG"], np.arange(1), {"axis": "Z"}),
+            },
         )
+        grid = Grid(da)
         self.add_field(
             Field(
                 name,
-                data,
+                da,
+                grid,
                 interp_method=None,  # TODO : Need to define an interpolation method for constants
-                allow_time_extrapolation=True,
             )
         )
 

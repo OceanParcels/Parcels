@@ -26,13 +26,16 @@ def test_fieldset_add_constant(fieldset):
     assert fieldset.test_constant == 1.0
 
 
-@pytest.mark.xfail(reason="Not yet implemented.")
 def test_fieldset_add_constant_field(fieldset):
     fieldset.add_constant_field("test_constant_field", 1.0)
 
     # Get a point in the domain
-    lon, lat, depth, time = ds["lon"].mean(), ds["lat"].mean(), ds["depth"].mean()
+    time = ds["time"].mean()
+    depth = ds["depth"].mean()
+    lat = ds["lat"].mean()
+    lon = ds["lon"].mean()
 
+    pytest.xfail(reason="Not yet implemented interpolation.")
     assert fieldset.test_constant_field[time, depth, lat, lon] == 1.0
 
 
