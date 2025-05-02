@@ -36,7 +36,6 @@ def test_fieldset_add_constant_field(fieldset):
     assert fieldset.test_constant_field[time, depth, lat, lon] == 1.0
 
 
-@pytest.mark.xfail(reason="need to add __getattr__.")
 def test_fieldset_add_field(fieldset):
     grid = Grid(ds)
     field = Field("test_field", ds["U (A grid)"], grid, mesh_type="flat")
