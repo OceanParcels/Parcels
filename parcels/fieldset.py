@@ -45,7 +45,14 @@ class FieldSet:
         self.fields = {f.name: f for f in fields}
         self.constants = {}
 
-    # TODO : Nick : Add _getattr_ magic method to allow access to fields by name
+    def __getattr__(self, name):
+        """Get the field by name. If the field is not found, check if it's a constant."""
+        if name in self.fields:
+            return self.fields[name]
+        elif name in self.constants:
+            return self.constants[name]
+        else:
+            raise AttributeError(f"FieldSet has no attribute '{name}'")
 
     @property
     def time_interval(self):
