@@ -21,6 +21,11 @@ def fieldset() -> FieldSet:
     )
 
 
+def test_fieldset_init_wrong_types():
+    with pytest.raises(ValueError, match="Expected `field` to be a Field or VectorField object. Got .*"):
+        FieldSet([1.0, 2.0, 3.0])
+
+
 def test_fieldset_add_constant(fieldset):
     fieldset.add_constant("test_constant", 1.0)
     assert fieldset.test_constant == 1.0

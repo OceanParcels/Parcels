@@ -42,7 +42,10 @@ class FieldSet:
     """
 
     def __init__(self, fields: list[Field | VectorField]):
-        # TODO Nick : Enforce fields to be list of Field or VectorField objects
+        for field in fields:
+            if not isinstance(field, (Field, VectorField)):
+                raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {field}")
+
         self.fields = {f.name: f for f in fields}
         self.constants = {}
 
