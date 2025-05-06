@@ -6,7 +6,7 @@ import xarray as xr
 __all__ = ["N", "T", "datasets"]
 
 N = 30
-T = 10
+T = 13
 
 
 def _rotated_curvilinear_grid():
@@ -45,7 +45,7 @@ def _rotated_curvilinear_grid():
                 {"axis": "Z"},
             ),
             "depth": (["ZG"], np.arange(3 * N), {"axis": "Z"}),
-            "time": (["time"], np.arange(T), {"axis": "T"}),
+            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
@@ -120,7 +120,7 @@ def _unrolled_cone_curvilinear_grid():
                 {"axis": "Z"},
             ),
             "depth": (["ZG"], np.arange(3 * N), {"axis": "Z"}),
-            "time": (["time"], np.arange(T), {"axis": "T"}),
+            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
@@ -176,7 +176,7 @@ datasets = {
             "lon": (["XG"], 2 * np.pi / N * np.arange(0, N)),
             "lat": (["YG"], 2 * np.pi / (2 * N) * np.arange(0, 2 * N)),
             "depth": (["ZG"], np.arange(3 * N)),
-            "time": (["time"], np.arange(T), {"axis": "T"}),
+            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
         },
     ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
