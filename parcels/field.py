@@ -149,7 +149,6 @@ class Field:
         grid: ux.Grid | Grid,
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
-        allow_time_extrapolation: bool | None = None,
     ):
         if not isinstance(data, (ux.UxDataArray, xr.DataArray)):
             raise ValueError(
@@ -204,10 +203,12 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
-        if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if len(getattr(self.data, "time", [])) == 1 else False
-        else:
-            self.allow_time_extrapolation = allow_time_extrapolation
+        # Check if time is in self.data.dims
+        if "time" not in self.data.dims:
+            # Add time dimension of length 1 if not present
+            # While the choice of actual date is arbitrary, it should be a datetime object
+            # Here, we use the current time
+            self.data = self.data.expand_dims({"time": [datetime.now()]})
 
     def __repr__(self):
         return field_repr(self)
@@ -361,7 +362,7 @@ class Field:
         return (zeta, eta, xsi, zi, yi, xi)
 
     def _search_indices(self, time: datetime, z, y, x, ei=None, search2D=False):
-        tau, ti = _search_time_index(self, time, self.allow_time_extrapolation)
+        tau, ti = _search_time_index(self, time)
 
         if ei is None:
             _ei = None
