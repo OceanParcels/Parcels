@@ -22,12 +22,12 @@ def _rotated_curvilinear_grid():
 
     return xr.Dataset(
         {
-            "data_g": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "data_c": (["ZC", "YC", "XC"], np.random.rand(3 * N, 2 * N, N)),
-            "U (A grid)": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "V (A grid)": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "U (C grid)": (["ZG", "YC", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "V (C grid)": (["ZG", "YG", "XC"], np.random.rand(3 * N, 2 * N, N)),
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (C grid)": (["time", "ZG", "YC", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (C grid)": (["time", "ZG", "YG", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
         },
         coords={
             "XG": (["XG"], XG, {"axis": "X", "c_grid_axis_shift": -0.5}),
@@ -97,12 +97,12 @@ def _unrolled_cone_curvilinear_grid():
 
     return xr.Dataset(
         {
-            "data_g": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "data_c": (["ZC", "YC", "XC"], np.random.rand(3 * N, 2 * N, N)),
-            "U (A grid)": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "V (A grid)": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "U (C grid)": (["ZG", "YC", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "V (C grid)": (["ZG", "YG", "XC"], np.random.rand(3 * N, 2 * N, N)),
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (C grid)": (["time", "ZG", "YC", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (C grid)": (["time", "ZG", "YG", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
         },
         coords={
             "XG": (["XG"], XG, {"axis": "X", "c_grid_axis_shift": -0.5}),
@@ -141,10 +141,10 @@ datasets = {
         {
             "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
             "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
-            "U (A grid)": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "V (A grid)": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "U (C grid)": (["ZG", "YC", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "V (C grid)": (["ZG", "YG", "XC"], np.random.rand(3 * N, 2 * N, N)),
+            "U (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (C grid)": (["time", "ZG", "YC", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (C grid)": (["time", "ZG", "YG", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
         },
         coords={
             "XG": (

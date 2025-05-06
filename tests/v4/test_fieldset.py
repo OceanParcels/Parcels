@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+import numpy as np
 import pytest
 
 from parcels._datasets.structured.generic import datasets as datasets_structured
@@ -70,4 +73,17 @@ def test_fieldset_gridset_size(fieldset):
     assert fieldset.gridset_size == 1
 
 
-def test_fieldset_executable_domain(): ...
+def test_fieldset_time_interval():
+    grid1 = Grid(ds)
+    field1 = Field("field1", ds["U (A grid)"], grid1, mesh_type="flat")
+
+    ds2 = ds.copy()
+    ds2["time"] = ds2["time"] + np.timedelta64(timedelta(days=1))
+    grid2 = Grid(ds2)
+    field2 = Field("field2", ds2["U (A grid)"], grid2, mesh_type="flat")
+
+    fieldset = FieldSet([field1, field2])
+    fieldset.add_constant_field("constant_field", 1.0)
+
+    assert fieldset.time_interval.left == np.datetime64("2000-01-02")
+    assert fieldset.time_interval.right == np.datetime64("2001-01-01")
