@@ -54,10 +54,9 @@ def test_field_incompatible_combination(data, grid):
     [
         pytest.param(
             structured_datasets["ds_2d_left"]["data_g"], Grid(structured_datasets["ds_2d_left"]), id="ds_2d_left"
-        ),
+        ),  # TODO: Perhaps this test should be expanded to cover more datasets?
     ],
 )
-@pytest.mark.xfail(reason="Structured grid creation is not implemented yet")
 def test_field_structured_grid_creation(data, grid):
     """Test creating a field."""
     field = Field(
@@ -66,13 +65,8 @@ def test_field_structured_grid_creation(data, grid):
         grid=grid,
     )
     assert field.name == "test_field"
-    assert field.data == data
+    assert field.data.equals(data)
     assert field.grid == grid
-
-
-def test_field_structured_grid_creation_spherical():
-    # Field(..., mesh_type="spherical")
-    ...
 
 
 def test_field_unstructured_grid_creation(): ...
