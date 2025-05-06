@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import uxarray as ux
 import xarray as xr
@@ -69,6 +70,21 @@ def test_field_structured_grid_creation(data, grid):
     assert field.grid == grid
 
 
+@pytest.mark.parametrize(
+    "data,grid",
+    [
+        pytest.param(
+            structured_datasets["ds_2d_left"]["data_g"], Grid(structured_datasets["ds_2d_left"]), id="ds_2d_left"
+        ),
+    ],
+)
+def test_field_time_interval(data, grid):
+    """Test creating a field."""
+    field = Field(name="test_field", data=data, grid=grid, mesh_type="flat")
+    assert field.time_interval.left == np.datetime64("2000-01-01")
+    assert field.time_interval.right == np.datetime64("2001-01-01")
+
+
 def test_field_unstructured_grid_creation(): ...
 
 
@@ -79,6 +95,3 @@ def test_field_interpolation_out_of_spatial_bounds(): ...
 
 
 def test_field_interpolation_out_of_time_bounds(): ...
-
-
-def test_field_allow_time_extrapolation(): ...
