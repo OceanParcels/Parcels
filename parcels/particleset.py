@@ -1130,7 +1130,7 @@ def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray,
     if np.any(release_times):
         if np.any(release_times < time[0]):
             warnings.warn(
-                "Some particles are set to be released before the fieldset's first time and the fields are not constant in time.",
+                "Some particles are set to be released outside the FieldSet's executable time domain.",
                 ParticleSetWarning,
                 stacklevel=2,
             )
