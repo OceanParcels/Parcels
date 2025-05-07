@@ -1,13 +1,21 @@
+from __future__ import annotations
+
 import functools
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import xarray as xr
 
+from parcels._core.utils.time import get_datetime_type_calendar
+from parcels._core.utils.time import is_compatible as datetime_is_compatible
 from parcels._reprs import fieldset_repr
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
 from parcels.v4.grid import Grid
 
+if TYPE_CHECKING:
+    from parcels._typing import DatetimeLike
 __all__ = ["FieldSet"]
 
 
@@ -45,6 +53,7 @@ class FieldSet:
         for field in fields:
             if not isinstance(field, (Field, VectorField)):
                 raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {field}")
+        assert_compatible_calendars(fields)
 
         self.fields = {f.name: f for f in fields}
         self.constants = {}
@@ -126,6 +135,7 @@ class FieldSet:
         """
         if not isinstance(field, (Field, VectorField)):
             raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {type(field)}")
+        assert_compatible_calendars((*self.fields.values(), field))
 
         name = field.name if name is None else name
 
@@ -235,3 +245,31 @@ class FieldSet:
     #             return nextTime
     #         else:
     #             return time + nSteps * dt
+
+
+class CalendarError(Exception):  # TODO: Move to a parcels errors module
+    """Exception raised when the calendar of a field is not compatible with the rest of the Fields. The user should ensure that they only add fields to a FieldSet that have compatible CFtime calendars."""
+
+
+def assert_compatible_calendars(fields: Iterable[Field]):
+    time_intervals = [f.time_interval for f in fields if f.time_interval is not None]
+    reference_datetime_object = time_intervals[0].left
+
+    for field in fields:
+        if field.time_interval is None:
+            continue
+
+        if not datetime_is_compatible(reference_datetime_object, field.time_interval.left):
+            msg = format_calendar_error_message(field, reference_datetime_object)
+            raise CalendarError(msg)
+
+
+def format_calendar_error_message(field: Field, reference_datetime: DatetimeLike) -> str:
+    def datetime_to_msg(example_datetime: DatetimeLike) -> str:
+        datetime_type, calendar = get_datetime_type_calendar(example_datetime)
+        msg = str(datetime_type)
+        if calendar is not None:
+            msg += f" with cftime calendar {calendar}'"
+        return msg
+
+    return f"Expected field {field.name!r} to have calendar compatible with datetime object {datetime_to_msg(reference_datetime)}. Got field with calendar {datetime_to_msg(field.time_interval.left)}. Have you considered using xarray to update the time dimension of the dataset to have a compatible calendar?"

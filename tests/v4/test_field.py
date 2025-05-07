@@ -72,8 +72,8 @@ def test_field_init_structured_grid(data, grid):
 
 
 @pytest.mark.parametrize("numpy_dtype", ["timedelta64[s]", "float64"])
-def test_field_init_fail_on_bad_timebase(numpy_dtype):
-    """Tests that field initialisation fails when the timebase isn't given as datetime object (i.e., is float or timedelta)."""
+def test_field_init_fail_on_bad_time_type(numpy_dtype):
+    """Tests that field initialisation fails when the time isn't given as datetime object (i.e., is float or timedelta)."""
     ds = datasets_structured["ds_2d_left"].copy()
     ds["time"] = np.arange(0, T_structured, dtype=numpy_dtype)
 
