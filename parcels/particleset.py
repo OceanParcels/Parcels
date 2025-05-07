@@ -11,9 +11,9 @@ from scipy.spatial import KDTree
 from tqdm import tqdm
 
 from parcels._compat import MPI
+from parcels._core.utils.time import TimeInterval
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.field import Field
 from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.interaction.neighborsearch import (
@@ -162,8 +162,8 @@ class ParticleSet:
             raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
-        if isinstance(fieldset.U, Field) and (len(fieldset.U.data.time) > 1):
-            _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.U.grid.time)
+        if fieldset.time_interval:
+            _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
 
         if lonlatdepth_dtype is None:
             lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
@@ -1127,7 +1127,7 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
         )
 
 
-def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: np.ndarray):
+def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: np.ndarray | TimeInterval):
     if np.any(release_times):
         if np.any(release_times < time[0]):
             warnings.warn(
