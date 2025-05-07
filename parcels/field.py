@@ -204,9 +204,7 @@ class Field:
 
         # Check if time is in self.data.dims
         if "time" not in self.data.dims:
-            # Add time dimension of length 1 if not present
-            # While the choice of actual date is arbitrary, it should be a datetime object
-            self.data = self.data.expand_dims({"time": [datetime.strptime("2015-09-27", "%Y-%m-%d")]})
+            raise ValueError("Field is missing a 'time' dimension. ")
 
     def __repr__(self):
         return field_repr(self)
@@ -666,7 +664,7 @@ def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux
 
 
 def get_time_interval(data: xr.DataArray | ux.UxDataArray) -> TimeInterval | None:
-    if "time" not in data.dims:
+    if len(data.time) == 1:
         return None
 
     return TimeInterval(data.time.values[0], data.time.values[-1])

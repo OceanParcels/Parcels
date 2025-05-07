@@ -37,7 +37,10 @@ def _search_time_index(field: Field, time: datetime):
     Note that we normalize to either the first or the last index
     if the sampled value is outside the time value range.
     """
-    if field.time_interval is not None and time in field.time_interval:
+    if field.time_interval is None:
+        return 0
+
+    if time in field.time_interval:
         _raise_time_extrapolation_error(time, field=None)
 
     time_index = field.data.time <= time

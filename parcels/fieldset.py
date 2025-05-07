@@ -154,7 +154,7 @@ class FieldSet:
         """
         da = xr.DataArray(
             data=np.full((1, 1, 1, 1), value),
-            dims=["T", "ZG", "YG", "XG"],
+            dims=["time", "ZG", "YG", "XG"],
             coords={
                 "ZG": (["ZG"], np.arange(1), {"axis": "Z"}),
                 "YG": (["YG"], np.arange(1), {"axis": "Y"}),
@@ -162,6 +162,7 @@ class FieldSet:
                 "lon": (["XG"], np.arange(1), {"axis": "X"}),
                 "lat": (["YG"], np.arange(1), {"axis": "Y"}),
                 "depth": (["ZG"], np.arange(1), {"axis": "Z"}),
+                "time": (["time"], np.arange(1), {"axis": "T"}),
             },
         )
         grid = Grid(da)
