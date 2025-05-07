@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TypeVar
 
 import cftime
+import numpy as np
 
 T = TypeVar("T", datetime, cftime.datetime)
 
@@ -24,10 +25,10 @@ class TimeInterval:
     """
 
     def __init__(self, left: T, right: T) -> None:
-        if not isinstance(left, (datetime, cftime.datetime)):
-            raise ValueError(f"Expected left to be a datetime or cftime.datetime, got {type(left)}.")
-        if not isinstance(right, (datetime, cftime.datetime)):
-            raise ValueError(f"Expected right to be a datetime or cftime.datetime, got {type(right)}.")
+        if not isinstance(left, (datetime, cftime.datetime, np.datetime64)):
+            raise ValueError(f"Expected right to be a datetime, cftime.datetime, or np.datetime64. Got {type(left)}.")
+        if not isinstance(right, (datetime, cftime.datetime, np.datetime64)):
+            raise ValueError(f"Expected right to be a datetime, cftime.datetime, or np.datetime64. Got {type(right)}.")
         if left >= right:
             raise ValueError(f"Expected left to be strictly less than right, got left={left} and right={right}.")
         if not is_compatible(left, right):

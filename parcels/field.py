@@ -1,22 +1,24 @@
+from __future__ import annotations
+
 import inspect
 import warnings
 from collections.abc import Callable
 from datetime import datetime
 from enum import IntEnum
-from typing import TYPE_CHECKING
 
 import numpy as np
 import uxarray as ux
 import xarray as xr
 from uxarray.grid.neighbors import _barycentric_coordinates
 
+from parcels._core.utils.time import TimeInterval
 from parcels._core.utils.unstructured import get_vertical_location_from_dims
+from parcels._reprs import default_repr, field_repr
 from parcels._typing import (
     Mesh,
     VectorType,
     assert_valid_mesh,
 )
-from parcels.tools._helpers import default_repr, field_repr
 from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
@@ -32,9 +34,6 @@ from parcels.v4.grid import Grid
 from parcels.v4.gridadapter import GridAdapter
 
 from ._index_search import _search_indices_rectilinear, _search_time_index
-
-if TYPE_CHECKING:
-    pass
 
 __all__ = ["Field", "GridType", "VectorField"]
 
@@ -166,6 +165,7 @@ class Field:
         self.name = name
         self.data = data
         self.grid = grid
+        self.time_interval = get_time_interval(data)
 
         # For compatibility with parts of the codebase that rely on v3 definition of Grid.
         # Should be worked to be removed in v4
@@ -184,7 +184,6 @@ class Field:
             e.add_note(f"Error validating field {name!r}.")
             raise e
 
-        self._parent_mesh = data.attrs["mesh"]
         self._mesh_type = mesh_type
 
         # Setting the interpolation method dynamically
@@ -665,3 +664,10 @@ def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux
             raise ValueError(
                 f"Incompatible data-grid combination. Data is a xarray.DataArray, expected `grid` to be a parcels Grid object, got {type(grid)}."
             )
+
+
+def get_time_interval(data: xr.DataArray | ux.UxDataArray) -> TimeInterval | None:
+    if "time" not in data.dims:
+        return None
+
+    return TimeInterval(data.time.values[0], data.time.values[-1])

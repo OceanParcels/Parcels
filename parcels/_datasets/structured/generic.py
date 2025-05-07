@@ -6,7 +6,7 @@ import xarray as xr
 __all__ = ["N", "T", "datasets"]
 
 N = 30
-T = 10
+T = 13
 
 
 def _rotated_curvilinear_grid():
@@ -22,8 +22,12 @@ def _rotated_curvilinear_grid():
 
     return xr.Dataset(
         {
-            "data_g": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "data_c": (["ZC", "YC", "XC"], np.random.rand(3 * N, 2 * N, N)),
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (C grid)": (["time", "ZG", "YC", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (C grid)": (["time", "ZG", "YG", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
         },
         coords={
             "XG": (["XG"], XG, {"axis": "X", "c_grid_axis_shift": -0.5}),
@@ -41,7 +45,7 @@ def _rotated_curvilinear_grid():
                 {"axis": "Z"},
             ),
             "depth": (["ZG"], np.arange(3 * N), {"axis": "Z"}),
-            "time": (["time"], np.arange(T), {"axis": "T"}),
+            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
@@ -93,8 +97,12 @@ def _unrolled_cone_curvilinear_grid():
 
     return xr.Dataset(
         {
-            "data_g": (["ZG", "YG", "XG"], np.random.rand(3 * N, 2 * N, N)),
-            "data_c": (["ZC", "YC", "XC"], np.random.rand(3 * N, 2 * N, N)),
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (C grid)": (["time", "ZG", "YC", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (C grid)": (["time", "ZG", "YG", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
         },
         coords={
             "XG": (["XG"], XG, {"axis": "X", "c_grid_axis_shift": -0.5}),
@@ -112,7 +120,7 @@ def _unrolled_cone_curvilinear_grid():
                 {"axis": "Z"},
             ),
             "depth": (["ZG"], np.arange(3 * N), {"axis": "Z"}),
-            "time": (["time"], np.arange(T), {"axis": "T"}),
+            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
@@ -133,6 +141,10 @@ datasets = {
         {
             "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
             "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "U (C grid)": (["time", "ZG", "YC", "XG"], np.random.rand(T, 3 * N, 2 * N, N)),
+            "V (C grid)": (["time", "ZG", "YG", "XC"], np.random.rand(T, 3 * N, 2 * N, N)),
         },
         coords={
             "XG": (
@@ -164,7 +176,7 @@ datasets = {
             "lon": (["XG"], 2 * np.pi / N * np.arange(0, N)),
             "lat": (["YG"], 2 * np.pi / (2 * N) * np.arange(0, 2 * N)),
             "depth": (["ZG"], np.arange(3 * N)),
-            "time": (["time"], np.arange(T), {"axis": "T"}),
+            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
         },
     ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),

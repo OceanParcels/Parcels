@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+import numpy as np
 import pytest
 from cftime import datetime as cftime_datetime
 from hypothesis import given
@@ -9,23 +10,30 @@ from hypothesis import strategies as st
 
 from parcels._core.utils.time import TimeInterval
 
-calendar_strategy = st.sampled_from(["gregorian", "proleptic_gregorian", "365_day", "360_day", "julian", "366_day"])
+calendar_strategy = st.sampled_from(
+    ["gregorian", "proleptic_gregorian", "365_day", "360_day", "julian", "366_day", np.datetime64, datetime]
+)
 
 
 @st.composite
-def cftime_datetime_strategy(draw, calendar=None):
+def datetime_strategy(draw, calendar=None):
     year = draw(st.integers(1900, 2100))
     month = draw(st.integers(1, 12))
     day = draw(st.integers(1, 28))
     if calendar is None:
         calendar = draw(calendar_strategy)
+    if calendar is datetime:
+        return datetime(year, month, day)
+    if calendar is np.datetime64:
+        return np.datetime64(datetime(year, month, day))
+
     return cftime_datetime(year, month, day, calendar=calendar)
 
 
 @st.composite
-def cftime_interval_strategy(draw, left=None, calendar=None):
+def time_interval_strategy(draw, left=None, calendar=None):
     if left is None:
-        left = draw(cftime_datetime_strategy(calendar=calendar))
+        left = draw(datetime_strategy(calendar=calendar))
     right = left + draw(
         st.timedeltas(
             min_value=timedelta(seconds=1),
@@ -41,6 +49,8 @@ def cftime_interval_strategy(draw, left=None, calendar=None):
         (cftime_datetime(2023, 1, 1, calendar="gregorian"), cftime_datetime(2023, 1, 2, calendar="gregorian")),
         (cftime_datetime(2023, 6, 1, calendar="365_day"), cftime_datetime(2023, 6, 2, calendar="365_day")),
         (cftime_datetime(2023, 12, 1, calendar="360_day"), cftime_datetime(2023, 12, 2, calendar="360_day")),
+        (datetime(2023, 12, 1), datetime(2023, 12, 2)),
+        (np.datetime64(datetime(2023, 12, 1)), np.datetime64(datetime(2023, 12, 2))),
     ],
 )
 def test_time_interval_initialization(left, right):
@@ -53,7 +63,7 @@ def test_time_interval_initialization(left, right):
         TimeInterval(right, left)
 
 
-@given(cftime_interval_strategy())
+@given(time_interval_strategy())
 def test_time_interval_contains(interval):
     left = interval.left
     right = interval.right
@@ -64,12 +74,12 @@ def test_time_interval_contains(interval):
     assert middle in interval
 
 
-@given(cftime_interval_strategy(calendar="365_day"), cftime_interval_strategy(calendar="365_day"))
+@given(time_interval_strategy(calendar="365_day"), time_interval_strategy(calendar="365_day"))
 def test_time_interval_intersection_commutative(interval1, interval2):
     assert interval1.intersection(interval2) == interval2.intersection(interval1)
 
 
-@given(cftime_interval_strategy())
+@given(time_interval_strategy())
 def test_time_interval_intersection_with_self(interval):
     assert interval.intersection(interval) == interval
 
@@ -81,7 +91,7 @@ def test_time_interval_repr():
     assert repr(interval) == expected
 
 
-@given(cftime_interval_strategy())
+@given(time_interval_strategy())
 def test_time_interval_equality(interval):
     assert interval == interval
 

@@ -3,9 +3,10 @@ import functools
 import numpy as np
 import xarray as xr
 
+from parcels._reprs import fieldset_repr
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
-from parcels.tools._helpers import fieldset_repr
+from parcels.v4.grid import Grid
 
 __all__ = ["FieldSet"]
 
@@ -41,10 +42,21 @@ class FieldSet:
     """
 
     def __init__(self, fields: list[Field | VectorField]):
-        # TODO Nick : Enforce fields to be list of Field or VectorField objects
-        self.fields = {f.name: f for f in fields}
+        for field in fields:
+            if not isinstance(field, (Field, VectorField)):
+                raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {field}")
 
-    # TODO : Nick : Add _getattr_ magic method to allow access to fields by name
+        self.fields = {f.name: f for f in fields}
+        self.constants = {}
+
+    def __getattr__(self, name):
+        """Get the field by name. If the field is not found, check if it's a constant."""
+        if name in self.fields:
+            return self.fields[name]
+        elif name in self.constants:
+            return self.constants[name]
+        else:
+            raise AttributeError(f"FieldSet has no attribute '{name}'")
 
     @property
     def time_interval(self):
@@ -112,6 +124,9 @@ class FieldSet:
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
+        if not isinstance(field, (Field, VectorField)):
+            raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {type(field)}")
+
         name = field.name if name is None else name
 
         if name in self.fields:
@@ -137,19 +152,24 @@ class FieldSet:
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
-        time = 0.0
-        values = np.full((1, 1, 1, 1), value)
-        data = xr.DataArray(
-            data=values,
-            name=name,
-            dims="null",
-            coords=[time, [0], [0], [0]],
-            attrs=dict(description="null", units="null", location="node", mesh="constant", mesh_type=mesh),
+        da = xr.DataArray(
+            data=np.full((1, 1, 1, 1), value),
+            dims=["T", "ZG", "YG", "XG"],
+            coords={
+                "ZG": (["ZG"], np.arange(1), {"axis": "Z"}),
+                "YG": (["YG"], np.arange(1), {"axis": "Y"}),
+                "XG": (["XG"], np.arange(1), {"axis": "X"}),
+                "lon": (["XG"], np.arange(1), {"axis": "X"}),
+                "lat": (["YG"], np.arange(1), {"axis": "Y"}),
+                "depth": (["ZG"], np.arange(1), {"axis": "Z"}),
+            },
         )
+        grid = Grid(da)
         self.add_field(
             Field(
                 name,
-                data,
+                da,
+                grid,
                 interp_method=None,  # TODO : Need to define an interpolation method for constants
             )
         )
@@ -184,7 +204,10 @@ class FieldSet:
         `Diffusion <../examples/tutorial_diffusion.ipynb>`__
         `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
-        setattr(self, name, value)
+        if name in self.constants:
+            raise ValueError(f"FieldSet already has a constant with name '{name}'")
+
+        self.constants[name] = np.float32(value)
 
     # def computeTimeChunk(self, time=0.0, dt=1):
     #     """Load a chunk of three data time steps into the FieldSet.
