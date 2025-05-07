@@ -8,7 +8,11 @@ used for runtime parameter validation (to ensure users are only using the right 
 
 import os
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any, Literal, get_args
+
+import numpy as np
+from cftime import datetime as cftime_datetime
 
 InterpMethodOption = Literal[
     "linear",
@@ -30,7 +34,7 @@ Mesh = Literal["spherical", "flat"]  # corresponds with `mesh`
 VectorType = Literal["3D", "3DSigma", "2D"] | None  # corresponds with `vector_type`
 GridIndexingType = Literal["pop", "mom5", "mitgcm", "nemo", "croco"]  # corresponds with `gridindexingtype`
 NetcdfEngine = Literal["netcdf4", "xarray", "scipy"]
-
+DatetimeLike = datetime | cftime_datetime | np.datetime64
 
 KernelFunction = Callable[..., None]
 

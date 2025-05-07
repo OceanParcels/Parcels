@@ -91,7 +91,7 @@ def test_fieldset_time_interval():
     assert fieldset.time_interval.right == np.datetime64("2001-01-01")
 
 
-def test_fieldset_init_incompatible_timebases():
+def test_fieldset_init_incompatible_calendars():
     ds1 = ds.copy()
     ds1["time"] = xr.date_range("2000", "2001", T_structured, calendar="365_day", use_cftime=True)
 
@@ -103,13 +103,13 @@ def test_fieldset_init_incompatible_timebases():
     ds2 = ds.copy()
     ds2["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
     grid2 = Grid(ds2)
-    incompatible_timebase = Field("test", ds2["data_g"], grid2, mesh_type="flat")
+    incompatible_calendar = Field("test", ds2["data_g"], grid2, mesh_type="flat")
 
     with pytest.raises(ValueError):
-        FieldSet([U, V, UV, incompatible_timebase])
+        FieldSet([U, V, UV, incompatible_calendar])
 
 
-def test_fieldset_add_field_incompatible_timebases(fieldset):
+def test_fieldset_add_field_incompatible_calendars(fieldset):
     ds_test = ds.copy()
     ds_test["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
     grid = Grid(ds_test)

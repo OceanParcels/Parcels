@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import cftime
 import numpy as np
 
 T = TypeVar("T", datetime, cftime.datetime)
+
+if TYPE_CHECKING:
+    from parcels._typing import DatetimeLike
 
 
 class TimeInterval:
@@ -70,3 +73,28 @@ def is_compatible(t1: datetime | cftime.datetime, t2: datetime | cftime.datetime
         return False
     else:
         return True
+
+
+def get_datetime_type_calendar(
+    example_datetime: DatetimeLike,
+) -> tuple[type, str | None]:
+    """Get the type and calendar of a datetime object.
+
+    Parameters
+    ----------
+    example_datetime : datetime, cftime.datetime, or np.datetime64
+        The datetime object to check.
+
+    Returns
+    -------
+    tuple[type, str | None]
+        A tuple containing the type of the datetime object and its calendar.
+        The calendar will be None if the datetime object is not a cftime datetime object.
+    """
+    calendar = None
+    try:
+        calendar = example_datetime.calendar
+    except AttributeError:
+        # datetime isn't a cftime datetime object
+        pass
+    return type(example_datetime), calendar
