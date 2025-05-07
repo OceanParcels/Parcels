@@ -206,8 +206,7 @@ class Field:
         if "time" not in self.data.dims:
             # Add time dimension of length 1 if not present
             # While the choice of actual date is arbitrary, it should be a datetime object
-            # Here, we use the current time
-            self.data = self.data.expand_dims({"time": [datetime.now()]})
+            self.data = self.data.expand_dims({"time": [datetime.strptime("2015-09-27", "%Y-%m-%d")]})
 
     def __repr__(self):
         return field_repr(self)
