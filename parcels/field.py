@@ -165,7 +165,13 @@ class Field:
         self.name = name
         self.data = data
         self.grid = grid
-        self.time_interval = get_time_interval(data)
+        try:
+            self.time_interval = get_time_interval(data)
+        except ValueError as e:
+            e.add_note(
+                f"Error getting time interval for field {name!r}. Are you sure that the time dimension on the xarray dataset is stored as datetime or cftime datetime objects?"
+            )
+            raise e
 
         # For compatibility with parts of the codebase that rely on v3 definition of Grid.
         # Should be worked to be removed in v4
@@ -529,6 +535,13 @@ class VectorField:
         self.V = V
         self.W = W
 
+        if W is None:
+            assert_same_time_interval((U, V))
+        else:
+            assert_same_time_interval((U, V, W))
+
+        self.time_interval = U.time_interval
+
         if self.W:
             self.vector_type = "3D"
         else:
@@ -668,3 +681,16 @@ def get_time_interval(data: xr.DataArray | ux.UxDataArray) -> TimeInterval | Non
         return None
 
     return TimeInterval(data.time.values[0], data.time.values[-1])
+
+
+def assert_same_time_interval(fields: list[Field]) -> None:
+    if len(fields) == 0:
+        return
+
+    reference_time_interval = fields[0].time_interval
+
+    for field in fields[1:]:
+        if field.time_interval != reference_time_interval:
+            raise ValueError(
+                f"Fields must have the same time domain. {fields[0].name}: {reference_time_interval}, {field.name}: {field.time_interval}"
+            )
