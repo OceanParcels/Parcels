@@ -105,6 +105,11 @@ def test_field_time_interval(data, grid):
     assert field.time_interval.right == np.datetime64("2001-01-01")
 
 
+def test_vectorfield_init_different_time_intervals():
+    # Tests that a VectorField raises a ValueError if the component fields have different time domains.
+    ...
+
+
 def test_field_unstructured_grid_creation(): ...
 
 
