@@ -2,7 +2,9 @@ from datetime import timedelta
 
 import numpy as np
 import pytest
+import xarray as xr
 
+from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
@@ -87,3 +89,31 @@ def test_fieldset_time_interval():
 
     assert fieldset.time_interval.left == np.datetime64("2000-01-02")
     assert fieldset.time_interval.right == np.datetime64("2001-01-01")
+
+
+def test_fieldset_init_incompatible_timebases():
+    ds1 = ds.copy()
+    ds1["time"] = xr.date_range("2000", "2001", T_structured, calendar="365_day", use_cftime=True)
+
+    grid = Grid(ds1)
+    U = Field("U", ds1["U (A grid)"], grid, mesh_type="flat")
+    V = Field("V", ds1["V (A grid)"], grid, mesh_type="flat")
+    UV = VectorField("UV", U, V)
+
+    ds2 = ds.copy()
+    ds2["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
+    grid2 = Grid(ds2)
+    incompatible_timebase = Field("test", ds2["data_g"], grid2, mesh_type="flat")
+
+    with pytest.raises(ValueError):
+        FieldSet([U, V, UV, incompatible_timebase])
+
+
+def test_fieldset_add_field_incompatible_timebases(fieldset):
+    ds_test = ds.copy()
+    ds_test["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
+    grid = Grid(ds_test)
+    field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
+
+    with pytest.raises(ValueError):
+        fieldset.add_field(field, "test_field")
