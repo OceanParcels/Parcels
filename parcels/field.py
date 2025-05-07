@@ -208,7 +208,6 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
-        # Check if time is in self.data.dims
         if "time" not in self.data.dims:
             raise ValueError("Field is missing a 'time' dimension. ")
 
