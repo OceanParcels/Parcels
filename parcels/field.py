@@ -148,7 +148,6 @@ class Field:
         grid: ux.Grid | Grid,
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
-        allow_time_extrapolation: bool | None = None,
     ):
         if not isinstance(data, (ux.UxDataArray, xr.DataArray)):
             raise ValueError(
@@ -209,10 +208,8 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
-        if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if len(getattr(self.data, "time", [])) == 1 else False
-        else:
-            self.allow_time_extrapolation = allow_time_extrapolation
+        if "time" not in self.data.dims:
+            raise ValueError("Field is missing a 'time' dimension. ")
 
     def __repr__(self):
         return field_repr(self)
@@ -366,7 +363,7 @@ class Field:
         return (zeta, eta, xsi, zi, yi, xi)
 
     def _search_indices(self, time: datetime, z, y, x, ei=None, search2D=False):
-        tau, ti = _search_time_index(self, time, self.allow_time_extrapolation)
+        tau, ti = _search_time_index(self, time)
 
         if ei is None:
             _ei = None
@@ -679,7 +676,7 @@ def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux
 
 
 def get_time_interval(data: xr.DataArray | ux.UxDataArray) -> TimeInterval | None:
-    if "time" not in data.dims:
+    if len(data.time) == 1:
         return None
 
     return TimeInterval(data.time.values[0], data.time.values[-1])

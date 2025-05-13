@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     # from .grid import Grid
 
 
-def _search_time_index(field: Field, time: datetime, allow_time_extrapolation=True):
+def _search_time_index(field: Field, time: datetime):
     """Find and return the index and relative coordinate in the time array associated with a given time.
 
     Parameters
@@ -37,8 +37,12 @@ def _search_time_index(field: Field, time: datetime, allow_time_extrapolation=Tr
     Note that we normalize to either the first or the last index
     if the sampled value is outside the time value range.
     """
-    if not allow_time_extrapolation and (time < field.data.time[0] or time > field.data.time[-1]):
+    if field.time_interval is None:
+        return 0
+
+    if time in field.time_interval:
         _raise_time_extrapolation_error(time, field=None)
+
     time_index = field.data.time <= time
 
     if time_index.all():

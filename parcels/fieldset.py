@@ -164,7 +164,7 @@ class FieldSet:
         """
         da = xr.DataArray(
             data=np.full((1, 1, 1, 1), value),
-            dims=["T", "ZG", "YG", "XG"],
+            dims=["time", "ZG", "YG", "XG"],
             coords={
                 "ZG": (["ZG"], np.arange(1), {"axis": "Z"}),
                 "YG": (["YG"], np.arange(1), {"axis": "Y"}),
@@ -172,6 +172,7 @@ class FieldSet:
                 "lon": (["XG"], np.arange(1), {"axis": "X"}),
                 "lat": (["YG"], np.arange(1), {"axis": "Y"}),
                 "depth": (["ZG"], np.arange(1), {"axis": "Z"}),
+                "time": (["time"], np.arange(1), {"axis": "T"}),
             },
         )
         grid = Grid(da)
@@ -253,6 +254,10 @@ class CalendarError(Exception):  # TODO: Move to a parcels errors module
 
 def assert_compatible_calendars(fields: Iterable[Field]):
     time_intervals = [f.time_interval for f in fields if f.time_interval is not None]
+
+    if len(time_intervals) == 0:  # All time intervals are none
+        return
+
     reference_datetime_object = time_intervals[0].left
 
     for field in fields:
