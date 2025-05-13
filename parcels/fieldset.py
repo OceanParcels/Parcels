@@ -254,6 +254,10 @@ class CalendarError(Exception):  # TODO: Move to a parcels errors module
 
 def assert_compatible_calendars(fields: Iterable[Field]):
     time_intervals = [f.time_interval for f in fields if f.time_interval is not None]
+
+    if len(time_intervals) == 0:  # All time intervals are none
+        return
+
     reference_datetime_object = time_intervals[0].left
 
     for field in fields:
