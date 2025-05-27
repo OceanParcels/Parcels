@@ -25,16 +25,40 @@ def _hycom_data() -> xr.Dataset:
     ...
 
 
-def _mitgcm_data() -> xr.Dataset: ...
+def _mitgcm_data() -> xr.Dataset:
+    """Dataset matching level 0 MITgcm model output.
+
+    Example dataset is based on the Pre-SWOT Level-4 Hourly MITgcm LLC4320 simulation,
+    which provides high-resolution (1/48°) global ocean state estimates with hourly outputs.
+
+    https://podaac.jpl.nasa.gov/dataset/MITgcm_LLC4320_Pre-SWOT_JPL_L4_ACC_SMST_v1.0
+    """
+    ...
 
 
-def _pop_data() -> xr.Dataset: ...
+def _pop_data() -> xr.Dataset:
+    """Dataset matching level 0 POP model output.
+
+    TODO: Identify a suitable public dataset to mimick.
+    """
+    ...
 
 
-def _echo_data() -> xr.Dataset: ...
+def _echo_data() -> xr.Dataset:
+    """Dataset matching level 0 ECHO model output.
+
+    TODO: Identify a suitable public dataset to mimick.
+
+    """
+    ...
 
 
-def _croco_data() -> xr.Dataset: ...
+def _croco_data() -> xr.Dataset:
+    """Dataset matching level 0 CROCO model output.
+
+    TODO: Identify a suitable public dataset to mimick.
+    """
+    ...
 
 
 datasets = {}
