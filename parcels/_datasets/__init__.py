@@ -3,7 +3,7 @@ Datasets compatible with Parcels.
 
 This subpackage uses xarray to generate *idealised* structured and unstructured hydrodynamical datasets that are compatible with Parcels. The goals are three-fold:
 
-1. To provide users with documentation for the types of datasets they can expect Parcels to work with.
+1. To provide users with documentation for the types of datasets they can expect Parcels to work with. When reporting bugs, users can use these datasets to reproduce the bug they're experiencing (allowing developers to quickly troubleshoot the problem).
 2. To supply our tutorials with hydrodynamical datasets.
 3. To offer developers datasets for use in test cases.
 
@@ -36,8 +36,10 @@ Structure
 
 This subpackage is broken down into structured and unstructured parts. Each of these have common submodules:
 
-* ``circulation_model`` -> hardcoded datasets with the intention of mimicking dataset structure from a certain (ocean) circulation model
+* ``circulation_model`` -> hardcoded datasets with the intention of mimicking dataset structure from a certain (ocean) circulation model. If you'd like to see Parcel support a new model, please open an issue in our issue tracker.
+    * exposes a dict ``datasets`` mapping dataset names to xarray datasets
 * ``generic`` -> hardcoded datasets that are generic, and not tied to a certain (ocean) circulation model. Instead these focus on the fundamental properties of the dataset
+    * exposes a dict ``datasets`` mapping dataset names to xarray datasets
 * ``generated`` -> functions to generate datasets with varying properties
 * ``utils`` -> any utility functions necessary related to either generating or validating datasets
 
