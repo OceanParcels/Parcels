@@ -12,6 +12,13 @@ delta = 0.1
 
 
 def _stommel_gyre_delaunay():
+    """
+    Stommel gyre on a Delaunay grid. the naming convention of the dataset and grid is consistent with what is 
+    provided by UXArray when reading in FESOM2 datasets.
+    This dataset is a single vertical layer of a barotropic ocean gyre on a square domain with closed boundaries.
+    The velocity field provides a slow moving interior circulation and a western boundary current. All fields are placed
+    on the vertices of the grid and at the element vertical faces.
+    """
     lon, lat = np.meshgrid(np.linspace(0, 60.0, Nx, dtype=np.float32), np.linspace(0, 60.0, Nx, dtype=np.float32))
     lon_flat = lon.ravel()
     lat_flat = lat.ravel()
