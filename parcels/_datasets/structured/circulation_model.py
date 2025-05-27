@@ -44,8 +44,8 @@ def _pop_data() -> xr.Dataset:
     ...
 
 
-def _echo_data() -> xr.Dataset:
-    """Dataset matching level 0 ECHO model output.
+def _ecco_data() -> xr.Dataset:
+    """Dataset matching level 0 ECCO model output.
 
     TODO: Identify a suitable public dataset to mimick.
 
