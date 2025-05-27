@@ -1,5 +1,3 @@
-"""Datasets focussing on grid geometry"""
-
 import numpy as np
 import xarray as xr
 
