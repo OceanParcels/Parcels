@@ -15,7 +15,7 @@ def _nemo_data() -> xr.Dataset:
     https://www.mercator-ocean.eu/en/solutions-expertise/accessing-digital-data/product-details/?offer=4217979b-2662-329a-907c-602fdc69c3a3&system=d35404e4-40d3-59d6-3608-581c9495d86a
     """
     # Using data from lorenz.
-    # Mesh file: /storage/shared/oceanparcels/input_data/MOi/domain_ORCA0083-N006/domain_ORCA0083-N006/PSY4V3R1_mesh_hgr.nc
+    # Mesh file: /storage/shared/oceanparcels/input_data/MOi/domain_ORCA0083-N006/SY4V3R1_mesh_hgr.nc
     # Data files: /storage/shared/oceanparcels/input_data/MOi/GLO12/psy4v3r1-daily_{U,V}_*.nc
     # used modulefile for reference: "/storage/shared/oceanparcels/input_data/MOi/psy4v3r1/create_fieldset2D.py"
 
