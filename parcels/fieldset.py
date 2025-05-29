@@ -265,16 +265,17 @@ def assert_compatible_calendars(fields: Iterable[Field]):
             continue
 
         if not datetime_is_compatible(reference_datetime_object, field.time_interval.left):
-            msg = format_calendar_error_message(field, reference_datetime_object)
+            msg = _format_calendar_error_message(field, reference_datetime_object)
             raise CalendarError(msg)
 
 
-def format_calendar_error_message(field: Field, reference_datetime: DatetimeLike) -> str:
-    def datetime_to_msg(example_datetime: DatetimeLike) -> str:
-        datetime_type, calendar = get_datetime_type_calendar(example_datetime)
-        msg = str(datetime_type)
-        if calendar is not None:
-            msg += f" with cftime calendar {calendar}'"
-        return msg
+def _datetime_to_msg(example_datetime: DatetimeLike) -> str:
+    datetime_type, calendar = get_datetime_type_calendar(example_datetime)
+    msg = str(datetime_type)
+    if calendar is not None:
+        msg += f" with cftime calendar {calendar}'"
+    return msg
 
-    return f"Expected field {field.name!r} to have calendar compatible with datetime object {datetime_to_msg(reference_datetime)}. Got field with calendar {datetime_to_msg(field.time_interval.left)}. Have you considered using xarray to update the time dimension of the dataset to have a compatible calendar?"
+
+def _format_calendar_error_message(field: Field, reference_datetime: DatetimeLike) -> str:
+    return f"Expected field {field.name!r} to have calendar compatible with datetime object {_datetime_to_msg(reference_datetime)}. Got field with calendar {_datetime_to_msg(field.time_interval.left)}. Have you considered using xarray to update the time dimension of the dataset to have a compatible calendar?"

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from parcels._datasets.structured.generic import N, T, datasets
+from parcels._datasets.structured.generic import T, X, Y, Z, datasets
 from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
 from parcels.v4.grid import Grid as NewGrid
@@ -17,9 +17,9 @@ test_cases = [
     GridTestCase(datasets["ds_2d_left"], "lat", datasets["ds_2d_left"].YG.values),
     GridTestCase(datasets["ds_2d_left"], "depth", datasets["ds_2d_left"].ZG.values),
     GridTestCase(datasets["ds_2d_left"], "time", datasets["ds_2d_left"].time.values),
-    GridTestCase(datasets["ds_2d_left"], "xdim", N),
-    GridTestCase(datasets["ds_2d_left"], "ydim", 2 * N),
-    GridTestCase(datasets["ds_2d_left"], "zdim", 3 * N),
+    GridTestCase(datasets["ds_2d_left"], "xdim", X),
+    GridTestCase(datasets["ds_2d_left"], "ydim", Y),
+    GridTestCase(datasets["ds_2d_left"], "zdim", Z),
     GridTestCase(datasets["ds_2d_left"], "tdim", T),
     GridTestCase(datasets["ds_2d_left"], "time_origin", TimeConverter(datasets["ds_2d_left"].time.values[0])),
 ]

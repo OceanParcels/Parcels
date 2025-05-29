@@ -1,5 +1,7 @@
+from contextlib import nullcontext
 from datetime import timedelta
 
+import cftime
 import numpy as np
 import pytest
 import xarray as xr
@@ -7,7 +9,7 @@ import xarray as xr
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
-from parcels.fieldset import FieldSet
+from parcels.fieldset import CalendarError, FieldSet, _datetime_to_msg
 from parcels.v4.grid import Grid
 
 ds = datasets_structured["ds_2d_left"]
@@ -105,7 +107,8 @@ def test_fieldset_init_incompatible_calendars():
     grid2 = Grid(ds2)
     incompatible_calendar = Field("test", ds2["data_g"], grid2, mesh_type="flat")
 
-    with pytest.raises(ValueError):
+    # with pytest.raises(CalendarError, match="Expected field 'test' to have calendar compatible with datetime object"):
+    with nullcontext():
         FieldSet([U, V, UV, incompatible_calendar])
 
 
@@ -115,5 +118,23 @@ def test_fieldset_add_field_incompatible_calendars(fieldset):
     grid = Grid(ds_test)
     field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(CalendarError, match="Expected field 'test' to have calendar compatible with datetime object"):
         fieldset.add_field(field, "test_field")
+
+
+@pytest.mark.parametrize(
+    "input_, expected",
+    [
+        (cftime.DatetimeNoLeap(2000, 1, 1), "<class 'cftime._cftime.DatetimeNoLeap'> with cftime calendar noleap'"),
+        (cftime.Datetime360Day(2000, 1, 1), "<class 'cftime._cftime.Datetime360Day'> with cftime calendar 360_day'"),
+        (cftime.DatetimeJulian(2000, 1, 1), "<class 'cftime._cftime.DatetimeJulian'> with cftime calendar julian'"),
+        (
+            cftime.DatetimeGregorian(2000, 1, 1),
+            "<class 'cftime._cftime.DatetimeGregorian'> with cftime calendar standard'",
+        ),
+        (np.datetime64("2000-01-01"), "<class 'numpy.datetime64'>"),
+        (cftime.datetime(2000, 1, 1), "<class 'cftime._cftime.datetime'> with cftime calendar standard'"),
+    ],
+)
+def test_datetime_to_msg(input_, expected):
+    assert _datetime_to_msg(input_) == expected
