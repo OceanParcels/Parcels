@@ -379,7 +379,7 @@ class Field:
     def _interpolate(self, time: datetime, z, y, x, ei):
         try:
             bcoords, _ei, tau, ti = self._search_indices(time, z, y, x, ei=ei)
-            val = self._interp_method(ti, _ei, bcoords, tau, time, z, y, x)
+            val = self._interp_method(self, ti, _ei, bcoords, tau, time, z, y, x)
 
             if np.isnan(val):
                 # Detect Out-of-bounds sampling and raise exception
