@@ -40,7 +40,7 @@ def _search_time_index(field: Field, time: datetime):
     if field.time_interval is None:
         return 0
 
-    if time in field.time_interval:
+    if time not in field.time_interval:
         _raise_time_extrapolation_error(time, field=None)
 
     time_index = field.data.time <= time
