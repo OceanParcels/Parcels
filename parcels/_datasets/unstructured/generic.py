@@ -172,7 +172,7 @@ def _fesom2_square_delaunay_uniform_z_coordinate():
         dims=["time", "nz", "n_node"],
         coords=dict(
             time=(["time"], date_array),
-            nz1=(["nz"], zf),
+            nz=(["nz"], zf),
         ),
         attrs=dict(
             description="vertical velocity", units="m/s", location="node", mesh="delaunay", Conventions="UGRID-1.0"
