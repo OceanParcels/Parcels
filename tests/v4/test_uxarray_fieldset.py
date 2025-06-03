@@ -91,7 +91,6 @@ def test_fesom_channel(ds_fesom_channel, uvw_fesom_channel):
     pset.execute(endtime=timedelta(days=1), dt=timedelta(hours=1))
 
 
-@pytest.mark.skip(reason="_index_search.search_time_indices needs major refactoring")
 def test_fesom2_square_delaunay_uniform_z_coordinate_eval():
     """
     Test the evaluation of a fieldset with a FESOM2 square Delaunay grid and uniform z-coordinate.

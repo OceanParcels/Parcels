@@ -286,13 +286,6 @@ class Field:
                 return 0
 
     @property
-    def n_face(self):
-        if type(self.data) is ux.uxDataArray:
-            return self.grid.n_face
-        else:
-            return 0  # TODO : Discuss what we want to return as n_face for dataarray obj
-
-    @property
     def interp_method(self):
         return self._interp_method
 
@@ -379,7 +372,7 @@ class Field:
     def _interpolate(self, time: datetime, z, y, x, ei):
         try:
             bcoords, _ei, tau, ti = self._search_indices(time, z, y, x, ei=ei)
-            val = self._interp_method(ti, _ei, bcoords, tau, time, z, y, x)
+            val = self._interp_method(self, ti, _ei, bcoords, tau, time, z, y, x)
 
             if np.isnan(val):
                 # Detect Out-of-bounds sampling and raise exception
@@ -452,7 +445,7 @@ class Field:
         if type(self.data) is xr.DataArray:
             return xi + self.xdim * (yi + self.ydim * zi)
         else:
-            return xi + self.n_face * zi
+            return xi + self.grid.n_face * zi
 
     def unravel_index(self, ei):
         """Return the zi, yi, xi indices for a given flat index.
@@ -481,8 +474,8 @@ class Field:
             return zi, yi, xi
         else:
             _ei = ei[self.igrid]
-            zi = _ei // self.n_face
-            fi = _ei % self.n_face
+            zi = _ei // self.grid.n_face
+            fi = _ei % self.grid.n_face
             return zi, fi
 
     def __getattr__(self, key: str):

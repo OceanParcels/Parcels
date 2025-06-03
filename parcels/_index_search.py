@@ -40,7 +40,7 @@ def _search_time_index(field: Field, time: datetime):
     if field.time_interval is None:
         return 0
 
-    if time in field.time_interval:
+    if time not in field.time_interval:
         _raise_time_extrapolation_error(time, field=None)
 
     time_index = field.data.time <= time
@@ -62,8 +62,8 @@ def _search_time_index(field: Field, time: datetime):
         tau = 1
     else:
         tau = (
-            (time - field.data.time[ti]).total_seconds()
-            / (field.data.time[ti + 1] - field.data.time[ti]).total_seconds()
+            (time - field.data.time[ti]).dt.total_seconds()
+            / (field.data.time[ti + 1] - field.data.time[ti]).dt.total_seconds()
             if field.data.time[ti] != field.data.time[ti + 1]
             else 0
         )
