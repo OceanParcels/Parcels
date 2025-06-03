@@ -13,6 +13,7 @@ from parcels import (
     VectorField,
     download_example_dataset,
 )
+from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 
 
 @pytest.fixture
@@ -88,3 +89,26 @@ def test_fesom_channel(ds_fesom_channel, uvw_fesom_channel):
 
     pset = ParticleSet(fieldset, pclass=Particle)
     pset.execute(endtime=timedelta(days=1), dt=timedelta(hours=1))
+
+
+@pytest.mark.skip(reason="_index_search.search_time_indices needs major refactoring")
+def test_fesom2_square_delaunay_uniform_z_coordinate_eval():
+    """
+    Test the evaluation of a fieldset with a FESOM2 square Delaunay grid and uniform z-coordinate.
+    Ensures that the fieldset can be created and evaluated correctly.
+    Since the underlying data is constant, we can check that the values are as expected.
+    """
+    ds = datasets_unstructured["fesom2_square_delaunay_uniform_z_coordinate"]
+    UVW = VectorField(
+        name="UVW",
+        U=Field(name="U", data=ds.U, grid=ds.uxgrid, interp_method=UXPiecewiseConstantFace),
+        V=Field(name="V", data=ds.V, grid=ds.uxgrid, interp_method=UXPiecewiseConstantFace),
+        W=Field(name="W", data=ds.W, grid=ds.uxgrid, interp_method=UXPiecewiseLinearNode),
+    )
+    P = Field(name="p", data=ds.p, grid=ds.uxgrid, interp_method=UXPiecewiseConstantFace)
+    fieldset = FieldSet([UVW, P, UVW.U, UVW.V, UVW.W])
+
+    assert fieldset.U.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
+    assert fieldset.V.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
+    assert fieldset.W.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 0.0
+    assert fieldset.P.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
