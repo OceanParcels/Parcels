@@ -9,7 +9,6 @@ import xarray as xr
 
 from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
-from parcels._reprs import fieldset_repr
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
 from parcels.v4.grid import Grid
@@ -78,9 +77,6 @@ class FieldSet:
         # Filter out Nones from constant Fields
         time_intervals = (t for t in time_intervals if t is not None)
         return functools.reduce(lambda x, y: x.intersection(y), time_intervals)
-
-    def __repr__(self):
-        return fieldset_repr(self)
 
     def dimrange(self, dim):
         """Returns maximum value of a dimension (lon, lat, depth or time)
