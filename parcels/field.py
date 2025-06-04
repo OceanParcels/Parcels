@@ -9,7 +9,6 @@ from enum import IntEnum
 import numpy as np
 import uxarray as ux
 import xarray as xr
-from uxarray.grid.neighbors import _barycentric_coordinates
 
 from parcels._core.utils.time import TimeInterval
 from parcels._core.utils.unstructured import get_vertical_location_from_dims
@@ -30,10 +29,11 @@ from parcels.tools.statuscodes import (
     FieldSamplingError,
     _raise_field_out_of_bound_error,
 )
+from parcels.uxgrid import UxGrid, ensure_uxgrid
 from parcels.v4.grid import Grid
 from parcels.v4.gridadapter import GridAdapter
 
-from ._index_search import _search_indices_rectilinear, _search_time_index
+from ._index_search import _search_time_index
 
 __all__ = ["Field", "GridType", "VectorField"]
 
@@ -145,7 +145,7 @@ class Field:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
-        grid: ux.Grid | Grid,
+        grid: ux.Grid | UxGrid | Grid,
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
     ):
@@ -155,8 +155,10 @@ class Field:
             )
         if not isinstance(name, str):
             raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
-        if not isinstance(grid, (ux.Grid, Grid)):
-            raise ValueError(f"Expected `grid` to be a uxarray.Grid or parcels Grid object, got {type(grid)}.")
+        if not isinstance(grid, (ux.Grid, UxGrid, Grid)):
+            raise ValueError(
+                f"Expected `grid` to be a uxarray.Grid, parcels UxGrid, or parcels Grid object, got {type(grid)}."
+            )
 
         assert_valid_mesh(mesh_type)
 
@@ -164,7 +166,11 @@ class Field:
 
         self.name = name
         self.data = data
-        self.grid = grid
+        if isinstance(grid, ux.Grid):
+            self.grid = ensure_uxgrid(grid)
+        else:
+            self.grid = grid
+
         try:
             self.time_interval = get_time_interval(data)
         except ValueError as e:
@@ -294,96 +300,6 @@ class Field:
         self._validate_interp_function(method)
         self._interp_method = method
 
-    def _get_ux_barycentric_coordinates(self, y, x, fi):
-        """Checks if a point is inside a given face id. Used for unstructured grids."""
-        # Check if particle is in the same face, otherwise search again.
-        n_nodes = self.grid.n_nodes_per_face[fi].to_numpy()
-        node_ids = self.grid.face_node_connectivity[fi, 0:n_nodes]
-        nodes = np.column_stack(
-            (
-                np.deg2rad(self.grid.node_lon[node_ids].to_numpy()),
-                np.deg2rad(self.grid.node_lat[node_ids].to_numpy()),
-            )
-        )
-
-        coord = np.deg2rad([x, y])
-        bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
-        err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
-        return bcoord, err
-
-    def _search_indices_unstructured(self, z, y, x, ei=None, search2D=False):
-        tol = 1e-10
-        if ei is None:
-            # Search using global search
-            fi, bcoords = self.grid.get_spatial_hash().query([[x, y]])  # Get the face id for the particle
-            if fi == -1:
-                raise FieldOutOfBoundError(z, y, x)
-            # TODO Joe : Do the vertical grid search
-            # zi = self._vertical_search(z)
-            zi = 0  # For now
-            return bcoords, self.ravel_index(zi, 0, fi)
-        else:
-            zi, fi = self.unravel_index(ei[self.igrid])  # Get the z, and face index of the particle
-            # Search using nearest neighbors
-            bcoords, err = self._get_ux_barycentric_coordinates(y, x, fi)
-
-            if ((bcoords >= 0).all()) and ((bcoords <= 1.0).all()) and err < tol:
-                # TODO Joe : Do the vertical grid search
-                return bcoords, ei
-            else:
-                # In this case we need to search the neighbors
-                for neighbor in self.grid.face_face_connectivity[fi, :]:
-                    bcoords, err = self._get_ux_barycentric_coordinates(y, x, neighbor)
-                    if ((bcoords >= 0).all()) and ((bcoords <= 1.0).all()) and err < tol:
-                        # TODO Joe: Do the vertical grid search
-                        return bcoords, self.ravel_index(zi, 0, neighbor)
-
-                # If we reach this point, we do a global search as a last ditch effort the particle is out of bounds
-                fi, bcoords = self.grid.get_spatial_hash().query([[x, y]])  # Get the face id for the particle
-                if fi == -1:
-                    raise FieldOutOfBoundError(z, y, x)
-
-    def _search_indices_structured(self, z, y, x, ei=None, search2D=False):
-        if self.gridadapter._gtype in [GridType.RectilinearSGrid, GridType.RectilinearZGrid]:
-            (zeta, eta, xsi, zi, yi, xi) = _search_indices_rectilinear(self, z, y, x, ei=ei, search2D=search2D)
-        else:
-            ## TODO :  Still need to implement the search_indices_curvilinear
-            # (zeta, eta, xsi, zi, yi, xi) = _search_indices_curvilinear(
-            #     self, z, y, x, ei=ei, search2D=search2D
-            # )
-            raise NotImplementedError("Curvilinear grid search not implemented yet")
-
-        return (zeta, eta, xsi, zi, yi, xi)
-
-    def _search_indices(self, time: datetime, z, y, x, ei=None, search2D=False):
-        tau, ti = _search_time_index(self, time)
-
-        if ei is None:
-            _ei = None
-        else:
-            _ei = ei[self.igrid]
-
-        if type(self.data) is ux.UxDataArray:
-            bcoords, ei = self._search_indices_unstructured(z, y, x, ei=_ei, search2D=search2D)
-        else:
-            bcoords, ei = self._search_indices_structured(z, y, x, ei=_ei, search2D=search2D)
-        return bcoords, ei, tau, ti
-
-    def _interpolate(self, time: datetime, z, y, x, ei):
-        try:
-            bcoords, _ei, tau, ti = self._search_indices(time, z, y, x, ei=ei)
-            val = self._interp_method(self, ti, _ei, bcoords, tau, time, z, y, x)
-
-            if np.isnan(val):
-                # Detect Out-of-bounds sampling and raise exception
-                _raise_field_out_of_bound_error(z, y, x)
-            else:
-                return val
-
-        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
-            e.add_note(f"Error interpolating field '{self.name}'.")
-            raise e
-
     def _check_velocitysampling(self):
         if self.name in ["U", "V", "W"]:
             warnings.warn(
@@ -414,7 +330,20 @@ class Field:
         else:
             _ei = particle.ei[self.igrid]
 
-        value = self._interpolate(time, z, y, x, ei=_ei)
+        try:
+            tau, ti = _search_time_index(self, time)
+            bcoords, _ei = self.grid.search(self, z, y, x, ei=_ei)
+            value = self._interp_method(self, ti, _ei, bcoords, tau, time, z, y, x)
+
+            if np.isnan(value):
+                # Detect Out-of-bounds sampling and raise exception
+                _raise_field_out_of_bound_error(z, y, x)
+            else:
+                return value
+
+        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
+            e.add_note(f"Error interpolating field '{self.name}'.")
+            raise e
 
         if applyConversion:
             return self.units.to_target(value, z, y, x)
@@ -424,59 +353,6 @@ class Field:
     def _rescale_and_set_minmax(self, data):
         data[np.isnan(data)] = 0
         return data
-
-    def ravel_index(self, zi, yi, xi):
-        """Return the flat index of the given grid points.
-
-        Parameters
-        ----------
-        zi : int
-            z index
-        yi : int
-            y index
-        xi : int
-            x index. When using an unstructured grid, this is the face index (fi)
-
-        Returns
-        -------
-        int
-            flat index
-        """
-        if type(self.data) is xr.DataArray:
-            return xi + self.xdim * (yi + self.ydim * zi)
-        else:
-            return xi + self.grid.n_face * zi
-
-    def unravel_index(self, ei):
-        """Return the zi, yi, xi indices for a given flat index.
-        Only used when working with fields on a structured grid.
-
-        Parameters
-        ----------
-        ei : int
-            The flat index to be unraveled.
-
-        Returns
-        -------
-        zi : int
-            The z index.
-        yi : int
-            The y index.
-        xi : int
-            The x index.
-        """
-        if type(self.data) is xr.DataArray:
-            _ei = ei[self.igrid]
-            zi = _ei // (self.xdim * self.ydim)
-            _ei = _ei % (self.xdim * self.ydim)
-            yi = _ei // self.xdim
-            xi = _ei % self.xdim
-            return zi, yi, xi
-        else:
-            _ei = ei[self.igrid]
-            zi = _ei // self.grid.n_face
-            fi = _ei % self.grid.n_face
-            return zi, fi
 
     def __getattr__(self, key: str):
         return getattr(self.data, key)
