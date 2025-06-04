@@ -16,7 +16,7 @@ test_cases = [
     GridTestCase(datasets["ds_2d_left"], "lon", datasets["ds_2d_left"].XG.values),
     GridTestCase(datasets["ds_2d_left"], "lat", datasets["ds_2d_left"].YG.values),
     GridTestCase(datasets["ds_2d_left"], "depth", datasets["ds_2d_left"].ZG.values),
-    GridTestCase(datasets["ds_2d_left"], "time", datasets["ds_2d_left"].time.values),
+    GridTestCase(datasets["ds_2d_left"], "time", datasets["ds_2d_left"].time.values.astype(np.float64) / 1e9),
     GridTestCase(datasets["ds_2d_left"], "xdim", X),
     GridTestCase(datasets["ds_2d_left"], "ydim", Y),
     GridTestCase(datasets["ds_2d_left"], "zdim", Z),
@@ -67,7 +67,7 @@ def test_grid_adapter_against_old(ds, attr):
         lon=ds.lon.values,
         lat=ds.lat.values,
         depth=ds.depth.values,
-        time=ds.time.values,
+        time=ds.time.values.astype("float64") / 1e9,
         time_origin=TimeConverter(ds.time.values[0]),
         mesh="spherical",
     )

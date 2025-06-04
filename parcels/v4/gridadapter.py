@@ -70,12 +70,16 @@ class GridAdapter:
         return self.grid._ds["depth"].values
 
     @property
-    def time(self):
+    def _datetimes(self):
         try:
             axis = self.grid.axes["T"]
         except KeyError:
             return np.zeros(1)
         return get_time(axis)
+
+    @property
+    def time(self):
+        return self._datetimes.astype(np.float64) / 1e9
 
     @property
     def xdim(self):
@@ -95,7 +99,7 @@ class GridAdapter:
 
     @property
     def time_origin(self):
-        return TimeConverter(self.time[0])
+        return TimeConverter(self._datetimes[0])
 
     @property
     def _z4d(self) -> Literal[0, 1]:
