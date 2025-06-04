@@ -12,7 +12,7 @@ import xarray as xr
 
 from parcels._core.utils.time import TimeInterval
 from parcels._core.utils.unstructured import get_vertical_location_from_dims
-from parcels._reprs import default_repr, field_repr
+from parcels._reprs import default_repr
 from parcels._typing import (
     Mesh,
     VectorType,
@@ -211,9 +211,6 @@ class Field:
 
         if "time" not in self.data.dims:
             raise ValueError("Field is missing a 'time' dimension. ")
-
-    def __repr__(self):
-        return field_repr(self)
 
     @property
     def units(self):
