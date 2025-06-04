@@ -318,7 +318,7 @@ class Field:
             # TODO Joe : Do the vertical grid search
             # zi = self._vertical_search(z)
             zi = 0  # For now
-            return bcoords, self.ravel_index(zi, 0, fi)
+            return bcoords.squeeze(), self.ravel_index(zi, 0, fi)
         else:
             zi, fi = self.unravel_index(ei[self.igrid])  # Get the z, and face index of the particle
             # Search using nearest neighbors
