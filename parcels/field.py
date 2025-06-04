@@ -29,7 +29,7 @@ from parcels.tools.statuscodes import (
     FieldSamplingError,
     _raise_field_out_of_bound_error,
 )
-from parcels.uxgrid import UxGrid, ensure_uxgrid
+from parcels.uxgrid import UxGrid
 from parcels.v4.grid import Grid
 from parcels.v4.gridadapter import GridAdapter
 
@@ -145,7 +145,7 @@ class Field:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
-        grid: ux.Grid | UxGrid | Grid,
+        grid: UxGrid | Grid,
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
     ):
@@ -166,10 +166,7 @@ class Field:
 
         self.name = name
         self.data = data
-        if isinstance(grid, ux.Grid):
-            self.grid = ensure_uxgrid(grid)
-        else:
-            self.grid = grid
+        self.grid = grid
 
         try:
             self.time_interval = get_time_interval(data)

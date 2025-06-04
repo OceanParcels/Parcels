@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class BaseGrid(ABC):
     @abstractmethod
-    def ravel_index(self, zi, yi, xi):
+    def ravel_index(self, zi: int, yi: int, xi: int):
         """Return the flat index of the given grid points.
 
         Parameters
@@ -23,7 +23,7 @@ class BaseGrid(ABC):
         ...
 
     @abstractmethod
-    def unravel_index(self, ei):
+    def unravel_index(self, ei: int):
         """Return the zi, yi, xi indices for a given flat index.
         Only used when working with fields on a structured grid.
 
