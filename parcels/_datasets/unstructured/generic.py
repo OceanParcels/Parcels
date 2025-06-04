@@ -1,15 +1,16 @@
 import math
-from datetime import datetime, timedelta
 
 import numpy as np
-import pandas as pd
 import uxarray as ux
+import xarray as xr
 
 __all__ = ["Nx", "datasets"]
 
+T = 13
 Nx = 20
 vmax = 1.0
 delta = 0.1
+TIME = xr.date_range("2000", "2001", T)
 
 
 def _stommel_gyre_delaunay():
@@ -57,7 +58,7 @@ def _stommel_gyre_delaunay():
         uxgrid=uxgrid,
         dims=["time", "nz1", "n_node"],
         coords=dict(
-            time=(["time"], pd.to_datetime(["2000-01-01"])),
+            time=(["time"], [TIME[0]]),
             nz1=(["nz1"], [0]),
         ),
         attrs=dict(
@@ -70,7 +71,7 @@ def _stommel_gyre_delaunay():
         uxgrid=uxgrid,
         dims=["time", "nz1", "n_node"],
         coords=dict(
-            time=(["time"], pd.to_datetime(["2000-01-01"])),
+            time=(["time"], [TIME[0]]),
             nz1=(["nz1"], [0]),
         ),
         attrs=dict(
@@ -83,7 +84,7 @@ def _stommel_gyre_delaunay():
         uxgrid=uxgrid,
         dims=["time", "nz1", "n_node"],
         coords=dict(
-            time=(["time"], pd.to_datetime(["2000-01-01"])),
+            time=(["time"], [TIME[0]]),
             nz1=(["nz1"], [0]),
         ),
         attrs=dict(description="pressure", units="N/m^2", location="node", mesh="delaunay", Conventions="UGRID-1.0"),
@@ -108,8 +109,6 @@ def _fesom2_square_delaunay_uniform_z_coordinate():
     zc = 0.5 * (zf[:-1] + zf[1:])  # Vertical element centers
     nz = zf.size
     nz1 = zc.size
-    num_days = 5
-    date_array = [datetime(2000, 1, 1) + timedelta(days=i) for i in range(num_days)]
 
     # mask any point on one of the boundaries
     mask = (
@@ -127,17 +126,15 @@ def _fesom2_square_delaunay_uniform_z_coordinate():
 
     # Define arrays U (zonal), V (meridional) and P (sea surface height)
     U = np.ones(
-        (num_days, nz1, uxgrid.n_face), dtype=np.float64
+        (T, nz1, uxgrid.n_face), dtype=np.float64
     )  # Lateral velocity is on the element centers and face centers
     V = np.ones(
-        (num_days, nz1, uxgrid.n_face), dtype=np.float64
+        (T, nz1, uxgrid.n_face), dtype=np.float64
     )  # Lateral velocity is on the element centers and face centers
     W = np.zeros(
-        (num_days, nz, uxgrid.n_node), dtype=np.float64
+        (T, nz, uxgrid.n_node), dtype=np.float64
     )  # Vertical velocity is on the element faces and face vertices
-    P = np.ones(
-        (num_days, nz1, uxgrid.n_node), dtype=np.float64
-    )  # Pressure is on the element centers and face vertices
+    P = np.ones((T, nz1, uxgrid.n_node), dtype=np.float64)  # Pressure is on the element centers and face vertices
 
     u = ux.UxDataArray(
         data=U,
@@ -145,7 +142,7 @@ def _fesom2_square_delaunay_uniform_z_coordinate():
         uxgrid=uxgrid,
         dims=["time", "nz1", "n_face"],
         coords=dict(
-            time=(["time"], date_array),
+            time=(["time"], TIME),
             nz1=(["nz1"], zc),
         ),
         attrs=dict(
@@ -158,7 +155,7 @@ def _fesom2_square_delaunay_uniform_z_coordinate():
         uxgrid=uxgrid,
         dims=["time", "nz1", "n_face"],
         coords=dict(
-            time=(["time"], date_array),
+            time=(["time"], TIME),
             nz1=(["nz1"], zc),
         ),
         attrs=dict(
@@ -171,7 +168,7 @@ def _fesom2_square_delaunay_uniform_z_coordinate():
         uxgrid=uxgrid,
         dims=["time", "nz", "n_node"],
         coords=dict(
-            time=(["time"], date_array),
+            time=(["time"], TIME),
             nz=(["nz"], zf),
         ),
         attrs=dict(
@@ -184,7 +181,7 @@ def _fesom2_square_delaunay_uniform_z_coordinate():
         uxgrid=uxgrid,
         dims=["time", "nz1", "n_node"],
         coords=dict(
-            time=(["time"], date_array),
+            time=(["time"], TIME),
             nz1=(["nz1"], zc),
         ),
         attrs=dict(description="pressure", units="N/m^2", location="node", mesh="delaunay", Conventions="UGRID-1.0"),

@@ -7,6 +7,8 @@ from . import T, X, Y, Z
 
 __all__ = ["T", "X", "Y", "Z", "datasets"]
 
+TIME = xr.date_range("2000", "2001", T)
+
 
 def _rotated_curvilinear_grid():
     XG = np.arange(X)
@@ -44,7 +46,7 @@ def _rotated_curvilinear_grid():
                 {"axis": "Z"},
             ),
             "depth": (["ZG"], np.arange(Z), {"axis": "Z"}),
-            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
+            "time": (["time"], TIME, {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
@@ -119,7 +121,7 @@ def _unrolled_cone_curvilinear_grid():
                 {"axis": "Z"},
             ),
             "depth": (["ZG"], np.arange(Z), {"axis": "Z"}),
-            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
+            "time": (["time"], TIME, {"axis": "T"}),
             "lon": (
                 ["YG", "XG"],
                 LON,
@@ -175,7 +177,7 @@ datasets = {
             "lon": (["XG"], 2 * np.pi / X * np.arange(0, X)),
             "lat": (["YG"], 2 * np.pi / (Y) * np.arange(0, Y)),
             "depth": (["ZG"], np.arange(Z)),
-            "time": (["time"], xr.date_range("2000", "2001", T), {"axis": "T"}),
+            "time": (["time"], TIME, {"axis": "T"}),
         },
     ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
