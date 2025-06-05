@@ -37,16 +37,16 @@ class XGrid:
     """
 
     def __init__(self, grid: xgcm.Grid, mesh="flat"):
-        self.grid = grid
+        self.xgcm_grid = grid
         self.mesh = mesh
 
         # ! Not ideal... Triggers computation on a throwaway item. If adapter is still needed in codebase, and this is prohibitively expensive, perhaps store GridAdapter on Field object instead of Grid
         self.lonlat_minmax = np.array(
             [
-                np.nanmin(self.grid._ds["lon"]),
-                np.nanmax(self.grid._ds["lon"]),
-                np.nanmin(self.grid._ds["lat"]),
-                np.nanmax(self.grid._ds["lat"]),
+                np.nanmin(self.xgcm_grid._ds["lon"]),
+                np.nanmax(self.xgcm_grid._ds["lon"]),
+                np.nanmin(self.xgcm_grid._ds["lat"]),
+                np.nanmax(self.xgcm_grid._ds["lat"]),
             ]
         )
 
@@ -59,10 +59,10 @@ class XGrid:
         TODO v4: Evaluate
         """
         try:
-            _ = self.grid.axes["X"]
+            _ = self.xgcm_grid.axes["X"]
         except KeyError:
             return np.zeros(1)
-        return self.grid._ds["lon"].values
+        return self.xgcm_grid._ds["lon"].values
 
     @property
     def lat(self):
@@ -73,10 +73,10 @@ class XGrid:
         TODO v4: Evaluate
         """
         try:
-            _ = self.grid.axes["Y"]
+            _ = self.xgcm_grid.axes["Y"]
         except KeyError:
             return np.zeros(1)
-        return self.grid._ds["lat"].values
+        return self.xgcm_grid._ds["lat"].values
 
     @property
     def depth(self):
@@ -87,15 +87,15 @@ class XGrid:
         TODO v4: Evaluate
         """
         try:
-            _ = self.grid.axes["Z"]
+            _ = self.xgcm_grid.axes["Z"]
         except KeyError:
             return np.zeros(1)
-        return self.grid._ds["depth"].values
+        return self.xgcm_grid._ds["depth"].values
 
     @property
     def _datetimes(self):
         try:
-            axis = self.grid.axes["T"]
+            axis = self.xgcm_grid.axes["T"]
         except KeyError:
             return np.zeros(1)
         return get_time(axis)
@@ -106,19 +106,19 @@ class XGrid:
 
     @property
     def xdim(self):
-        return get_dimensionality(self.grid.axes.get("X"))
+        return get_dimensionality(self.xgcm_grid.axes.get("X"))
 
     @property
     def ydim(self):
-        return get_dimensionality(self.grid.axes.get("Y"))
+        return get_dimensionality(self.xgcm_grid.axes.get("Y"))
 
     @property
     def zdim(self):
-        return get_dimensionality(self.grid.axes.get("Z"))
+        return get_dimensionality(self.xgcm_grid.axes.get("Z"))
 
     @property
     def tdim(self):
-        return get_dimensionality(self.grid.axes.get("T"))
+        return get_dimensionality(self.xgcm_grid.axes.get("T"))
 
     @property
     def time_origin(self):
