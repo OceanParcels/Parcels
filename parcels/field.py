@@ -157,7 +157,7 @@ class Field:
             raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
         if not isinstance(grid, (UxGrid, Grid)):
             raise ValueError(
-                f"Expected `grid` to be a uxarray.Grid, parcels UxGrid, or parcels Grid object, got {type(grid)}."
+                f"Expected `grid` to be a parcels UxGrid, or parcels Grid object, got {type(grid)}."
             )
 
         assert_valid_mesh(mesh_type)
