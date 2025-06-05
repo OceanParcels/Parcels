@@ -3,47 +3,6 @@ from abc import ABC, abstractmethod
 
 class BaseGrid(ABC):
     @abstractmethod
-    def ravel_index(self, zi: int, yi: int, xi: int):
-        """Return the flat index of the given grid points.
-
-        Parameters
-        ----------
-        zi : int
-            z index
-        yi : int
-            y index
-        xi : int
-            x index. When using an unstructured grid, this is the face index (fi)
-
-        Returns
-        -------
-        int
-            flat index
-        """
-        ...
-
-    @abstractmethod
-    def unravel_index(self, ei: int):
-        """Return the zi, yi, xi indices for a given flat index.
-        Only used when working with fields on a structured grid.
-
-        Parameters
-        ----------
-        ei : int
-            The flat index to be unraveled.
-
-        Returns
-        -------
-        zi : int
-            The z index.
-        yi : int
-            The y index.
-        xi : int
-            The x index.
-        """
-        ...
-
-    @abstractmethod
     def search(self, z: float, y: float, x: float, ei=None, search2D: bool = False):
         """
         Perform a spatial (and optionally vertical) search to locate the grid element
@@ -54,9 +13,6 @@ class BaseGrid(ABC):
 
         Parameters
         ----------
-        field : Field
-            The field requesting the search. Used to extract grid-specific parameters,
-            unravel index metadata, or perform coordinate system-specific operations.
         z : float
             Vertical coordinate of the query point. If `search2D=True`, this may be ignored.
         y : float
