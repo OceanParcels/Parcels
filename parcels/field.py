@@ -155,7 +155,7 @@ class Field:
             )
         if not isinstance(name, str):
             raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
-        if not isinstance(grid, (ux.Grid, UxGrid, Grid)):
+        if not isinstance(grid, (UxGrid, Grid)):
             raise ValueError(
                 f"Expected `grid` to be a uxarray.Grid, parcels UxGrid, or parcels Grid object, got {type(grid)}."
             )
