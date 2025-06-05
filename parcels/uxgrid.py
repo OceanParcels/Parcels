@@ -19,18 +19,19 @@ class UxGrid(BaseGrid):
         self.uxgrid = grid
 
     def search(
-        self, field, z: float, y: float, x: float, ei: int | None = None, search2D: bool = False
+        self, z: float, y: float, x: float, ei: int | None = None, search2D: bool = False
     ) -> tuple[np.ndarray, int]:
         tol = 1e-10
 
         def try_face(fid):
+            # TODO : Vertical search is not implemented yet, so we assume z is not used.
             bcoords, err = self.uxgrid._get_barycentric_coordinates(y, x, fid)
             if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
-                return bcoords, field.ravel_index(0, 0, fid)  # Z and time indices are 0 for now
+                return bcoords, self.ravel_index(0, fid)  # Z and time indices are 0 for now
             return None, None
 
         if ei is not None:
-            zi, fi = field.unravel_index(ei)
+            zi, fi = self.unravel_index(ei)
             bcoords, ei_new = try_face(fi)
             if bcoords is not None:
                 return bcoords, ei_new
@@ -48,7 +49,7 @@ class UxGrid(BaseGrid):
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
 
-        return bcoords, field.ravel_index(0, 0, fi)
+        return bcoords, self.ravel_index(zi, fi)
 
     def _get_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
@@ -67,10 +68,40 @@ class UxGrid(BaseGrid):
         err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
         return bcoord, err
 
-    def ravel_index(self, zi, yi, xi):
-        return xi + self.uxgrid.n_face * zi
+    def ravel_index(self, zi, fi):
+        """
+        Converts a face index and a vertical index into a single encoded index.
+
+        Parameters
+        ----------
+        zi : int
+            Vertical index (not used in unstructured grids, but kept for compatibility).
+        fi : int
+            Face index.
+
+        Returns
+        -------
+        int
+            Encoded index combining the face index and vertical index.
+        """
+        return fi + self.uxgrid.n_face * zi
 
     def unravel_index(self, ei):
+        """
+        Converts a single encoded index back into a vertical index and face index.
+
+        Parameters
+        ----------
+        ei : int
+            Encoded index to be unraveled.
+
+        Returns
+        -------
+        zi : int
+            Vertical index.
+        fi : int
+            Face index.
+        """
         zi = ei // self.uxgrid.n_face
         fi = ei % self.uxgrid.n_face
         return zi, fi
