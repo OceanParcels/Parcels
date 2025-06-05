@@ -18,7 +18,7 @@ from parcels._typing import (
     VectorType,
     assert_valid_mesh,
 )
-from parcels.gridadapter import GridAdapter
+from parcels.gridadapter import XGrid
 from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
@@ -177,7 +177,7 @@ class Field:
         # For compatibility with parts of the codebase that rely on v3 definition of Grid.
         # Should be worked to be removed in v4
         if isinstance(grid, Grid):
-            self.gridadapter = GridAdapter(grid)
+            self.gridadapter = XGrid(grid)
         else:
             self.gridadapter = None
 
