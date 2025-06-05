@@ -1,11 +1,16 @@
-from typing import Literal
+from collections.abc import Hashable
+from typing import Literal, cast
 
 import numpy as np
 import numpy.typing as npt
+import xarray as xr
 
 from parcels import xgcm
 from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
+
+_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
+_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
 
 
 def get_dimensionality(axis: xgcm.Axis | None) -> int:
@@ -165,3 +170,49 @@ class XGrid(BaseGrid):
                 return GridType.CurvilinearSGrid
 
     def search(self, z, y, x, ei=None, search2D=False): ...
+
+
+def get_direction_axis(grid: xgcm.Grid, var: str) -> _AXIS_DIRECTION | None:
+    """For a given variable name in a grid, returns the direction axis it is on."""
+    for direction, axis in grid.axes.items():
+        if var in axis.coords.values():
+            return direction
+    return None
+
+
+def get_position(grid: xgcm.Grid, var: str) -> _AXIS_POSITION | None:
+    """For a given variable, returns the position of the variable in the grid."""
+    for axis in grid.axes.values():
+        var_to_position = {var: position for position, var in axis.coords.items()}
+
+        if var in var_to_position:
+            return var_to_position[var]
+    return None
+
+
+def assert_valid_field_array_ordering(da: xr.DataArray, grid: xgcm.Grid):
+    # ? This works well for one file, but what happens if the Field and Grid are stored in different files?
+    dim_direction = {dim: get_direction_axis(grid, dim) for dim in da.dims}
+
+    if None in dim_direction.values():
+        for dim, direction in dim_direction.items():
+            if direction is None:
+                raise ValueError(
+                    f"Dimension {dim!r} for DataArray {da.name!r} with dims {da.dims} is not associated with a direction on the provided grid."
+                )
+
+    dim_direction = cast(dict[Hashable, _AXIS_DIRECTION], dim_direction)
+
+    # Assert all dimensions are present
+    if set(dim_direction.values()) != {"T", "Z", "Y", "X"}:
+        raise ValueError(
+            f"DataArray {da.name!r} with dims {da.dims} has directions {tuple(dim_direction.values())}."
+            "Expected directions of 'T', 'Z', 'Y', and 'X'."
+        )
+
+    # Assert order is t, z, y, x
+    # ? Is this even necessary? Can't we just fetch the direction from the grid?
+    if list(dim_direction.values()) != ["T", "Z", "Y", "X"]:
+        raise ValueError(
+            f"Dimension order for array {da.name!r} is not valid. Got {tuple(dim_direction.keys())} with associated directions of {tuple(dim_direction.values())}.  Expected directions of ('T', 'Z', 'Y', 'X'). Transpose your array accordingly."
+        )
