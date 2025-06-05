@@ -7,6 +7,7 @@ from parcels import Field
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
+from parcels.uxgrid import UxGrid
 from parcels.v4.grid import Grid
 
 
@@ -24,7 +25,7 @@ def test_field_init_param_types():
     with pytest.raises(ValueError, match="Expected `data` to be a uxarray.UxDataArray or xarray.DataArray"):
         Field(name="test", data=123, grid=grid)
 
-    with pytest.raises(ValueError, match="Expected `grid` to be a uxarray.Grid or parcels Grid"):
+    with pytest.raises(ValueError, match="Expected `grid` to be a parcels UxGrid, or parcels Grid"):
         Field(name="test", data=data, grid=123)
 
     with pytest.raises(ValueError, match="Invalid value 'invalid'. Valid options are.*"):
@@ -37,7 +38,7 @@ def test_field_init_param_types():
         pytest.param(ux.UxDataArray(), Grid(xr.Dataset()), id="uxdata-grid"),
         pytest.param(
             xr.DataArray(),
-            datasets_unstructured["stommel_gyre_delaunay"].uxgrid,
+            UxGrid(datasets_unstructured["stommel_gyre_delaunay"].uxgrid),
             id="xarray-uxgrid",
         ),
     ],

@@ -528,9 +528,9 @@ def _assert_valid_uxgrid(grid):
 
 def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux.Grid | Grid):
     if isinstance(data, ux.UxDataArray):
-        if not isinstance(grid, ux.Grid):
+        if not isinstance(grid, UxGrid):
             raise ValueError(
-                f"Incompatible data-grid combination. Data is a uxarray.UxDataArray, expected `grid` to be a uxarray.Grid object, got {type(grid)}."
+                f"Incompatible data-grid combination. Data is a uxarray.UxDataArray, expected `grid` to be a UxGrid object, got {type(grid)}."
             )
     elif isinstance(data, xr.DataArray):
         if not isinstance(grid, Grid):
