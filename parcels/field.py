@@ -18,6 +18,7 @@ from parcels._typing import (
     VectorType,
     assert_valid_mesh,
 )
+from parcels.gridadapter import GridAdapter
 from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
@@ -30,8 +31,7 @@ from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
 )
 from parcels.uxgrid import UxGrid
-from parcels.v4.grid import Grid
-from parcels.v4.gridadapter import GridAdapter
+from parcels.xgcm.grid import Grid
 
 from ._index_search import _search_time_index
 
