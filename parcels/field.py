@@ -30,7 +30,6 @@ from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
 )
 from parcels.uxgrid import UxGrid
-from parcels.xgcm.grid import Grid
 from parcels.xgrid import XGrid
 
 from ._index_search import _search_time_index
@@ -145,7 +144,7 @@ class Field:
         self,
         name: str,
         data: xr.DataArray | ux.UxDataArray,
-        grid: UxGrid | Grid,
+        grid: UxGrid | XGrid,
         mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
     ):
@@ -155,7 +154,7 @@ class Field:
             )
         if not isinstance(name, str):
             raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
-        if not isinstance(grid, (UxGrid, Grid)):
+        if not isinstance(grid, (UxGrid, XGrid)):
             raise ValueError(f"Expected `grid` to be a parcels UxGrid, or parcels Grid object, got {type(grid)}.")
 
         assert_valid_mesh(mesh_type)
@@ -173,13 +172,6 @@ class Field:
                 f"Error getting time interval for field {name!r}. Are you sure that the time dimension on the xarray dataset is stored as datetime or cftime datetime objects?"
             )
             raise e
-
-        # For compatibility with parts of the codebase that rely on v3 definition of Grid.
-        # Should be worked to be removed in v4
-        if isinstance(grid, Grid):
-            self.gridadapter = XGrid(grid)
-        else:
-            self.gridadapter = None
 
         try:
             if isinstance(data, ux.UxDataArray):
@@ -232,7 +224,7 @@ class Field:
             elif self.data.attrs["location"] == "edge":
                 return self.grid.edge_lat
         else:
-            return self.gridadapter.lat
+            return self.grid.lat
 
     @property
     def lon(self):
@@ -244,7 +236,7 @@ class Field:
             elif self.data.attrs["location"] == "edge":
                 return self.grid.edge_lon
         else:
-            return self.gridadapter.lon
+            return self.grid.lon
 
     @property
     def depth(self):
@@ -255,26 +247,26 @@ class Field:
             elif vertical_location == "face":
                 return self.grid.nz
         else:
-            return self.gridadapter.depth
+            return self.grid.depth
 
     @property
     def xdim(self):
         if type(self.data) is xr.DataArray:
-            return self.gridadapter.xdim
+            return self.grid.xdim
         else:
             raise NotImplementedError("xdim not implemented for unstructured grids")
 
     @property
     def ydim(self):
         if type(self.data) is xr.DataArray:
-            return self.gridadapter.ydim
+            return self.grid.ydim
         else:
             raise NotImplementedError("ydim not implemented for unstructured grids")
 
     @property
     def zdim(self):
         if type(self.data) is xr.DataArray:
-            return self.gridadapter.zdim
+            return self.grid.zdim
         else:
             if "nz1" in self.data.dims:
                 return self.data.sizes["nz1"]
@@ -523,14 +515,14 @@ def _assert_valid_uxgrid(grid):
         )
 
 
-def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux.Grid | Grid):
+def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux.Grid | XGrid):
     if isinstance(data, ux.UxDataArray):
         if not isinstance(grid, UxGrid):
             raise ValueError(
                 f"Incompatible data-grid combination. Data is a uxarray.UxDataArray, expected `grid` to be a UxGrid object, got {type(grid)}."
             )
     elif isinstance(data, xr.DataArray):
-        if not isinstance(grid, Grid):
+        if not isinstance(grid, XGrid):
             raise ValueError(
                 f"Incompatible data-grid combination. Data is a xarray.DataArray, expected `grid` to be a parcels Grid object, got {type(grid)}."
             )
