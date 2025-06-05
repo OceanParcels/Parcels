@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 from parcels import xgcm
 from parcels._datasets.structured.generic import T, X, Y, Z, datasets
 from parcels.grid import Grid as OldGrid
-from parcels.gridadapter import GridAdapter
+from parcels.gridadapter import XGrid
 from parcels.tools.converters import TimeConverter
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
@@ -39,7 +39,7 @@ def assert_equal(actual, expected):
 
 @pytest.mark.parametrize("ds, attr, expected", test_cases)
 def test_grid_adapter_properties_ground_truth(ds, attr, expected):
-    adapter = GridAdapter(xgcm.Grid(ds, periodic=False))
+    adapter = XGrid(xgcm.Grid(ds, periodic=False))
     actual = getattr(adapter, attr)
     assert_equal(actual, expected)
 
@@ -61,7 +61,7 @@ def test_grid_adapter_properties_ground_truth(ds, attr, expected):
 )
 @pytest.mark.parametrize("ds", datasets.values())
 def test_grid_adapter_against_old(ds, attr):
-    adapter = GridAdapter(xgcm.Grid(ds, periodic=False))
+    adapter = XGrid(xgcm.Grid(ds, periodic=False))
 
     grid = OldGrid.create_grid(
         lon=ds.lon.values,

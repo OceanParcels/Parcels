@@ -29,7 +29,13 @@ def get_time(axis: xgcm.Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
-class GridAdapter:
+class XGrid:
+    """
+    Class to represent a structured grid in Parcels. Wraps a xgcm-like Grid object (we use a trimmed down version of the xgcm.Grid class that is vendored with Parcels).
+
+    This class provides methods and properties required for indexing and interpolating on the grid.
+    """
+
     def __init__(self, grid: xgcm.Grid, mesh="flat"):
         self.grid = grid
         self.mesh = mesh
