@@ -7,7 +7,7 @@ from typing import (
     Any,
 )
 
-from . import comodo
+from parcels.v4 import comodo
 
 _VALID_BOUNDARY = [None, "fill", "extend", "periodic"]
 
