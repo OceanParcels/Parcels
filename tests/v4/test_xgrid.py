@@ -39,8 +39,8 @@ def assert_equal(actual, expected):
 
 @pytest.mark.parametrize("ds, attr, expected", test_cases)
 def test_xgrid_properties_ground_truth(ds, attr, expected):
-    adapter = XGrid(xgcm.Grid(ds, periodic=False))
-    actual = getattr(adapter, attr)
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    actual = getattr(grid, attr)
     assert_equal(actual, expected)
 
 
@@ -61,9 +61,9 @@ def test_xgrid_properties_ground_truth(ds, attr, expected):
 )
 @pytest.mark.parametrize("ds", datasets.values())
 def test_xgrid_against_old(ds, attr):
-    adapter = XGrid(xgcm.Grid(ds, periodic=False))
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
 
-    grid = OldGrid.create_grid(
+    old_grid = OldGrid.create_grid(
         lon=ds.lon.values,
         lat=ds.lat.values,
         depth=ds.depth.values,
@@ -71,6 +71,6 @@ def test_xgrid_against_old(ds, attr):
         time_origin=TimeConverter(ds.time.values[0]),
         mesh="spherical",
     )
-    actual = getattr(adapter, attr)
-    expected = getattr(grid, attr)
+    actual = getattr(grid, attr)
+    expected = getattr(old_grid, attr)
     assert_equal(actual, expected)

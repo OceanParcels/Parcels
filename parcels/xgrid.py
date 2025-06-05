@@ -40,7 +40,7 @@ class XGrid:
         self.xgcm_grid = grid
         self.mesh = mesh
 
-        # ! Not ideal... Triggers computation on a throwaway item. If adapter is still needed in codebase, and this is prohibitively expensive, perhaps store GridAdapter on Field object instead of Grid
+        # ! Not ideal... Triggers computation on a throwaway item. Keeping for now for v3 compat, will be removed in v4.
         self.lonlat_minmax = np.array(
             [
                 np.nanmin(self.xgcm_grid._ds["lon"]),
