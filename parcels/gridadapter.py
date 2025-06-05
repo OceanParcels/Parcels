@@ -3,12 +3,11 @@ from typing import Literal
 import numpy as np
 import numpy.typing as npt
 
+from parcels import xgcm
 from parcels.tools.converters import TimeConverter
-from parcels.xgcm.grid import Axis
-from parcels.xgcm.grid import Grid as NewGrid
 
 
-def get_dimensionality(axis: Axis | None) -> int:
+def get_dimensionality(axis: xgcm.Axis | None) -> int:
     if axis is None:
         return 1
     first_coord = list(axis.coords.items())[0]
@@ -26,12 +25,12 @@ def get_dimensionality(axis: Axis | None) -> int:
     return pos_to_dim[pos](n)
 
 
-def get_time(axis: Axis) -> npt.NDArray:
+def get_time(axis: xgcm.Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
 class GridAdapter:
-    def __init__(self, grid: NewGrid, mesh="flat"):
+    def __init__(self, grid: xgcm.Grid, mesh="flat"):
         self.grid = grid
         self.mesh = mesh
 
@@ -106,7 +105,7 @@ class GridAdapter:
         return 1 if self.depth.shape == 4 else 0
 
     @property
-    def zonal_periodic(self): ...  # ? hmmm
+    def zonal_periodic(self): ...  # ? hmmm, from v3, do we still need this?
 
     @property
     def _gtype(self):
@@ -127,10 +126,3 @@ class GridAdapter:
                 return GridType.CurvilinearZGrid
             else:
                 return GridType.CurvilinearSGrid
-
-    @staticmethod
-    def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs): ...  # ? hmmm
-
-    def _check_zonal_periodic(self): ...  # ? hmmm
-
-    def _add_Sdepth_periodic_halo(self, zonal, meridional, halosize): ...  # ? hmmm
