@@ -6,9 +6,9 @@ from numpy.testing import assert_allclose
 
 from parcels._datasets.structured.generic import T, X, Y, Z, datasets
 from parcels.grid import Grid as OldGrid
+from parcels.gridadapter import GridAdapter
 from parcels.tools.converters import TimeConverter
-from parcels.v4.grid import Grid as NewGrid
-from parcels.v4.gridadapter import GridAdapter
+from parcels.xgcm.grid import Grid as NewGrid
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
 

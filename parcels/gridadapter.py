@@ -4,8 +4,8 @@ import numpy as np
 import numpy.typing as npt
 
 from parcels.tools.converters import TimeConverter
-from parcels.v4.grid import Axis
-from parcels.v4.grid import Grid as NewGrid
+from parcels.xgcm.grid import Axis
+from parcels.xgcm.grid import Grid as NewGrid
 
 
 def get_dimensionality(axis: Axis | None) -> int:
