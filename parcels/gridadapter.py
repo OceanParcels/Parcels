@@ -46,6 +46,12 @@ class GridAdapter:
 
     @property
     def lon(self):
+        """
+        Note
+        ----
+        Included for compatibility with v3 codebase. May be removed in future.
+        TODO v4: Evaluate
+        """
         try:
             _ = self.grid.axes["X"]
         except KeyError:
@@ -54,6 +60,12 @@ class GridAdapter:
 
     @property
     def lat(self):
+        """
+        Note
+        ----
+        Included for compatibility with v3 codebase. May be removed in future.
+        TODO v4: Evaluate
+        """
         try:
             _ = self.grid.axes["Y"]
         except KeyError:
@@ -62,6 +74,12 @@ class GridAdapter:
 
     @property
     def depth(self):
+        """
+        Note
+        ----
+        Included for compatibility with v3 codebase. May be removed in future.
+        TODO v4: Evaluate
+        """
         try:
             _ = self.grid.axes["Z"]
         except KeyError:
@@ -98,10 +116,22 @@ class GridAdapter:
 
     @property
     def time_origin(self):
+        """
+        Note
+        ----
+        Included for compatibility with v3 codebase. May be removed in future.
+        TODO v4: Evaluate
+        """
         return TimeConverter(self._datetimes[0])
 
     @property
     def _z4d(self) -> Literal[0, 1]:
+        """
+        Note
+        ----
+        Included for compatibility with v3 codebase. May be removed in future.
+        TODO v4: Evaluate
+        """
         return 1 if self.depth.shape == 4 else 0
 
     @property
