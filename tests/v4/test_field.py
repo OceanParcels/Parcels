@@ -8,7 +8,7 @@ from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
-from parcels.xgcm.grid import Grid
+from parcels.xgcm import Grid
 
 
 def test_field_init_param_types():
