@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 
 from parcels import xgcm
+from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
 
 
@@ -29,7 +30,7 @@ def get_time(axis: xgcm.Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
-class XGrid:
+class XGrid(BaseGrid):
     """
     Class to represent a structured grid in Parcels. Wraps a xgcm-like Grid object (we use a trimmed down version of the xgcm.Grid class that is vendored with Parcels).
 
@@ -162,3 +163,5 @@ class XGrid:
                 return GridType.CurvilinearZGrid
             else:
                 return GridType.CurvilinearSGrid
+
+    def search(self, z, y, x, ei=None, search2D=False): ...
