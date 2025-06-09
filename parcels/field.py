@@ -327,7 +327,7 @@ class Field:
 
         try:
             tau, ti = _search_time_index(self, time)
-            bcoords, _ei = self.grid.search(self, z, y, x, ei=_ei)
+            bcoords, _ei = self.grid.search(z, y, x, ei=_ei)
             value = self._interp_method(self, ti, _ei, bcoords, tau, time, z, y, x)
 
             if np.isnan(value):
