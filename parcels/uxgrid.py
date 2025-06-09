@@ -15,8 +15,19 @@ class UxGrid(BaseGrid):
     for interpolation on unstructured grids.
     """
 
-    def __init__(self, grid: ux.grid.Grid) -> UxGrid:
+    def __init__(self, grid: ux.grid.Grid, z: np.ndarray) -> UxGrid:
+        """
+        Initializes the UxGrid with a uxarray grid and vertical coordinate array.
+
+        Parameters
+        ----------
+        grid : ux.grid.Grid
+            The uxarray grid object containing the unstructured grid data.
+        z : np.ndarray
+            A 1D array of vertical coordinates (depths) corresponding to the vertical position of layer faces of the grid
+        """
         self.uxgrid = grid
+        self.z = z
 
     def search(
         self, z: float, y: float, x: float, ei: int | None = None, search2D: bool = False
@@ -24,25 +35,36 @@ class UxGrid(BaseGrid):
         tol = 1e-10
 
         def try_face(fid):
-            # TODO : Vertical search is not implemented yet, so we assume z is not used.
             bcoords, err = self.uxgrid._get_barycentric_coordinates(y, x, fid)
             if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
-                return bcoords, self.ravel_index(0, fid)  # Z and time indices are 0 for now
+                return bcoords, fid
             return None, None
+
+        def find_vertical_index() -> int:
+            if len(self.z) == 1:
+                return 0
+            zi = np.searchsorted(self.z, z, side="right") - 1  # Search assumes that z is positive and increasing with i
+            if zi < 0 or zi >= len(self.z) - 1:
+                raise FieldOutOfBoundError(z, y, x)
+            return zi
+
+        if not search2D:
+            zi = find_vertical_index()  # Find the vertical cell center nearest to z
+        else:
+            zi = 0
 
         if ei is not None:
             zi, fi = self.unravel_index(ei)
-            bcoords, ei_new = try_face(fi)
+            bcoords, fi_new = try_face(fi)
             if bcoords is not None:
-                return bcoords, ei_new
-
+                return bcoords, self.ravel_index(zi, fi_new)
             # Try neighbors of current face
             for neighbor in self.uxgrid.face_face_connectivity[fi, :]:
                 if neighbor == -1:
                     continue
-                bcoords, ei_new = try_face(neighbor)
+                bcoords, fi_new = try_face(neighbor)
                 if bcoords is not None:
-                    return bcoords, ei_new
+                    return bcoords, self.ravel_index(zi, fi_new)
 
         # Global fallback using spatial hash
         fi, bcoords = self.uxgrid.get_spatial_hash().query([[x, y]])
