@@ -27,7 +27,7 @@ def UXPiecewiseConstantFace(
     face registered, such as u,v in FESOM.
     """
     # TODO joe : handle vertical interpolation
-    zi, fi = field.unravel_index(ei)
+    zi, fi = field.grid.unravel_index(ei)
     return field.data[ti, zi, fi]
 
 
@@ -48,6 +48,6 @@ def UXPiecewiseLinearNode(
     such as the vertical velocity w in FESOM.
     """
     # TODO joe : handle vertical interpolation
-    zi, fi = field.unravel_index(ei)
-    node_ids = field.data.uxgrid.face_node_connectivity[fi, :]
+    zi, fi = field.grid.unravel_index(ei)
+    node_ids = field.grid.uxgrid.face_node_connectivity[fi, :]
     return np.dot(field.data[ti, zi, node_ids], bcoords)
