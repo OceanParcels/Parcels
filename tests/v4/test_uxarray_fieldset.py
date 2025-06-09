@@ -37,13 +37,13 @@ def uv_fesom_channel(ds_fesom_channel) -> VectorField:
         U=Field(
             name="U",
             data=ds_fesom_channel.U,
-            grid=UxGrid(ds_fesom_channel.uxgrid),
+            grid=UxGrid(ds_fesom_channel.uxgrid, z=ds_fesom_channel.nz),
             interp_method=UXPiecewiseConstantFace,
         ),
         V=Field(
             name="V",
             data=ds_fesom_channel.V,
-            grid=UxGrid(ds_fesom_channel.uxgrid),
+            grid=UxGrid(ds_fesom_channel.uxgrid, z=ds_fesom_channel.nz),
             interp_method=UXPiecewiseConstantFace,
         ),
     )
@@ -57,17 +57,20 @@ def uvw_fesom_channel(ds_fesom_channel) -> VectorField:
         U=Field(
             name="U",
             data=ds_fesom_channel.U,
-            grid=UxGrid(ds_fesom_channel.uxgrid),
+            grid=UxGrid(ds_fesom_channel.uxgrid, z=ds_fesom_channel.nz),
             interp_method=UXPiecewiseConstantFace,
         ),
         V=Field(
             name="V",
             data=ds_fesom_channel.V,
-            grid=UxGrid(ds_fesom_channel.uxgrid),
+            grid=UxGrid(ds_fesom_channel.uxgrid, z=ds_fesom_channel.nz),
             interp_method=UXPiecewiseConstantFace,
         ),
         W=Field(
-            name="W", data=ds_fesom_channel.W, grid=UxGrid(ds_fesom_channel.uxgrid), interp_method=UXPiecewiseLinearNode
+            name="W",
+            data=ds_fesom_channel.W,
+            grid=UxGrid(ds_fesom_channel.uxgrid, z=ds_fesom_channel.nz),
+            interp_method=UXPiecewiseLinearNode,
         ),
     )
     return UVW
@@ -123,14 +126,14 @@ def test_fesom2_square_delaunay_uniform_z_coordinate_eval():
     ds = datasets_unstructured["fesom2_square_delaunay_uniform_z_coordinate"]
     UVW = VectorField(
         name="UVW",
-        U=Field(name="U", data=ds.U, grid=UxGrid(ds.uxgrid), interp_method=UXPiecewiseConstantFace),
-        V=Field(name="V", data=ds.V, grid=UxGrid(ds.uxgrid), interp_method=UXPiecewiseConstantFace),
-        W=Field(name="W", data=ds.W, grid=UxGrid(ds.uxgrid), interp_method=UXPiecewiseLinearNode),
+        U=Field(name="U", data=ds.U, grid=UxGrid(ds.uxgrid, z=ds.nz), interp_method=UXPiecewiseConstantFace),
+        V=Field(name="V", data=ds.V, grid=UxGrid(ds.uxgrid, z=ds.nz), interp_method=UXPiecewiseConstantFace),
+        W=Field(name="W", data=ds.W, grid=UxGrid(ds.uxgrid, z=ds.nz), interp_method=UXPiecewiseLinearNode),
     )
-    P = Field(name="p", data=ds.p, grid=UxGrid(ds.uxgrid), interp_method=UXPiecewiseConstantFace)
+    P = Field(name="p", data=ds.p, grid=UxGrid(ds.uxgrid, z=ds.nz), interp_method=UXPiecewiseConstantFace)
     fieldset = FieldSet([UVW, P, UVW.U, UVW.V, UVW.W])
 
     assert fieldset.U.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
     assert fieldset.V.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
-    # assert fieldset.W.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 0.0
+    assert fieldset.W.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 0.0
     assert fieldset.P.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
