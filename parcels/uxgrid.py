@@ -15,7 +15,7 @@ class UxGrid(BaseGrid):
     for interpolation on unstructured grids.
     """
 
-    def __init__(self, grid: ux.grid.Grid, z: np.ndarray) -> UxGrid:
+    def __init__(self, grid: ux.grid.Grid, z: ux.UxDataArray) -> UxGrid:
         """
         Initializes the UxGrid with a uxarray grid and vertical coordinate array.
 
@@ -23,10 +23,16 @@ class UxGrid(BaseGrid):
         ----------
         grid : ux.grid.Grid
             The uxarray grid object containing the unstructured grid data.
-        z : np.ndarray
+        z : ux.UxDataArray
             A 1D array of vertical coordinates (depths) corresponding to the vertical position of layer faces of the grid
+            While uxarray allows nz to be spatially and temporally varying, the parcels.UxGrid class considers the case where
+            the vertical coordinate is constant in time and space. This implies flat bottom topography and no moving ALE vertical grid.
         """
         self.uxgrid = grid
+        if not isinstance(z, ux.UxDataArray):
+            raise TypeError("z must be an instance of ux.UxDataArray")
+        if z.ndim != 1:
+            raise ValueError("z must be a 1D array of vertical coordinates")
         self.z = z
 
     def search(
@@ -41,10 +47,12 @@ class UxGrid(BaseGrid):
             return None, None
 
         def find_vertical_index() -> int:
-            if len(self.z) == 1:
+            nz = self.z.shape[0]
+            if nz == 1:
                 return 0
-            zi = np.searchsorted(self.z, z, side="right") - 1  # Search assumes that z is positive and increasing with i
-            if zi < 0 or zi >= len(self.z) - 1:
+            zf = self.z.values
+            zi = np.searchsorted(zf, z, side="right") - 1  # Search assumes that z is positive and increasing with i
+            if zi < 0 or zi >= nz - 1:
                 raise FieldOutOfBoundError(z, y, x)
             return zi
 
