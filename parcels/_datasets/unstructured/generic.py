@@ -24,6 +24,10 @@ def _stommel_gyre_delaunay():
     lon, lat = np.meshgrid(np.linspace(0, 60.0, Nx, dtype=np.float32), np.linspace(0, 60.0, Nx, dtype=np.float32))
     lon_flat = lon.ravel()
     lat_flat = lat.ravel()
+    zf = np.linspace(0.0, 1000.0, 2, endpoint=True, dtype=np.float32)  # Vertical element faces
+    zc = 0.5 * (zf[:-1] + zf[1:])  # Vertical element centers
+    nz = zf.size
+    nz1 = zc.size
 
     # mask any point on one of the boundaries
     mask = (
@@ -40,9 +44,10 @@ def _stommel_gyre_delaunay():
     uxgrid.attrs["Conventions"] = "UGRID-1.0"
 
     # Define arrays U (zonal), V (meridional) and P (sea surface height)
-    U = np.zeros((1, 1, lat.size), dtype=np.float64)
-    V = np.zeros((1, 1, lat.size), dtype=np.float64)
-    P = np.zeros((1, 1, lat.size), dtype=np.float64)
+    U = np.zeros((1, nz1, lat.size), dtype=np.float64)
+    V = np.zeros((1, nz1, lat.size), dtype=np.float64)
+    W = np.zeros((1, nz, lat.size), dtype=np.float64)
+    P = np.zeros((1, nz1, lat.size), dtype=np.float64)
 
     for i, (x, y) in enumerate(zip(lon_flat, lat_flat, strict=False)):
         xi = x / 60.0
@@ -72,7 +77,20 @@ def _stommel_gyre_delaunay():
         dims=["time", "nz1", "n_node"],
         coords=dict(
             time=(["time"], [TIME[0]]),
-            nz1=(["nz1"], [0]),
+            nz1=(["nz1"], zc),
+        ),
+        attrs=dict(
+            description="meridional velocity", units="m/s", location="node", mesh="delaunay", Conventions="UGRID-1.0"
+        ),
+    )
+    w = ux.UxDataArray(
+        data=W,
+        name="W",
+        uxgrid=uxgrid,
+        dims=["time", "nz", "n_node"],
+        coords=dict(
+            time=(["time"], [TIME[0]]),
+            nz=(["nz"], zf),
         ),
         attrs=dict(
             description="meridional velocity", units="m/s", location="node", mesh="delaunay", Conventions="UGRID-1.0"
@@ -85,12 +103,12 @@ def _stommel_gyre_delaunay():
         dims=["time", "nz1", "n_node"],
         coords=dict(
             time=(["time"], [TIME[0]]),
-            nz1=(["nz1"], [0]),
+            nz1=(["nz1"], zc),
         ),
         attrs=dict(description="pressure", units="N/m^2", location="node", mesh="delaunay", Conventions="UGRID-1.0"),
     )
 
-    return ux.UxDataset({"U": u, "V": v, "p": p}, uxgrid=uxgrid)
+    return ux.UxDataset({"U": u, "V": v, "W": w, "p": p}, uxgrid=uxgrid)
 
 
 def _fesom2_square_delaunay_uniform_z_coordinate():
