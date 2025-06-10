@@ -81,29 +81,6 @@ def multifile_fieldset(tmp_path):
 
 @pytest.mark.v4remove
 @pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("xdim", [100, 200])
-@pytest.mark.parametrize("ydim", [100, 200])
-def test_fieldset_from_data(xdim, ydim):
-    """Simple test for fieldset initialisation from data."""
-    data, dimensions = generate_fieldset_data(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions)
-    assert len(fieldset.U.data.shape) == 2
-    assert len(fieldset.V.data.shape) == 2
-    assert np.allclose(fieldset.U.data, data["U"], rtol=1e-12)
-    assert np.allclose(fieldset.V.data, data["V"], rtol=1e-12)
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="vmin and vmax were removed as arguments")
-def test_fieldset_vmin_vmax():
-    data, dimensions = generate_fieldset_data(11, 11)
-    fieldset = FieldSet.from_data(data, dimensions, vmin=3, vmax=7)
-    assert np.isclose(np.amin(fieldset.U.data[fieldset.U.data > 0.0]), 3)
-    assert np.isclose(np.amax(fieldset.U.data), 7)
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("ttype", ["float", "datetime64"])
 @pytest.mark.parametrize("tdim", [1, 20])
 def test_fieldset_from_data_timedims(ttype, tdim):

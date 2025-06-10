@@ -375,6 +375,12 @@ def test_pset_multi_execute_delete(fieldset):
 
 @pytest.mark.parametrize("staggered_grid", ["Agrid", "Cgrid"])
 def test_from_field_exact_val(staggered_grid):
+    """
+    Tests the creation of a ParticleSet from a field with exact values
+    on both A-grid and C-grid staggered grids. Verifies that particles
+    are initialized correctly within the masked region and that their
+    properties match the expected field values.
+    """
     xdim = 4
     ydim = 3
 

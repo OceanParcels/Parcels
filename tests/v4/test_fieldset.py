@@ -1,4 +1,3 @@
-from contextlib import nullcontext
 from datetime import timedelta
 
 import cftime
@@ -107,8 +106,7 @@ def test_fieldset_init_incompatible_calendars():
     grid2 = Grid(ds2)
     incompatible_calendar = Field("test", ds2["data_g"], grid2, mesh_type="flat")
 
-    # with pytest.raises(CalendarError, match="Expected field 'test' to have calendar compatible with datetime object"):
-    with nullcontext():
+    with pytest.raises(CalendarError, match="Expected field '.*' to have calendar compatible with datetime object"):
         FieldSet([U, V, UV, incompatible_calendar])
 
 
@@ -118,7 +116,7 @@ def test_fieldset_add_field_incompatible_calendars(fieldset):
     grid = Grid(ds_test)
     field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
 
-    with pytest.raises(CalendarError, match="Expected field 'test' to have calendar compatible with datetime object"):
+    with pytest.raises(CalendarError, match="Expected field '.*' to have calendar compatible with datetime object"):
         fieldset.add_field(field, "test_field")
 
 

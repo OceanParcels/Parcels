@@ -30,28 +30,6 @@ def set_globcurrent_fieldset(
     )
 
 
-@pytest.mark.v4remove(
-    reason="indices keryword is not supported in v4. Subsetting should be done on xarray level."
-)
-@pytest.mark.parametrize(
-    "use_xarray", [True, pytest.param(False, marks=pytest.mark.xfail)]
-)
-def test_globcurrent_fieldset(use_xarray):
-    fieldset = set_globcurrent_fieldset()
-    assert fieldset.U.lon.size == 81
-    assert fieldset.U.lat.size == 41
-    assert fieldset.V.lon.size == 81
-    assert fieldset.V.lat.size == 41
-
-    if not use_xarray:
-        indices = {"lon": [5], "lat": range(20, 30)}
-        fieldsetsub = set_globcurrent_fieldset(indices=indices)
-        assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices["lon"]])
-        assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices["lat"]])
-        assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices["lon"]])
-        assert np.allclose(fieldsetsub.V.lat, fieldset.V.lat[indices["lat"]])
-
-
 @pytest.mark.parametrize(
     "dt, lonstart, latstart", [(3600.0, 25, -35), (-3600.0, 20, -39)]
 )
@@ -101,55 +79,6 @@ def test_globcurrent_particles():
 
     assert abs(pset[0].lon - 23.8) < 1
     assert abs(pset[0].lat - -35.3) < 1
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(
-    reason="Can't patch metadata without using xarray. v4 will natively use xarray anyway. GH1919."
-)
-@pytest.mark.parametrize("dt", [-300, 300])
-def test_globcurrent_xarray_vs_netcdf(dt):
-    fieldsetNetcdf = set_globcurrent_fieldset(use_xarray=False)
-    fieldsetxarray = set_globcurrent_fieldset(use_xarray=True)
-    lonstart, latstart, runtime = (25, -35, timedelta(days=7))
-
-    psetN = parcels.ParticleSet(
-        fieldsetNetcdf, pclass=parcels.Particle, lon=lonstart, lat=latstart
-    )
-    psetN.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
-
-    psetX = parcels.ParticleSet(
-        fieldsetxarray, pclass=parcels.Particle, lon=lonstart, lat=latstart
-    )
-    psetX.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
-
-    assert np.allclose(psetN[0].lon, psetX[0].lon)
-    assert np.allclose(psetN[0].lat, psetX[0].lat)
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(
-    reason="Timeslices will be removed in v4, as users will be able to use xarray directly."
-)
-@pytest.mark.parametrize("dt", [-300, 300])
-def test_globcurrent_netcdf_timestamps(dt):
-    fieldsetNetcdf = set_globcurrent_fieldset()
-    timestamps = fieldsetNetcdf.U.grid.timeslices
-    fieldsetTimestamps = set_globcurrent_fieldset(timestamps=timestamps)
-    lonstart, latstart, runtime = (25, -35, timedelta(days=7))
-
-    psetN = parcels.ParticleSet(
-        fieldsetNetcdf, pclass=parcels.Particle, lon=lonstart, lat=latstart
-    )
-    psetN.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
-
-    psetT = parcels.ParticleSet(
-        fieldsetTimestamps, pclass=parcels.Particle, lon=lonstart, lat=latstart
-    )
-    psetT.execute(parcels.AdvectionRK4, runtime=runtime, dt=dt)
-
-    assert np.allclose(psetN.lon[0], psetT.lon[0])
-    assert np.allclose(psetN.lat[0], psetT.lat[0])
 
 
 def test__particles_init_time():

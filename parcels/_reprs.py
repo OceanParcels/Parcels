@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from parcels import Field, FieldSet, ParticleSet
 
 
-def field_repr(field: Field) -> str:
+def field_repr(field: Field) -> str:  # TODO v4: Rework or remove entirely
     """Return a pretty repr for Field"""
     out = f"""<{type(field).__name__}>
     name            : {field.name!r}
@@ -63,7 +63,7 @@ def particleset_repr(pset: ParticleSet) -> str:
     return textwrap.dedent(out).strip()
 
 
-def fieldset_repr(fieldset: FieldSet) -> str:
+def fieldset_repr(fieldset: FieldSet) -> str:  # TODO v4: Rework or remove entirely
     """Return a pretty repr for FieldSet"""
     fields_repr = "\n".join([repr(f) for f in fieldset.get_fields()])
 
