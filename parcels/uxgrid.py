@@ -24,7 +24,7 @@ class UxGrid(BaseGrid):
         grid : ux.grid.Grid
             The uxarray grid object containing the unstructured grid data.
         z : ux.UxDataArray
-            A 1D array of vertical coordinates (depths) corresponding to the vertical position of layer faces of the grid
+            A 1D array of vertical coordinates (depths) associated with the layer interface heights (not the mid-layer depths).
             While uxarray allows nz to be spatially and temporally varying, the parcels.UxGrid class considers the case where
             the vertical coordinate is constant in time and space. This implies flat bottom topography and no moving ALE vertical grid.
         """
@@ -47,22 +47,23 @@ class UxGrid(BaseGrid):
             return None, None
 
         def find_vertical_index() -> int:
-            nz = self.z.shape[0]
-            if nz == 1:
+            if search2D:
                 return 0
-            zf = self.z.values
-            zi = np.searchsorted(zf, z, side="right") - 1  # Search assumes that z is positive and increasing with i
-            if zi < 0 or zi >= nz - 1:
-                raise FieldOutOfBoundError(z, y, x)
-            return zi
+            else:
+                nz = self.z.shape[0]
+                if nz == 1:
+                    return 0
+                zf = self.z.values
+                # Return zi such that zf[zi] <= z < zf[zi+1]
+                zi = np.searchsorted(zf, z, side="right") - 1  # Search assumes that z is positive and increasing with i
+                if zi < 0 or zi >= nz - 1:
+                    raise FieldOutOfBoundError(z, y, x)
+                return zi
 
-        if not search2D:
-            zi = find_vertical_index()  # Find the vertical cell center nearest to z
-        else:
-            zi = 0
+        zi = find_vertical_index()  # Find the vertical cell center nearest to z
 
         if ei is not None:
-            zi, fi = self.unravel_index(ei)
+            _, fi = self.unravel_index(ei)
             bcoords, fi_new = try_face(fi)
             if bcoords is not None:
                 return bcoords, self.ravel_index(zi, fi_new)
@@ -79,7 +80,7 @@ class UxGrid(BaseGrid):
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
 
-        return bcoords, self.ravel_index(zi, fi)
+        return bcoords[0], self.ravel_index(zi, fi[0])
 
     def _get_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
