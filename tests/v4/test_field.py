@@ -113,19 +113,11 @@ def test_vectorfield_init_different_time_intervals():
     ...
 
 
-def test_field_unstructured_grid_creation(): ...
-
-
-def test_field_interpolation(): ...
-
-
-def test_field_interpolation_out_of_spatial_bounds(): ...
-
-
-def test_field_interpolation_out_of_time_bounds(): ...
-
-
 def test_field_unstructured_z_linear():
+    """Tests correctness of piecewise constant and piecewise linear interpolation methods on an unstructured grid with a vertical coordinate.
+    The example dataset is a FESOM2 square Delaunay grid with uniform z-coordinate. Cell centered and layer registered data are defined to be
+    linear functions of the vertical coordinate. This allows for testing of exactness of the interpolation methods.
+    """
     ds = datasets_unstructured["fesom2_square_delaunay_uniform_z_coordinate"]
 
     # Change the pressure values to be linearly dependent on the vertical coordinate
@@ -151,3 +143,15 @@ def test_field_unstructured_z_linear():
     assert np.isclose(W.eval(time=ds.time[0].values, z=10.0, y=30.0, x=30.0, applyConversion=False), 10.0)
     assert np.isclose(W.eval(time=ds.time[0].values, z=65.0, y=30.0, x=30.0, applyConversion=False), 65.0)
     assert np.isclose(W.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 900.0)
+
+
+def test_field_unstructured_grid_creation(): ...
+
+
+def test_field_interpolation(): ...
+
+
+def test_field_interpolation_out_of_spatial_bounds(): ...
+
+
+def test_field_interpolation_out_of_time_bounds(): ...
