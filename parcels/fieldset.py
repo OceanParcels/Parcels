@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import xarray as xr
 
+from parcels import xgcm
 from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
-from parcels.v4.grid import Grid
+from parcels.xgrid import XGrid
 
 if TYPE_CHECKING:
     from parcels._typing import DatetimeLike
@@ -171,7 +172,7 @@ class FieldSet:
                 "time": (["time"], np.arange(1), {"axis": "T"}),
             },
         )
-        grid = Grid(da)
+        grid = XGrid(xgcm.Grid(da))
         self.add_field(
             Field(
                 name,

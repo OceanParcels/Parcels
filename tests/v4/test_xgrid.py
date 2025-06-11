@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+from parcels import xgcm
 from parcels._datasets.structured.generic import T, X, Y, Z, datasets
 from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
-from parcels.v4.grid import Grid as NewGrid
-from parcels.v4.gridadapter import GridAdapter
+from parcels.xgrid import XGrid
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
 
@@ -38,9 +38,9 @@ def assert_equal(actual, expected):
 
 
 @pytest.mark.parametrize("ds, attr, expected", test_cases)
-def test_grid_adapter_properties_ground_truth(ds, attr, expected):
-    adapter = GridAdapter(NewGrid(ds, periodic=False))
-    actual = getattr(adapter, attr)
+def test_xgrid_properties_ground_truth(ds, attr, expected):
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    actual = getattr(grid, attr)
     assert_equal(actual, expected)
 
 
@@ -60,10 +60,10 @@ def test_grid_adapter_properties_ground_truth(ds, attr, expected):
     ],
 )
 @pytest.mark.parametrize("ds", datasets.values())
-def test_grid_adapter_against_old(ds, attr):
-    adapter = GridAdapter(NewGrid(ds, periodic=False))
+def test_xgrid_against_old(ds, attr):
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
 
-    grid = OldGrid.create_grid(
+    old_grid = OldGrid.create_grid(
         lon=ds.lon.values,
         lat=ds.lat.values,
         depth=ds.depth.values,
@@ -71,6 +71,6 @@ def test_grid_adapter_against_old(ds, attr):
         time_origin=TimeConverter(ds.time.values[0]),
         mesh="spherical",
     )
-    actual = getattr(adapter, attr)
-    expected = getattr(grid, attr)
+    actual = getattr(grid, attr)
+    expected = getattr(old_grid, attr)
     assert_equal(actual, expected)

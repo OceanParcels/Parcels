@@ -3,39 +3,34 @@ import pytest
 import uxarray as ux
 import xarray as xr
 
-from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode
+from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, xgcm
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
-from parcels.v4.grid import Grid
+from parcels.xgrid import XGrid
 
 
 def test_field_init_param_types():
-    data = xr.DataArray(
-        attrs={
-            "location": "node",
-            "mesh": "flat",
-        }
-    )
-    grid = Grid(data)
+    data = datasets_structured["ds_2d_left"]
+    grid = XGrid(xgcm.Grid(data))
     with pytest.raises(ValueError, match="Expected `name` to be a string"):
-        Field(name=123, data=data, grid=grid)
+        Field(name=123, data=data["data_g"], grid=grid)
 
     with pytest.raises(ValueError, match="Expected `data` to be a uxarray.UxDataArray or xarray.DataArray"):
         Field(name="test", data=123, grid=grid)
 
-    with pytest.raises(ValueError, match="Expected `grid` to be a parcels UxGrid, or parcels Grid"):
-        Field(name="test", data=data, grid=123)
+    with pytest.raises(ValueError, match="Expected `grid` to be a parcels UxGrid, or parcels XGrid"):
+        Field(name="test", data=data["data_g"], grid=123)
 
     with pytest.raises(ValueError, match="Invalid value 'invalid'. Valid options are.*"):
-        Field(name="test", data=data, grid=grid, mesh_type="invalid")
+        Field(name="test", data=data["data_g"], grid=grid, mesh_type="invalid")
 
 
 @pytest.mark.parametrize(
     "data,grid",
     [
-        pytest.param(ux.UxDataArray(), Grid(xr.Dataset()), id="uxdata-grid"),
+        pytest.param(ux.UxDataArray(), XGrid(xgcm.Grid(datasets_structured["ds_2d_left"])), id="uxdata-grid"),
         pytest.param(
             xr.DataArray(),
             UxGrid(
@@ -59,7 +54,9 @@ def test_field_incompatible_combination(data, grid):
     "data,grid",
     [
         pytest.param(
-            datasets_structured["ds_2d_left"]["data_g"], Grid(datasets_structured["ds_2d_left"]), id="ds_2d_left"
+            datasets_structured["ds_2d_left"]["data_g"],
+            XGrid(xgcm.Grid(datasets_structured["ds_2d_left"])),
+            id="ds_2d_left",
         ),  # TODO: Perhaps this test should be expanded to cover more datasets?
     ],
 )
@@ -82,7 +79,7 @@ def test_field_init_fail_on_bad_time_type(numpy_dtype):
     ds["time"] = np.arange(0, T_structured, dtype=numpy_dtype)
 
     data = ds["data_g"]
-    grid = Grid(ds)
+    grid = XGrid(xgcm.Grid(ds))
     with pytest.raises(
         ValueError,
         match="Error getting time interval.*. Are you sure that the time dimension on the xarray dataset is stored as datetime or cftime datetime objects\?",
@@ -98,7 +95,9 @@ def test_field_init_fail_on_bad_time_type(numpy_dtype):
     "data,grid",
     [
         pytest.param(
-            datasets_structured["ds_2d_left"]["data_g"], Grid(datasets_structured["ds_2d_left"]), id="ds_2d_left"
+            datasets_structured["ds_2d_left"]["data_g"],
+            XGrid(xgcm.Grid(datasets_structured["ds_2d_left"])),
+            id="ds_2d_left",
         ),
     ],
 )
