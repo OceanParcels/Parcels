@@ -3,7 +3,7 @@ import pytest
 import uxarray as ux
 import xarray as xr
 
-from parcels import Field
+from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
@@ -38,7 +38,10 @@ def test_field_init_param_types():
         pytest.param(ux.UxDataArray(), Grid(xr.Dataset()), id="uxdata-grid"),
         pytest.param(
             xr.DataArray(),
-            UxGrid(datasets_unstructured["stommel_gyre_delaunay"].uxgrid),
+            UxGrid(
+                datasets_unstructured["stommel_gyre_delaunay"].uxgrid,
+                z=datasets_unstructured["stommel_gyre_delaunay"].coords["nz"],
+            ),
             id="xarray-uxgrid",
         ),
     ],
@@ -121,3 +124,31 @@ def test_field_interpolation_out_of_spatial_bounds(): ...
 
 
 def test_field_interpolation_out_of_time_bounds(): ...
+
+
+def test_field_unstructured_z_linear():
+    ds = datasets_unstructured["fesom2_square_delaunay_uniform_z_coordinate"]
+
+    # Change the pressure values to be linearly dependent on the vertical coordinate
+    for k, z in enumerate(ds.coords["nz1"]):
+        ds["p"].values[:, k, :] = z
+
+    # Change the vertical velocity values to be linearly dependent on the vertical coordinate
+    for k, z in enumerate(ds.coords["nz"]):
+        ds["W"].values[:, k, :] = z
+
+    grid = UxGrid(ds.uxgrid, z=ds.coords["nz"])
+    # Note that the vertical coordinate is required to be the position of the layer interfaces ("nz"), not the mid-layers ("nz1")
+    P = Field(name="p", data=ds.p, grid=grid, interp_method=UXPiecewiseConstantFace)
+
+    # Test above first cell center - for piecewise constant, should return the depth of the first cell center
+    assert np.isclose(P.eval(time=ds.time[0].values, z=10.0, y=30.0, x=30.0, applyConversion=False), 55.555557)
+    # Test below first cell center, but in the first layer  - for piecewise constant, should return the depth of the first cell center
+    assert np.isclose(P.eval(time=ds.time[0].values, z=65.0, y=30.0, x=30.0, applyConversion=False), 55.555557)
+    # Test bottom layer  - for piecewise constant, should return the depth of the of the bottom layer cell center
+    assert np.isclose(P.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 944.44445801)
+
+    W = Field(name="W", data=ds.W, grid=grid, interp_method=UXPiecewiseLinearNode)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=10.0, y=30.0, x=30.0, applyConversion=False), 10.0)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=65.0, y=30.0, x=30.0, applyConversion=False), 65.0)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 900.0)
