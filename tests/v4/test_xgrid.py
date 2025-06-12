@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -11,6 +12,7 @@ from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
 from parcels.xgrid import (
     XGrid,
+    _iterate_over_cells,
 )
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
@@ -117,3 +119,46 @@ def test_invalid_xgrid_field_array():
 def test_invalid_lon_lat(ds):
     """Stress test the grid initialiser by creating incompatible datasets that test the edge cases"""
     ...
+
+
+def test_iterate_over_cells():
+    ny = 3  # Number of cells in the y-direction
+    nx = 6  # Number of cells in the x-direction
+    lon = np.arange(ny + 1)
+    lat = np.arange(nx + 1)
+    LAT, LON = np.meshgrid(lat, lon, indexing="ij")
+
+    # Call the function and collect the output
+    cells = list(_iterate_over_cells(lat=LAT, lon=LON))
+    assert len(cells) == ny * nx, "Number of cells does not match expected."
+
+    for cell in cells:
+        _assert_point_is("east", 1, cell[0], cell[1])
+        _assert_point_is("north", 1, cell[1], cell[2])
+        _assert_point_is("west", 1, cell[2], cell[3])
+
+
+def test__assert_point_is():
+    _assert_point_is("east", 1, np.array([0, 0]), np.array([0, 1]))
+    _assert_point_is("west", 1, np.array([0, 1]), np.array([0, 0]))
+    _assert_point_is("north", 1, np.array([0, 0]), np.array([1, 0]))
+    _assert_point_is("south", 1, np.array([1, 0]), np.array([0, 0]))
+
+
+def _assert_point_is(
+    direction: Literal["east", "west", "north", "south"], by: int, reference_cell: np.ndarray, test_cell: np.ndarray
+):
+    """cell1 and cell2 are arrays of (lat, lon)"""
+    match direction:
+        case "east":
+            delta = np.array([0, by])
+        case "west":
+            delta = np.array([0, -by])
+        case "north":
+            delta = np.array([by, 0])
+        case "south":
+            delta = np.array([-by, 0])
+        case _:
+            raise ValueError(f"Invalid method: {direction}")
+
+    np.testing.assert_allclose(reference_cell + delta, test_cell)
