@@ -121,16 +121,41 @@ def test_invalid_lon_lat(ds):
         XGrid(xgcm.Grid(ds, periodic=False))
 
 
+def test_xgrid_ravel_unravel_index():
+    ds = datasets["ds_2d_left"]
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
+
+    xdim = grid.xdim
+    ydim = grid.ydim
+    zdim = grid.zdim
+
+    encountered_eis = []
+    for xi in range(xdim):
+        for yi in range(ydim):
+            for zi in range(zdim):
+                ei = grid.ravel_index(zi, yi, xi)
+                zi_test, yi_test, xi_test = grid.unravel_index(ei)
+                assert xi == xi_test, f"Expected xi {xi} but got {xi_test} for ei {ei}"
+                assert yi == yi_test, f"Expected yi {yi} but got {yi_test} for ei {ei}"
+                assert zi == zi_test, f"Expected zi {zi} but got {zi_test} for ei {ei}"
+                encountered_eis.append(ei)
+
+    encountered_eis = sorted(encountered_eis)
+    assert len(set(encountered_eis)) == len(encountered_eis), "Raveled indices are not unique."
+    assert np.allclose(np.diff(np.array(encountered_eis)), 1), "Raveled indices are not consecutive integers."
+    assert encountered_eis[0] == 0, "Raveled indices do not start at 0."
+
+
 def test_iterate_over_cells():
-    ny = 3  # Number of cells in the y-direction
-    nx = 6  # Number of cells in the x-direction
-    lon = np.arange(ny + 1)
-    lat = np.arange(nx + 1)
+    ydim = 3  # Number of cells in the y-direction
+    xdim = 6  # Number of cells in the x-direction
+    lon = np.arange(ydim + 1)
+    lat = np.arange(xdim + 1)
     LAT, LON = np.meshgrid(lat, lon, indexing="ij")
 
     # Call the function and collect the output
     cells = list(_iterate_over_cells(lat=LAT, lon=LON))
-    assert len(cells) == ny * nx, "Number of cells does not match expected."
+    assert len(cells) == ydim * xdim, "Number of cells does not match expected."
 
     for cell in cells:
         _assert_point_is("east", 1, cell[0], cell[1])
