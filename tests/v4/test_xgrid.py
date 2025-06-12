@@ -12,7 +12,7 @@ from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
 from parcels.xgrid import (
     XGrid,
-    _iterate_over_cells,
+    _generate_cells,
 )
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
@@ -146,7 +146,7 @@ def test_xgrid_ravel_unravel_index():
     assert encountered_eis[0] == 0, "Raveled indices do not start at 0."
 
 
-def test_iterate_over_cells():
+def test_generate_cells():
     ydim = 3  # Number of cells in the y-direction
     xdim = 6  # Number of cells in the x-direction
     lon = np.arange(ydim + 1)
@@ -154,7 +154,7 @@ def test_iterate_over_cells():
     LAT, LON = np.meshgrid(lat, lon, indexing="ij")
 
     # Call the function and collect the output
-    cells = list(_iterate_over_cells(lat=LAT, lon=LON))
+    cells = list(_generate_cells(lat=LAT, lon=LON))
     assert len(cells) == ydim * xdim, "Number of cells does not match expected."
 
     for cell in cells:
