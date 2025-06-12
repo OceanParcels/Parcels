@@ -280,9 +280,13 @@ def assert_valid_lon_lat(da_lon, da_lat, axes: _XGCM_AXES):
             )
 
     if da_lon.ndim == 2:
+        if da_lon.dims != da_lat.dims:
+            raise ValueError(
+                f"Longitude DataArray {da_lon.name!r} with dims {da_lon.dims} and Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} must be defined on the same dimensions."
+            )
+
         lon_axes = [get_axis_from_dim_name(axes, dim) for dim in da_lon.dims]
-        lat_axes = [get_axis_from_dim_name(axes, dim) for dim in da_lat.dims]
-        if lon_axes != lat_axes != ["Y", "X"]:
+        if lon_axes != ["Y", "X"]:
             raise ValueError(
                 f"Longitude DataArray {da_lon.name!r} with dims {da_lon.dims} and Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} must be defined on the X and Y axes and transposed to have dimensions in order of Y, X."
             )
