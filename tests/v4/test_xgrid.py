@@ -88,6 +88,11 @@ def test_grid_init_on_generic_datasets(ds):
 
 def test_invalid_xgrid_field_array():
     """Stress test initialiser by creating incompatible datasets that test the edge cases"""
+    ...
+
+
+def test_invalid_lon_lat(ds):
+    """Stress test the grid initialiser by creating incompatible datasets that test the edge cases"""
     ds = datasets["ds_2d_left"].copy()
     ds["lon"], ds["lat"] = xr.broadcast(ds["YC"], ds["XC"])
 
@@ -114,11 +119,6 @@ def test_invalid_xgrid_field_array():
         match=".*must be defined on the X and Y axes and transposed to have dimensions in order of Y, X\.",
     ):
         XGrid(xgcm.Grid(ds, periodic=False))
-
-
-def test_invalid_lon_lat(ds):
-    """Stress test the grid initialiser by creating incompatible datasets that test the edge cases"""
-    ...
 
 
 def test_iterate_over_cells():
