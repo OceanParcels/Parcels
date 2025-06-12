@@ -1,4 +1,4 @@
-from collections.abc import Hashable
+from collections.abc import Hashable, Mapping
 from typing import Literal, cast
 
 import numpy as np
@@ -10,7 +10,9 @@ from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
 
 _AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
+_AXIS_DIRECTION_SPATIAL = Literal["X", "Y", "Z"]
 _AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
+_XGCM_AXES = Mapping[_AXIS_DIRECTION, xgcm.Axis]
 
 
 def get_dimensionality(axis: xgcm.Axis | None) -> int:
@@ -172,47 +174,66 @@ class XGrid(BaseGrid):
     def search(self, z, y, x, ei=None, search2D=False): ...
 
 
-def get_direction_axis(grid: xgcm.Grid, var: str) -> _AXIS_DIRECTION | None:
-    """For a given variable name in a grid, returns the direction axis it is on."""
-    for direction, axis in grid.axes.items():
-        if var in axis.coords.values():
-            return direction
+def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _AXIS_DIRECTION | None:
+    """For a given dimension name in a grid, returns the direction axis it is on."""
+    for axis_name, axis in axes.items():
+        if dim in axis.coords.values():
+            return axis_name
     return None
 
 
-def get_position(grid: xgcm.Grid, var: str) -> _AXIS_POSITION | None:
-    """For a given variable, returns the position of the variable in the grid."""
-    for axis in grid.axes.values():
+def get_position_from_dim_name(axes: _XGCM_AXES, dim: str) -> _AXIS_POSITION | None:
+    """For a given dimension, returns the position of the variable in the grid."""
+    for axis in axes.values():
         var_to_position = {var: position for position, var in axis.coords.items()}
 
-        if var in var_to_position:
-            return var_to_position[var]
+        if dim in var_to_position:
+            return var_to_position[dim]
     return None
 
 
-def assert_valid_field_array_ordering(da: xr.DataArray, grid: xgcm.Grid):
-    # ? This works well for one file, but what happens if the Field and Grid are stored in different files?
-    dim_direction = {dim: get_direction_axis(grid, dim) for dim in da.dims}
+def assert_valid_field_array(da: xr.DataArray, axes: _XGCM_AXES):
+    """
+    Asserts that for a data array:
+    - All dimensions are associated with a direction on the grid
+    - These directions are T, Z, Y, X and the array is ordered as T, Z, Y, X
+    """
+    dim_to_axis = {dim: get_axis_from_dim_name(axes, dim) for dim in da.dims}
 
-    if None in dim_direction.values():
-        for dim, direction in dim_direction.items():
-            if direction is None:
-                raise ValueError(
-                    f"Dimension {dim!r} for DataArray {da.name!r} with dims {da.dims} is not associated with a direction on the provided grid."
-                )
+    for dim, direction in dim_to_axis.items():
+        if direction is None:
+            raise ValueError(
+                f"Dimension {dim!r} for DataArray {da.name!r} with dims {da.dims} is not associated with a direction on the provided grid."
+            )
 
-    dim_direction = cast(dict[Hashable, _AXIS_DIRECTION], dim_direction)
+    dim_to_axis = cast(dict[Hashable, _AXIS_DIRECTION], dim_to_axis)
 
     # Assert all dimensions are present
-    if set(dim_direction.values()) != {"T", "Z", "Y", "X"}:
+    if set(dim_to_axis.values()) != {"T", "Z", "Y", "X"}:
         raise ValueError(
-            f"DataArray {da.name!r} with dims {da.dims} has directions {tuple(dim_direction.values())}."
+            f"DataArray {da.name!r} with dims {da.dims} has directions {tuple(dim_to_axis.values())}."
             "Expected directions of 'T', 'Z', 'Y', and 'X'."
         )
 
     # Assert order is t, z, y, x
-    # ? Is this even necessary? Can't we just fetch the direction from the grid?
-    if list(dim_direction.values()) != ["T", "Z", "Y", "X"]:
+    if list(dim_to_axis.values()) != ["T", "Z", "Y", "X"]:
         raise ValueError(
-            f"Dimension order for array {da.name!r} is not valid. Got {tuple(dim_direction.keys())} with associated directions of {tuple(dim_direction.values())}.  Expected directions of ('T', 'Z', 'Y', 'X'). Transpose your array accordingly."
+            f"Dimension order for array {da.name!r} is not valid. Got {tuple(dim_to_axis.keys())} with associated directions of {tuple(dim_to_axis.values())}.  Expected directions of ('T', 'Z', 'Y', 'X'). Transpose your array accordingly."
         )
+
+
+def assert_valid_lon_lat(da_lon, da_lat, axes: _XGCM_AXES):
+    """
+    Asserts that the provided longitude and latitude DataArrays are defined appropriately
+    on the F points to match the internal representation in Parcels.
+
+    - Longitude and latitude must be 1D or 2D
+    - Both are defined on the left points (i.e., not the centers)
+    - If 1D:
+      - Longitude is associated with the X axis
+      - Latitude is associated with the Y axis
+    - If 2D:
+      - Lon and lat are defined on the same dimensions
+      - Lon and lat are transposed such they're Y, X
+    """
+    ...
