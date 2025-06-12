@@ -118,7 +118,7 @@ def test_field_unstructured_z_linear():
     The example dataset is a FESOM2 square Delaunay grid with uniform z-coordinate. Cell centered and layer registered data are defined to be
     linear functions of the vertical coordinate. This allows for testing of exactness of the interpolation methods.
     """
-    ds = datasets_unstructured["fesom2_square_delaunay_uniform_z_coordinate"]
+    ds = datasets_unstructured["fesom2_square_delaunay_uniform_z_coordinate"].copy(deep=True)
 
     # Change the pressure values to be linearly dependent on the vertical coordinate
     for k, z in enumerate(ds.coords["nz1"]):
