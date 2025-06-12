@@ -8,7 +8,9 @@ from parcels import xgcm
 from parcels._datasets.structured.generic import T, X, Y, Z, datasets
 from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
-from parcels.xgrid import XGrid
+from parcels.xgrid import (
+    XGrid,
+)
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
 
@@ -74,3 +76,13 @@ def test_xgrid_against_old(ds, attr):
     actual = getattr(grid, attr)
     expected = getattr(old_grid, attr)
     assert_equal(actual, expected)
+
+
+def test_invalid_xgrid_field_array(ds):
+    """Stress test initialiser by creating incompatible datasets that test the edge cases"""
+    ...
+
+
+def test_invalid_lon_lat(ds):
+    """Stress test the grid initialiser by creating incompatible datasets that test the edge cases"""
+    ...
