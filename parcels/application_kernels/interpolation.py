@@ -27,7 +27,7 @@ def UXPiecewiseConstantFace(
     face registered, such as u,v in FESOM.
     """
     zi, fi = field.grid.unravel_index(ei)
-    return field.values[ti, zi, fi]
+    return field.data.values[ti, zi, fi]
 
 
 def UXPiecewiseLinearNode(
@@ -52,8 +52,8 @@ def UXPiecewiseLinearNode(
     # The zi refers to the vertical layer index. The field in this routine are assumed to be defined at the vertical interface levels.
     # For interface zi, the interface indices are [zi, zi+1], so we need to use the values at zi and zi+1.
     # First, do barycentric interpolation in the lateral direction for each interface level
-    fzk = np.dot(field.values[ti, k, node_ids], bcoords)
-    fzkp1 = np.dot(field.values[ti, k + 1, node_ids], bcoords)
+    fzk = np.dot(field.data.values[ti, k, node_ids], bcoords)
+    fzkp1 = np.dot(field.data.values[ti, k + 1, node_ids], bcoords)
 
     # Then, do piecewise linear interpolation in the vertical direction
     zk = field.grid.z.values[k]
