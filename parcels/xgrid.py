@@ -176,7 +176,21 @@ class XGrid(BaseGrid):
             else:
                 return GridType.CurvilinearSGrid
 
-    def search(self, z, y, x, ei=None, search2D=False): ...
+    def search(self, z, y, x, ei=None, search2D=False):
+        ds = self.xgcm_grid._ds
+
+        if ds.lon.ndim == 1:
+            yi, bcoord_y = _search_1d_array(ds.lat.values, y)
+            xi, bcoord_x = _search_1d_array(ds.lon.values, x)
+
+            if search2D:
+                zi = 0
+            else:
+                zi, _ = _search_1d_array(ds.depth.values, z)
+
+            return (zi, yi, xi), np.array([bcoord_y, bcoord_x, 1 - bcoord_y, 1 - bcoord_x])
+
+        raise NotImplementedError("Searching in 2D arrays is not implemented yet.")
 
     def ravel_index(self, zi, yi, xi):
         """
@@ -340,7 +354,7 @@ def assert_valid_lon_lat(da_lon, da_lat, axes: _XGCM_AXES):
             )
 
 
-def _iterate_over_cells(
+def _generate_cells(
     *,
     lat: np.ndarray,
     lon: np.ndarray,
@@ -375,3 +389,29 @@ def _iterate_over_cells(
                     [lat[y + 1, x], lon[y + 1, x]],  # top left
                 ]
             )
+
+
+def _search_1d_array(
+    arr: np.array,
+    x: float,
+) -> tuple[int, int]:
+    """
+    Searches for the particle location in a 1D array and return barycentric coordinate along dimension.
+
+    Parameters
+    ----------
+    arr : np.array
+        1D array (assumed to be ascending) to search in.
+    x : float
+        Position in the 1D array to search for.
+
+    Returns
+    -------
+    int
+        Index of the element just before the position x in the array.
+    float
+        Barycentric coordinate.
+    """
+    i = np.argmin(arr < x)
+    barry = (x - arr[i]) / (arr[i + 1] - arr[i])
+    return i, barry
