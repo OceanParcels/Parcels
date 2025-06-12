@@ -61,7 +61,7 @@ def test_xgrid_properties_ground_truth(ds, attr, expected):
         "_gtype",
     ],
 )
-@pytest.mark.parametrize("ds", datasets.values())
+@pytest.mark.parametrize("ds", [pytest.param(ds, id=key) for key, ds in datasets.items()])
 def test_xgrid_against_old(ds, attr):
     grid = XGrid(xgcm.Grid(ds, periodic=False))
 
@@ -76,6 +76,11 @@ def test_xgrid_against_old(ds, attr):
     actual = getattr(grid, attr)
     expected = getattr(old_grid, attr)
     assert_equal(actual, expected)
+
+
+@pytest.mark.parametrize("ds", [pytest.param(ds, id=key) for key, ds in datasets.items()])
+def test_grid_init_on_generic_datasets(ds):
+    XGrid(xgcm.Grid(ds, periodic=False))
 
 
 def test_invalid_xgrid_field_array(ds):
