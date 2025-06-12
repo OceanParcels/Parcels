@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import numpy as np
 import pytest
+import xarray as xr
 from numpy.testing import assert_allclose
 
 from parcels import xgcm
@@ -83,9 +84,34 @@ def test_grid_init_on_generic_datasets(ds):
     XGrid(xgcm.Grid(ds, periodic=False))
 
 
-def test_invalid_xgrid_field_array(ds):
+def test_invalid_xgrid_field_array():
     """Stress test initialiser by creating incompatible datasets that test the edge cases"""
-    ...
+    ds = datasets["ds_2d_left"].copy()
+    ds["lon"], ds["lat"] = xr.broadcast(ds["YC"], ds["XC"])
+
+    with pytest.raises(
+        ValueError,
+        match=".*is defined on the center of the grid, but must be defined on the F points\.",
+    ):
+        XGrid(xgcm.Grid(ds, periodic=False))
+
+    ds = datasets["ds_2d_left"].copy()
+    ds["lon"], _ = xr.broadcast(ds["YG"], ds["XG"])
+    with pytest.raises(
+        ValueError,
+        match=".*have different dimensionalities\.",
+    ):
+        XGrid(xgcm.Grid(ds, periodic=False))
+
+    ds = datasets["ds_2d_left"].copy()
+    ds["lon"], ds["lat"] = xr.broadcast(ds["YG"], ds["XG"])
+    ds["lon"], ds["lat"] = ds["lon"].transpose(), ds["lat"].transpose()
+
+    with pytest.raises(
+        ValueError,
+        match=".*must be defined on the X and Y axes and transposed to have dimensions in order of Y, X\.",
+    ):
+        XGrid(xgcm.Grid(ds, periodic=False))
 
 
 def test_invalid_lon_lat(ds):
