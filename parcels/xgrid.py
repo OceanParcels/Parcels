@@ -178,6 +178,51 @@ class XGrid(BaseGrid):
 
     def search(self, z, y, x, ei=None, search2D=False): ...
 
+    def ravel_index(self, zi, yi, xi):
+        """
+        Converts a z, y, and x index into a single encoded index.
+
+        Parameters
+        ----------
+        zi : int
+            Vertical index.
+        yi : int
+            Latitude index.
+        xi : int
+            Longitude index.
+
+        Returns
+        -------
+        int
+            Encoded index.
+        """
+        return xi + self.xdim * yi + self.xdim * self.ydim * zi
+
+    def unravel_index(self, ei):
+        """
+        Converts a single encoded index back into a vertical index and face index.
+
+        Parameters
+        ----------
+        ei : int
+            Encoded index to be unraveled.
+
+        Returns
+        -------
+        zi : int
+            Vertical index.
+        yi : int
+            Latitude index.
+        xi : int
+            Longitude index.
+        """
+        zi = ei // (self.xdim * self.ydim)
+        ei = ei % (self.xdim * self.ydim)
+
+        yi = ei // self.xdim
+        xi = ei % self.xdim
+        return zi, yi, xi
+
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _AXIS_DIRECTION | None:
     """For a given dimension name in a grid, returns the direction axis it is on."""
