@@ -15,7 +15,7 @@ _AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
 _XGCM_AXES = Mapping[_AXIS_DIRECTION, xgcm.Axis]
 
 
-def get_dimensionality(axis: xgcm.Axis | None) -> int:
+def get_tracer_dimensionality(axis: xgcm.Axis | None) -> int:
     if axis is None:
         return 1
     first_coord = list(axis.coords.items())[0]
@@ -116,19 +116,22 @@ class XGrid(BaseGrid):
 
     @property
     def xdim(self):
-        return get_dimensionality(self.xgcm_grid.axes.get("X"))
+        """Number of T (tracer) cells in the X direction."""
+        return get_tracer_dimensionality(self.xgcm_grid.axes.get("X"))
 
     @property
     def ydim(self):
-        return get_dimensionality(self.xgcm_grid.axes.get("Y"))
+        """Number of T (tracer) cells in the Y direction."""
+        return get_tracer_dimensionality(self.xgcm_grid.axes.get("Y"))
 
     @property
     def zdim(self):
-        return get_dimensionality(self.xgcm_grid.axes.get("Z"))
+        """Number of T (tracer) cells in the Z direction."""
+        return get_tracer_dimensionality(self.xgcm_grid.axes.get("Z"))
 
     @property
     def tdim(self):
-        return get_dimensionality(self.xgcm_grid.axes.get("T"))
+        return get_tracer_dimensionality(self.xgcm_grid.axes.get("T"))
 
     @property
     def time_origin(self):
