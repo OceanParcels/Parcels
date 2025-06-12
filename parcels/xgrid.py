@@ -47,6 +47,8 @@ class XGrid(BaseGrid):
     def __init__(self, grid: xgcm.Grid, mesh="flat"):
         self.xgcm_grid = grid
         self.mesh = mesh
+        ds = grid._ds
+        assert_valid_lon_lat(ds["lon"], ds["lat"], grid.axes)
 
         # ! Not ideal... Triggers computation on a throwaway item. Keeping for now for v3 compat, will be removed in v4.
         self.lonlat_minmax = np.array(
@@ -268,18 +270,18 @@ def assert_valid_lon_lat(da_lon, da_lat, axes: _XGCM_AXES):
         )
 
     if da_lon.ndim == 1:
-        if get_axis_from_dim_name(da_lon.dims[0]) != "X":
+        if get_axis_from_dim_name(axes, da_lon.dims[0]) != "X":
             raise ValueError(
                 f"Longitude DataArray {da_lon.name!r} with dims {da_lon.dims} is not associated with the X axis."
             )
-        if get_axis_from_dim_name(da_lat.dims[0]) != "Y":
+        if get_axis_from_dim_name(axes, da_lat.dims[0]) != "Y":
             raise ValueError(
                 f"Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} is not associated with the Y axis."
             )
 
     if da_lon.ndim == 2:
-        lon_axes = [get_axis_from_dim_name(dim) for dim in da_lon.dims]
-        lat_axes = [get_axis_from_dim_name(dim) for dim in da_lat.dims]
+        lon_axes = [get_axis_from_dim_name(axes, dim) for dim in da_lon.dims]
+        lat_axes = [get_axis_from_dim_name(axes, dim) for dim in da_lat.dims]
         if lon_axes != lat_axes != ["Y", "X"]:
             raise ValueError(
                 f"Longitude DataArray {da_lon.name!r} with dims {da_lon.dims} and Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} must be defined on the X and Y axes and transposed to have dimensions in order of Y, X."
