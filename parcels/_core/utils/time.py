@@ -13,13 +13,13 @@ if TYPE_CHECKING:
 
 
 class TimeInterval:
-    """A class representing a time interval between two datetime objects.
+    """A class representing a time interval between two datetime or np.timedelta64 objects.
 
     Parameters
     ----------
-    left : datetime or cftime.datetime
+    left : np.datetime64 or cftime.datetime or np.timedelta64
         The left endpoint of the interval.
-    right : datetime or cftime.datetime
+    right : np.datetime64 or cftime.datetime or np.timedelta64
         The right endpoint of the interval.
 
     Notes
@@ -28,12 +28,22 @@ class TimeInterval:
     """
 
     def __init__(self, left: T, right: T) -> None:
-        if not isinstance(left, (datetime, cftime.datetime, np.datetime64)):
-            raise ValueError(f"Expected right to be a datetime, cftime.datetime, or np.datetime64. Got {type(left)}.")
-        if not isinstance(right, (datetime, cftime.datetime, np.datetime64)):
-            raise ValueError(f"Expected right to be a datetime, cftime.datetime, or np.datetime64. Got {type(right)}.")
+        if not isinstance(left, (np.timedelta64, datetime, cftime.datetime, np.datetime64)):
+            raise ValueError(
+                f"Expected right to be a np.timedelta64, datetime, cftime.datetime, or np.datetime64. Got {type(left)}."
+            )
+        if not isinstance(right, (np.timedelta64, datetime, cftime.datetime, np.datetime64)):
+            raise ValueError(
+                f"Expected right to be a np.timedelta64, datetime, cftime.datetime, or np.datetime64. Got {type(right)}."
+            )
         if left >= right:
             raise ValueError(f"Expected left to be strictly less than right, got left={left} and right={right}.")
+
+        if isinstance(left, np.timedelta64):
+            assert_supported_np_timedelta(left)
+        if isinstance(right, np.timedelta64):
+            assert_supported_np_timedelta(right)
+
         if not is_compatible(left, right):
             raise ValueError(f"Expected left and right to be compatible, got left={left} and right={right}.")
 
@@ -58,6 +68,8 @@ class TimeInterval:
         """Return the intersection of two time intervals. Returns None if there is no overlap."""
         if not is_compatible(self.left, other.left):
             raise ValueError("TimeIntervals are not compatible.")
+        if not is_compatible(self.right, other.right):
+            raise ValueError("TimeIntervals are not compatible.")
 
         start = max(self.left, other.left)
         end = min(self.right, other.right)
@@ -65,8 +77,17 @@ class TimeInterval:
         return TimeInterval(start, end) if start <= end else None
 
 
-def is_compatible(t1: datetime | cftime.datetime, t2: datetime | cftime.datetime) -> bool:
-    """Checks whether two (cftime.)datetime objects are compatible."""
+def is_compatible(
+    t1: datetime | cftime.datetime | np.timedelta64, t2: datetime | cftime.datetime | np.timedelta64
+) -> bool:
+    """
+    Defines whether two datetime or np.timedelta64 objects are compatible in the context
+    of being left and right sides of an interval.
+    """
+    # Ensure if either is a timedelta64, both must be
+    if isinstance(t1, np.timedelta64) ^ isinstance(t2, np.timedelta64):
+        return False
+
     try:
         t1 - t2
     except Exception:
@@ -98,3 +119,12 @@ def get_datetime_type_calendar(
         # datetime isn't a cftime datetime object
         pass
     return type(example_datetime), calendar
+
+
+def assert_supported_np_timedelta(dt: np.timedelta64) -> None:
+    """Assert that the given np.timedelta64 is supported by Parcels.
+
+    Parcels only supports np.timedelta64 with seconds as the unit.
+    """
+    if dt.dtype != "timedelta64[s]":
+        raise ValueError(f"Unsupported np.timedelta64 type: {dt.dtype}. Only 'timedelta64[s]' is supported.")
