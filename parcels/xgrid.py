@@ -10,7 +10,6 @@ from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
 
 _AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
-_AXIS_DIRECTION_SPATIAL = Literal["X", "Y", "Z"]
 _AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
 _XGCM_AXES = Mapping[_AXIS_DIRECTION, xgcm.Axis]
 
