@@ -386,6 +386,7 @@ class VectorField:
         self.U = U
         self.V = V
         self.W = W
+        self.grid = U.grid
 
         if W is None:
             assert_same_time_interval((U, V))
