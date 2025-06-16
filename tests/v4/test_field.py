@@ -3,7 +3,7 @@ import pytest
 import uxarray as ux
 import xarray as xr
 
-from parcels import Field, xgcm
+from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, xgcm
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
@@ -33,7 +33,10 @@ def test_field_init_param_types():
         pytest.param(ux.UxDataArray(), XGrid(xgcm.Grid(datasets_structured["ds_2d_left"])), id="uxdata-grid"),
         pytest.param(
             xr.DataArray(),
-            UxGrid(datasets_unstructured["stommel_gyre_delaunay"].uxgrid),
+            UxGrid(
+                datasets_unstructured["stommel_gyre_delaunay"].uxgrid,
+                z=datasets_unstructured["stommel_gyre_delaunay"].coords["nz"],
+            ),
             id="xarray-uxgrid",
         ),
     ],
@@ -108,6 +111,38 @@ def test_field_time_interval(data, grid):
 def test_vectorfield_init_different_time_intervals():
     # Tests that a VectorField raises a ValueError if the component fields have different time domains.
     ...
+
+
+def test_field_unstructured_z_linear():
+    """Tests correctness of piecewise constant and piecewise linear interpolation methods on an unstructured grid with a vertical coordinate.
+    The example dataset is a FESOM2 square Delaunay grid with uniform z-coordinate. Cell centered and layer registered data are defined to be
+    linear functions of the vertical coordinate. This allows for testing of exactness of the interpolation methods.
+    """
+    ds = datasets_unstructured["fesom2_square_delaunay_uniform_z_coordinate"].copy(deep=True)
+
+    # Change the pressure values to be linearly dependent on the vertical coordinate
+    for k, z in enumerate(ds.coords["nz1"]):
+        ds["p"].values[:, k, :] = z
+
+    # Change the vertical velocity values to be linearly dependent on the vertical coordinate
+    for k, z in enumerate(ds.coords["nz"]):
+        ds["W"].values[:, k, :] = z
+
+    grid = UxGrid(ds.uxgrid, z=ds.coords["nz"])
+    # Note that the vertical coordinate is required to be the position of the layer interfaces ("nz"), not the mid-layers ("nz1")
+    P = Field(name="p", data=ds.p, grid=grid, interp_method=UXPiecewiseConstantFace)
+
+    # Test above first cell center - for piecewise constant, should return the depth of the first cell center
+    assert np.isclose(P.eval(time=ds.time[0].values, z=10.0, y=30.0, x=30.0, applyConversion=False), 55.555557)
+    # Test below first cell center, but in the first layer  - for piecewise constant, should return the depth of the first cell center
+    assert np.isclose(P.eval(time=ds.time[0].values, z=65.0, y=30.0, x=30.0, applyConversion=False), 55.555557)
+    # Test bottom layer  - for piecewise constant, should return the depth of the of the bottom layer cell center
+    assert np.isclose(P.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 944.44445801)
+
+    W = Field(name="W", data=ds.W, grid=grid, interp_method=UXPiecewiseLinearNode)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=10.0, y=30.0, x=30.0, applyConversion=False), 10.0)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=65.0, y=30.0, x=30.0, applyConversion=False), 65.0)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 900.0)
 
 
 def test_field_unstructured_grid_creation(): ...

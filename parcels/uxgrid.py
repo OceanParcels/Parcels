@@ -15,8 +15,25 @@ class UxGrid(BaseGrid):
     for interpolation on unstructured grids.
     """
 
-    def __init__(self, grid: ux.grid.Grid) -> UxGrid:
+    def __init__(self, grid: ux.grid.Grid, z: ux.UxDataArray) -> UxGrid:
+        """
+        Initializes the UxGrid with a uxarray grid and vertical coordinate array.
+
+        Parameters
+        ----------
+        grid : ux.grid.Grid
+            The uxarray grid object containing the unstructured grid data.
+        z : ux.UxDataArray
+            A 1D array of vertical coordinates (depths) associated with the layer interface heights (not the mid-layer depths).
+            While uxarray allows nz to be spatially and temporally varying, the parcels.UxGrid class considers the case where
+            the vertical coordinate is constant in time and space. This implies flat bottom topography and no moving ALE vertical grid.
+        """
         self.uxgrid = grid
+        if not isinstance(z, ux.UxDataArray):
+            raise TypeError("z must be an instance of ux.UxDataArray")
+        if z.ndim != 1:
+            raise ValueError("z must be a 1D array of vertical coordinates")
+        self.z = z
 
     def search(
         self, z: float, y: float, x: float, ei: int | None = None, search2D: bool = False
@@ -24,32 +41,46 @@ class UxGrid(BaseGrid):
         tol = 1e-10
 
         def try_face(fid):
-            # TODO : Vertical search is not implemented yet, so we assume z is not used.
             bcoords, err = self.uxgrid._get_barycentric_coordinates(y, x, fid)
             if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
-                return bcoords, self.ravel_index(0, fid)  # Z and time indices are 0 for now
+                return bcoords, fid
             return None, None
 
-        if ei is not None:
-            zi, fi = self.unravel_index(ei)
-            bcoords, ei_new = try_face(fi)
-            if bcoords is not None:
-                return bcoords, ei_new
+        def find_vertical_index() -> int:
+            if search2D:
+                return 0
+            else:
+                nz = self.z.shape[0]
+                if nz == 1:
+                    return 0
+                zf = self.z.values
+                # Return zi such that zf[zi] <= z < zf[zi+1]
+                zi = np.searchsorted(zf, z, side="right") - 1  # Search assumes that z is positive and increasing with i
+                if zi < 0 or zi >= nz - 1:
+                    raise FieldOutOfBoundError(z, y, x)
+                return zi
 
+        zi = find_vertical_index()  # Find the vertical cell center nearest to z
+
+        if ei is not None:
+            _, fi = self.unravel_index(ei)
+            bcoords, fi_new = try_face(fi)
+            if bcoords is not None:
+                return bcoords, self.ravel_index(zi, fi_new)
             # Try neighbors of current face
             for neighbor in self.uxgrid.face_face_connectivity[fi, :]:
                 if neighbor == -1:
                     continue
-                bcoords, ei_new = try_face(neighbor)
+                bcoords, fi_new = try_face(neighbor)
                 if bcoords is not None:
-                    return bcoords, ei_new
+                    return bcoords, self.ravel_index(zi, fi_new)
 
         # Global fallback using spatial hash
         fi, bcoords = self.uxgrid.get_spatial_hash().query([[x, y]])
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
 
-        return bcoords, self.ravel_index(zi, fi)
+        return bcoords[0], self.ravel_index(zi, fi[0])
 
     def _get_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
