@@ -1,7 +1,6 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from copy import copy
 from datetime import date, datetime, timedelta
 
 import cftime
@@ -10,20 +9,13 @@ import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
-from parcels._compat import MPI
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
-from parcels.interaction.neighborsearch import (
-    BruteFlatNeighborSearch,
-    BruteSphericalNeighborSearch,
-    HashSphericalNeighborSearch,
-    KDTreeFlatNeighborSearch,
-)
 from parcels.kernel import Kernel
-from parcels.particle import Particle, Variable
+from parcels.particle import Particle
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools._helpers import timedelta_to_float
@@ -109,37 +101,6 @@ class ParticleSet:
         self.fieldset = fieldset
         self._pclass = pclass
 
-        # ==== first: create a new subclass of the pclass that includes the required variables ==== #
-        # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
-        class_name = pclass.__name__
-        array_class = None
-        if class_name not in dir():
-
-            def ArrayClass_init(self, *args, **kwargs):
-                fieldset = kwargs.get("fieldset", None)
-                ngrids = kwargs.get("ngrids", None)
-                if type(self).ngrids.initial < 0:
-                    numgrids = ngrids
-                    if numgrids is None and fieldset is not None:
-                        numgrids = fieldset.gridset_size
-                    assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
-                    type(self).ngrids.initial = numgrids
-                self.ngrids = type(self).ngrids.initial
-                if self.ngrids >= 0:
-                    self.ei = np.zeros(self.ngrids, dtype=np.int32)
-                super(type(self), self).__init__(*args, **kwargs)
-
-            array_class_vdict = {
-                "ngrids": Variable("ngrids", dtype=np.int32, to_write=False, initial=-1),
-                "ei": Variable("ei", dtype=np.int32, to_write=False),
-                "__init__": ArrayClass_init,
-            }
-            array_class = type(class_name, (pclass,), array_class_vdict)
-        else:
-            array_class = locals()[class_name]
-        # ==== dynamic re-classing completed ==== #
-        _pclass = array_class
-
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
 
@@ -147,7 +108,10 @@ class ParticleSet:
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.dimrange("depth")[0]
+            mindepth = 0
+            for field in self.fieldset.fields.values():
+                if field.grid.depth is not None:
+                    mindepth = min(mindepth, field.grid.depth[0])
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_flat_array(depth)
@@ -162,8 +126,8 @@ class ParticleSet:
             raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
-        if fieldset.time_interval:
-            _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
+        # if fieldset.time_interval: # TODO : Fixe time_interval for datasets with no time interval
+        #     _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
 
         if lonlatdepth_dtype is None:
             lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
@@ -179,97 +143,17 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self.repeatdt = timedelta_to_float(repeatdt) if repeatdt is not None else None
-
-        if self.repeatdt:
-            if self.repeatdt <= 0:
-                raise ValueError("Repeatdt should be > 0")
-            if time[0] and not np.allclose(time, time[0]):
-                raise ValueError("All Particle.time should be the same when repeatdt is not None")
-            self._repeatpclass = pclass
-            self._repeatkwargs = kwargs
-            self._repeatkwargs.pop("partition_function", None)
-
-        ngrids = fieldset.gridset_size
-
-        # Variables used for interaction kernels.
-        inter_dist_horiz = None
-        inter_dist_vert = None
-        # The _dirty_neighbor attribute keeps track of whether
-        # the neighbor search structure needs to be rebuilt.
-        # If indices change (for example adding/deleting a particle)
-        # The NS structure needs to be rebuilt and _dirty_neighbor should be
-        # set to true. Since the NS structure isn't immediately initialized,
-        # it is set to True here.
-        self._dirty_neighbor = True
-
         self.particledata = ParticleData(
-            _pclass,
+            self._pclass,
             lon=lon,
             lat=lat,
             depth=depth,
             time=time,
             lonlatdepth_dtype=lonlatdepth_dtype,
             pid_orig=pid_orig,
-            ngrid=ngrids,
+            ngrid=fieldset.gridset_size,
             **kwargs,
         )
-
-        # Initialize neighbor search data structure (used for interaction).
-        if interaction_distance is not None:
-            meshes = [g.mesh for g in fieldset.gridset.grids]
-            # Assert all grids have the same mesh type
-            assert np.all(np.array(meshes) == meshes[0])
-            mesh_type = meshes[0]
-            if mesh_type == "spherical":
-                if len(self) < 1000:
-                    interaction_class = BruteSphericalNeighborSearch
-                else:
-                    interaction_class = HashSphericalNeighborSearch
-            elif mesh_type == "flat":
-                if len(self) < 1000:
-                    interaction_class = BruteFlatNeighborSearch
-                else:
-                    interaction_class = KDTreeFlatNeighborSearch
-            else:
-                assert False, "Interaction is only possible on 'flat' and 'spherical' meshes"
-            try:
-                if len(interaction_distance) == 2:
-                    inter_dist_vert, inter_dist_horiz = interaction_distance
-                else:
-                    inter_dist_vert = interaction_distance[0]
-                    inter_dist_horiz = interaction_distance[0]
-            except TypeError:
-                inter_dist_vert = interaction_distance
-                inter_dist_horiz = interaction_distance
-            self._neighbor_tree = interaction_class(
-                inter_dist_vert=inter_dist_vert,
-                inter_dist_horiz=inter_dist_horiz,
-                periodic_domain_zonal=periodic_domain_zonal,
-            )
-        # End of neighbor search data structure initialization.
-
-        if self.repeatdt:
-            if len(time) > 0 and time[0] is None:
-                self._repeat_starttime = time[0]
-            else:
-                if self.particledata.data["time"][0] and not np.allclose(
-                    self.particledata.data["time"], self.particledata.data["time"][0]
-                ):
-                    raise ValueError("All Particle.time should be the same when repeatdt is not None")
-                self._repeat_starttime = copy(self.particledata.data["time"][0])
-            self._repeatlon = copy(self.particledata.data["lon"])
-            self._repeatlat = copy(self.particledata.data["lat"])
-            self._repeatdepth = copy(self.particledata.data["depth"])
-            for kwvar in kwargs:
-                if kwvar not in ["partition_function"]:
-                    self._repeatkwargs[kwvar] = copy(self.particledata.data[kwvar])
-
-        if self.repeatdt:
-            if MPI and self.particledata.pu_indicators is not None:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                self._repeatpid = pid_orig[self.particledata.pu_indicators == mpi_rank]
 
         self._kernel = None
 
