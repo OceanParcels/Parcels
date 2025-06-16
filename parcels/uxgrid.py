@@ -35,6 +35,20 @@ class UxGrid(BaseGrid):
             raise ValueError("z must be a 1D array of vertical coordinates")
         self.z = z
 
+    @property
+    def depth(self):
+        """
+        Note
+        ----
+        Included for compatibility with v3 codebase. May be removed in future.
+        TODO v4: Evaluate
+        """
+        try:
+            _ = self.z.values
+        except KeyError:
+            return np.zeros(1)
+        return self.z.values
+
     def search(
         self, z: float, y: float, x: float, ei: int | None = None, search2D: bool = False
     ) -> tuple[np.ndarray, int]:
