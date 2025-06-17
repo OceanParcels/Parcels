@@ -72,11 +72,13 @@ def test_field_init_structured_grid(data, grid):
     assert field.grid == grid
 
 
-@pytest.mark.parametrize("numpy_dtype", ["timedelta64[s]", "float64"])
-def test_field_init_fail_on_bad_time_type(numpy_dtype):
-    """Tests that field initialisation fails when the time isn't given as datetime object (i.e., is float or timedelta)."""
+def test_field_init_fail_on_float_time_dim():
+    """Test field initialisation fails when given float array as time dimension.
+
+    (users are expected to use timedelta64 or datetime).
+    """
     ds = datasets_structured["ds_2d_left"].copy()
-    ds["time"] = np.arange(0, T_structured, dtype=numpy_dtype)
+    ds["time"] = np.arange(0, T_structured, dtype="float64")
 
     data = ds["data_g"]
     grid = XGrid(xgcm.Grid(ds))
