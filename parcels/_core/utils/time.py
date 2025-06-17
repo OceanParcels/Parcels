@@ -39,11 +39,6 @@ class TimeInterval:
         if left >= right:
             raise ValueError(f"Expected left to be strictly less than right, got left={left} and right={right}.")
 
-        if isinstance(left, np.timedelta64):
-            assert_supported_np_timedelta(left)
-        if isinstance(right, np.timedelta64):
-            assert_supported_np_timedelta(right)
-
         if not is_compatible(left, right):
             raise ValueError(f"Expected left and right to be compatible, got left={left} and right={right}.")
 
@@ -119,12 +114,3 @@ def get_datetime_type_calendar(
         # datetime isn't a cftime datetime object
         pass
     return type(example_datetime), calendar
-
-
-def assert_supported_np_timedelta(dt: np.timedelta64) -> None:
-    """Assert that the given np.timedelta64 is supported by Parcels.
-
-    Parcels only supports np.timedelta64 with seconds as the unit.
-    """
-    if dt.dtype != "timedelta64[s]":
-        raise ValueError(f"Unsupported np.timedelta64 type: {dt.dtype}. Only 'timedelta64[s]' is supported.")
