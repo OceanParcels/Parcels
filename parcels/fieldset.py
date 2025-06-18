@@ -76,7 +76,9 @@ class FieldSet:
         time_intervals = (f.time_interval for f in self.fields.values())
 
         # Filter out Nones from constant Fields
-        time_intervals = (t for t in time_intervals if t is not None)
+        time_intervals = [t for t in time_intervals if t is not None]
+        if len(time_intervals) == 0:  # All fields are constant fields
+            return None
         return functools.reduce(lambda x, y: x.intersection(y), time_intervals)
 
     def dimrange(self, dim):
