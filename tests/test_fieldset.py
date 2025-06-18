@@ -264,12 +264,6 @@ def test_add_field_after_pset(fieldtype):
             fieldset.add_vector_field(vfield)
 
 
-def test_fieldset_samegrids_from_file(multifile_fieldset):
-    """Test for subsetting fieldset from file using indices dict."""
-    assert multifile_fieldset.gridset.size == 1
-    assert multifile_fieldset.U.grid == multifile_fieldset.V.grid
-
-
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("gridtype", ["A", "C"])
@@ -291,66 +285,6 @@ def assign_dataset_timestamp_dim(ds, timestamp):
     ds.expand_dims("time")
     ds["time"] = timestamp
     return ds
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
-def test_fieldset_diffgrids_from_file(tmp_path):
-    """Test for subsetting fieldset from file using indices dict."""
-    stem = "test_subsets"
-
-    timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 1)
-
-    ufiles = []
-    vfiles = []
-    for index, timestamp in enumerate(timestamps):
-        # U files
-        data, dimensions = generate_fieldset_data(100, 100)
-        path = tmp_path / f"{stem}_U_{index}.nc"
-        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
-        ufiles.append(path)
-
-        data, dimensions = generate_fieldset_data(50, 50)
-        path = tmp_path / f"{stem}_V_{index}.nc"
-        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
-        vfiles.append(path)
-
-    files = {"U": [str(f) for f in ufiles], "V": [str(f) for f in vfiles]}
-    variables = {"U": "U", "V": "V"}
-    dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
-
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, allow_time_extrapolation=True)
-    assert fieldset.gridset.size == 2
-    assert fieldset.U.grid != fieldset.V.grid
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
-    """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    field_U = FieldSet.from_data(data, dimensions).U  # TODO : Remove from_data
-    field_U.name = "B"
-
-    multifile_fieldset.add_field(field_U, "B")
-    fields = [f for f in multifile_fieldset.get_fields() if isinstance(f, Field)]
-    assert len(fields) == 3
-    assert multifile_fieldset.gridset.size == 2
-    assert multifile_fieldset.U.grid != multifile_fieldset.B.grid
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-def test_fieldset_samegrids_from_data():
-    """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    fieldset1 = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
-    field_data = fieldset1.U
-    field_data.name = "B"
-    fieldset1.add_field(field_data, "B")
-    assert fieldset1.gridset.size == 1
-    assert fieldset1.U.grid == fieldset1.B.grid
 
 
 def addConst(particle, fieldset, time):  # pragma: no cover

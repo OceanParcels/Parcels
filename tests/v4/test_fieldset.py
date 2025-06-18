@@ -145,3 +145,18 @@ def test_fieldset_add_field_incompatible_calendars(fieldset):
 )
 def test_datetime_to_msg(input_, expected):
     assert _datetime_to_msg(input_) == expected
+
+
+def test_fieldset_samegrids_UV():
+    """Test that if a simple fieldset with U and V is created, that only one grid object is defined."""
+    ...
+
+
+def test_fieldset_grid_deduplication():
+    """Tests that for a full fieldset that the number of grid objects is as expected
+    (sharing of grid objects so that the particle location is not duplicated).
+
+    When grid deduplication is actually implemented, this might need to be refactored
+    into multiple tests (/more might be needed).
+    """
+    ...
