@@ -160,3 +160,8 @@ def test_fieldset_grid_deduplication():
     into multiple tests (/more might be needed).
     """
     ...
+
+
+def test_fieldset_add_field_after_pset():
+    # ? Should it be allowed to add fields (normal or vector) after a ParticleSet has been initialized?
+    ...

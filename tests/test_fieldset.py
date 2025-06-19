@@ -186,23 +186,6 @@ def test_add_field(xdim, ydim, tmpdir):
 
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("fieldtype", ["normal", "vector"])
-def test_add_field_after_pset(fieldtype):
-    data, dimensions = generate_fieldset_data(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
-    pset = ParticleSet(fieldset, Particle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
-    field1 = Field("field1", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
-    field2 = Field("field2", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
-    vfield = VectorField("vfield", field1, field2)
-    with pytest.raises(RuntimeError):
-        if fieldtype == "normal":
-            fieldset.add_field(field1)
-        elif fieldtype == "vector":
-            fieldset.add_vector_field(vfield)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("gridtype", ["A", "C"])
 def test_fieldset_dimlength1_cgrid(gridtype):
     fieldset = FieldSet.from_data({"U": 0, "V": 0}, {"lon": 0, "lat": 0})  # TODO : Remove from_data
