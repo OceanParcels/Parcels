@@ -93,6 +93,14 @@ def test_fieldset_time_interval():
     assert fieldset.time_interval.right == np.datetime64("2001-01-01")
 
 
+def test_fieldset_time_interval_constant_fields():
+    fieldset = FieldSet([])
+    fieldset.add_constant_field("constant_field", 1.0)
+    fieldset.add_constant_field("constant_field2", 2.0)
+
+    assert fieldset.time_interval is None
+
+
 def test_fieldset_init_incompatible_calendars():
     ds1 = ds.copy()
     ds1["time"] = xr.date_range("2000", "2001", T_structured, calendar="365_day", use_cftime=True)
