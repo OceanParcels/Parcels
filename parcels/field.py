@@ -431,36 +431,43 @@ class VectorField:
     #         and np.allclose(grid1.depth, grid2.depth)
     #         and np.allclose(grid1.time, grid2.time)
     #     )
-    def _interpolate(self, time, z, y, x, ei):
-        bcoords, _ei, ti = self._search_indices(time, z, y, x, ei=ei)
+    def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
+        """Interpolate field values in space and time.
 
-        if self._vector_interp_method is None:
-            u = self.U.eval(time, z, y, x, _ei, applyConversion=False)
-            v = self.V.eval(time, z, y, x, _ei, applyConversion=False)
-            if "3D" in self.vector_type:
-                w = self.W.eval(time, z, y, x, _ei, applyConversion=False)
-                return (u, v, w)
+        We interpolate linearly in time and apply implicit unit
+        conversion to the result. Note that we defer to
+        scipy.interpolate to perform spatial interpolation.
+        """
+        if particle is None:
+            _ei = None
+        else:
+            _ei = particle.ei[self.igrid]
+
+        try:
+            tau, ti = _search_time_index(self.U, time)
+            bcoords, _ei = self.grid.search(z, y, x, ei=_ei)
+            if self._vector_interp_method is None:
+                u = self.U._interp_method(self.U, ti, _ei, bcoords, tau, time, z, y, x)
+                v = self.V._interp_method(self.V, ti, _ei, bcoords, tau, time, z, y, x)
+                if "3D" in self.vector_type:
+                    w = self.W._interp_method(self.W, ti, _ei, bcoords, tau, time, z, y, x)
             else:
-                return (u, v, 0)
-        else:
-            (u, v, w) = self._vector_interp_method(ti, _ei, bcoords, time, z, y, x)
-            return (u, v, w)
+                (u, v, w) = self._vector_interp_method(self, ti, _ei, bcoords, time, z, y, x)
 
-    def eval(self, time, z, y, x, ei=None, applyConversion=True):
-        if ei is None:
-            _ei = 0
-        else:
-            _ei = ei[self.igrid]
+            if applyConversion:
+                u = self.U.units.to_target(u, z, y, x)
+                v = self.V.units.to_target(v, z, y, x)
+                if "3D" in self.vector_type:
+                    w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
+            else:
+                if "3D" in self.vector_type:
+                    return (u, v, w)
+                else:
+                    return (u, v, 0)
 
-        (u, v, w) = self._interpolate(time, z, y, x, _ei)
-
-        if applyConversion:
-            u = self.U.units.to_target(u, z, y, x)
-            v = self.V.units.to_target(v, z, y, x)
-            if "3D" in self.vector_type:
-                w = self.W.units.to_target(w, z, y, x)
-
-        return (u, v, w)
+        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
+            e.add_note(f"Error interpolating field '{self.name}'.")
+            raise e
 
     def __getitem__(self, key):
         try:
