@@ -25,19 +25,6 @@ def test_fieldset_warning_pop():
         FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
 
 
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="Incorrect warning message being raised (and GH1918)")
-def test_fieldset_warning_timestamps():
-    filenames = str(TEST_DATA / "POPtestdata_time.nc")
-    variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
-    dimensions = {"lon": "lon", "lat": "lat", "depth": "w_deps", "time": "time"}
-    with pytest.warns(
-        FieldSetWarning, match="something"
-    ):  # TODO: Fix warning message. Shouldn't be "General s-levels are not supported"
-        # timestamps with time in file warning
-        FieldSet.from_pop(filenames, variables, dimensions, mesh="flat", timestamps=[0, 1, 2, 3])
-
-
 def test_file_warnings(tmp_zarrfile):
     fieldset = FieldSet.from_data(
         data={"U": np.zeros((1, 1)), "V": np.zeros((1, 1))}, dimensions={"lon": [0], "lat": [0]}

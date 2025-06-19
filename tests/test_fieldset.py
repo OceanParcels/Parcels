@@ -12,7 +12,7 @@ from parcels import (
     ParticleSet,
     Variable,
 )
-from parcels.field import Field, VectorField
+from parcels.field import VectorField
 from parcels.tools.converters import GeographicPolar, UnitConverter
 from tests.utils import TEST_DATA
 
@@ -77,53 +77,6 @@ def multifile_fieldset(tmp_path):
     variables = {"U": "U", "V": "V"}
     dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
     return FieldSet.from_netcdf(files, variables, dimensions)
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("ttype", ["float", "datetime64"])
-@pytest.mark.parametrize("tdim", [1, 20])
-def test_fieldset_from_data_timedims(ttype, tdim):
-    data, dimensions = generate_fieldset_data(10, 10, tdim=tdim)
-    if ttype == "float":
-        dimensions["time"] = np.linspace(0, 5, tdim)
-    else:
-        dimensions["time"] = [np.datetime64("2018-01-01") + np.timedelta64(t, "D") for t in range(tdim)]
-    fieldset = FieldSet.from_data(data, dimensions)
-    for i, dtime in enumerate(dimensions["time"]):
-        print(fieldset.U, dtime)
-        assert fieldset.U.time[i].data == dtime
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("xdim", [100, 200])
-@pytest.mark.parametrize("ydim", [100, 50])
-def test_fieldset_from_data_different_dimensions(xdim, ydim):
-    """Test for fieldset initialisation from data using dict-of-dict for dimensions."""
-    zdim, tdim = 4, 2
-    lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
-    lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
-    depth = np.zeros(zdim, dtype=np.float32)
-    time = np.zeros(tdim, dtype=np.float64)
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.ones((ydim, xdim), dtype=np.float32)
-    P = 2 * np.ones((tdim, zdim, int(ydim / 2), int(xdim / 2)), dtype=np.float32)
-    data = {"U": U, "V": V, "P": P}
-    dimensions = {
-        "U": {"lat": lat, "lon": lon},
-        "V": {"lat": lat, "lon": lon},
-        "P": {"lat": lat[0::2], "lon": lon[0::2], "depth": depth, "time": time},
-    }
-
-    fieldset = FieldSet.from_data(data, dimensions)
-    assert len(fieldset.U.data.shape) == 4
-    assert len(fieldset.V.data.shape) == 4
-    assert len(fieldset.P.data.shape) == 4
-    assert fieldset.P.data.shape == (tdim, zdim, ydim / 2, xdim / 2)
-    assert np.allclose(fieldset.U.data, 0.0, rtol=1e-12)
-    assert np.allclose(fieldset.V.data, 1.0, rtol=1e-12)
-    assert np.allclose(fieldset.P.data, 2.0, rtol=1e-12)
 
 
 @pytest.mark.v4alpha
@@ -221,57 +174,6 @@ def test_illegal_dimensionsdict(calltype):
 
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("xdim", [100, 200])
-@pytest.mark.parametrize("ydim", [100, 200])
-def test_add_field(xdim, ydim, tmpdir):
-    data, dimensions = generate_fieldset_data(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
-    field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
-    fieldset.add_field(field)
-    assert fieldset.newfld.data.shape == fieldset.U.data.shape
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("dupobject", ["same", "new"])
-def test_add_duplicate_field(dupobject):
-    data, dimensions = generate_fieldset_data(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
-    field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
-    fieldset.add_field(field)
-    with pytest.raises(RuntimeError):
-        if dupobject == "same":
-            fieldset.add_field(field)
-        elif dupobject == "new":
-            field2 = Field("newfld", np.ones((2, 2)), lon=np.array([0, 1]), lat=np.array([0, 2]))
-            fieldset.add_field(field2)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("fieldtype", ["normal", "vector"])
-def test_add_field_after_pset(fieldtype):
-    data, dimensions = generate_fieldset_data(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
-    pset = ParticleSet(fieldset, Particle, lon=0, lat=0)  # noqa ; to trigger fieldset._check_complete
-    field1 = Field("field1", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
-    field2 = Field("field2", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
-    vfield = VectorField("vfield", field1, field2)
-    with pytest.raises(RuntimeError):
-        if fieldtype == "normal":
-            fieldset.add_field(field1)
-        elif fieldtype == "vector":
-            fieldset.add_vector_field(vfield)
-
-
-def test_fieldset_samegrids_from_file(multifile_fieldset):
-    """Test for subsetting fieldset from file using indices dict."""
-    assert multifile_fieldset.gridset.size == 1
-    assert multifile_fieldset.U.grid == multifile_fieldset.V.grid
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("gridtype", ["A", "C"])
 def test_fieldset_dimlength1_cgrid(gridtype):
     fieldset = FieldSet.from_data({"U": 0, "V": 0}, {"lon": 0, "lat": 0})  # TODO : Remove from_data
@@ -291,66 +193,6 @@ def assign_dataset_timestamp_dim(ds, timestamp):
     ds.expand_dims("time")
     ds["time"] = timestamp
     return ds
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
-def test_fieldset_diffgrids_from_file(tmp_path):
-    """Test for subsetting fieldset from file using indices dict."""
-    stem = "test_subsets"
-
-    timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 1)
-
-    ufiles = []
-    vfiles = []
-    for index, timestamp in enumerate(timestamps):
-        # U files
-        data, dimensions = generate_fieldset_data(100, 100)
-        path = tmp_path / f"{stem}_U_{index}.nc"
-        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
-        ufiles.append(path)
-
-        data, dimensions = generate_fieldset_data(50, 50)
-        path = tmp_path / f"{stem}_V_{index}.nc"
-        to_xarray_dataset(data, dimensions).pipe(assign_dataset_timestamp_dim, timestamp).to_netcdf(path)
-        vfiles.append(path)
-
-    files = {"U": [str(f) for f in ufiles], "V": [str(f) for f in vfiles]}
-    variables = {"U": "U", "V": "V"}
-    dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
-
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, allow_time_extrapolation=True)
-    assert fieldset.gridset.size == 2
-    assert fieldset.U.grid != fieldset.V.grid
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-def test_fieldset_diffgrids_from_file_data(multifile_fieldset):
-    """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    field_U = FieldSet.from_data(data, dimensions).U  # TODO : Remove from_data
-    field_U.name = "B"
-
-    multifile_fieldset.add_field(field_U, "B")
-    fields = [f for f in multifile_fieldset.get_fields() if isinstance(f, Field)]
-    assert len(fields) == 3
-    assert multifile_fieldset.gridset.size == 2
-    assert multifile_fieldset.U.grid != multifile_fieldset.B.grid
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-def test_fieldset_samegrids_from_data():
-    """Test for subsetting fieldset from file using indices dict."""
-    data, dimensions = generate_fieldset_data(100, 100)
-    fieldset1 = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
-    field_data = fieldset1.U
-    field_data.name = "B"
-    fieldset1.add_field(field_data, "B")
-    assert fieldset1.gridset.size == 1
-    assert fieldset1.U.grid == fieldset1.B.grid
 
 
 def addConst(particle, fieldset, time):  # pragma: no cover
@@ -399,7 +241,7 @@ def test_vector_fields(swapUV):
 
 
 @pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
+@pytest.mark.xfail(reason="GH1946, originated in GH938")
 def test_add_second_vector_field():
     lon = np.linspace(0.0, 10.0, 12, dtype=np.float32)
     lat = np.linspace(0.0, 10.0, 10, dtype=np.float32)
@@ -426,38 +268,6 @@ def test_add_second_vector_field():
 
     assert abs(pset.lon[0] - 2.5) < 1e-9
     assert abs(pset.lat[0] - 0.5) < 1e-9
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1918")
-@pytest.mark.parametrize("datetype", ["float", "datetime64"])
-def test_timestamps(datetype, tmpdir):
-    data1, dims1 = generate_fieldset_data(10, 10, 1, 10)
-    data2, dims2 = generate_fieldset_data(10, 10, 1, 4)
-    if datetype == "float":
-        dims1["time"] = np.arange(0, 10, 1) * 86400
-        dims2["time"] = np.arange(10, 14, 1) * 86400
-    else:
-        dims1["time"] = np.arange("2005-02-01", "2005-02-11", dtype="datetime64[D]")
-        dims2["time"] = np.arange("2005-02-11", "2005-02-15", dtype="datetime64[D]")
-
-    fieldset1 = FieldSet.from_data(data1, dims1)  # TODO : Remove from_data
-    fieldset1.U.data[0, :, :] = 2.0
-    fieldset1.write(tmpdir.join("file1"))
-
-    fieldset2 = FieldSet.from_data(data2, dims2)  # TODO : Remove from_data
-    fieldset2.U.data[0, :, :] = 0.0
-    fieldset2.write(tmpdir.join("file2"))
-
-    fieldset3 = FieldSet.from_parcels(tmpdir.join("file*"))
-    timestamps = [dims1["time"], dims2["time"]]
-    fieldset4 = FieldSet.from_parcels(tmpdir.join("file*"), timestamps=timestamps)
-    assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
-
-    for d in [0, 8, 10, 12]:
-        fieldset3.computeTimeChunk(d * 86400.0, 1.0)
-        fieldset4.computeTimeChunk(d * 86400.0, 1.0)
-        assert np.allclose(fieldset3.U.data, fieldset4.U.data)
 
 
 @pytest.mark.v4remove
@@ -549,62 +359,6 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
     assert np.allclose(pset.u1[0], pset.u2[0])
     assert np.allclose(pset.v1[0], pset.v2[0])
     assert np.allclose(pset.d[0], 1.0)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("tdim", [10, None])
-def test_fieldset_from_xarray(tdim):
-    def generate_dataset(xdim, ydim, zdim=1, tdim=1):
-        lon = np.linspace(0.0, 12, xdim, dtype=np.float32)
-        lat = np.linspace(0.0, 12, ydim, dtype=np.float32)
-        depth = np.linspace(0.0, 20.0, zdim, dtype=np.float32)
-        if tdim:
-            time = np.linspace(0.0, 10, tdim, dtype=np.float64)
-            Uxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
-            Vxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
-            for t in range(Uxr.shape[0]):
-                Uxr[t, :, :, :] = t / 10.0
-            coords = {"lat": lat, "lon": lon, "depth": depth, "time": time}
-            dims = ("time", "depth", "lat", "lon")
-        else:
-            Uxr = np.ones((zdim, ydim, xdim), dtype=np.float32)
-            Vxr = np.ones((zdim, ydim, xdim), dtype=np.float32)
-            for z in range(Uxr.shape[0]):
-                Uxr[z, :, :] = z / 2.0
-            coords = {"lat": lat, "lon": lon, "depth": depth}
-            dims = ("depth", "lat", "lon")
-        return xr.Dataset(
-            {"Uxr": xr.DataArray(Uxr, coords=coords, dims=dims), "Vxr": xr.DataArray(Vxr, coords=coords, dims=dims)}
-        )
-
-    ds = generate_dataset(3, 3, 2, tdim)
-    variables = {"U": "Uxr", "V": "Vxr"}
-    if tdim:
-        dimensions = {"lat": "lat", "lon": "lon", "depth": "depth", "time": "time"}
-    else:
-        dimensions = {"lat": "lat", "lon": "lon", "depth": "depth"}
-    fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh="flat")
-
-    pset = ParticleSet(fieldset, Particle, 0, 0, depth=20)
-
-    pset.execute(AdvectionRK4, dt=1, runtime=10)
-    if tdim == 10:
-        assert np.allclose(pset.lon_nextloop[0], 4.5) and np.allclose(pset.lat_nextloop[0], 10)
-    else:
-        assert np.allclose(pset.lon_nextloop[0], 5.0) and np.allclose(pset.lat_nextloop[0], 10)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="From_pop is not supported during v4-alpha development. This will be reconsidered in v4.")
-def test_fieldset_frompop():
-    filenames = str(TEST_DATA / "POPtestdata_time.nc")
-    variables = {"U": "U", "V": "V", "W": "W", "T": "T"}
-    dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
-
-    fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
-    pset = ParticleSet.from_list(fieldset, Particle, lon=[3, 5, 1], lat=[3, 5, 1])
-    pset.execute(AdvectionRK4, runtime=3, dt=1)
 
 
 @pytest.mark.v4alpha
