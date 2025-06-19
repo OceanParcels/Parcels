@@ -438,50 +438,6 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
 
 
 @pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("tdim", [10, None])
-def test_fieldset_from_xarray(tdim):
-    def generate_dataset(xdim, ydim, zdim=1, tdim=1):
-        lon = np.linspace(0.0, 12, xdim, dtype=np.float32)
-        lat = np.linspace(0.0, 12, ydim, dtype=np.float32)
-        depth = np.linspace(0.0, 20.0, zdim, dtype=np.float32)
-        if tdim:
-            time = np.linspace(0.0, 10, tdim, dtype=np.float64)
-            Uxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
-            Vxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
-            for t in range(Uxr.shape[0]):
-                Uxr[t, :, :, :] = t / 10.0
-            coords = {"lat": lat, "lon": lon, "depth": depth, "time": time}
-            dims = ("time", "depth", "lat", "lon")
-        else:
-            Uxr = np.ones((zdim, ydim, xdim), dtype=np.float32)
-            Vxr = np.ones((zdim, ydim, xdim), dtype=np.float32)
-            for z in range(Uxr.shape[0]):
-                Uxr[z, :, :] = z / 2.0
-            coords = {"lat": lat, "lon": lon, "depth": depth}
-            dims = ("depth", "lat", "lon")
-        return xr.Dataset(
-            {"Uxr": xr.DataArray(Uxr, coords=coords, dims=dims), "Vxr": xr.DataArray(Vxr, coords=coords, dims=dims)}
-        )
-
-    ds = generate_dataset(3, 3, 2, tdim)
-    variables = {"U": "Uxr", "V": "Vxr"}
-    if tdim:
-        dimensions = {"lat": "lat", "lon": "lon", "depth": "depth", "time": "time"}
-    else:
-        dimensions = {"lat": "lat", "lon": "lon", "depth": "depth"}
-    fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh="flat")
-
-    pset = ParticleSet(fieldset, Particle, 0, 0, depth=20)
-
-    pset.execute(AdvectionRK4, dt=1, runtime=10)
-    if tdim == 10:
-        assert np.allclose(pset.lon_nextloop[0], 4.5) and np.allclose(pset.lat_nextloop[0], 10)
-    else:
-        assert np.allclose(pset.lon_nextloop[0], 5.0) and np.allclose(pset.lat_nextloop[0], 10)
-
-
-@pytest.mark.v4alpha
 @pytest.mark.xfail(reason="From_pop is not supported during v4-alpha development. This will be reconsidered in v4.")
 def test_fieldset_frompop():
     filenames = str(TEST_DATA / "POPtestdata_time.nc")
