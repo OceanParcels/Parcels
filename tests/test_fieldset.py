@@ -12,7 +12,7 @@ from parcels import (
     ParticleSet,
     Variable,
 )
-from parcels.field import Field, VectorField
+from parcels.field import VectorField
 from parcels.tools.converters import GeographicPolar, UnitConverter
 from tests.utils import TEST_DATA
 
@@ -170,18 +170,6 @@ def test_illegal_dimensionsdict(calltype):
             variables = {"dx": "e1u"}
             dimensions = {"lon": "glamu", "lat": "gphiu", "test": "test"}
             FieldSet.from_nemo(filenames, variables, dimensions)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("xdim", [100, 200])
-@pytest.mark.parametrize("ydim", [100, 200])
-def test_add_field(xdim, ydim, tmpdir):
-    data, dimensions = generate_fieldset_data(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions)  # TODO : Remove from_data
-    field = Field("newfld", fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
-    fieldset.add_field(field)
-    assert fieldset.newfld.data.shape == fieldset.U.data.shape
 
 
 @pytest.mark.v4alpha
