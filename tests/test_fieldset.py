@@ -79,53 +79,6 @@ def multifile_fieldset(tmp_path):
     return FieldSet.from_netcdf(files, variables, dimensions)
 
 
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("ttype", ["float", "datetime64"])
-@pytest.mark.parametrize("tdim", [1, 20])
-def test_fieldset_from_data_timedims(ttype, tdim):
-    data, dimensions = generate_fieldset_data(10, 10, tdim=tdim)
-    if ttype == "float":
-        dimensions["time"] = np.linspace(0, 5, tdim)
-    else:
-        dimensions["time"] = [np.datetime64("2018-01-01") + np.timedelta64(t, "D") for t in range(tdim)]
-    fieldset = FieldSet.from_data(data, dimensions)
-    for i, dtime in enumerate(dimensions["time"]):
-        print(fieldset.U, dtime)
-        assert fieldset.U.time[i].data == dtime
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("xdim", [100, 200])
-@pytest.mark.parametrize("ydim", [100, 50])
-def test_fieldset_from_data_different_dimensions(xdim, ydim):
-    """Test for fieldset initialisation from data using dict-of-dict for dimensions."""
-    zdim, tdim = 4, 2
-    lon = np.linspace(0.0, 1.0, xdim, dtype=np.float32)
-    lat = np.linspace(0.0, 1.0, ydim, dtype=np.float32)
-    depth = np.zeros(zdim, dtype=np.float32)
-    time = np.zeros(tdim, dtype=np.float64)
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.ones((ydim, xdim), dtype=np.float32)
-    P = 2 * np.ones((tdim, zdim, int(ydim / 2), int(xdim / 2)), dtype=np.float32)
-    data = {"U": U, "V": V, "P": P}
-    dimensions = {
-        "U": {"lat": lat, "lon": lon},
-        "V": {"lat": lat, "lon": lon},
-        "P": {"lat": lat[0::2], "lon": lon[0::2], "depth": depth, "time": time},
-    }
-
-    fieldset = FieldSet.from_data(data, dimensions)
-    assert len(fieldset.U.data.shape) == 4
-    assert len(fieldset.V.data.shape) == 4
-    assert len(fieldset.P.data.shape) == 4
-    assert fieldset.P.data.shape == (tdim, zdim, ydim / 2, xdim / 2)
-    assert np.allclose(fieldset.U.data, 0.0, rtol=1e-12)
-    assert np.allclose(fieldset.V.data, 1.0, rtol=1e-12)
-    assert np.allclose(fieldset.P.data, 2.0, rtol=1e-12)
-
-
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
 def test_fieldset_from_modulefile():
@@ -317,7 +270,7 @@ def test_vector_fields(swapUV):
 
 
 @pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
+@pytest.mark.xfail(reason="GH1946, originated in GH938")
 def test_add_second_vector_field():
     lon = np.linspace(0.0, 10.0, 12, dtype=np.float32)
     lat = np.linspace(0.0, 10.0, 10, dtype=np.float32)
