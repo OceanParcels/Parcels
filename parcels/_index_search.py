@@ -38,7 +38,7 @@ def _search_time_index(field: Field, time: datetime):
     if the sampled value is outside the time value range.
     """
     if field.time_interval is None:
-        return 0
+        return 0, 0
 
     if time not in field.time_interval:
         _raise_time_extrapolation_error(time, field=None)
