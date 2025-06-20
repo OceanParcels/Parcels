@@ -309,10 +309,10 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        if particle is None:
-            _ei = None
-        else:
-            _ei = particle.ei[self.igrid]
+        # if particle is None:
+        _ei = None
+        # else:
+        #    _ei = particle.ei[self.igrid]
 
         try:
             tau, ti = _search_time_index(self, time)
@@ -438,10 +438,10 @@ class VectorField:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        if particle is None:
-            _ei = None
-        else:
-            _ei = particle.ei[self.igrid]
+        # if particle is None:
+        _ei = None
+        # else:
+        #    _ei = particle.ei[self.igrid]
 
         try:
             tau, ti = _search_time_index(self.U, time)
@@ -454,16 +454,17 @@ class VectorField:
             else:
                 (u, v, w) = self._vector_interp_method(self, ti, _ei, bcoords, time, z, y, x)
 
+            # print(u,v)
             if applyConversion:
                 u = self.U.units.to_target(u, z, y, x)
                 v = self.V.units.to_target(v, z, y, x)
                 if "3D" in self.vector_type:
                     w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
+
+            if "3D" in self.vector_type:
+                return (u, v, w)
             else:
-                if "3D" in self.vector_type:
-                    return (u, v, w)
-                else:
-                    return (u, v, 0)
+                return (u, v)
 
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
             e.add_note(f"Error interpolating field '{self.name}'.")
@@ -472,7 +473,7 @@ class VectorField:
     def __getitem__(self, key):
         try:
             if _isParticle(key):
-                return self.eval(key.time, key.depth, key.lat, key.lon, key.ei)
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
