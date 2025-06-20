@@ -1,7 +1,7 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import numpy as np
 import xarray as xr
@@ -14,7 +14,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
-from parcels.particle import Particle
+from parcels.particle import Particle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
@@ -96,6 +96,37 @@ class ParticleSet:
         self.fieldset = fieldset
         self._pclass = pclass
 
+        # ==== first: create a new subclass of the pclass that includes the required variables ==== #
+        # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
+        class_name = pclass.__name__
+        array_class = None
+        if class_name not in dir():
+
+            def ArrayClass_init(self, *args, **kwargs):
+                fieldset = kwargs.get("fieldset", None)
+                ngrids = kwargs.get("ngrids", None)
+                if type(self).ngrids.initial < 0:
+                    numgrids = ngrids
+                    if numgrids is None and fieldset is not None:
+                        numgrids = fieldset.gridset_size
+                    assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                    type(self).ngrids.initial = numgrids
+                self.ngrids = type(self).ngrids.initial
+                if self.ngrids >= 0:
+                    self.ei = np.zeros(self.ngrids, dtype=np.int32)
+                super(type(self), self).__init__(*args, **kwargs)
+
+            array_class_vdict = {
+                "ngrids": Variable("ngrids", dtype=np.int32, to_write=False, initial=-1),
+                "ei": Variable("ei", dtype=np.int32, to_write=False),
+                "__init__": ArrayClass_init,
+            }
+            array_class = type(class_name, (pclass,), array_class_vdict)
+        else:
+            array_class = locals()[class_name]
+        # ==== dynamic re-classing completed ==== #
+        _pclass = array_class
+
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
 
@@ -140,7 +171,7 @@ class ParticleSet:
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
         self.particledata = ParticleData(
-            self._pclass,
+            _pclass,
             lon=lon,
             lat=lat,
             depth=depth,
@@ -742,8 +773,8 @@ class ParticleSet:
 
     def execute(
         self,
-        endtime: np.timedelta64 | np.datetime64,
-        dt: np.float64 | np.float32 | np.timedelta64,
+        endtime: timedelta | datetime,
+        dt: np.float64 | np.float32 | timedelta,
         pyfunc=AdvectionRK4,
         output_file=None,
         verbose_progress=True,
@@ -799,27 +830,27 @@ class ParticleSet:
         fieldset_timeinterval = self.fieldset.time_interval
 
         if fieldset_timeinterval is None:
-            if isinstance(endtime, np.datetime64):
+            if isinstance(endtime, datetime):
                 raise NotImplementedError(
-                    "If fieldset.time_interval is None, endtime must be a np.timedelta64 not a np.datetime64"
+                    "If fieldset.time_interval is None, endtime must be a timedelta not a datetime"
                 )
-            duration = endtime / np.timedelta64(1, "s")  # converts np.timedelta64 to seconds as float64
+            duration = endtime.total_seconds()  # converts timedelta to seconds as float64
 
         else:
             # Get the particle time interval
-            if isinstance(endtime, np.datetime64):
-                simulation_endtime = np.min(fieldset_timeinterval[1], endtime)
+            if isinstance(endtime, datetime):
+                simulation_endtime = min(fieldset_timeinterval[1], endtime)
                 if simulation_endtime < fieldset_timeinterval[1]:
                     print(
                         f"Simulation endtime is limited by fieldset.time_interval. End time adjusted to {simulation_endtime}"
                     )
-                duration = (simulation_endtime - fieldset_timeinterval[0]) / np.timedelta64(1, "s")
+                duration = (simulation_endtime - fieldset_timeinterval[0]).total_seconds()
 
             else:
-                duration = endtime / np.timedelta64(1, "s")
+                duration = endtime.total_seconds()
 
-        if isinstance(dt, np.datetime64):
-            dt = dt / np.timedelta64(1, "s")  # convert to seconds as float64
+        if isinstance(dt, timedelta):
+            dt = dt.total_seconds()  # convert to seconds as float64
 
         outputdt = output_file.outputdt if output_file else None
 
@@ -839,14 +870,12 @@ class ParticleSet:
 
         tol = 1e-12
         time = 0.0
-
         while time < duration and dt > 0:  # Forward in time only for now
             # Check if we can fast-forward to the next time needed for the particles
             # if dt > 0:
             #     skip_kernel = True if duration > (time + dt) else False
             # else:
             #     skip_kernel = True if max(self.time) < (time + dt) else False
-
             t0 = time
             next_time = t0 + dt
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
