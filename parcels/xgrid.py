@@ -41,6 +41,10 @@ class XGrid(BaseGrid):
     Class to represent a structured grid in Parcels. Wraps a xgcm-like Grid object (we use a trimmed down version of the xgcm.Grid class that is vendored with Parcels).
 
     This class provides methods and properties required for indexing and interpolating on the grid.
+
+    Assumptions:
+    - If using Parcels in the context of a periodic simulation, the provided grid already has a halo
+
     """
 
     def __init__(self, grid: xgcm.Grid, mesh="flat"):

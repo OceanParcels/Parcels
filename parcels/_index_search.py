@@ -17,6 +17,7 @@ from parcels.tools.statuscodes import (
     _raise_field_sampling_error,
     _raise_time_extrapolation_error,
 )
+from parcels.xgrid import XGrid
 
 from .grid import GridType
 
@@ -270,35 +271,43 @@ def _search_indices_rectilinear(
     return (zeta, eta, xsi, _ei)
 
 
-## TODO :  Still need to implement the search_indices_curvilinear
-def _search_indices_curvilinear_2d(field: Field, time, z, y, x, ti, particle=None, search2D=False):
-    if particle:
-        zi, yi, xi = field.unravel_index(particle.ei)
-    else:
-        xi = int(field.xdim / 2) - 1
-        yi = int(field.ydim / 2) - 1
+def _search_indices_curvilinear_2d(
+    grid: XGrid, y: float, x: float, yi_guess: int | None = None, xi_guess: int | None = None
+):
+    yi, xi = yi_guess, xi_guess
+    if yi is None:
+        yi = int(grid.ydim / 2) - 1
+
+    if xi is None:
+        xi = int(grid.xdim / 2) - 1
+
     xsi = eta = -1.0
-    grid = field.grid
-    invA = np.array([[1, 0, 0, 0], [-1, 1, 0, 0], [-1, 0, 0, 1], [1, -1, 1, -1]])
+    invA = np.array(
+        [
+            [1, 0, 0, 0],
+            [-1, 1, 0, 0],
+            [-1, 0, 0, 1],
+            [1, -1, 1, -1],
+        ]
+    )
     maxIterSearch = 1e6
     it = 0
     tol = 1.0e-10
-    if not grid.zonal_periodic:
-        if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:
-            if grid.lon[0, 0] < grid.lon[0, -1]:
-                _raise_field_out_of_bound_error(z, y, x)
-            elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-                _raise_field_out_of_bound_error(z, y, x)
-    if y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]:
-        _raise_field_out_of_bound_error(z, y, x)
+
+    # # ! Error handling for out of bounds
+    # TODO: Re-enable in some capacity
+    # if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:
+    #     if grid.lon[0, 0] < grid.lon[0, -1]:
+    #         _raise_field_out_of_bound_error(y, x)
+    #     elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
+    #         _raise_field_out_of_bound_error(z, y, x)
+
+    # if y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]:
+    #     _raise_field_out_of_bound_error(z, y, x)
 
     while xsi < -tol or xsi > 1 + tol or eta < -tol or eta > 1 + tol:
         px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
-        if grid.mesh == "spherical":
-            px[0] = px[0] + 360 if px[0] < x - 225 else px[0]
-            px[0] = px[0] - 360 if px[0] > x + 225 else px[0]
-            px[1:] = np.where(px[1:] - px[0] > 180, px[1:] - 360, px[1:])
-            px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
+
         py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
         a = np.dot(invA, px)
         b = np.dot(invA, py)
@@ -339,25 +348,10 @@ def _search_indices_curvilinear_2d(field: Field, time, z, y, x, ti, particle=Non
     xsi = min(1.0, xsi)
     eta = min(1.0, eta)
 
-    if grid.zdim > 1 and not search2D:
-        if grid._gtype == GridType.CurvilinearZGrid:
-            try:
-                (zi, zeta) = search_indices_vertical_z(field.grid, field.gridindexingtype, z)
-            except FieldOutOfBoundError:
-                _raise_field_out_of_bound_error(z, y, x)
-        elif grid._gtype == GridType.CurvilinearSGrid:
-            (zi, zeta) = search_indices_vertical_s(field.grid, field.interp_method, time, z, y, x, ti, yi, xi, eta, xsi)
-    else:
-        zi = -1
-        zeta = 0
+    if not ((0 <= xsi <= 1) and (0 <= eta <= 1)):
+        _raise_field_sampling_error(y, x)
 
-    if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-        _raise_field_sampling_error(z, y, x)
-
-    if particle:
-        particle.ei[field.igrid] = field.ravel_index(zi, yi, xi)
-
-    return (zeta, eta, xsi, zi, yi, xi)
+    return (eta, xsi, yi, xi)
 
 
 ## TODO :  Still need to implement the search_indices_curvilinear
