@@ -271,6 +271,96 @@ def _search_indices_rectilinear(
 
 
 ## TODO :  Still need to implement the search_indices_curvilinear
+def _search_indices_curvilinear_2d(field: Field, time, z, y, x, ti, particle=None, search2D=False):
+    if particle:
+        zi, yi, xi = field.unravel_index(particle.ei)
+    else:
+        xi = int(field.xdim / 2) - 1
+        yi = int(field.ydim / 2) - 1
+    xsi = eta = -1.0
+    grid = field.grid
+    invA = np.array([[1, 0, 0, 0], [-1, 1, 0, 0], [-1, 0, 0, 1], [1, -1, 1, -1]])
+    maxIterSearch = 1e6
+    it = 0
+    tol = 1.0e-10
+    if not grid.zonal_periodic:
+        if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:
+            if grid.lon[0, 0] < grid.lon[0, -1]:
+                _raise_field_out_of_bound_error(z, y, x)
+            elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
+                _raise_field_out_of_bound_error(z, y, x)
+    if y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]:
+        _raise_field_out_of_bound_error(z, y, x)
+
+    while xsi < -tol or xsi > 1 + tol or eta < -tol or eta > 1 + tol:
+        px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
+        if grid.mesh == "spherical":
+            px[0] = px[0] + 360 if px[0] < x - 225 else px[0]
+            px[0] = px[0] - 360 if px[0] > x + 225 else px[0]
+            px[1:] = np.where(px[1:] - px[0] > 180, px[1:] - 360, px[1:])
+            px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
+        py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
+        a = np.dot(invA, px)
+        b = np.dot(invA, py)
+
+        aa = a[3] * b[2] - a[2] * b[3]
+        bb = a[3] * b[0] - a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + x * b[3] - y * a[3]
+        cc = a[1] * b[0] - a[0] * b[1] + x * b[1] - y * a[1]
+        if abs(aa) < 1e-12:  # Rectilinear cell, or quasi
+            eta = -cc / bb
+        else:
+            det2 = bb * bb - 4 * aa * cc
+            if det2 > 0:  # so, if det is nan we keep the xsi, eta from previous iter
+                det = np.sqrt(det2)
+                eta = (-bb + det) / (2 * aa)
+        if abs(a[1] + a[3] * eta) < 1e-12:  # this happens when recti cell rotated of 90deg
+            xsi = ((y - py[0]) / (py[1] - py[0]) + (y - py[3]) / (py[2] - py[3])) * 0.5
+        else:
+            xsi = (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta)
+        if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
+            _raise_field_out_of_bound_error(0, y, x)
+        if xsi > 1 and eta > 1 and xi == grid.xdim - 1 and yi == grid.ydim - 1:
+            _raise_field_out_of_bound_error(0, y, x)
+        if xsi < -tol:
+            xi -= 1
+        elif xsi > 1 + tol:
+            xi += 1
+        if eta < -tol:
+            yi -= 1
+        elif eta > 1 + tol:
+            yi += 1
+        (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid.mesh)
+        it += 1
+        if it > maxIterSearch:
+            print(f"Correct cell not found after {maxIterSearch} iterations")
+            _raise_field_out_of_bound_error(0, y, x)
+    xsi = max(0.0, xsi)
+    eta = max(0.0, eta)
+    xsi = min(1.0, xsi)
+    eta = min(1.0, eta)
+
+    if grid.zdim > 1 and not search2D:
+        if grid._gtype == GridType.CurvilinearZGrid:
+            try:
+                (zi, zeta) = search_indices_vertical_z(field.grid, field.gridindexingtype, z)
+            except FieldOutOfBoundError:
+                _raise_field_out_of_bound_error(z, y, x)
+        elif grid._gtype == GridType.CurvilinearSGrid:
+            (zi, zeta) = search_indices_vertical_s(field.grid, field.interp_method, time, z, y, x, ti, yi, xi, eta, xsi)
+    else:
+        zi = -1
+        zeta = 0
+
+    if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
+        _raise_field_sampling_error(z, y, x)
+
+    if particle:
+        particle.ei[field.igrid] = field.ravel_index(zi, yi, xi)
+
+    return (zeta, eta, xsi, zi, yi, xi)
+
+
+## TODO :  Still need to implement the search_indices_curvilinear
 def _search_indices_curvilinear(field: Field, time, z, y, x, ti, particle=None, search2D=False):
     if particle:
         zi, yi, xi = field.unravel_index(particle.ei)
