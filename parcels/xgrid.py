@@ -6,6 +6,7 @@ import numpy.typing as npt
 import xarray as xr
 
 from parcels import xgcm
+from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
 
@@ -182,18 +183,26 @@ class XGrid(BaseGrid):
     def search(self, z, y, x, ei=None, search2D=False):
         ds = self.xgcm_grid._ds
 
+        if search2D:
+            zi = 0
+        else:
+            zi, _ = _search_1d_array(ds.depth.values, z)
+
         if ds.lon.ndim == 1:
-            yi, bcoord_y = _search_1d_array(ds.lat.values, y)
-            xi, bcoord_x = _search_1d_array(ds.lon.values, x)
+            yi, eta = _search_1d_array(ds.lat.values, y)
+            xi, xsi = _search_1d_array(ds.lon.values, x)
+            return (zi, yi, xi), np.array([eta, xsi, 1 - eta, 1 - xsi])
 
-            if search2D:
-                zi = 0
-            else:
-                zi, _ = _search_1d_array(ds.depth.values, z)
+        yi, xi = None, None
+        if ei is not None:
+            _, yi, xi = self.unravel_index(ei)
 
-            return (zi, yi, xi), np.array([bcoord_y, bcoord_x, 1 - bcoord_y, 1 - bcoord_x])
+        if ds.lon.ndim == 2:
+            eta, xsi, yi, xi = _search_indices_curvilinear_2d(self, y, x, yi, xi)
 
-        raise NotImplementedError("Searching in 2D arrays is not implemented yet.")
+            return (zi, yi, xi), np.array([eta, xsi, 1 - eta, 1 - xsi])
+
+        raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
 
     def ravel_index(self, zi, yi, xi):
         """
@@ -415,6 +424,6 @@ def _search_1d_array(
     float
         Barycentric coordinate.
     """
-    i = np.argmin(arr < x)
+    i = np.argmin(arr <= x) - 1
     barry = (x - arr[i]) / (arr[i + 1] - arr[i])
     return i, barry
