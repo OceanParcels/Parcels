@@ -52,7 +52,7 @@ class XGrid(BaseGrid):
         self.xgcm_grid = grid
         self.mesh = mesh
         ds = grid._ds
-        assert_valid_lon_lat(ds["lon"], ds["lat"], grid.axes)
+        assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
 
         # ! Not ideal... Triggers computation on a throwaway item. Keeping for now for v3 compat, will be removed in v4.
         self.lonlat_minmax = np.array(
@@ -226,7 +226,7 @@ class XGrid(BaseGrid):
 
     def unravel_index(self, ei):
         """
-        Converts a single encoded index back into a vertical index and face index.
+        Converts a single encoded index back into a Z, Y, and X indices.
 
         Parameters
         ----------
@@ -303,7 +303,7 @@ def assert_valid_field_array(da: xr.DataArray, axes: _XGCM_AXES):
         )
 
 
-def assert_valid_lon_lat(da_lon, da_lat, axes: _XGCM_AXES):
+def assert_valid_lat_lon(da_lat, da_lon, axes: _XGCM_AXES):
     """
     Asserts that the provided longitude and latitude DataArrays are defined appropriately
     on the F points to match the internal representation in Parcels.
@@ -371,7 +371,7 @@ def _search_1d_array(
     x: float,
 ) -> tuple[int, int]:
     """
-    Searches for the particle location in a 1D array and return barycentric coordinate along dimension.
+    Searches for the particle location in a 1D array and returns barycentric coordinate along dimension.
 
     Assumes particle position x is within the bounds of the array, and array is increasing.
 
@@ -390,5 +390,5 @@ def _search_1d_array(
         Barycentric coordinate.
     """
     i = np.argmin(arr <= x) - 1
-    barry = (x - arr[i]) / (arr[i + 1] - arr[i])
-    return i, barry
+    bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
+    return i, bcoord
