@@ -366,43 +366,6 @@ def assert_valid_lon_lat(da_lon, da_lat, axes: _XGCM_AXES):
             )
 
 
-def _generate_cells(
-    *,
-    lat: np.ndarray,
-    lon: np.ndarray,
-):
-    """
-    Takes in 2 2D arrays representing the F points of a grid and returns a generator that yields
-    the individual cells of the grid as 2D arrays of the corners of the cells.
-
-    Parameters
-    ----------
-    lon : np.ndarray
-        2D array of the longitude F points of the grid of shape (Y, X)
-    lat : np.ndarray
-        2D array of the latitude F points of the grid of shape (Y, X).
-
-    Yields
-    ------
-    np.ndarray
-        2D array of shape (4, 2) representing the corners of the cell in the order:
-        bottom left, bottom right, top right, top left. Output is provided in lat, lon order.
-    """
-    assert lon.ndim == 2 and lat.ndim == 2, "lon and lat must be 2D arrays."
-    assert lon.shape == lat.shape, "lon and lat must have the same shape."
-
-    for y in range(lon.shape[0] - 1):
-        for x in range(lon.shape[1] - 1):
-            yield np.array(
-                [
-                    [lat[y, x], lon[y, x]],  # bottom left
-                    [lat[y, x + 1], lon[y, x + 1]],  # bottom right
-                    [lat[y + 1, x + 1], lon[y + 1, x + 1]],  # top right
-                    [lat[y + 1, x], lon[y + 1, x]],  # top left
-                ]
-            )
-
-
 def _search_1d_array(
     arr: np.array,
     x: float,
