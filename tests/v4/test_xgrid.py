@@ -88,7 +88,7 @@ def test_invalid_xgrid_field_array():
     ...
 
 
-def test_invalid_lon_lat(ds):
+def test_invalid_lon_lat():
     """Stress test the grid initialiser by creating incompatible datasets that test the edge cases"""
     ds = datasets["ds_2d_left"].copy()
     ds["lon"], ds["lat"] = xr.broadcast(ds["YC"], ds["XC"])
