@@ -10,10 +10,7 @@ from parcels import xgcm
 from parcels._datasets.structured.generic import T, X, Y, Z, datasets
 from parcels.grid import Grid as OldGrid
 from parcels.tools.converters import TimeConverter
-from parcels.xgrid import (
-    XGrid,
-    _generate_cells,
-)
+from parcels.xgrid import XGrid, _generate_cells, _search_1d_array
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
 
@@ -187,3 +184,56 @@ def _assert_point_is(
             raise ValueError(f"Invalid method: {direction}")
 
     np.testing.assert_allclose(reference_cell + delta, test_cell)
+
+
+@pytest.mark.parametrize(
+    "ds",
+    [
+        pytest.param(datasets["ds_2d_left"], id="1D lon/lat"),
+        pytest.param(datasets["2d_left_rotated"], id="2D lon/lat"),
+    ],
+)  # for key, ds in datasets.items()])
+def test_xgrid_search_cpoints(ds):
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    lat_array, lon_array = get_2d_fpoint_mesh(grid)
+    lat_array, lon_array = corner_to_cell_center_points(lat_array, lon_array)
+
+    for xi in range(grid.xdim - 1):
+        for yi in range(grid.ydim - 1):
+            lat, lon = lat_array[yi, xi], lon_array[yi, xi]
+            (zi_test, yi_test, xi_test), bcoords = grid.search(0, lat, lon, ei=None, search2D=True)
+            assert xi == xi_test
+            assert yi == yi_test
+            assert zi_test == 0
+
+            # assert np.isclose(bcoords[0], 0.5) #? Should this not be the case with the cell center points?
+            # assert np.isclose(bcoords[1], 0.5)
+
+
+def get_2d_fpoint_mesh(grid: XGrid):
+    lat, lon = grid.lat, grid.lon
+    if lon.ndim == 1:
+        lat, lon = np.meshgrid(lat, lon, indexing="ij")
+    return lat, lon
+
+
+def corner_to_cell_center_points(lat, lon):
+    """Convert F points to C points."""
+    lon_c = (lon[:-1, :-1] + lon[:-1, 1:]) / 2
+    lat_c = (lat[:-1, :-1] + lat[1:, :-1]) / 2
+    return lat_c, lon_c
+
+
+@pytest.mark.parametrize(
+    "array, x, expected_xi, expected_xsi",
+    [
+        (np.array([1, 2, 3, 4, 5]), 1.1, 0, 0.1),
+        (np.array([1, 2, 3, 4, 5]), 2.1, 1, 0.1),
+        (np.array([1, 2, 3, 4, 5]), 3.1, 2, 0.1),
+        (np.array([1, 2, 3, 4, 5]), 4.5, 3, 0.5),
+    ],
+)
+def test_search_1d_array(array, x, expected_xi, expected_xsi):
+    xi, xsi = _search_1d_array(array, x)
+    assert xi == expected_xi
+    assert np.isclose(xsi, expected_xsi)
