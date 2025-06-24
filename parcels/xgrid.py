@@ -410,6 +410,8 @@ def _search_1d_array(
     """
     Searches for the particle location in a 1D array and return barycentric coordinate along dimension.
 
+    Assumes particle position x is within the bounds of the array, and array is increasing.
+
     Parameters
     ----------
     arr : np.array
