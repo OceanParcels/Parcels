@@ -353,6 +353,13 @@ def assert_valid_lat_lon(da_lat, da_lon, axes: _XGCM_AXES):
                 f"Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} is not associated with the Y axis."
             )
 
+        if not np.all(np.diff(da_lon.values) > 0):
+            raise ValueError(
+                f"Longitude DataArray {da_lon.name!r} with dims {da_lon.dims} must be strictly increasing."
+            )
+        if not np.all(np.diff(da_lat.values) > 0):
+            raise ValueError(f"Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} must be strictly increasing.")
+
     if da_lon.ndim == 2:
         if da_lon.dims != da_lat.dims:
             raise ValueError(
@@ -373,12 +380,14 @@ def _search_1d_array(
     """
     Searches for the particle location in a 1D array and returns barycentric coordinate along dimension.
 
-    Assumes particle position x is within the bounds of the array, and array is increasing.
+    Assumptions:
+    - particle position x is within the bounds of the array
+    - array is strictly monotonically increasing.
 
     Parameters
     ----------
     arr : np.array
-        1D array (assumed to be ascending) to search in.
+        1D array to search in.
     x : float
         Position in the 1D array to search for.
 
