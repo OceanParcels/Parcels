@@ -157,7 +157,7 @@ def test_xgrid_search_cpoints(ds):
     for xi in range(grid.xdim - 1):
         for yi in range(grid.ydim - 1):
             lat, lon = lat_array[yi, xi], lon_array[yi, xi]
-            ei, bcoords = grid.search(0, lat, lon, ei=None, search2D=True)
+            bcoords, ei = grid.search(0, lat, lon, ei=None, search2D=True)
             zi_test, yi_test, xi_test = grid.unravel_index(ei)
             assert xi == xi_test
             assert yi == yi_test
