@@ -128,6 +128,14 @@ def test_fieldset_add_field_incompatible_calendars(fieldset):
     with pytest.raises(CalendarError, match="Expected field '.*' to have calendar compatible with datetime object"):
         fieldset.add_field(field, "test_field")
 
+    ds_test = ds.copy()
+    ds_test["time"] = np.linspace(0, 100, T_structured, dtype="timedelta64[s]")
+    grid = XGrid(xgcm.Grid(ds_test))
+    field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
+
+    with pytest.raises(CalendarError, match="Expected field '.*' to have calendar compatible with datetime object"):
+        fieldset.add_field(field, "test_field")
+
 
 @pytest.mark.parametrize(
     "input_, expected",
