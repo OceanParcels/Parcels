@@ -447,7 +447,7 @@ static inline StatusCode temporal_interpolation_structured_grid(double time, typ
   int igrid = f->igrid;
 
   /* Find time index for temporal interpolation */
-  if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
+  if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && ((time < grid->time[0] - FLT_EPSILON) || (time > grid->time[grid->tdim-1] + FLT_EPSILON))) {
     return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], f->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
@@ -660,7 +660,7 @@ static inline StatusCode temporal_interpolationUV_c_grid(double time, type_coord
   int igrid = U->igrid;
 
   /* Find time index for temporal interpolation */
-  if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
+  if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && ((time < grid->time[0] - FLT_EPSILON) || (time > grid->time[grid->tdim-1] + FLT_EPSILON))) {
     return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
@@ -882,7 +882,7 @@ static inline StatusCode temporal_interpolationUVW_c_grid(double time, type_coor
   int igrid = U->igrid;
 
   /* Find time index for temporal interpolation */
-  if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
+  if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && ((time < grid->time[0] - FLT_EPSILON) || (time > grid->time[grid->tdim-1] + FLT_EPSILON))){
     return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
@@ -1103,7 +1103,7 @@ static inline StatusCode temporal_interpolation_slip(double time, type_coord z, 
   int igrid = U->igrid;
 
   /* Find time index for temporal interpolation */
-  if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
+  if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && ((time < grid->time[0] - FLT_EPSILON) || (time > grid->time[grid->tdim-1] + FLT_EPSILON))) {
     return ERRORTIMEEXTRAPOLATION;
   }
   status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);

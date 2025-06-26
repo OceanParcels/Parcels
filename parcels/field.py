@@ -1101,7 +1101,10 @@ class Field:
         if (
             not self.time_periodic
             and not self.allow_time_extrapolation
-            and (time < self.grid.time[0] or time > self.grid.time[-1])
+            and (
+                (time < self.grid.time[0] - np.finfo(np.float32).eps)
+                or (time > self.grid.time[-1] + np.finfo(np.float32).eps)
+            )
         ):
             raise TimeExtrapolationError(time, field=self)
         time_index = self.grid.time <= time
