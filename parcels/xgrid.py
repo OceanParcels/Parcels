@@ -10,9 +10,10 @@ from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
 
-_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
-_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
-_XGCM_AXES = Mapping[_AXIS_DIRECTION, xgcm.Axis]
+_XGCM_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
+_XGCM_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
+_AXIS_DIRECTION = Literal["X", "Y", "Z"]
+_XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
 
 
 def get_tracer_dimensionality(axis: xgcm.Axis | None) -> int:
@@ -180,77 +181,49 @@ class XGrid(BaseGrid):
             else:
                 return GridType.CurvilinearSGrid
 
-    def search(self, z, y, x, ei=None, search2D=False):
+    def search(self, z, y, x, ei=None):
         ds = self.xgcm_grid._ds
 
-        if search2D:
-            zi = 0
-        else:
-            zi, _ = _search_1d_array(ds.depth.values, z)
+        zi, zeta = _search_1d_array(ds.depth.values, z)
 
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
             xi, xsi = _search_1d_array(ds.lon.values, x)
-            return np.array([eta, xsi, 1 - eta, 1 - xsi]), self.ravel_index(zi, yi, xi)
+            return {"X": (xi, xsi), "Y": (yi, eta), "Z": (zi, zeta)}
 
         yi, xi = None, None
         if ei is not None:
-            _, yi, xi = self.unravel_index(ei)
+            axis_indices = self.unravel_index(ei)
+            xi = axis_indices.get("X")
+            yi = axis_indices.get("Y")
 
         if ds.lon.ndim == 2:
             eta, xsi, yi, xi = _search_indices_curvilinear_2d(self, y, x, yi, xi)
 
-            return np.array([eta, xsi, 1 - eta, 1 - xsi]), self.ravel_index(zi, yi, xi)
+            return {"X": (xi, xsi), "Y": (yi, eta), "Z": (zi, zeta)}
 
         raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
 
-    def ravel_index(self, zi, yi, xi):
-        """
-        Converts a z, y, and x index into a single encoded index.
-
-        Parameters
-        ----------
-        zi : int
-            Vertical index.
-        yi : int
-            Latitude index.
-        xi : int
-            Longitude index.
-
-        Returns
-        -------
-        int
-            Encoded index.
-        """
+    def ravel_index(self, axis_indices: dict[_AXIS_DIRECTION, int]) -> int:
+        xi = axis_indices.get("X", 0)
+        yi = axis_indices.get("Y", 0)
+        zi = axis_indices.get("Z", 0)
         return xi + self.xdim * yi + self.xdim * self.ydim * zi
 
-    def unravel_index(self, ei):
-        """
-        Converts a single encoded index back into a Z, Y, and X indices.
-
-        Parameters
-        ----------
-        ei : int
-            Encoded index to be unraveled.
-
-        Returns
-        -------
-        zi : int
-            Vertical index.
-        yi : int
-            Latitude index.
-        xi : int
-            Longitude index.
-        """
+    def unravel_index(self, ei) -> dict[_AXIS_DIRECTION, int]:
         zi = ei // (self.xdim * self.ydim)
         ei = ei % (self.xdim * self.ydim)
 
         yi = ei // self.xdim
         xi = ei % self.xdim
-        return zi, yi, xi
+        return {
+            "X": xi,
+            "Y": yi,
+            "Z": zi,
+        }
 
 
-def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _AXIS_DIRECTION | None:
+def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
     """For a given dimension name in a grid, returns the direction axis it is on."""
     for axis_name, axis in axes.items():
         if dim in axis.coords.values():
@@ -258,7 +231,7 @@ def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _AXIS_DIRECTION | None
     return None
 
 
-def get_position_from_dim_name(axes: _XGCM_AXES, dim: str) -> _AXIS_POSITION | None:
+def get_position_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_POSITION | None:
     """For a given dimension, returns the position of the variable in the grid."""
     for axis in axes.values():
         var_to_position = {var: position for position, var in axis.coords.items()}
@@ -287,7 +260,7 @@ def assert_valid_field_array(da: xr.DataArray, axes: _XGCM_AXES):
     assert_all_dimensions_correspond_with_axis(da, axes)
 
     dim_to_axis = {dim: get_axis_from_dim_name(axes, dim) for dim in da.dims}
-    dim_to_axis = cast(dict[Hashable, _AXIS_DIRECTION], dim_to_axis)
+    dim_to_axis = cast(dict[Hashable, _XGCM_AXIS_DIRECTION], dim_to_axis)
 
     # Assert all dimensions are present
     if set(dim_to_axis.values()) != {"T", "Z", "Y", "X"}:

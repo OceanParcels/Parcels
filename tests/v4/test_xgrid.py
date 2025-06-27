@@ -129,11 +129,10 @@ def test_xgrid_ravel_unravel_index():
     for xi in range(xdim):
         for yi in range(ydim):
             for zi in range(zdim):
-                ei = grid.ravel_index(zi, yi, xi)
-                zi_test, yi_test, xi_test = grid.unravel_index(ei)
-                assert xi == xi_test, f"Expected xi {xi} but got {xi_test} for ei {ei}"
-                assert yi == yi_test, f"Expected yi {yi} but got {yi_test} for ei {ei}"
-                assert zi == zi_test, f"Expected zi {zi} but got {zi_test} for ei {ei}"
+                axis_indices = {"X": xi, "Y": yi, "Z": zi}
+                ei = grid.ravel_index(axis_indices)
+                axis_indices_test = grid.unravel_index(ei)
+                assert axis_indices_test == axis_indices
                 encountered_eis.append(ei)
 
     encountered_eis = sorted(encountered_eis)
@@ -156,12 +155,12 @@ def test_xgrid_search_cpoints(ds):
 
     for xi in range(grid.xdim - 1):
         for yi in range(grid.ydim - 1):
+            axis_indices = {"X": xi, "Y": yi, "Z": 0}
+
             lat, lon = lat_array[yi, xi], lon_array[yi, xi]
-            bcoords, ei = grid.search(0, lat, lon, ei=None, search2D=True)
-            zi_test, yi_test, xi_test = grid.unravel_index(ei)
-            assert xi == xi_test
-            assert yi == yi_test
-            assert zi_test == 0
+            axis_indices_bcoords = grid.search(0, lat, lon, ei=None)
+            axis_indices_test = {k: v[0] for k, v in axis_indices_bcoords.items()}
+            assert axis_indices == axis_indices_test
 
             # assert np.isclose(bcoords[0], 0.5) #? Should this not be the case with the cell center points?
             # assert np.isclose(bcoords[1], 0.5)
