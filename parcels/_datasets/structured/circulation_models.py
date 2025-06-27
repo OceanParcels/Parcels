@@ -14,8 +14,8 @@ datasets = {
     "ds_copernicusmarine": xr.Dataset(
         # Copernicus Marine Service dataset as retrieved by the `copernicusmarine` toolkit
         {
-            "uo": (["depth", "latitude", "longitude", "time"], np.random.rand(Z, Y, X, T)),
-            "vo": (["depth", "latitude", "longitude", "time"], np.random.rand(Z, Y, X, T)),
+            "uo": (["depth", "latitude", "longitude", "time"], np.random.rand(T, Z, Y, X)),
+            "vo": (["depth", "latitude", "longitude", "time"], np.random.rand(T, Z, Y, X)),
         },
         coords={
             "depth": (["depth"], np.linspace(0, 5000, Z), {"axis": "Z"}),
