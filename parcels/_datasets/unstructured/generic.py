@@ -44,12 +44,12 @@ def _stommel_gyre_delaunay():
     uxgrid.attrs["Conventions"] = "UGRID-1.0"
 
     # Define arrays U (zonal), V (meridional) and P (sea surface height)
-    U = np.zeros((1, nz1, lat.size), dtype=np.float64)
-    V = np.zeros((1, nz1, lat.size), dtype=np.float64)
+    U = np.zeros((1, nz1, uxgrid.n_face), dtype=np.float64)
+    V = np.zeros((1, nz1, uxgrid.n_face), dtype=np.float64)
     W = np.zeros((1, nz, lat.size), dtype=np.float64)
-    P = np.zeros((1, nz1, lat.size), dtype=np.float64)
+    P = np.zeros((1, nz1, uxgrid.n_face), dtype=np.float64)
 
-    for i, (x, y) in enumerate(zip(lon_flat, lat_flat, strict=False)):
+    for i, (x, y) in enumerate(zip(uxgrid.face_lon, uxgrid.face_lat, strict=False)):
         xi = x / 60.0
         yi = y / 60.0
 
@@ -61,10 +61,10 @@ def _stommel_gyre_delaunay():
         data=U,
         name="U",
         uxgrid=uxgrid,
-        dims=["time", "nz1", "n_node"],
+        dims=["time", "nz1", "n_face"],
         coords=dict(
             time=(["time"], [TIME[0]]),
-            nz1=(["nz1"], [0]),
+            nz1=(["nz1"], zc),
         ),
         attrs=dict(
             description="zonal velocity", units="m/s", location="node", mesh="delaunay", Conventions="UGRID-1.0"
@@ -74,7 +74,7 @@ def _stommel_gyre_delaunay():
         data=V,
         name="V",
         uxgrid=uxgrid,
-        dims=["time", "nz1", "n_node"],
+        dims=["time", "nz1", "n_face"],
         coords=dict(
             time=(["time"], [TIME[0]]),
             nz1=(["nz1"], zc),
@@ -100,7 +100,7 @@ def _stommel_gyre_delaunay():
         data=P,
         name="p",
         uxgrid=uxgrid,
-        dims=["time", "nz1", "n_node"],
+        dims=["time", "nz1", "n_face"],
         coords=dict(
             time=(["time"], [TIME[0]]),
             nz1=(["nz1"], zc),
