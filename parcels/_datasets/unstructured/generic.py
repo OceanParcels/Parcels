@@ -7,7 +7,7 @@ import xarray as xr
 __all__ = ["Nx", "datasets"]
 
 T = 13
-Nx = 10
+Nx = 20
 vmax = 1.0
 delta = 0.1
 TIME = xr.date_range("2000", "2001", T)
