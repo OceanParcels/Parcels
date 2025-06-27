@@ -147,6 +147,20 @@ def test_field_unstructured_z_linear():
     assert np.isclose(W.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 900.0)
 
 
+def test_field_constant_in_time():
+    """Tests field evaluation for a field with no time interval (i.e., constant in time)."""
+    ds = datasets_unstructured["stommel_gyre_delaunay"]
+    grid = UxGrid(ds.uxgrid, z=ds.coords["nz"])
+    # Note that the vertical coordinate is required to be the position of the layer interfaces ("nz"), not the mid-layers ("nz1")
+    P = Field(name="p", data=ds.p, grid=grid, interp_method=UXPiecewiseConstantFace)
+
+    # Assert that the field can be evaluated at any time, and returns the same value
+    time = np.datetime64("2000-01-01T00:00:00")
+    P1 = P.eval(time=time, z=10.0, y=30.0, x=30.0, applyConversion=False)
+    P2 = P.eval(time=time + np.timedelta64(1, "D"), z=10.0, y=30.0, x=30.0, applyConversion=False)
+    assert np.isclose(P1, P2)
+
+
 def test_field_unstructured_grid_creation(): ...
 
 
