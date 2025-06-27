@@ -18,7 +18,7 @@ datasets = {
             "vo": (["depth", "latitude", "longitude", "time"], np.random.rand(T, Z, Y, X)),
         },
         coords={
-            "depth": (["depth"], np.linspace(0, 5000, Z), {"axis": "Z"}),
+            "depth": (["depth"], np.linspace(0.49, 5727.92, Z), {"axis": "Z"}),
             "latitude": (["latitude"], np.linspace(-90, 90, Y), {"axis": "Y"}),
             "longitude": (["longitude"], np.linspace(-180, 180, X), {"axis": "X"}),
             "time": (["time"], TIME, {"axis": "T"}),
