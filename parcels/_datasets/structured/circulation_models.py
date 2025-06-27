@@ -14,8 +14,30 @@ datasets = {
     "ds_copernicusmarine": xr.Dataset(
         # Copernicus Marine Service dataset as retrieved by the `copernicusmarine` toolkit
         {
-            "uo": (["depth", "latitude", "longitude", "time"], np.random.rand(T, Z, Y, X)),
-            "vo": (["depth", "latitude", "longitude", "time"], np.random.rand(T, Z, Y, X)),
+            "uo": (
+                ["depth", "latitude", "longitude", "time"],
+                np.random.rand(T, Z, Y, X),
+                {
+                    "valid_max": 5.0,
+                    "unit_long": "Meters per second",
+                    "units": "m s-1",
+                    "long_name": "Eastward velocity",
+                    "standard_name": "eastward_sea_water_velocity",
+                    "valid_min": -5.0,
+                },
+            ),
+            "vo": (
+                ["depth", "latitude", "longitude", "time"],
+                np.random.rand(T, Z, Y, X),
+                {
+                    "valid_max": 5.0,
+                    "unit_long": "Meters per second",
+                    "units": "m s-1",
+                    "long_name": "Northward velocity",
+                    "standard_name": "northward_sea_water_velocity",
+                    "valid_min": -5.0,
+                },
+            ),
         },
         coords={
             "depth": (
