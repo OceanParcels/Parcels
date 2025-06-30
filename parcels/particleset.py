@@ -1065,7 +1065,7 @@ class ParticleSet:
                 return StatusCode.StopAllExecution
 
             if abs(time - next_output) < tol:
-                for fld in self.fieldset.get_fields():
+                for fld in self.fieldset.fields.values():
                     if hasattr(fld, "to_write") and fld.to_write:
                         if fld.grid.tdim > 1:
                             raise RuntimeError(

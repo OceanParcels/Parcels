@@ -184,17 +184,6 @@ class FieldSet:
             )
         )
 
-    def get_fields(self) -> list[Field | VectorField]:
-        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
-        objects associated with this FieldSet.
-        """
-        fields = []
-        for v in self.__dict__.values():
-            if type(v) in [Field, VectorField]:
-                if v not in fields:
-                    fields.append(v)
-        return fields
-
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are
         stored as 32-bit floats.
