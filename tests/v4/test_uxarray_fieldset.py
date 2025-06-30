@@ -83,9 +83,9 @@ def test_fesom_fieldset(ds_fesom_channel, uv_fesom_channel):
     assert (fieldset.V == ds_fesom_channel.V).all()
 
 
-@pytest.mark.skip(reason="ParticleSet.__init__ needs major refactoring")
 def test_fesom_in_particleset(ds_fesom_channel, uv_fesom_channel):
     fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
+
     # Check that the fieldset has the expected properties
     assert (fieldset.U == ds_fesom_channel.U).all()
     assert (fieldset.V == ds_fesom_channel.V).all()

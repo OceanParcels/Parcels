@@ -1,32 +1,22 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from copy import copy
 from datetime import date, datetime, timedelta
 
-import cftime
 import numpy as np
 import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
-from parcels._compat import MPI
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
-from parcels.interaction.neighborsearch import (
-    BruteFlatNeighborSearch,
-    BruteSphericalNeighborSearch,
-    HashSphericalNeighborSearch,
-    KDTreeFlatNeighborSearch,
-)
 from parcels.kernel import Kernel
 from parcels.particle import Particle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools._helpers import timedelta_to_float
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
@@ -89,11 +79,8 @@ class ParticleSet:
         lat=None,
         depth=None,
         time=None,
-        repeatdt=None,
         lonlatdepth_dtype=None,
         pid_orig=None,
-        interaction_distance=None,
-        periodic_domain_zonal=None,
         **kwargs,
     ):
         self.particledata = None
@@ -147,7 +134,10 @@ class ParticleSet:
             pid_orig = np.arange(lon.size)
 
         if depth is None:
-            mindepth = self.fieldset.dimrange("depth")[0]
+            mindepth = 0
+            for field in self.fieldset.fields.values():
+                if field.grid.depth is not None:
+                    mindepth = min(mindepth, field.grid.depth[0])
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_flat_array(depth)
@@ -160,6 +150,7 @@ class ParticleSet:
             time = np.array([np.datetime64(t) for t in time])
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
+
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
         if fieldset.time_interval:
@@ -179,30 +170,6 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self.repeatdt = timedelta_to_float(repeatdt) if repeatdt is not None else None
-
-        if self.repeatdt:
-            if self.repeatdt <= 0:
-                raise ValueError("Repeatdt should be > 0")
-            if time[0] and not np.allclose(time, time[0]):
-                raise ValueError("All Particle.time should be the same when repeatdt is not None")
-            self._repeatpclass = pclass
-            self._repeatkwargs = kwargs
-            self._repeatkwargs.pop("partition_function", None)
-
-        ngrids = fieldset.gridset_size
-
-        # Variables used for interaction kernels.
-        inter_dist_horiz = None
-        inter_dist_vert = None
-        # The _dirty_neighbor attribute keeps track of whether
-        # the neighbor search structure needs to be rebuilt.
-        # If indices change (for example adding/deleting a particle)
-        # The NS structure needs to be rebuilt and _dirty_neighbor should be
-        # set to true. Since the NS structure isn't immediately initialized,
-        # it is set to True here.
-        self._dirty_neighbor = True
-
         self.particledata = ParticleData(
             _pclass,
             lon=lon,
@@ -211,65 +178,9 @@ class ParticleSet:
             time=time,
             lonlatdepth_dtype=lonlatdepth_dtype,
             pid_orig=pid_orig,
-            ngrid=ngrids,
+            ngrid=fieldset.gridset_size,
             **kwargs,
         )
-
-        # Initialize neighbor search data structure (used for interaction).
-        if interaction_distance is not None:
-            meshes = [g.mesh for g in fieldset.gridset.grids]
-            # Assert all grids have the same mesh type
-            assert np.all(np.array(meshes) == meshes[0])
-            mesh_type = meshes[0]
-            if mesh_type == "spherical":
-                if len(self) < 1000:
-                    interaction_class = BruteSphericalNeighborSearch
-                else:
-                    interaction_class = HashSphericalNeighborSearch
-            elif mesh_type == "flat":
-                if len(self) < 1000:
-                    interaction_class = BruteFlatNeighborSearch
-                else:
-                    interaction_class = KDTreeFlatNeighborSearch
-            else:
-                assert False, "Interaction is only possible on 'flat' and 'spherical' meshes"
-            try:
-                if len(interaction_distance) == 2:
-                    inter_dist_vert, inter_dist_horiz = interaction_distance
-                else:
-                    inter_dist_vert = interaction_distance[0]
-                    inter_dist_horiz = interaction_distance[0]
-            except TypeError:
-                inter_dist_vert = interaction_distance
-                inter_dist_horiz = interaction_distance
-            self._neighbor_tree = interaction_class(
-                inter_dist_vert=inter_dist_vert,
-                inter_dist_horiz=inter_dist_horiz,
-                periodic_domain_zonal=periodic_domain_zonal,
-            )
-        # End of neighbor search data structure initialization.
-
-        if self.repeatdt:
-            if len(time) > 0 and time[0] is None:
-                self._repeat_starttime = time[0]
-            else:
-                if self.particledata.data["time"][0] and not np.allclose(
-                    self.particledata.data["time"], self.particledata.data["time"][0]
-                ):
-                    raise ValueError("All Particle.time should be the same when repeatdt is not None")
-                self._repeat_starttime = copy(self.particledata.data["time"][0])
-            self._repeatlon = copy(self.particledata.data["lon"])
-            self._repeatlat = copy(self.particledata.data["lat"])
-            self._repeatdepth = copy(self.particledata.data["depth"])
-            for kwvar in kwargs:
-                if kwvar not in ["partition_function"]:
-                    self._repeatkwargs[kwvar] = copy(self.particledata.data[kwvar])
-
-        if self.repeatdt:
-            if MPI and self.particledata.pu_indicators is not None:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                self._repeatpid = pid_orig[self.particledata.pu_indicators == mpi_rank]
 
         self._kernel = None
 
@@ -862,15 +773,11 @@ class ParticleSet:
 
     def execute(
         self,
+        endtime: timedelta | datetime,
+        dt: np.float64 | np.float32 | timedelta,
         pyfunc=AdvectionRK4,
-        pyfunc_inter=None,
-        endtime=None,
-        runtime: float | timedelta | np.timedelta64 | None = None,
-        dt: float | timedelta | np.timedelta64 = 1.0,
         output_file=None,
         verbose_progress=True,
-        postIterationCallbacks=None,
-        callbackdt: float | timedelta | np.timedelta64 | None = None,
     ):
         """Execute a given kernel function over the particle set for multiple timesteps.
 
@@ -883,13 +790,10 @@ class ParticleSet:
             Kernel function to execute. This can be the name of a
             defined Python function or a :class:`parcels.kernel.Kernel` object.
             Kernels can be concatenated using the + operator (Default value = AdvectionRK4)
-        endtime :
-            End time for the timestepping loop.
-            It is either a datetime object or a positive double. (Default value = None)
-        runtime :
-            Length of the timestepping loop. Use instead of endtime.
-            It is either a timedelta object or a positive double. (Default value = None)
-        dt :
+        endtime (datetime.datetime or np.timedelta64): :
+            End time for the timestepping loop. If a timedelta is provided, it is interpreted as the total simulation time.
+            If a datetime is provided, it is interpreted as the end time of the simulation.
+        dt (timedelta):
             Timestep interval (in seconds) to be passed to the kernel.
             It is either a timedelta object or a double.
             Use a negative value for a backward-in-time simulation. (Default value = 1 second)
@@ -897,12 +801,6 @@ class ParticleSet:
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
         verbose_progress : bool
             Boolean for providing a progress bar for the kernel execution loop. (Default value = True)
-        postIterationCallbacks :
-            Optional, array of functions that are to be called after each iteration (post-process, non-Kernel) (Default value = None)
-        callbackdt :
-            Optional, in conjecture with 'postIterationCallbacks', timestep interval to (latest) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks' (Default value = None)
-        pyfunc_inter :
-            (Default value = None)
 
         Notes
         -----
@@ -919,197 +817,82 @@ class ParticleSet:
                 self._kernel = pyfunc
             else:
                 self._kernel = self.Kernel(pyfunc)
+
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
-        # Set up the interaction kernel(s) if not set and given.
-        if self._interaction_kernel is None and pyfunc_inter is not None:
-            if isinstance(pyfunc_inter, InteractionKernel):
-                self._interaction_kernel = pyfunc_inter
+        # The fieldset time intervale defines the extent of time that is allowed to be
+        # simulated. If `fieldset.time_interval` is not None, it will be used to determine the endtime (the min of endtime or fieldset.time_interval[1]).
+        # If `fieldset.time_interval` is None, the endtime will be determined by the
+        # `endtime` parameter or the fieldset's time dimension.
+        # Time parameters for the main for loop are converted to floats, since the interpolation kernels expect float objects for time
+        # The initial time (in float point) representation is t0=0.0 and time is interpreted as relative to the start of the time interval
+        fieldset_timeinterval = self.fieldset.time_interval
+
+        if fieldset_timeinterval is None:
+            if isinstance(endtime, datetime):
+                raise NotImplementedError(
+                    "If fieldset.time_interval is None, endtime must be a timedelta not a datetime"
+                )
+            duration = endtime.total_seconds()  # converts timedelta to seconds as float64
+
+        else:
+            # Get the particle time interval
+            if isinstance(endtime, datetime):
+                simulation_endtime = min(fieldset_timeinterval[1], endtime)
+                if simulation_endtime < fieldset_timeinterval[1]:
+                    print(
+                        f"Simulation endtime is limited by fieldset.time_interval. End time adjusted to {simulation_endtime}"
+                    )
+                duration = (simulation_endtime - fieldset_timeinterval[0]).total_seconds()
+
             else:
-                self._interaction_kernel = self.InteractionKernel(pyfunc_inter)
+                duration = endtime.total_seconds()
 
-        # Convert all time variables to seconds
-        if isinstance(endtime, timedelta):
-            raise TypeError("endtime must be either a datetime or a double")
-        if isinstance(endtime, datetime):
-            endtime = np.datetime64(endtime)
-        elif isinstance(endtime, cftime.datetime):
-            endtime = self.time_origin.reltime(endtime)
-        if isinstance(endtime, np.datetime64):
-            if self.time_origin.calendar is None:
-                raise NotImplementedError("If fieldset.time_origin is not a date, execution endtime must be a double")
-            endtime = self.time_origin.reltime(endtime)
+        if isinstance(dt, timedelta):
+            dt = dt.total_seconds()  # convert to seconds as float64
 
-        if runtime is not None:
-            runtime = timedelta_to_float(runtime)
-
-        dt = timedelta_to_float(dt)
-
-        if abs(dt) <= 1e-6:
-            raise ValueError("Time step dt is too small")
-        if (dt * 1e6) % 1 != 0:
-            raise ValueError("Output interval should not have finer precision than 1e-6 s")
-        outputdt = timedelta_to_float(output_file.outputdt) if output_file else np.inf
-
-        if callbackdt is not None:
-            callbackdt = timedelta_to_float(callbackdt)
-
-        assert runtime is None or runtime >= 0, "runtime must be positive"
-        assert outputdt is None or outputdt >= 0, "outputdt must be positive"
-
-        if runtime is not None and endtime is not None:
-            raise RuntimeError("Only one of (endtime, runtime) can be specified")
-
-        mintime, maxtime = self.fieldset.dimrange("time")  # TODO : change to fieldset.time_interval
-
-        default_release_time = mintime if dt >= 0 else maxtime
-        if np.any(np.isnan(self.particledata.data["time"])):
-            self.particledata.data["time"][np.isnan(self.particledata.data["time"])] = default_release_time
-            self.particledata.data["time_nextloop"][np.isnan(self.particledata.data["time_nextloop"])] = (
-                default_release_time
-            )
-        min_rt = np.min(self.particledata.data["time_nextloop"])
-        max_rt = np.max(self.particledata.data["time_nextloop"])
-
-        # Derive starttime and endtime from arguments or fieldset defaults
-        starttime = min_rt if dt >= 0 else max_rt
-        if self.repeatdt is not None and self._repeat_starttime is None:
-            self._repeat_starttime = starttime
-        if runtime is not None:
-            endtime = starttime + runtime * np.sign(dt)
-        elif endtime is None:
-            mintime, maxtime = self.fieldset.dimrange("time")
-            endtime = maxtime if dt >= 0 else mintime
-
-        if (abs(endtime - starttime) < 1e-5 or runtime == 0) and dt == 0:
-            raise RuntimeError(
-                "dt and runtime are zero, or endtime is equal to Particle.time. "
-                "ParticleSet.execute() will not do anything."
-            )
-
-        if np.isfinite(outputdt):
-            _warn_outputdt_release_desync(outputdt, starttime, self.particledata.data["time_nextloop"])
+        outputdt = output_file.outputdt if output_file else None
 
         self.particledata._data["dt"][:] = dt
-
-        if callbackdt is None:
-            interupt_dts = [np.inf, outputdt]
-            if self.repeatdt is not None:
-                interupt_dts.append(self.repeatdt)
-            callbackdt = np.min(np.array(interupt_dts))
 
         # Set up pbar
         if output_file:
             logger.info(f"Output files are stored in {output_file.fname}.")
 
         if verbose_progress:
-            pbar = tqdm(total=abs(endtime - starttime), file=sys.stdout)
+            pbar = tqdm(total=abs(duration), file=sys.stdout)
 
-        # Set up variables for first iteration
-        if self.repeatdt:
-            next_prelease = self._repeat_starttime + (
-                abs(starttime - self._repeat_starttime) // self.repeatdt + 1
-            ) * self.repeatdt * np.sign(dt)
-        else:
-            next_prelease = np.inf if dt > 0 else -np.inf
         if output_file:
-            next_output = starttime + dt
+            next_output = outputdt
         else:
             next_output = np.inf * np.sign(dt)
-        next_callback = starttime + callbackdt * np.sign(dt)
 
         tol = 1e-12
-        time = starttime
-
-        while (time < endtime and dt > 0) or (time > endtime and dt < 0):
+        time = 0.0
+        while time < duration and dt > 0:  # Forward in time only for now
             # Check if we can fast-forward to the next time needed for the particles
-            if dt > 0:
-                skip_kernel = True if min(self.time) > (time + dt) else False
-            else:
-                skip_kernel = True if max(self.time) < (time + dt) else False
+            # if dt > 0:
+            #     skip_kernel = True if duration > (time + dt) else False
+            # else:
+            #     skip_kernel = True if max(self.time) < (time + dt) else False
+            t0 = time
+            next_time = t0 + dt
+            res = self._kernel.execute(self, endtime=next_time, dt=dt)
+            if res == StatusCode.StopAllExecution:
+                return StatusCode.StopAllExecution
 
-            time_at_startofloop = time
-
-            next_input = self.fieldset.computeTimeChunk(time, dt)
-
-            # Define next_time (the timestamp when the execution needs to be handed back to python)
-            if dt > 0:
-                next_time = min(next_prelease, next_input, next_output, next_callback, endtime)
-            else:
-                next_time = max(next_prelease, next_input, next_output, next_callback, endtime)
-
-            # If we don't perform interaction, only execute the normal kernel efficiently.
-            if self._interaction_kernel is None:
-                if not skip_kernel:
-                    res = self._kernel.execute(self, endtime=next_time, dt=dt)
-                    if res == StatusCode.StopAllExecution:
-                        return StatusCode.StopAllExecution
-            # Interaction: interleave the interaction and non-interaction kernel for each time step.
-            # E.g. Normal -> Inter -> Normal -> Inter if endtime-time == 2*dt
-            else:
-                cur_time = time
-                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0):
-                    if dt > 0:
-                        cur_end_time = min(cur_time + dt, next_time)
-                    else:
-                        cur_end_time = max(cur_time + dt, next_time)
-                    self._kernel.execute(self, endtime=cur_end_time, dt=dt)
-                    self._interaction_kernel.execute(self, endtime=cur_end_time, dt=dt)
-                    cur_time += dt
             # End of interaction specific code
             time = next_time
 
-            # Check for empty ParticleSet
-            if np.isinf(next_prelease) and len(self) == 0:
-                return StatusCode.StopAllExecution
-
-            if abs(time - next_output) < tol:
-                for fld in self.fieldset.get_fields():
-                    if hasattr(fld, "to_write") and fld.to_write:
-                        if fld.grid.tdim > 1:
-                            raise RuntimeError(
-                                "Field writing during execution only works for Fields with one snapshot in time"
-                            )
-                        fldfilename = str(output_file.fname).replace(".zarr", f"_{fld.to_write:04d}")
-                        fld.write(fldfilename)
-                        fld.to_write += 1
-
             if abs(time - next_output) < tol:
                 if output_file:
-                    output_file.write(self, time_at_startofloop)
+                    output_file.write(self, t0)
                 if np.isfinite(outputdt):
                     next_output += outputdt * np.sign(dt)
 
-            # ==== insert post-process here to also allow for memory clean-up via external func ==== #
-            if abs(time - next_callback) < tol:
-                if postIterationCallbacks is not None:
-                    for extFunc in postIterationCallbacks:
-                        extFunc()
-                next_callback += callbackdt * np.sign(dt)
-
-            if abs(time - next_prelease) < tol:
-                pset_new = self.__class__(
-                    fieldset=self.fieldset,
-                    time=time,
-                    lon=self._repeatlon,
-                    lat=self._repeatlat,
-                    depth=self._repeatdepth,
-                    pclass=self._repeatpclass,
-                    lonlatdepth_dtype=self.particledata.lonlatdepth_dtype,
-                    partition_function=False,
-                    pid_orig=self._repeatpid,
-                    **self._repeatkwargs,
-                )
-                for p in pset_new:
-                    p.dt = dt
-                self.add(pset_new)
-                next_prelease += self.repeatdt * np.sign(dt)
-
-            if time != endtime:
-                next_input = self.fieldset.computeTimeChunk(time, dt)
             if verbose_progress:
-                pbar.update(abs(time - time_at_startofloop))
+                pbar.update(abs(dt))
 
         if verbose_progress:
             pbar.close()
