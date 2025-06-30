@@ -10,7 +10,7 @@ from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
 
-_AXES_DEFAULT_ORDERING = "ZYX"
+_XGRID_AXES_ORDERING = "ZYX"
 _XGRID_AXES = Literal["X", "Y", "Z"]
 
 _XGCM_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
@@ -34,7 +34,7 @@ def get_time(axis: xgcm.Axis) -> npt.NDArray:
 
 def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXES]:
     spatial_axes = [a for a in grid.axes.keys() if a in ["X", "Y", "Z"]]
-    return sorted(spatial_axes, key=_AXES_DEFAULT_ORDERING.index)
+    return sorted(spatial_axes, key=_XGRID_AXES_ORDERING.index)
 
 
 class XGrid(BaseGrid):
