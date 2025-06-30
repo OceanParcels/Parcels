@@ -16,6 +16,7 @@ from parcels.xgrid import XGrid
 
 if TYPE_CHECKING:
     from parcels._typing import DatetimeLike
+    from parcels.basegrid import BaseGrid
 __all__ = ["FieldSet"]
 
 
@@ -108,10 +109,6 @@ class FieldSet:
         minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
 
         return maxleft, minright
-
-    @property
-    def gridset_size(self):
-        return len(self.fields)
 
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
@@ -207,6 +204,14 @@ class FieldSet:
             raise ValueError(f"FieldSet already has a constant with name '{name}'")
 
         self.constants[name] = np.float32(value)
+
+    @property
+    def gridset(self) -> list[BaseGrid]:
+        grids = []
+        for field in self.fields.values():
+            if field.grid not in grids:
+                grids.append(field.grid)
+        return grids
 
     # def computeTimeChunk(self, time=0.0, dt=1):
     #     """Load a chunk of three data time steps into the FieldSet.
