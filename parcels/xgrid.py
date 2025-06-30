@@ -46,16 +46,6 @@ class XGrid(BaseGrid):
         ds = grid._ds
         assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
 
-        # ! Not ideal... Triggers computation on a throwaway item. Keeping for now for v3 compat, will be removed in v4.
-        self.lonlat_minmax = np.array(
-            [
-                np.nanmin(self.xgcm_grid._ds["lon"]),
-                np.nanmax(self.xgcm_grid._ds["lon"]),
-                np.nanmin(self.xgcm_grid._ds["lat"]),
-                np.nanmax(self.xgcm_grid._ds["lat"]),
-            ]
-        )
-
     @property
     def lon(self):
         """
