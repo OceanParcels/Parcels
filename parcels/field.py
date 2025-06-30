@@ -169,7 +169,7 @@ class Field:
             self.time_interval = get_time_interval(data)
         except ValueError as e:
             e.add_note(
-                f"Error getting time interval for field {name!r}. Are you sure that the time dimension on the xarray dataset is stored as datetime or cftime datetime objects?"
+                f"Error getting time interval for field {name!r}. Are you sure that the time dimension on the xarray dataset is stored as timedelta, datetime or cftime datetime objects?"
             )
             raise e
 
