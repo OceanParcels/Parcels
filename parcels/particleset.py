@@ -121,7 +121,7 @@ class ParticleSet:
                 if type(self).ngrids.initial < 0:
                     numgrids = ngrids
                     if numgrids is None and fieldset is not None:
-                        numgrids = fieldset.gridset_size
+                        numgrids = len(fieldset.gridset)
                     assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
                     type(self).ngrids.initial = numgrids
                 self.ngrids = type(self).ngrids.initial
@@ -190,7 +190,7 @@ class ParticleSet:
             self._repeatkwargs = kwargs
             self._repeatkwargs.pop("partition_function", None)
 
-        ngrids = fieldset.gridset_size
+        ngrids = len(fieldset.gridset)
 
         # Variables used for interaction kernels.
         inter_dist_horiz = None
@@ -217,7 +217,7 @@ class ParticleSet:
 
         # Initialize neighbor search data structure (used for interaction).
         if interaction_distance is not None:
-            meshes = [g.mesh for g in fieldset.gridset.grids]
+            meshes = [g.mesh for g in fieldset.gridset]
             # Assert all grids have the same mesh type
             assert np.all(np.array(meshes) == meshes[0])
             mesh_type = meshes[0]
@@ -428,7 +428,7 @@ class ParticleSet:
         This is only intended for curvilinear grids, where the initial index search
         may be quite expensive.
         """
-        for i, grid in enumerate(self.fieldset.gridset.grids):
+        for i, grid in enumerate(self.fieldset.gridset):
             if grid._gtype not in [GridType.CurvilinearZGrid, GridType.CurvilinearSGrid]:
                 continue
 

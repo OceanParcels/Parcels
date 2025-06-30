@@ -72,9 +72,17 @@ def test_fieldset_add_field_already_exists(fieldset):
         fieldset.add_field(field, "test_field")
 
 
-@pytest.mark.xfail(reason="FieldSet doesn't yet correctly handle duplicate grids.")
-def test_fieldset_gridset_size(fieldset):
-    assert fieldset.gridset_size == 1
+def test_fieldset_gridset(fieldset):
+    assert fieldset.fields["U"].grid in fieldset.gridset
+    assert fieldset.fields["V"].grid in fieldset.gridset
+    assert fieldset.fields["UV"].grid in fieldset.gridset
+    assert len(fieldset.gridset) == 1
+
+    fieldset.add_constant_field("constant_field", 1.0)
+    assert len(fieldset.gridset) == 2
+
+
+def test_fieldset_gridset_multiple_grids(): ...
 
 
 def test_fieldset_time_interval():
