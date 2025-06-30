@@ -16,22 +16,13 @@ _AXIS_DIRECTION = Literal["X", "Y", "Z"]
 _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
 
 
-def get_tracer_dimensionality(axis: xgcm.Axis | None) -> int:
+def get_n_cell_edges_along_dim(axis: xgcm.Axis | None) -> int:
     if axis is None:
         return 1
     first_coord = list(axis.coords.items())[0]
-    pos, coord = first_coord
+    _, coord_var = first_coord
 
-    pos_to_dim = {  # TODO: These could do with being explicitly tested
-        "center": lambda x: x,
-        "left": lambda x: x,
-        "right": lambda x: x,
-        "inner": lambda x: x + 1,
-        "outer": lambda x: x - 1,
-    }
-
-    n = axis._ds[coord].size
-    return pos_to_dim[pos](n)
+    return axis._ds[coord_var].size
 
 
 def get_time(axis: xgcm.Axis) -> npt.NDArray:
@@ -121,22 +112,19 @@ class XGrid(BaseGrid):
 
     @property
     def xdim(self):
-        """Number of T (tracer) cells in the X direction."""
-        return get_tracer_dimensionality(self.xgcm_grid.axes.get("X"))
+        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("X"))
 
     @property
     def ydim(self):
-        """Number of T (tracer) cells in the Y direction."""
-        return get_tracer_dimensionality(self.xgcm_grid.axes.get("Y"))
+        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("Y"))
 
     @property
     def zdim(self):
-        """Number of T (tracer) cells in the Z direction."""
-        return get_tracer_dimensionality(self.xgcm_grid.axes.get("Z"))
+        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("Z"))
 
     @property
     def tdim(self):
-        return get_tracer_dimensionality(self.xgcm_grid.axes.get("T"))
+        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("T"))
 
     @property
     def time_origin(self):
