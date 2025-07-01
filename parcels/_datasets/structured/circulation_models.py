@@ -191,4 +191,93 @@ datasets = {
             ),
         },
     ),
+    "ds_NEMO_MOI_V": xr.Dataset(
+        # NEMO model dataset (V component) as serviced by Mercator Ocean International
+        {
+            "vomecrty": (
+                ["deptht", "y", "x"],
+                np.random.rand(Z, Y, X, dtype="float64"),
+                {
+                    "units": "m s-1",
+                    "valid_min": -10.0,
+                    "valid_max": 10.0,
+                    "long_name": "Meridional velocity",
+                    "unit_long": "Meters per second",
+                    "standard_name": "sea_water_y_velocity",
+                    "short_name": "vomecrty",
+                    "online_operation": "N/A",
+                    "interval_operation": 86400,
+                    "interval_write": 86400,
+                    "associate": "time_counter deptht nav_lat nav_lon",
+                },
+            ),
+        },
+        coords={
+            "nav_lon": (
+                ["y, x"],
+                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
+                {
+                    "units": "degrees_east",
+                    "valid_min": -179.99984754002182,
+                    "valid_max": 179.999842386314,
+                    "long_name": "Longitude",
+                    "nav_model": "Default grid",
+                    "standard_name": "longitude",
+                },
+            ),
+            "nav_lat": (
+                ["y, x"],
+                np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
+                {
+                    "units": "degrees_north",
+                    "valid_min": -77.0104751586914,
+                    "valid_max": 89.9591064453125,
+                    "long_name": "Latitude",
+                    "nav_model": "Default grid",
+                    "standard_name": "latitude",
+                },
+            ),
+            "x": (
+                ["x"],
+                np.arange(X, dtype="int32"),
+                {
+                    "standard_name": "projection_x_coordinate",
+                    "axis": "X",
+                    "units": "1",
+                },
+            ),
+            "y": (
+                ["y"],
+                np.arange(Y, dtype="int32"),
+                {
+                    "standard_name": "projection_y_coordinate",
+                    "axis": "Y",
+                    "units": "1",
+                },
+            ),
+            "time_counter": (
+                [],
+                np.empty(0, dtype="datetime64[ns]"),
+                {
+                    "standard_name": "time",
+                    "long_name": "Time axis",
+                    "axis": "T",
+                    "time_origin": "1950-JAN-01 00:00:00",
+                },
+            ),
+            "deptht": (
+                ["deptht"],
+                np.linspace(1, 5500, Z, dtype="float64"),
+                {
+                    "units": "m",
+                    "positive": "down",
+                    "valid_min": 0.4940253794193268,
+                    "valid_max": 5727.91650390625,
+                    "long_name": "Vertical T levels",
+                    "standard_name": "depth",
+                    "axis": "Z",
+                },
+            ),
+        },
+    ),
 }
