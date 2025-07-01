@@ -169,7 +169,7 @@ class Field:
             self.time_interval = get_time_interval(data)
         except ValueError as e:
             e.add_note(
-                f"Error getting time interval for field {name!r}. Are you sure that the time dimension on the xarray dataset is stored as datetime or cftime datetime objects?"
+                f"Error getting time interval for field {name!r}. Are you sure that the time dimension on the xarray dataset is stored as timedelta, datetime or cftime datetime objects?"
             )
             raise e
 
@@ -309,10 +309,10 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        if particle is None:
-            _ei = None
-        else:
-            _ei = particle.ei[self.igrid]
+        # if particle is None:
+        _ei = None
+        # else:
+        #    _ei = particle.ei[self.igrid]
 
         try:
             tau, ti = _search_time_index(self, time)
@@ -386,6 +386,7 @@ class VectorField:
         self.U = U
         self.V = V
         self.W = W
+        self.grid = U.grid
 
         if W is None:
             assert_same_time_interval((U, V))
@@ -430,41 +431,49 @@ class VectorField:
     #         and np.allclose(grid1.depth, grid2.depth)
     #         and np.allclose(grid1.time, grid2.time)
     #     )
-    def _interpolate(self, time, z, y, x, ei):
-        bcoords, _ei, ti = self._search_indices(time, z, y, x, ei=ei)
+    def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
+        """Interpolate field values in space and time.
 
-        if self._vector_interp_method is None:
-            u = self.U.eval(time, z, y, x, _ei, applyConversion=False)
-            v = self.V.eval(time, z, y, x, _ei, applyConversion=False)
+        We interpolate linearly in time and apply implicit unit
+        conversion to the result. Note that we defer to
+        scipy.interpolate to perform spatial interpolation.
+        """
+        # if particle is None:
+        _ei = None
+        # else:
+        #    _ei = particle.ei[self.igrid]
+
+        try:
+            tau, ti = _search_time_index(self.U, time)
+            bcoords, _ei = self.grid.search(z, y, x, ei=_ei)
+            if self._vector_interp_method is None:
+                u = self.U._interp_method(self.U, ti, _ei, bcoords, tau, time, z, y, x)
+                v = self.V._interp_method(self.V, ti, _ei, bcoords, tau, time, z, y, x)
+                if "3D" in self.vector_type:
+                    w = self.W._interp_method(self.W, ti, _ei, bcoords, tau, time, z, y, x)
+            else:
+                (u, v, w) = self._vector_interp_method(self, ti, _ei, bcoords, time, z, y, x)
+
+            # print(u,v)
+            if applyConversion:
+                u = self.U.units.to_target(u, z, y, x)
+                v = self.V.units.to_target(v, z, y, x)
+                if "3D" in self.vector_type:
+                    w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
+
             if "3D" in self.vector_type:
-                w = self.W.eval(time, z, y, x, _ei, applyConversion=False)
                 return (u, v, w)
             else:
-                return (u, v, 0)
-        else:
-            (u, v, w) = self._vector_interp_method(ti, _ei, bcoords, time, z, y, x)
-            return (u, v, w)
+                return (u, v)
 
-    def eval(self, time, z, y, x, ei=None, applyConversion=True):
-        if ei is None:
-            _ei = 0
-        else:
-            _ei = ei[self.igrid]
-
-        (u, v, w) = self._interpolate(time, z, y, x, _ei)
-
-        if applyConversion:
-            u = self.U.units.to_target(u, z, y, x)
-            v = self.V.units.to_target(v, z, y, x)
-            if "3D" in self.vector_type:
-                w = self.W.units.to_target(w, z, y, x)
-
-        return (u, v, w)
+        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
+            e.add_note(f"Error interpolating field '{self.name}'.")
+            raise e
 
     def __getitem__(self, key):
         try:
             if _isParticle(key):
-                return self.eval(key.time, key.depth, key.lat, key.lon, key.ei)
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:

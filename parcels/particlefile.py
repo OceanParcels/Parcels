@@ -54,7 +54,7 @@ class ParticleFile:
         self._particleset = particleset
         self._parcels_mesh = "spherical"
         if self.particleset.fieldset is not None:
-            self._parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
+            self._parcels_mesh = self.particleset.fieldset.gridset[0].mesh
         self.lonlatdepth_dtype = self.particleset.particledata.lonlatdepth_dtype
         self._maxids = 0
         self._pids_written = {}
