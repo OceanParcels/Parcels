@@ -15,7 +15,7 @@ datasets = {
         # Copernicus Marine Service dataset as retrieved by the `copernicusmarine` toolkit
         {
             "uo": (
-                ["depth", "latitude", "longitude", "time"],
+                ["time", "depth", "latitude", "longitude"],
                 np.random.rand(T, Z, Y, X),
                 {
                     "valid_max": 5.0,
@@ -27,7 +27,7 @@ datasets = {
                 },
             ),
             "vo": (
-                ["depth", "latitude", "longitude", "time"],
+                ["time", "depth", "latitude", "longitude"],
                 np.random.rand(T, Z, Y, X),
                 {
                     "valid_max": 5.0,
