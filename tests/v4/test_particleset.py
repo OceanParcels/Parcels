@@ -44,7 +44,7 @@ def test_uxstommel_gyre():
         lon=[30.0],
         lat=[5.0],
         depth=[50.0],
-        time=[0.0],  # important otherwise initialization appears to take forever?
+        time=[0.0],
         pclass=Particle,
     )
-    pset.execute(endtime=timedelta(minutes=10), dt=timedelta(seconds=60), pyfunc=AdvectionEE, verbose_progress=False)
+    pset.execute(runtime=timedelta(minutes=10), dt=timedelta(seconds=60), pyfunc=AdvectionEE, verbose_progress=False)
