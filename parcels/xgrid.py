@@ -16,7 +16,7 @@ _AXIS_DIRECTION = Literal["X", "Y", "Z"]
 _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
 
 
-def get_n_cell_edges_along_dim(axis: xgcm.Axis | None) -> int:
+def get_cell_edge_count_along_dim(axis: xgcm.Axis | None) -> int:
     if axis is None:
         return 1
     first_coord = list(axis.coords.items())[0]
@@ -36,7 +36,7 @@ class XGrid(BaseGrid):
     This class provides methods and properties required for indexing and interpolating on the grid.
 
     Assumptions:
-    - If using Parcels in the context of a periodic simulation, the provided grid already has a halo
+    - If using Parcels in the context of a spatially periodic simulation, the provided grid already has a halo
 
     """
 
@@ -112,19 +112,19 @@ class XGrid(BaseGrid):
 
     @property
     def xdim(self):
-        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("X"))
+        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("X"))
 
     @property
     def ydim(self):
-        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("Y"))
+        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("Y"))
 
     @property
     def zdim(self):
-        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("Z"))
+        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("Z"))
 
     @property
     def tdim(self):
-        return get_n_cell_edges_along_dim(self.xgcm_grid.axes.get("T"))
+        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("T"))
 
     @property
     def time_origin(self):
@@ -177,7 +177,7 @@ class XGrid(BaseGrid):
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
             xi, xsi = _search_1d_array(ds.lon.values, x)
-            return {"X": (xi, xsi), "Y": (yi, eta), "Z": (zi, zeta)}
+            return {"Z": (zi, zeta), "Y": (yi, eta), "X": (xi, xsi)}
 
         yi, xi = None, None
         if ei is not None:
@@ -186,9 +186,9 @@ class XGrid(BaseGrid):
             yi = axis_indices.get("Y")
 
         if ds.lon.ndim == 2:
-            eta, xsi, yi, xi = _search_indices_curvilinear_2d(self, y, x, yi, xi)
+            yi, eta, xi, xsi = _search_indices_curvilinear_2d(self, y, x, yi, xi)
 
-            return {"X": (xi, xsi), "Y": (yi, eta), "Z": (zi, zeta)}
+            return {"Z": (zi, zeta), "Y": (yi, eta), "X": (xi, xsi)}
 
         raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
 
@@ -204,11 +204,7 @@ class XGrid(BaseGrid):
 
         yi = ei // self.xdim
         xi = ei % self.xdim
-        return {
-            "X": xi,
-            "Y": yi,
-            "Z": zi,
-        }
+        return {"Z": zi, "Y": yi, "X": xi}
 
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
@@ -219,7 +215,7 @@ def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION |
     return None
 
 
-def get_position_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_POSITION | None:
+def get_xgcm_position_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_POSITION | None:
     """For a given dimension, returns the position of the variable in the grid."""
     for axis in axes.values():
         var_to_position = {var: position for position, var in axis.coords.items()}
@@ -281,16 +277,16 @@ def assert_valid_lat_lon(da_lat, da_lon, axes: _XGCM_AXES):
     assert_all_dimensions_correspond_with_axis(da_lon, axes)
     assert_all_dimensions_correspond_with_axis(da_lat, axes)
 
-    dim_to_position = {dim: get_position_from_dim_name(axes, dim) for dim in da_lon.dims}
-    dim_to_position.update({dim: get_position_from_dim_name(axes, dim) for dim in da_lat.dims})
+    dim_to_position = {dim: get_xgcm_position_from_dim_name(axes, dim) for dim in da_lon.dims}
+    dim_to_position.update({dim: get_xgcm_position_from_dim_name(axes, dim) for dim in da_lat.dims})
 
     for dim in da_lon.dims:
-        if get_position_from_dim_name(axes, dim) == "center":
+        if get_xgcm_position_from_dim_name(axes, dim) == "center":
             raise ValueError(
                 f"Longitude DataArray {da_lon.name!r} with dims {da_lon.dims} is defined on the center of the grid, but must be defined on the F points."
             )
     for dim in da_lat.dims:
-        if get_position_from_dim_name(axes, dim) == "center":
+        if get_xgcm_position_from_dim_name(axes, dim) == "center":
             raise ValueError(
                 f"Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} is defined on the center of the grid, but must be defined on the F points."
             )

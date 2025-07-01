@@ -352,7 +352,7 @@ def _search_indices_curvilinear_2d(
     if not ((0 <= xsi <= 1) and (0 <= eta <= 1)):
         _raise_field_sampling_error(y, x)
 
-    return (eta, xsi, yi, xi)
+    return (yi, eta, xi, xsi)
 
 
 ## TODO :  Still need to implement the search_indices_curvilinear

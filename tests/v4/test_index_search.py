@@ -30,7 +30,7 @@ def test_grid_indexing_fpoints(field_cone):
             x = grid.lon[yi_expected, xi_expected] + 0.00001
             y = grid.lat[yi_expected, xi_expected] + 0.00001
 
-            eta, xsi, yi, xi = _search_indices_curvilinear_2d(grid, y, x)
+            yi, eta, xi, xsi = _search_indices_curvilinear_2d(grid, y, x)
             if eta > 0.9:
                 yi_expected -= 1
             if xsi > 0.9:
