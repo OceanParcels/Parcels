@@ -834,6 +834,8 @@ class ParticleSet:
             if verbose_progress:
                 pbar.update(dt.total_seconds())
 
+            time = next_time
+
         if verbose_progress:
             pbar.close()
 
