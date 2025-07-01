@@ -78,8 +78,13 @@ def test_xgrid_against_old(ds, attr):
 
 
 @pytest.mark.parametrize("ds", [pytest.param(ds, id=key) for key, ds in datasets.items()])
-def test_grid_init_on_generic_datasets(ds):
+def test_xgrid_init_on_generic_datasets(ds):
     XGrid(xgcm.Grid(ds, periodic=False))
+
+
+def test_xgrid_axes():
+    # Tests that the xgrid.axes property correctly identifies the axes and ordering
+    ...
 
 
 def test_invalid_xgrid_field_array():

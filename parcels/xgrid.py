@@ -10,6 +10,9 @@ from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
 from parcels.tools.converters import TimeConverter
 
+_XGRID_AXES_ORDERING = "ZYX"
+_XGRID_AXES = Literal["X", "Y", "Z"]
+
 _XGCM_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
 _XGCM_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
 _AXIS_DIRECTION = Literal["X", "Y", "Z"]
@@ -29,6 +32,11 @@ def get_time(axis: xgcm.Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
+def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXES]:
+    spatial_axes = [a for a in grid.axes.keys() if a in ["X", "Y", "Z"]]
+    return sorted(spatial_axes, key=_XGRID_AXES_ORDERING.index)
+
+
 class XGrid(BaseGrid):
     """
     Class to represent a structured grid in Parcels. Wraps a xgcm-like Grid object (we use a trimmed down version of the xgcm.Grid class that is vendored with Parcels).
@@ -44,17 +52,13 @@ class XGrid(BaseGrid):
         self.xgcm_grid = grid
         self.mesh = mesh
         ds = grid._ds
-        assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
 
-        # ! Not ideal... Triggers computation on a throwaway item. Keeping for now for v3 compat, will be removed in v4.
-        self.lonlat_minmax = np.array(
-            [
-                np.nanmin(self.xgcm_grid._ds["lon"]),
-                np.nanmax(self.xgcm_grid._ds["lon"]),
-                np.nanmin(self.xgcm_grid._ds["lat"]),
-                np.nanmax(self.xgcm_grid._ds["lat"]),
-            ]
-        )
+        if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
+            assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
+
+    @property
+    def axes(self) -> list[_XGRID_AXES]:
+        return _get_xgrid_axes(self.xgcm_grid)
 
     @property
     def lon(self):
