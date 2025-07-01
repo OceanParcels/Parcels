@@ -129,7 +129,7 @@ def test_xgrid_ravel_unravel_index():
     for xi in range(xdim):
         for yi in range(ydim):
             for zi in range(zdim):
-                axis_indices = {"X": xi, "Y": yi, "Z": zi}
+                axis_indices = {"Z": zi, "Y": yi, "X": xi}
                 ei = grid.ravel_index(axis_indices)
                 axis_indices_test = grid.unravel_index(ei)
                 assert axis_indices_test == axis_indices
@@ -155,7 +155,7 @@ def test_xgrid_search_cpoints(ds):
 
     for xi in range(grid.xdim - 1):
         for yi in range(grid.ydim - 1):
-            axis_indices = {"X": xi, "Y": yi, "Z": 0}
+            axis_indices = {"Z": 0, "Y": yi, "X": xi}
 
             lat, lon = lat_array[yi, xi], lon_array[yi, xi]
             axis_indices_bcoords = grid.search(0, lat, lon, ei=None)

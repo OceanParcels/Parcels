@@ -38,8 +38,8 @@ class BaseGrid(ABC):
             A dictionary mapping spatial axis names to tuples of (index, barycentric_coordinates).
             The returned axes depend on the grid dimensionality and type:
 
-            - 3D structured grid: {"X": (xi, xsi), "Y": (yi, eta), "Z": (zi, zeta)}
-            - 2D structured grid: {"X": (xi, xsi), "Y": (yi, eta)}
+            - 3D structured grid: {"Z": (zi, zeta), "Y": (yi, eta), "X": (xi, xsi)}
+            - 2D structured grid: {"Y": (yi, eta), "X": (xi, xsi)}
             - 1D structured grid (depth): {"Z": (zi, zeta)}
             - Unstructured grid: {"Z": (zi, zeta), "FACE": (fi, bcoords)}
 
@@ -74,8 +74,8 @@ class BaseGrid(ABC):
             A dictionary mapping axis names to their corresponding indices.
             The expected keys depend on the grid dimensionality and type:
 
-            - 3D structured grid: {"X": xi, "Y": yi, "Z": zi}
-            - 2D structured grid: {"X": xi, "Y": yi}
+            - 3D structured grid: {"Z": zi, "Y": yi, "X": xi}
+            - 2D structured grid: {"Y": yi, "X": xi}
             - 1D structured grid: {"Z": zi}
             - Unstructured grid: {"Z": zi, "FACE": fi}
 
@@ -114,8 +114,8 @@ class BaseGrid(ABC):
             A dictionary mapping axis names to their corresponding indices.
             The returned keys depend on the grid dimensionality and type:
 
-            - 3D structured grid: {"X": xi, "Y": yi, "Z": zi}
-            - 2D structured grid: {"X": xi, "Y": yi}
+            - 3D structured grid: {"Z": zi, "Y": yi, "X": xi}
+            - 2D structured grid: {"Y": yi, "X": xi}
             - 1D structured grid: {"Z": zi}
             - Unstructured grid: {"Z": zi, "FACE": fi}
 
