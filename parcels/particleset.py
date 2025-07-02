@@ -14,7 +14,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
-from parcels.particle import Particle
+from parcels.particle import Particle, Variable
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
@@ -54,6 +54,8 @@ class ParticleSet:
         Optional list of initial depth values for particles. Default is 0m
     time :
         Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
+    repeatdt : datetime.timedelta or float, optional
+        Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
     lonlatdepth_dtype :
         Floating precision for lon, lat, depth particle coordinates.
         It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -82,11 +84,48 @@ class ParticleSet:
         **kwargs,
     ):
         self.particledata = None
+        self._repeat_starttime = None
+        self._repeatlon = None
+        self._repeatlat = None
+        self._repeatdepth = None
+        self._repeatpclass = None
+        self._repeatkwargs = None
         self._kernel = None
         self._interaction_kernel = None
 
         self.fieldset = fieldset
         self._pclass = pclass
+
+        # ==== first: create a new subclass of the pclass that includes the required variables ==== #
+        # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
+        class_name = pclass.__name__
+        array_class = None
+        if class_name not in dir():
+
+            def ArrayClass_init(self, *args, **kwargs):
+                fieldset = kwargs.get("fieldset", None)
+                ngrids = kwargs.get("ngrids", None)
+                if type(self).ngrids.initial < 0:
+                    numgrids = ngrids
+                    if numgrids is None and fieldset is not None:
+                        numgrids = fieldset.gridset_size
+                    assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                    type(self).ngrids.initial = numgrids
+                self.ngrids = type(self).ngrids.initial
+                if self.ngrids >= 0:
+                    self.ei = np.zeros(self.ngrids, dtype=np.int32)
+                super(type(self), self).__init__(*args, **kwargs)
+
+            array_class_vdict = {
+                "ngrids": Variable("ngrids", dtype=np.int32, to_write=False, initial=-1),
+                "ei": Variable("ei", dtype=np.int32, to_write=False),
+                "__init__": ArrayClass_init,
+            }
+            array_class = type(class_name, (pclass,), array_class_vdict)
+        else:
+            array_class = locals()[class_name]
+        # ==== dynamic re-classing completed ==== #
+        _pclass = array_class
 
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
@@ -132,7 +171,7 @@ class ParticleSet:
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
         self.particledata = ParticleData(
-            self._pclass,
+            _pclass,
             lon=lon,
             lat=lat,
             depth=depth,
@@ -317,7 +356,9 @@ class ParticleSet:
             self.particledata.data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
 
     @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, lonlatdepth_dtype=None, **kwargs):
+    def from_list(
+        cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs
+    ):
         """Initialise the ParticleSet from lists of lon and lat.
 
         Parameters
@@ -334,6 +375,8 @@ class ParticleSet:
             Optional list of initial depth values for particles. Default is 0m
         time :
             Optional list of start time values for particles. Default is fieldset.U.time[0]
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -349,6 +392,7 @@ class ParticleSet:
             lat=lat,
             depth=depth,
             time=time,
+            repeatdt=repeatdt,
             lonlatdepth_dtype=lonlatdepth_dtype,
             **kwargs,
         )
@@ -363,6 +407,7 @@ class ParticleSet:
         size,
         depth=None,
         time=None,
+        repeatdt=None,
         lonlatdepth_dtype=None,
         **kwargs,
     ):
@@ -388,6 +433,8 @@ class ParticleSet:
             Optional list of initial depth values for particles. Default is 0m
         time :
             Optional start time value for particles. Default is fieldset.U.time[0]
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -404,6 +451,7 @@ class ParticleSet:
             lat=lat,
             depth=depth,
             time=time,
+            repeatdt=repeatdt,
             lonlatdepth_dtype=lonlatdepth_dtype,
             **kwargs,
         )
@@ -480,6 +528,7 @@ class ParticleSet:
         mode="monte_carlo",
         depth=None,
         time=None,
+        repeatdt=None,
         lonlatdepth_dtype=None,
     ):
         """Initialise the ParticleSet randomly drawn according to distribution from a field.
@@ -500,6 +549,8 @@ class ParticleSet:
             Optional list of initial depth values for particles. Default is 0m
         time :
             Optional start time value for particles. Default is fieldset.U.time[0]
+        repeatdt :
+            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -515,11 +566,12 @@ class ParticleSet:
             depth=depth,
             time=time,
             lonlatdepth_dtype=lonlatdepth_dtype,
+            repeatdt=repeatdt,
         )
 
     @classmethod
     def from_particlefile(
-        cls, fieldset, pclass, filename, restart=True, restarttime=None, lonlatdepth_dtype=None, **kwargs
+        cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs
     ):
         """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
@@ -540,6 +592,8 @@ class ParticleSet:
             time at which the Particles will be restarted. Default is the last time written.
             Alternatively, restarttime could be a time value (including np.datetime64) or
             a callable function such as np.nanmin. The last is useful when running with dt < 0.
+        repeatdt : datetime.timedelta or float, optional
+            Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
         lonlatdepth_dtype :
             Floating precision for lon, lat, depth particle coordinates.
             It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -547,6 +601,15 @@ class ParticleSet:
         **kwargs :
             Keyword arguments passed to the particleset constructor.
         """
+        if repeatdt is not None:
+            warnings.warn(
+                f"Note that the `repeatdt` argument is not retained from {filename}, and that "
+                "setting a new repeatdt will start particles from the _new_ particle "
+                "locations.",
+                ParticleSetWarning,
+                stacklevel=2,
+            )
+
         pfile = xr.open_zarr(str(filename))
         pfile_vars = [v for v in pfile.data_vars]
 
@@ -612,6 +675,7 @@ class ParticleSet:
             time=vars["time"],
             pid_orig=vars["id"],
             lonlatdepth_dtype=lonlatdepth_dtype,
+            repeatdt=repeatdt,
             **kwargs,
         )
 
