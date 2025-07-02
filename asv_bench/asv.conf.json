@@ -110,7 +110,7 @@
     "pymbolic": [""],
     "pytest": [""],
     "scipy": [""],
-    "trajan": [""],
+    // "trajan": [""],
     "tqdm": [""],
     "xarray": [""],
     "zarr": [""]
