@@ -105,8 +105,7 @@ class Field:
     def _interp_template(
         self,
         ti: int,
-        ei: int,
-        bcoords: np.ndarray,
+        position: dict[str, tuple[int, float | np.ndarray]],
         tau: np.float32 | np.float64,
         t: np.float32 | np.float64,
         z: np.float32 | np.float64,
@@ -316,8 +315,8 @@ class Field:
 
         try:
             tau, ti = _search_time_index(self, time)
-            bcoords, _ei = self.grid.search(z, y, x, ei=_ei)
-            value = self._interp_method(self, ti, _ei, bcoords, tau, time, z, y, x)
+            position = self.grid.search(z, y, x, ei=_ei)
+            value = self._interp_method(self, ti, position, tau, time, z, y, x)
 
             if np.isnan(value):
                 # Detect Out-of-bounds sampling and raise exception
@@ -445,14 +444,14 @@ class VectorField:
 
         try:
             tau, ti = _search_time_index(self.U, time)
-            bcoords, _ei = self.grid.search(z, y, x, ei=_ei)
+            position = self.grid.search(z, y, x, ei=_ei)
             if self._vector_interp_method is None:
-                u = self.U._interp_method(self.U, ti, _ei, bcoords, tau, time, z, y, x)
-                v = self.V._interp_method(self.V, ti, _ei, bcoords, tau, time, z, y, x)
+                u = self.U._interp_method(self.U, ti, position, tau, time, z, y, x)
+                v = self.V._interp_method(self.V, ti, position, tau, time, z, y, x)
                 if "3D" in self.vector_type:
-                    w = self.W._interp_method(self.W, ti, _ei, bcoords, tau, time, z, y, x)
+                    w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
             else:
-                (u, v, w) = self._vector_interp_method(self, ti, _ei, bcoords, time, z, y, x)
+                (u, v, w) = self._vector_interp_method(self, ti, position, time, z, y, x)
 
             # print(u,v)
             if applyConversion:

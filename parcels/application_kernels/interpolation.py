@@ -1,8 +1,15 @@
 """Collection of pre-built interpolation kernels."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from parcels.field import Field
+
+if TYPE_CHECKING:
+    from parcels.uxgrid import _UXGRID_AXES
 
 __all__ = [
     "UXPiecewiseConstantFace",
@@ -13,8 +20,7 @@ __all__ = [
 def UXPiecewiseConstantFace(
     field: Field,
     ti: int,
-    ei: int,
-    bcoords: np.ndarray,
+    position: dict[_UXGRID_AXES, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
@@ -26,15 +32,13 @@ def UXPiecewiseConstantFace(
     This interpolation method is appropriate for fields that are
     face registered, such as u,v in FESOM.
     """
-    zi, fi = field.grid.unravel_index(ei)
-    return field.data.values[ti, zi, fi]
+    return field.data.values[ti, position["Z"][0], position["CELL"][0]]
 
 
 def UXPiecewiseLinearNode(
     field: Field,
     ti: int,
-    ei: int,
-    bcoords: np.ndarray,
+    position: dict[_UXGRID_AXES, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
@@ -47,7 +51,8 @@ def UXPiecewiseLinearNode(
     velocity W in FESOM2. Effectively, it applies barycentric interpolation in the lateral direction
     and piecewise linear interpolation in the vertical direction.
     """
-    k, fi = field.grid.unravel_index(ei)
+    k, fi = position["Z"][0], position["CELL"][0]
+    bcoords = position["CELL"][1]
     node_ids = field.grid.uxgrid.face_node_connectivity[fi, :]
     # The zi refers to the vertical layer index. The field in this routine are assumed to be defined at the vertical interface levels.
     # For interface zi, the interface indices are [zi, zi+1], so we need to use the values at zi and zi+1.
