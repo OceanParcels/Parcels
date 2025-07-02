@@ -458,4 +458,83 @@ datasets = {
             ),
         },
     ),
+    "ds_hycom_espc": xr.Dataset(
+        # HYCOM ESPC model dataset from https://data.hycom.org/datasets/ESPC-D-V02/data/daily_netcdf/2025/
+        {
+            "water_u": (
+                ["time", "depth", "lat", "lon"],
+                np.random.rand(T, Z, Y, X, dtype="float32"),
+                {
+                    "long_name": "Eastward Water Velocity",
+                    "standard_name": "eastward_sea_water_velocity",
+                    "units": "m/s",
+                    "NAVO_code": 17,
+                    "actual_range": [-3.3700001, 3.6840003],
+                    "cell_methods": "time: mean",
+                },
+            ),
+            "tau": (
+                ["time"],
+                np.arange(0, 24, T, dtype="float64"),
+                {
+                    "long_name": "Tau",
+                    "units": "hours since analysis",
+                    "time_origin": "2024-12-31 12:00:00",
+                    "NAVO_code": 56,
+                    "cell_methods": "time: mean",
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                np.arange(0, T, dtype="float64"),
+                {
+                    "long_name": "Valid Time",
+                    "units": "hours since 2000-01-01 00:00:00",
+                    "time_origin": "2000-01-01 00:00:00",
+                    "calendar": "standard",
+                    "axis": "T",
+                    "NAVO_code": 13,
+                    "cell_methods": "time: mean",
+                },
+            ),
+            "depth": (
+                ["depth"],
+                np.linspace(0, 5000, Z, dtype="float32"),
+                {
+                    "long_name": "Depth",
+                    "standard_name": "depth",
+                    "units": "m",
+                    "positive": "down",
+                    "axis": "Z",
+                    "NAVO_code": 5,
+                },
+            ),
+            "lat": (
+                ["lat"],
+                np.linspace(-80, 90, Y),
+                {
+                    "long_name": "Latitude",
+                    "standard_name": "latitude",
+                    "units": "degrees_north",
+                    "point_spacing": "even",
+                    "axis": "Y",
+                    "NAVO_code": 1,
+                },
+            ),
+            "lon": (
+                ["lon"],
+                np.linspace(0, 360, X, endpoint=False),
+                {
+                    "long_name": "Longitude",
+                    "standard_name": "longitude",
+                    "units": "degrees_east",
+                    "modulo": "360 degrees",
+                    "axis": "X",
+                    "NAVO_code": 2,
+                },
+            ),
+        },
+    ),
 }
