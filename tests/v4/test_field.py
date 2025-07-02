@@ -84,7 +84,7 @@ def test_field_init_fail_on_float_time_dim():
     grid = XGrid(xgcm.Grid(ds))
     with pytest.raises(
         ValueError,
-        match="Error getting time interval.*. Are you sure that the time dimension on the xarray dataset is stored as datetime or cftime datetime objects\?",
+        match="Error getting time interval.*. Are you sure that the time dimension on the xarray dataset is stored as timedelta, datetime or cftime datetime objects\?",
     ):
         Field(
             name="test_field",

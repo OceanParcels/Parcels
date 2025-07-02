@@ -16,6 +16,7 @@ from parcels.xgrid import XGrid
 
 if TYPE_CHECKING:
     from parcels._typing import DatetimeLike
+    from parcels.basegrid import BaseGrid
 __all__ = ["FieldSet"]
 
 
@@ -109,10 +110,6 @@ class FieldSet:
 
         return maxleft, minright
 
-    @property
-    def gridset_size(self):
-        return len(self.fields)
-
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
@@ -164,15 +161,6 @@ class FieldSet:
         da = xr.DataArray(
             data=np.full((1, 1, 1, 1), value),
             dims=["time", "ZG", "YG", "XG"],
-            coords={
-                "ZG": (["ZG"], np.arange(1), {"axis": "Z"}),
-                "YG": (["YG"], np.arange(1), {"axis": "Y"}),
-                "XG": (["XG"], np.arange(1), {"axis": "X"}),
-                "lon": (["XG"], np.arange(1), {"axis": "X"}),
-                "lat": (["YG"], np.arange(1), {"axis": "Y"}),
-                "depth": (["ZG"], np.arange(1), {"axis": "Z"}),
-                "time": (["time"], np.arange(1), {"axis": "T"}),
-            },
         )
         grid = XGrid(xgcm.Grid(da))
         self.add_field(
@@ -183,17 +171,6 @@ class FieldSet:
                 interp_method=None,  # TODO : Need to define an interpolation method for constants
             )
         )
-
-    def get_fields(self) -> list[Field | VectorField]:
-        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
-        objects associated with this FieldSet.
-        """
-        fields = []
-        for v in self.__dict__.values():
-            if type(v) in [Field, VectorField]:
-                if v not in fields:
-                    fields.append(v)
-        return fields
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are
@@ -218,6 +195,14 @@ class FieldSet:
             raise ValueError(f"FieldSet already has a constant with name '{name}'")
 
         self.constants[name] = np.float32(value)
+
+    @property
+    def gridset(self) -> list[BaseGrid]:
+        grids = []
+        for field in self.fields.values():
+            if field.grid not in grids:
+                grids.append(field.grid)
+        return grids
 
     # def computeTimeChunk(self, time=0.0, dt=1):
     #     """Load a chunk of three data time steps into the FieldSet.

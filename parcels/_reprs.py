@@ -65,7 +65,7 @@ def particleset_repr(pset: ParticleSet) -> str:
 
 def fieldset_repr(fieldset: FieldSet) -> str:  # TODO v4: Rework or remove entirely
     """Return a pretty repr for FieldSet"""
-    fields_repr = "\n".join([repr(f) for f in fieldset.get_fields()])
+    fields_repr = "\n".join([repr(f) for f in fieldset.fields.values()])
 
     out = f"""<{type(fieldset).__name__}>
     fields:

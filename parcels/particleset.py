@@ -312,7 +312,7 @@ class ParticleSet:
         This is only intended for curvilinear grids, where the initial index search
         may be quite expensive.
         """
-        for i, grid in enumerate(self.fieldset.gridset.grids):
+        for i, grid in enumerate(self.fieldset.gridset):
             if grid._gtype not in [GridType.CurvilinearZGrid, GridType.CurvilinearSGrid]:
                 continue
 
