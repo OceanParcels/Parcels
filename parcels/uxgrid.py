@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 import uxarray as ux
 from uxarray.grid.neighbors import _barycentric_coordinates
@@ -7,6 +9,8 @@ from uxarray.grid.neighbors import _barycentric_coordinates
 from parcels.field import FieldOutOfBoundError  # Adjust import as necessary
 
 from .basegrid import BaseGrid
+
+_UXGRID_AXES = Literal["Z", "CELL"]
 
 
 class UxGrid(BaseGrid):
@@ -49,9 +53,7 @@ class UxGrid(BaseGrid):
             return np.zeros(1)
         return self.z.values
 
-    def search(
-        self, z: float, y: float, x: float, ei: int | None = None, search2D: bool = False
-    ) -> tuple[np.ndarray, int]:
+    def search(self, z, y, x, ei=None):
         tol = 1e-10
 
         def try_face(fid):
@@ -61,18 +63,15 @@ class UxGrid(BaseGrid):
             return None, None
 
         def find_vertical_index() -> int:
-            if search2D:
+            nz = self.z.shape[0]
+            if nz == 1:
                 return 0
-            else:
-                nz = self.z.shape[0]
-                if nz == 1:
-                    return 0
-                zf = self.z.values
-                # Return zi such that zf[zi] <= z < zf[zi+1]
-                zi = np.searchsorted(zf, z, side="right") - 1  # Search assumes that z is positive and increasing with i
-                if zi < 0 or zi >= nz - 1:
-                    raise FieldOutOfBoundError(z, y, x)
-                return zi
+            zf = self.z.values
+            # Return zi such that zf[zi] <= z < zf[zi+1]
+            zi = np.searchsorted(zf, z, side="right") - 1  # Search assumes that z is positive and increasing with i
+            if zi < 0 or zi >= nz - 1:
+                raise FieldOutOfBoundError(z, y, x)
+            return zi
 
         zi = find_vertical_index()  # Find the vertical cell center nearest to z
 
