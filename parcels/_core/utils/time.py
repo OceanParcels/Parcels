@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, TypeVar
 import cftime
 import numpy as np
 
-T = TypeVar("T", datetime, cftime.datetime)
-
 if TYPE_CHECKING:
-    from parcels._typing import DatetimeLike
+    from parcels._typing import TimeLike
+
+T = TypeVar("T", bound="TimeLike")
 
 
 class TimeInterval:
@@ -92,7 +92,7 @@ def is_compatible(
 
 
 def get_datetime_type_calendar(
-    example_datetime: DatetimeLike,
+    example_datetime: TimeLike,
 ) -> tuple[type, str | None]:
     """Get the type and calendar of a datetime object.
 
