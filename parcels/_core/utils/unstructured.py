@@ -1,12 +1,10 @@
-from collections.abc import Hashable
-
 DIM_TO_VERTICAL_LOCATION_MAP = {
     "nz1": "center",
     "nz": "face",
 }
 
 
-def get_vertical_location_from_dims(dims: tuple[Hashable, ...]):
+def get_vertical_location_from_dims(dims: tuple[str, ...]):
     """
     Determine the vertical location of the field based on the uxarray.UxDataArray object variables.
 
