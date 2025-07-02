@@ -32,7 +32,7 @@ def UXPiecewiseConstantFace(
     This interpolation method is appropriate for fields that are
     face registered, such as u,v in FESOM.
     """
-    return field.data.values[ti, position["Z"][0], position["CELL"][0]]
+    return field.data.values[ti, position["Z"][0], position["FACE"][0]]
 
 
 def UXPiecewiseLinearNode(
@@ -51,8 +51,8 @@ def UXPiecewiseLinearNode(
     velocity W in FESOM2. Effectively, it applies barycentric interpolation in the lateral direction
     and piecewise linear interpolation in the vertical direction.
     """
-    k, fi = position["Z"][0], position["CELL"][0]
-    bcoords = position["CELL"][1]
+    k, fi = position["Z"][0], position["FACE"][0]
+    bcoords = position["FACE"][1]
     node_ids = field.grid.uxgrid.face_node_connectivity[fi, :]
     # The zi refers to the vertical layer index. The field in this routine are assumed to be defined at the vertical interface levels.
     # For interface zi, the interface indices are [zi, zi+1], so we need to use the values at zi and zi+1.
