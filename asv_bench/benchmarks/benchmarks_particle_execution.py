@@ -71,8 +71,6 @@ class ParticleExecutionScipy:
 
     def time_run_single_timestep(self):
         self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 5), dt=timedelta(seconds=5))
-        print("single step", self.pset[0].time)
 
     def time_run_many_timesteps(self):
         self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=100 * 5), dt=timedelta(seconds=5))
-        print("multi step", self.pset[0].time)
