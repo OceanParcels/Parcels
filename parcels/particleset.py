@@ -14,7 +14,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
-from parcels.particle import Particle, Variable
+from parcels.particle import Particle
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
@@ -100,37 +100,6 @@ class ParticleSet:
         if repeatdt:
             NotImplementedError("ParticleSet.repeatdt is not implemented yet in v4")
 
-        # ==== first: create a new subclass of the pclass that includes the required variables ==== #
-        # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
-        class_name = pclass.__name__
-        array_class = None
-        if class_name not in dir():
-
-            def ArrayClass_init(self, *args, **kwargs):
-                fieldset = kwargs.get("fieldset", None)
-                ngrids = kwargs.get("ngrids", None)
-                if type(self).ngrids.initial < 0:
-                    numgrids = ngrids
-                    if numgrids is None and fieldset is not None:
-                        numgrids = fieldset.gridset_size
-                    assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
-                    type(self).ngrids.initial = numgrids
-                self.ngrids = type(self).ngrids.initial
-                if self.ngrids >= 0:
-                    self.ei = np.zeros(self.ngrids, dtype=np.int32)
-                super(type(self), self).__init__(*args, **kwargs)
-
-            array_class_vdict = {
-                "ngrids": Variable("ngrids", dtype=np.int32, to_write=False, initial=-1),
-                "ei": Variable("ei", dtype=np.int32, to_write=False),
-                "__init__": ArrayClass_init,
-            }
-            array_class = type(class_name, (pclass,), array_class_vdict)
-        else:
-            array_class = locals()[class_name]
-        # ==== dynamic re-classing completed ==== #
-        _pclass = array_class
-
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
 
@@ -152,8 +121,8 @@ class ParticleSet:
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
-            raise NotImplementedError("If fieldset.time_origin is not a date, time of a particle must be a double")
+        else:
+            raise NotImplementedError("particle time must be a datetime or date object")
 
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
@@ -175,7 +144,7 @@ class ParticleSet:
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
         self.particledata = ParticleData(
-            _pclass,
+            self._pclass,
             lon=lon,
             lat=lat,
             depth=depth,
