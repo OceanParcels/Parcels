@@ -30,13 +30,13 @@ class ParticleExecutionJIT:
             depth=np.linspace(0, 1, npart),
         )
         # trigger compilation
-        self.pset.execute(AdvectionRK4, runtime=0, dt=timedelta(seconds=30))
+        self.pset.execute(AdvectionRK4, runtime=0, dt=timedelta(seconds=5))
 
     def time_run_single_timestep(self):
-        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 30), dt=timedelta(seconds=30))
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=1 * 5), dt=timedelta(seconds=5))
 
     def time_run_many_timesteps(self):
-        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=100 * 30), dt=timedelta(seconds=30))
+        self.pset.execute(AdvectionRK4, runtime=timedelta(seconds=100 * 5), dt=timedelta(seconds=5))
 
 
 class ParticleExecutionScipy:
