@@ -363,4 +363,50 @@ datasets = {
             ),
         },
     ),
+    "ds_ERA5_wind": xr.Dataset(
+        # ERA5 10m wind model dataset
+        {
+            "u10": (
+                ["time", "latitude", "longitude"],
+                np.random.rand(T, Y, X, dtype="float32"),
+                {
+                    "long_name": "10 metre U wind component",
+                    "units": "m s**-1",
+                },
+            ),
+            "v10": (
+                ["time", "latitude", "longitude"],
+                np.random.rand(T, Y, X, dtype="float32"),
+                {
+                    "long_name": "10 metre V wind component",
+                    "units": "m s**-1",
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                TIME,
+                {
+                    "long_name": "time",
+                },
+            ),
+            "latitude": (
+                ["latitude"],
+                np.linspace(90, -90, Y),  # Note: ERA5 uses latitudes from 90 to -90
+                {
+                    "long_name": "latitude",
+                    "units": "degrees_north",
+                },
+            ),
+            "longitude": (
+                ["longitude"],
+                np.linspace(0, 360, X, endpoint=False),
+                {
+                    "long_name": "longitude",
+                    "units": "degrees_east",
+                },
+            ),
+        },
+    ),
 }
