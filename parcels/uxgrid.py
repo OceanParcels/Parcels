@@ -11,7 +11,7 @@ from parcels.xgrid import _search_1d_array
 
 from .basegrid import BaseGrid
 
-_UXGRID_AXES = Literal["Z", "CELL"]
+_UXGRID_AXES = Literal["Z", "FACE"]
 
 
 class UxGrid(BaseGrid):
@@ -83,7 +83,7 @@ class UxGrid(BaseGrid):
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
 
-        return {"Z": (zi, zeta), "CELL": (fi, bcoords[0])}
+        return {"Z": (zi, zeta), "FACE": (fi, bcoords[0])}
 
     def _get_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
@@ -103,9 +103,9 @@ class UxGrid(BaseGrid):
         return bcoord, err
 
     def ravel_index(self, axis_indices: dict[_UXGRID_AXES, int]):
-        return axis_indices["CELL"] + self.uxgrid.n_face * axis_indices["Z"]
+        return axis_indices["FACE"] + self.uxgrid.n_face * axis_indices["Z"]
 
     def unravel_index(self, ei) -> dict[_UXGRID_AXES, int]:
         zi = ei // self.uxgrid.n_face
         fi = ei % self.uxgrid.n_face
-        return {"Z": zi, "CELL": fi}
+        return {"Z": zi, "FACE": fi}
