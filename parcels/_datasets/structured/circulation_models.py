@@ -409,4 +409,53 @@ datasets = {
             ),
         },
     ),
+    "ds_FES_tides": xr.Dataset(
+        # FES tidal model dataset
+        {
+            "Ug": (
+                ["lat", "lon"],
+                np.random.rand(Y, X, dtype="float32"),
+                {
+                    "long_name": "Eastward sea water velocity phaselag due to non equilibrium ocean tide at m2 frequency",
+                    "units": "degrees",
+                    "grid_mapping": "crs",
+                },
+            ),
+            "Ua": (
+                ["lat", "lon"],
+                np.random.rand(Y, X, dtype="float32"),
+                {
+                    "long_name": "Eastward sea water velocity amplitude due to non equilibrium ocean tide at m2 frequency",
+                    "units": "cm/s",
+                    "grid_mapping": "crs",
+                },
+            ),
+        },
+        coords={
+            "lat": (
+                ["lat"],
+                np.linspace(-90, 90, Y),
+                {
+                    "long_name": "latitude",
+                    "units": "degrees_north",
+                    "bounds": "lat_bnds",
+                    "axis": "Y",
+                    "valid_min": -90.0,
+                    "valid_max": 90.0,
+                },
+            ),
+            "lon": (
+                ["lon"],
+                np.linspace(0, 360, X, endpoint=False),
+                {
+                    "long_name": "longitude",
+                    "units": "degrees_east",
+                    "bounds": "lon_bnds",
+                    "axis": "X",
+                    "valid_min": 0.0,
+                    "valid_max": 360.0,
+                },
+            ),
+        },
+    ),
 }
