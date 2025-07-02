@@ -537,4 +537,173 @@ datasets = {
             ),
         },
     ),
+    "ds_CROCO_idealized": xr.Dataset(
+        # CROCO idealized model dataset
+        {
+            "u": (
+                ["time", "s_rho", "eta_rho", "xi_u"],
+                np.random.rand(T, Z, Y, X - 1, dtype="float32"),
+                {
+                    "long_name": "u-momentum component",
+                    "units": "meter second-1",
+                    "field": "u-velocity, scalar, series",
+                    "standard_name": "sea_water_x_velocity_at_u_location",
+                },
+            ),
+            "v": (
+                ["time", "s_rho", "eta_v", "xi_rho"],
+                np.random.rand(T, Z, Y - 1, X, dtype="float32"),
+                {
+                    "long_name": "v-momentum component",
+                    "units": "meter second-1",
+                    "field": "v-velocity, scalar, series",
+                    "standard_name": "sea_water_y_velocity_at_v_location",
+                },
+            ),
+            "w": (
+                ["time", "s_rho", "eta_rho", "xi_rho"],
+                np.random.rand(T, Z, Y, X, dtype="float32"),
+                {
+                    "long_name": "vertical momentum component",
+                    "units": "meter second-1",
+                    "field": "w-velocity, scalar, series",
+                    "standard_name": "upward_sea_water_velocity",
+                    "coordinates": "lat_rho lon_rho",
+                },
+            ),
+            "h": (
+                ["eta_rho", "xi_rho"],
+                np.random.rand(Y, X, dtype="float32"),
+                {
+                    "long_name": "bathymetry at RHO-points",
+                    "units": "meter",
+                    "field": "bath, scalar",
+                    "standard_name": "model_sea_floor_depth_below_geoid",
+                },
+            ),
+            "zeta": (
+                ["time", "eta_rho", "xi_rho"],
+                np.random.rand(T, Y, X, dtype="float32"),
+                {
+                    "long_name": "free-surface",
+                    "units": "meter",
+                    "field": "free_surface, scalar, series",
+                    "standard_name": "sea_surface_height",
+                },
+            ),
+            "Cs_w": (
+                ["s_w"],
+                np.random.rand(Z + 1, dtype="float32"),
+                {
+                    "long_name": "S-coordinate stretching curves at W-points",
+                },
+            ),
+            "hc": (
+                [],
+                np.array(0.0, dtype="float32"),
+                {
+                    "long_name": "S-coordinate parameter, critical depth",
+                    "units": "meter",
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                np.arange(0, T, dtype="float64"),
+                {
+                    "long_name": "time since initialization",
+                    "units": "second",
+                    "field": "time, scalar, series",
+                    "standard_name": "time",
+                    "axis": "T",
+                },
+            ),
+            "s_rho": (
+                ["s_rho"],
+                np.linspace(-0.95, 0.05, Z, dtype="float32"),
+                {
+                    "long_name": "S-coordinate at RHO-points",
+                    "standard_name": "ocean_s_coordinate_g1",
+                    "positive": "up",
+                    "axis": "Z",
+                    "formula_terms": "s: sc_r C: Cs_r eta: zeta depth: h depth_c: hc",
+                },
+            ),
+            "s_w": (
+                ["s_w"],
+                np.linspace(-1, 0, Z + 1, dtype="float32"),
+                {
+                    "long_name": "S-coordinate at W-points",
+                    "standard_name": "ocean_s_coordinate_g1_at_w_location",
+                    "positive": "up",
+                    "axis": "Z",
+                    "c_grid_axis_shift": -0.5,
+                    "formula_terms": "s: sc_w C: Cs_w eta: zeta depth: h depth_c: hc",
+                },
+            ),
+            "eta_rho": (
+                ["eta_rho"],
+                np.arange(Y, dtype="float32"),
+                {
+                    "long name": "y-dimension of the grid",
+                    "standard_name": "y_grid_index",
+                    "axis": "Y",
+                    "c_grid_dynamic_range": f"2:{Y}",
+                },
+            ),
+            "eta_v": (
+                ["eta_v"],
+                np.arange(Y - 1, dtype="float32"),
+                {
+                    "long name": "y-dimension of the grid at v location",
+                    "standard_name": "y_grid_index_at_v_location",
+                    "axis": "Y",
+                    "c_grid_axis_shift": 0.5,
+                    "c_grid_dynamic_range": f"2:{Y-1}",
+                },
+            ),
+            "xi_rho": (
+                ["xi_rho"],
+                np.arange(X, dtype="float32"),
+                {
+                    "long name": "x-dimension of the grid",
+                    "standard_name": "x_grid_index",
+                    "axis": "X",
+                    "c_grid_dynamic_range": f"2:{X}",
+                },
+            ),
+            "xi_u": (
+                ["xi_u"],
+                np.arange(X - 1, dtype="float32"),
+                {
+                    "long name": "x-dimension of the grid at u location",
+                    "standard_name": "x_grid_index_at_u_location",
+                    "axis": "X",
+                    "c_grid_axis_shift": 0.5,
+                    "c_grid_dynamic_range": f"2:{X-1}",
+                },
+            ),
+            "x_rho": (
+                ["eta_rho", "xi_rho"],
+                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
+                {
+                    "long_name": "x-locations of RHO-points",
+                    "units": "meter",
+                    "standard_name": "plane_x_coordinate",
+                    "field": "x_rho, scalar",
+                },
+            ),
+            "y_rho": (
+                ["eta_rho", "xi_rho"],
+                np.tile(np.linspace(-89, 89, Y), (X, 1)).T,  # note that this is not curvilinear
+                {
+                    "long_name": "y-locations of RHO-points",
+                    "units": "meter",
+                    "standard_name": "plane_y_coordinate",
+                    "field": "y_rho, scalar",
+                },
+            ),
+        },
+    ),
 }
