@@ -79,6 +79,7 @@ class ParticleSet:
         lat=None,
         depth=None,
         time=None,
+        repeatdt=None,
         lonlatdepth_dtype=None,
         pid_orig=None,
         **kwargs,
@@ -95,6 +96,9 @@ class ParticleSet:
 
         self.fieldset = fieldset
         self._pclass = pclass
+
+        if repeatdt:
+            NotImplementedError("ParticleSet.repeatdt is not implemented yet in v4")
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -775,7 +779,7 @@ class ParticleSet:
         self,
         pyfunc=AdvectionRK4,
         endtime: timedelta | datetime | None = None,
-        runtime=None,
+        runtime: timedelta | None = None,
         dt: np.float64 | np.float32 | timedelta | None = None,
         output_file=None,
         verbose_progress=True,
