@@ -86,6 +86,75 @@ datasets = {
             ),
         },
     ),
+    "ds_copernicusmarine_globcurrents": xr.Dataset(
+        # Copernicus Marine Service GlobCurrent dataset (MULTIOBS_GLO_PHY_MYNRT_015_003)
+        {
+            "ue": (
+                ["time", "depth", "latitude", "longitude"],
+                np.random.rand(T, Z, Y, X),
+                {
+                    "units": "m/s",
+                    "standard_name": "eastward_sea_water_velocity_due_to_ekman_drift",
+                    "long_name": "Depth Ekman driven velocity : zonal component",
+                    "grid_mapping": "crs",
+                },
+            ),
+            "ve": (
+                ["time", "depth", "latitude", "longitude"],
+                np.random.rand(T, Z, Y, X),
+                {
+                    "units": "m/s",
+                    "standard_name": "northward_sea_water_velocity_due_to_ekman_drift",
+                    "long_name": "Depth Ekman driven velocity : meridional component",
+                    "grid_mapping": "crs",
+                },
+            ),
+        },
+        coords={
+            "depth": (
+                ["depth"],
+                np.linspace(-0.0, 15, Z),
+                {
+                    "standard_name": "depth",
+                    "long_name": "Depth",
+                    "units": "m",
+                    "axis": "Z",
+                    "positive": "down",
+                },
+            ),
+            "latitude": (
+                ["latitude"],
+                np.linspace(-90, 90, Y),
+                {
+                    "unit_long": "Degrees North",
+                    "units": "degrees_north",
+                    "axis": "Y",
+                    "long_name": "Latitude",
+                    "standard_name": "latitude",
+                },
+            ),
+            "longitude": (
+                ["longitude"],
+                np.linspace(-180, 180, X),
+                {
+                    "unit_long": "Degrees East",
+                    "units": "degrees_east",
+                    "axis": "X",
+                    "long_name": "Longitude",
+                    "standard_name": "longitude",
+                },
+            ),
+            "time": (
+                ["time"],
+                TIME,
+                {
+                    "axis": "T",
+                    "long_name": "Time",
+                    "standard_name": "time",
+                },
+            ),
+        },
+    ),
     "ds_NEMO_MOI_U": xr.Dataset(
         # NEMO model dataset (U component) as serviced by Mercator Ocean International
         {
