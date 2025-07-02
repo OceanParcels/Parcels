@@ -7,6 +7,7 @@ from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, ScipyParti
 
 class ParticleExecutionJIT:
     timeout = 240
+
     def setup(self):
         xdim = ydim = zdim = 2
         npart = 1_000
@@ -42,6 +43,7 @@ class ParticleExecutionJIT:
 
 class ParticleExecutionScipy:
     timeout = 240
+
     def setup(self):
         xdim = ydim = zdim = 2
         npart = 1_000
