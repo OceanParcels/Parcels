@@ -15,7 +15,6 @@ _XGRID_AXES = Literal["X", "Y", "Z"]
 
 _XGCM_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
 _XGCM_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
-_AXIS_DIRECTION = Literal["X", "Y", "Z"]
 _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
 
 
@@ -196,13 +195,13 @@ class XGrid(BaseGrid):
 
         raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
 
-    def ravel_index(self, axis_indices: dict[_AXIS_DIRECTION, int]) -> int:
+    def ravel_index(self, axis_indices: dict[_XGRID_AXES, int]) -> int:
         xi = axis_indices.get("X", 0)
         yi = axis_indices.get("Y", 0)
         zi = axis_indices.get("Z", 0)
         return xi + self.xdim * yi + self.xdim * self.ydim * zi
 
-    def unravel_index(self, ei) -> dict[_AXIS_DIRECTION, int]:
+    def unravel_index(self, ei) -> dict[_XGRID_AXES, int]:
         zi = ei // (self.xdim * self.ydim)
         ei = ei % (self.xdim * self.ydim)
 
