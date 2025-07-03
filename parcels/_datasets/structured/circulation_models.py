@@ -669,7 +669,7 @@ def _hycom_espc():
             ),
             "tau": (
                 ["time"],
-                np.arange(0, 24, T, dtype="float64"),
+                np.linspace(0, 24, T, dtype="float64"),
                 {
                     "long_name": "Tau",
                     "units": "hours since analysis",
@@ -735,11 +735,12 @@ def _hycom_espc():
 
 def _ecco4():
     """ECCO V4r4 model dataset (from https://podaac.jpl.nasa.gov/dataset/ECCO_L4_OCEAN_VEL_LLC0090GRID_DAILY_V4R4#capability-modal-download)"""
+    tiles = 13
     return xr.Dataset(
         {
             "UVEL": (
                 ["time", "k", "tile", "j", "i_g"],
-                np.random.rand(T, Z, 13, Y, X).astype("float32"),
+                np.random.rand(T, Z, tiles, Y, X).astype("float32"),
                 {
                     "long_name": "Horizontal velocity in the model +x direction",
                     "units": "m s-1",
@@ -754,7 +755,7 @@ def _ecco4():
             ),
             "VVEL": (
                 ["time", "k", "tile", "j_g", "i"],
-                np.random.rand(T, Z, 13, Y, X).astype("float32"),
+                np.random.rand(T, Z, tiles, Y, X).astype("float32"),
                 {
                     "long_name": "Horizontal velocity in the model +y direction",
                     "units": "m s-1",
@@ -769,7 +770,7 @@ def _ecco4():
             ),
             "WVEL": (
                 ["time", "k_l", "tile", "j", "i"],
-                np.random.rand(T, Z, 13, Y, X).astype("float32"),
+                np.random.rand(T, Z, tiles, Y, X).astype("float32"),
                 {
                     "long_name": "Vertical velocity",
                     "units": "m s-1",
@@ -796,7 +797,7 @@ def _ecco4():
             ),
             "tile": (
                 ["tile"],
-                np.arange(13, dtype="int32"),
+                np.arange(tiles, dtype="int32"),
                 {
                     "long_name": "lat-lon-cap tile index",
                     "coverage_content_type": "coordinate",
@@ -899,7 +900,7 @@ def _ecco4():
             "YC": (
                 ["tile", "j", "i"],
                 np.tile(
-                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (13, 1, 1)
+                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (tiles, 1, 1)
                 ),  # NOTE this grid is not correct, as duplicates for each tile
                 {
                     "long_name": "latitude of tracer grid cell center",
@@ -914,7 +915,7 @@ def _ecco4():
             "YG": (
                 ["tile", "j_g", "i_g"],
                 np.tile(
-                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (13, 1, 1)
+                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (tiles, 1, 1)
                 ),  # NOTE this grid is not correct, as duplicates for each tile
                 {
                     "long_name": "latitude of 'southwest' corner of tracer grid cell",
@@ -928,7 +929,7 @@ def _ecco4():
             "XC": (
                 ["tile", "j", "i"],
                 np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)).reshape(
-                    13, Y, X
+                    tiles, Y, X
                 ),  # NOTE this grid is not correct, as duplicates for each tile
                 {
                     "long_name": "longitude of tracer grid cell center",
@@ -943,7 +944,7 @@ def _ecco4():
             "XG": (
                 ["tile", "j_g", "i_g"],
                 np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)).reshape(
-                    13, Y, X
+                    tiles, Y, X
                 ),  # NOTE this grid is not correct, as duplicates for each tile
                 {
                     "long_name": "longitude of 'southwest' corner of tracer grid cell",
