@@ -811,8 +811,7 @@ class ParticleSet:
                     raise ValueError("The runtime must be a timedelta object")
 
         else:
-            valid_start, valid_end = self.fieldset.time_interval
-            start_time = valid_start
+            start_time = self.fieldset.time_interval.left
 
             if runtime is None:
                 if endtime is None:
@@ -820,10 +819,10 @@ class ParticleSet:
                         "Must provide either runtime or endtime when time_interval is defined for a fieldset."
                     )
                 # Ensure that the endtime uses the same type as the start_time
-                if isinstance(endtime, valid_start.__class__):
-                    if endtime < valid_start:
+                if isinstance(endtime, self.fieldset.time_interval.left.__class__):
+                    if endtime < self.fieldset.time_interval.left:
                         raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
-                    end_time = min(endtime, valid_end)
+                    end_time = min(endtime, self.fieldset.time_interval.right)
                 else:
                     raise ValueError("The endtime must be of the same type as the fieldset.time_interval start time.")
             else:
@@ -889,15 +888,15 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
         )
 
 
-def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: np.ndarray | TimeInterval):
+def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: TimeInterval):
     if np.any(release_times):
-        if np.any(release_times < time[0]):
+        if np.any(release_times < time.left):
             warnings.warn(
                 "Some particles are set to be released outside the FieldSet's executable time domain.",
                 ParticleSetWarning,
                 stacklevel=2,
             )
-        if np.any(release_times > time[-1]):
+        if np.any(release_times > time.right):
             warnings.warn(
                 "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
                 ParticleSetWarning,
