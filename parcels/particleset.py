@@ -833,7 +833,8 @@ class ParticleSet:
         outputdt = output_file.outputdt if output_file else None
 
         # dt must be converted to float to avoid "TypeError: float() argument must be a string or a real number, not 'datetime.timedelta'"
-        self.particledata._data["dt"][:] = dt.total_seconds()
+        dt_seconds = dt / np.timedelta64(1, "s")
+        self.particledata._data["dt"][:] = dt_seconds
 
         # Set up pbar
         if output_file:
@@ -856,8 +857,8 @@ class ParticleSet:
             # Kernel and particledata currently expect all time objects to be numpy floats.
             # When converting absolute times to floats, we do them all relative to the start time.
             # TODO: To completely support datetime or timedelta objects, this really needs to be addressed in the kernels and particledata
-            next_time_float = (next_time - start_time).total_seconds()
-            res = self._kernel.execute(self, endtime=next_time_float, dt=dt.total_seconds())
+            next_time_float = (next_time - start_time) / np.timedelta64(1, "s")
+            res = self._kernel.execute(self, endtime=next_time_float, dt=dt_seconds)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
 
