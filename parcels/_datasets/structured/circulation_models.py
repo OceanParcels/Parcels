@@ -200,7 +200,7 @@ def _NEMO_MOI_U():
         },
         coords={
             "nav_lon": (
-                ["y, x"],
+                ["y", "x"],
                 np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
                 {
                     "units": "degrees_east",
@@ -212,7 +212,7 @@ def _NEMO_MOI_U():
                 },
             ),
             "nav_lat": (
-                ["y, x"],
+                ["y", "x"],
                 np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
                 {
                     "units": "degrees_north",
@@ -242,7 +242,7 @@ def _NEMO_MOI_U():
                 },
             ),
             "time_counter": (
-                [],
+                ["time_counter"],
                 np.empty(0, dtype="datetime64[ns]"),
                 {
                     "standard_name": "time",
@@ -292,7 +292,7 @@ def _NEMO_MOI_V():
         },
         coords={
             "nav_lon": (
-                ["y, x"],
+                ["y", "x"],
                 np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
                 {
                     "units": "degrees_east",
@@ -304,7 +304,7 @@ def _NEMO_MOI_V():
                 },
             ),
             "nav_lat": (
-                ["y, x"],
+                ["y", "x"],
                 np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
                 {
                     "units": "degrees_north",
@@ -334,7 +334,7 @@ def _NEMO_MOI_V():
                 },
             ),
             "time_counter": (
-                [],
+                ["time_counter"],
                 np.empty(0, dtype="datetime64[ns]"),
                 {
                     "standard_name": "time",
@@ -367,7 +367,7 @@ def _CESM():
             {
                 "UVEL": (
                     ["time", "z_t", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X, dtype="float32"),
+                    np.random.rand(T, Z, Y, X).astype("float32"),
                     {
                         "long_name": "Velocity in grid-x direction",
                         "units": "centimeter/s",
@@ -377,7 +377,7 @@ def _CESM():
                 ),
                 "VVEL": (
                     ["time", "z_t", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X, dtype="float32"),
+                    np.random.rand(T, Z, Y, X).astype("float32"),
                     {
                         "long_name": "Velocity in grid-y direction",
                         "units": "centimeter/s",
@@ -387,7 +387,7 @@ def _CESM():
                 ),
                 "WVEL": (
                     ["time", "z_w_top", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X, dtype="float32"),
+                    np.random.rand(T, Z, Y, X).astype("float32"),
                     {
                         "long_name": "Vertical Velocity",
                         "units": "centimeter/s",
@@ -455,7 +455,7 @@ def _MITgcm_netcdf():
         {
             "U": (
                 ["T", "Z", "Y", "Xp1"],
-                np.random.rand(T, Z, Y, X + 1, dtype="float32"),
+                np.random.rand(T, Z, Y, X + 1).astype("float32"),
                 {
                     "units": "m/s",
                     "coordinates": "XU YU RC iter",
@@ -463,7 +463,7 @@ def _MITgcm_netcdf():
             ),
             "V": (
                 ["T", "Z", "Yp1", "X"],
-                np.random.rand(T, Z, Y + 1, X, dtype="float32"),
+                np.random.rand(T, Z, Y + 1, X).astype("float32"),
                 {
                     "units": "m/s",
                     "coordinates": "XV YV RC iter",
@@ -471,7 +471,7 @@ def _MITgcm_netcdf():
             ),
             "W": (
                 ["T", "Zl", "Y", "X"],
-                np.random.rand(T, Z, Y, X, dtype="float32"),
+                np.random.rand(T, Z, Y, X).astype("float32"),
                 {
                     "units": "m/s",
                     "coordinates": "XC YC RC iter",
@@ -479,7 +479,7 @@ def _MITgcm_netcdf():
             ),
             "Temp": (
                 ["T", "Z", "Y", "X"],
-                np.random.rand(T, Z, Y, X, dtype="float32"),
+                np.random.rand(T, Z, Y, X).astype("float32"),
                 {
                     "units": "degC",
                     "coordinates": "XC YC RC iter",
@@ -556,7 +556,7 @@ def _ERA5_wind():
         {
             "u10": (
                 ["time", "latitude", "longitude"],
-                np.random.rand(T, Y, X, dtype="float32"),
+                np.random.rand(T, Y, X).astype("float32"),
                 {
                     "long_name": "10 metre U wind component",
                     "units": "m s**-1",
@@ -564,7 +564,7 @@ def _ERA5_wind():
             ),
             "v10": (
                 ["time", "latitude", "longitude"],
-                np.random.rand(T, Y, X, dtype="float32"),
+                np.random.rand(T, Y, X).astype("float32"),
                 {
                     "long_name": "10 metre V wind component",
                     "units": "m s**-1",
@@ -605,7 +605,7 @@ def _FES_tides():
         {
             "Ug": (
                 ["lat", "lon"],
-                np.random.rand(Y, X, dtype="float32"),
+                np.random.rand(Y, X).astype("float32"),
                 {
                     "long_name": "Eastward sea water velocity phaselag due to non equilibrium ocean tide at m2 frequency",
                     "units": "degrees",
@@ -614,7 +614,7 @@ def _FES_tides():
             ),
             "Ua": (
                 ["lat", "lon"],
-                np.random.rand(Y, X, dtype="float32"),
+                np.random.rand(Y, X).astype("float32"),
                 {
                     "long_name": "Eastward sea water velocity amplitude due to non equilibrium ocean tide at m2 frequency",
                     "units": "cm/s",
@@ -657,7 +657,7 @@ def _hycom_espc():
         {
             "water_u": (
                 ["time", "depth", "lat", "lon"],
-                np.random.rand(T, Z, Y, X, dtype="float32"),
+                np.random.rand(T, Z, Y, X).astype("float32"),
                 {
                     "long_name": "Eastward Water Velocity",
                     "standard_name": "eastward_sea_water_velocity",
@@ -739,7 +739,7 @@ def _ecco4():
         {
             "UVEL": (
                 ["time", "k", "tile", "j", "i_g"],
-                np.random.rand(T, Z, 13, Y, X, dtype="float32"),
+                np.random.rand(T, Z, 13, Y, X).astype("float32"),
                 {
                     "long_name": "Horizontal velocity in the model +x direction",
                     "units": "m s-1",
@@ -754,7 +754,7 @@ def _ecco4():
             ),
             "VVEL": (
                 ["time", "k", "tile", "j_g", "i"],
-                np.random.rand(T, Z, 13, Y, X, dtype="float32"),
+                np.random.rand(T, Z, 13, Y, X).astype("float32"),
                 {
                     "long_name": "Horizontal velocity in the model +y direction",
                     "units": "m s-1",
@@ -769,7 +769,7 @@ def _ecco4():
             ),
             "WVEL": (
                 ["time", "k_l", "tile", "j", "i"],
-                np.random.rand(T, Z, 13, Y, X, dtype="float32"),
+                np.random.rand(T, Z, 13, Y, X).astype("float32"),
                 {
                     "long_name": "Vertical velocity",
                     "units": "m s-1",
@@ -964,7 +964,7 @@ def _CROCO_idealized():
         {
             "u": (
                 ["time", "s_rho", "eta_rho", "xi_u"],
-                np.random.rand(T, Z, Y, X - 1, dtype="float32"),
+                np.random.rand(T, Z, Y, X - 1).astype("float32"),
                 {
                     "long_name": "u-momentum component",
                     "units": "meter second-1",
@@ -974,7 +974,7 @@ def _CROCO_idealized():
             ),
             "v": (
                 ["time", "s_rho", "eta_v", "xi_rho"],
-                np.random.rand(T, Z, Y - 1, X, dtype="float32"),
+                np.random.rand(T, Z, Y - 1, X).astype("float32"),
                 {
                     "long_name": "v-momentum component",
                     "units": "meter second-1",
@@ -984,7 +984,7 @@ def _CROCO_idealized():
             ),
             "w": (
                 ["time", "s_rho", "eta_rho", "xi_rho"],
-                np.random.rand(T, Z, Y, X, dtype="float32"),
+                np.random.rand(T, Z, Y, X).astype("float32"),
                 {
                     "long_name": "vertical momentum component",
                     "units": "meter second-1",
@@ -995,7 +995,7 @@ def _CROCO_idealized():
             ),
             "h": (
                 ["eta_rho", "xi_rho"],
-                np.random.rand(Y, X, dtype="float32"),
+                np.random.rand(Y, X).astype("float32"),
                 {
                     "long_name": "bathymetry at RHO-points",
                     "units": "meter",
@@ -1005,7 +1005,7 @@ def _CROCO_idealized():
             ),
             "zeta": (
                 ["time", "eta_rho", "xi_rho"],
-                np.random.rand(T, Y, X, dtype="float32"),
+                np.random.rand(T, Y, X).astype("float32"),
                 {
                     "long_name": "free-surface",
                     "units": "meter",
@@ -1015,7 +1015,7 @@ def _CROCO_idealized():
             ),
             "Cs_w": (
                 ["s_w"],
-                np.random.rand(Z + 1, dtype="float32"),
+                np.random.rand(Z + 1).astype("float32"),
                 {
                     "long_name": "S-coordinate stretching curves at W-points",
                 },
