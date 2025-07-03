@@ -606,6 +606,228 @@ datasets = {
             ),
         },
     ),
+    "ds_ecco4": xr.Dataset(
+        # ECCO V4r4 model dataset (from https://podaac.jpl.nasa.gov/dataset/ECCO_L4_OCEAN_VEL_LLC0090GRID_DAILY_V4R4#capability-modal-download)
+        {
+            "UVEL": (
+                ["time", "k", "tile", "j", "i_g"],
+                np.random.rand(T, Z, 13, Y, X, dtype="float32"),
+                {
+                    "long_name": "Horizontal velocity in the model +x direction",
+                    "units": "m s-1",
+                    "mate": "VVEL",
+                    "coverage_content_type": "modelResult",
+                    "direction": ">0 increases volume",
+                    "standard_name": "sea_water_x_velocity",
+                    "comment": "Horizontal velocity in the +x direction at the 'u' face of the tracer cell on the native model grid. Note: in the Arakawa-C grid, horizontal velocities are staggered relative to the tracer cells with indexing such that +UVEL(i_g,j,k) corresponds to +x fluxes through the 'u' face of the tracer cell at (i,j,k). Do NOT use UVEL for volume flux calculations because the model's grid cell thicknesses vary with time (z* coordinates); use UVELMASS instead. Also, the model +x direction does not necessarily correspond to the geographical east-west direction because the x and y axes of the model's curvilinear lat-lon-cap (llc) grid have arbitrary orientations which vary within and across tiles. See EVEL and NVEL for zonal and meridional velocity.",
+                    "valid_min": -2.139253616333008,
+                    "valid_max": 2.038635015487671,
+                },
+            ),
+            "VVEL": (
+                ["time", "k", "tile", "j_g", "i"],
+                np.random.rand(T, Z, 13, Y, X, dtype="float32"),
+                {
+                    "long_name": "Horizontal velocity in the model +y direction",
+                    "units": "m s-1",
+                    "mate": "UVEL",
+                    "coverage_content_type": "modelResult",
+                    "direction": ">0 increases volume",
+                    "standard_name": "sea_water_y_velocity",
+                    "comment": "Horizontal velocity in the +y direction at the 'v' face of the tracer cell on the native model grid. Note: in the Arakawa-C grid, horizontal velocities are staggered relative to the tracer cells with indexing such that +VVEL(i,j_g,k) corresponds to +y fluxes through the 'v' face of the tracer cell at (i,j,k). Do NOT use VVEL for volume flux calculations because the model's grid cell thicknesses vary with time (z* coordinates); use VVELMASS instead. Also, the model +y direction does not necessarily correspond to the geographical north-south direction because the x and y axes of the model's curvilinear lat-lon-cap (llc) grid have arbitrary orientations which vary within and across tiles. See EVEL and NVEL for zonal and meridional velocity.",
+                    "valid_min": -1.7877743244171143,
+                    "valid_max": 1.9089667797088623,
+                },
+            ),
+            "WVEL": (
+                ["time", "k_l", "tile", "j", "i"],
+                np.random.rand(T, Z, 13, Y, X, dtype="float32"),
+                {
+                    "long_name": "Vertical velocity",
+                    "units": "m s-1",
+                    "coverage_content_type": "modelResult",
+                    "direction": ">0 decreases volume",
+                    "standard_name": "upward_sea_water_velocity",
+                    "comment": "Vertical velocity in the +z direction at the top 'w' face of the tracer cell on the native model grid. Note: in the Arakawa-C grid, vertical velocities are staggered relative to the tracer cells with indexing such that +WVEL(i,j,k_l) corresponds to upward +z motion through the top 'w' face of the tracer cell at (i,j,k). WVEL is identical to WVELMASS.",
+                    "valid_min": -0.0023150660563260317,
+                    "valid_max": 0.0016380994347855449,
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                TIME,
+                {
+                    "long_name": "center time of averaging period",
+                    "standard_name": "time",
+                    "axis": "T",
+                    "bounds": "time_bnds",
+                    "coverage_content_type": "coordinate",
+                },
+            ),
+            "tile": (
+                ["tile"],
+                np.arange(13, dtype="int32"),
+                {
+                    "long_name": "lat-lon-cap tile index",
+                    "coverage_content_type": "coordinate",
+                    "comment": "The ECCO V4 horizontal model grid is divided into 13 tiles of 90x90 cells for convenience.",
+                },
+            ),
+            "k": (
+                ["k"],
+                np.arange(Z, dtype="int32"),
+                {
+                    "long_name": "grid index in z for tracer variables",
+                    "axis": "Z",
+                    "swap_dim": "Z",
+                    "coverage_content_type": "coordinate",
+                },
+            ),
+            "k_l": (
+                ["k_l"],
+                np.arange(Z, dtype="int32"),
+                {
+                    "long_name": "grid index in z corresponding to the top face of tracer grid cells ('w' locations)",
+                    "axis": "Z",
+                    "swap_dim": "Zl",
+                    "coverage_content_type": "coordinate",
+                    "c_grid_axis_shift": -0.5,
+                    "comment": "First index corresponds to the top surface of the uppermost tracer grid cell. The use of 'l' in the variable name follows the MITgcm convention for ocean variables in which the lower (l) face of a tracer grid cell on the logical grid corresponds to the top face of the grid cell on the physical grid.",
+                },
+            ),
+            "j": (
+                ["j"],
+                np.arange(Y, dtype="int32"),
+                {
+                    "long_name": "grid index in y for variables at tracer and 'u' locations",
+                    "axis": "Y",
+                    "swap_dim": "YC",
+                    "coverage_content_type": "coordinate",
+                    "comment": "In the Arakawa C-grid system, tracer (e.g., THETA) and 'u' variables (e.g., UVEL) have the same y coordinate on the model grid.",
+                },
+            ),
+            "j_g": (
+                ["j_g"],
+                np.arange(Y, dtype="int32"),
+                {
+                    "long_name": "grid index in y for variables at 'v' and 'g' locations",
+                    "axis": "Y",
+                    "swap_dim": "YG",
+                    "c_grid_axis_shift": -0.5,
+                    "coverage_content_type": "coordinate",
+                    "comment": "In the Arakawa C-grid system, 'v' (e.g., VVEL) and 'g' variables (e.g., XG) have the same y coordinate.",
+                },
+            ),
+            "i": (
+                ["i"],
+                np.arange(X, dtype="int32"),
+                {
+                    "long_name": "grid index in x for variables at tracer and 'v' locations",
+                    "axis": "X",
+                    "swap_dim": "XC",
+                    "coverage_content_type": "coordinate",
+                    "comment": "In the Arakawa C-grid system, tracer (e.g., THETA) and 'v' variables (e.g., VVEL) have the same x coordinate on the model grid.",
+                },
+            ),
+            "i_g": (
+                ["i_g"],
+                np.arange(X, dtype="int32"),
+                {
+                    "long_name": "grid index in x for variables at 'u' and 'g' locations",
+                    "axis": "X",
+                    "swap_dim": "XG",
+                    "c_grid_axis_shift": -0.5,
+                    "coverage_content_type": "coordinate",
+                    "comment": "In the Arakawa C-grid system, 'u' (e.g., UVEL) and 'g' variables (e.g., XG) have the same x coordinate on the model grid.",
+                },
+            ),
+            "Z": (
+                ["k"],
+                np.linspace(-5, -5900, Z, dtype="float32"),
+                {
+                    "long_name": "depth of tracer grid cell center",
+                    "standard_name": "depth",
+                    "units": "m",
+                    "positive": "up",
+                    "bounds": "Z_bnds",
+                    "coverage_content_type": "coordinate",
+                    "comment": "Non-uniform vertical spacing.",
+                },
+            ),
+            "Zl": (
+                ["k_l"],
+                np.linspace(0, -5678, Z, dtype="float32"),
+                {
+                    "long_name": "depth of the top face of tracer grid cells",
+                    "standard_name": "depth",
+                    "units": "m",
+                    "positive": "up",
+                    "coverage_content_type": "coordinate",
+                    "comment": "First element is 0m, the depth of the top face of the first tracer grid cell (ocean surface). Last element is the depth of the top face of the deepest grid cell. The use of 'l' in the variable name follows the MITgcm convention for ocean variables in which the lower (l) face of a tracer grid cell on the logical grid corresponds to the top face of the grid cell on the physical grid. In other words, the logical vertical grid of MITgcm ocean variables is inverted relative to the physical vertical grid.",
+                },
+            ),
+            "YC": (
+                ["tile", "j", "i"],
+                np.tile(
+                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (13, 1, 1)
+                ),  # NOTE this grid is not correct, as duplicates for each tile
+                {
+                    "long_name": "latitude of tracer grid cell center",
+                    "standard_name": "latitude",
+                    "units": "degrees_north",
+                    "coordinate": "YC XC",
+                    "bounds": "YC_bnds",
+                    "coverage_content_type": "coordinate",
+                    "comment": "nonuniform grid spacing",
+                },
+            ),
+            "YG": (
+                ["tile", "j_g", "i_g"],
+                np.tile(
+                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (13, 1, 1)
+                ),  # NOTE this grid is not correct, as duplicates for each tile
+                {
+                    "long_name": "latitude of 'southwest' corner of tracer grid cell",
+                    "standard_name": "latitude",
+                    "units": "degrees_north",
+                    "coordinate": "YG XG",
+                    "coverage_content_type": "coordinate",
+                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm documentation for details.",
+                },
+            ),
+            "XC": (
+                ["tile", "j", "i"],
+                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)).reshape(
+                    13, Y, X
+                ),  # NOTE this grid is not correct, as duplicates for each tile
+                {
+                    "long_name": "longitude of tracer grid cell center",
+                    "standard_name": "longitude",
+                    "units": "degrees_east",
+                    "coordinate": "YC XC",
+                    "bounds": "XC_bnds",
+                    "coverage_content_type": "coordinate",
+                    "comment": "nonuniform grid spacing",
+                },
+            ),
+            "XG": (
+                ["tile", "j_g", "i_g"],
+                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)).reshape(
+                    13, Y, X
+                ),  # NOTE this grid is not correct, as duplicates for each tile
+                {
+                    "long_name": "longitude of 'southwest' corner of tracer grid cell",
+                    "standard_name": "longitude",
+                    "units": "degrees_east",
+                    "coordinate": "YG XG",
+                    "coverage_content_type": "coordinate",
+                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm documentation for details.",
+                },
+            ),
+        },
+    ),
     "ds_CROCO_idealized": xr.Dataset(
         # CROCO idealized model dataset
         {
