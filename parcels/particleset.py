@@ -153,7 +153,7 @@ class ParticleSet:
             time=time,
             lonlatdepth_dtype=lonlatdepth_dtype,
             pid_orig=pid_orig,
-            ngrid=fieldset.gridset_size,
+            ngrid=len(fieldset.gridset),
             **kwargs,
         )
 
