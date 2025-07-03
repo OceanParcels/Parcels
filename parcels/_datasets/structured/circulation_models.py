@@ -432,6 +432,104 @@ datasets = {
             ),
         },
     ),
+    "ds_MITgcm_netcdf": xr.Dataset(
+        # MITgcm model dataset in netCDF format
+        {
+            "U": (
+                ["T", "Z", "Y", "Xp1"],
+                np.random.rand(T, Z, Y, X + 1, dtype="float32"),
+                {
+                    "units": "m/s",
+                    "coordinates": "XU YU RC iter",
+                },
+            ),
+            "V": (
+                ["T", "Z", "Yp1", "X"],
+                np.random.rand(T, Z, Y + 1, X, dtype="float32"),
+                {
+                    "units": "m/s",
+                    "coordinates": "XV YV RC iter",
+                },
+            ),
+            "W": (
+                ["T", "Zl", "Y", "X"],
+                np.random.rand(T, Z, Y, X, dtype="float32"),
+                {
+                    "units": "m/s",
+                    "coordinates": "XC YC RC iter",
+                },
+            ),
+            "Temp": (
+                ["T", "Z", "Y", "X"],
+                np.random.rand(T, Z, Y, X, dtype="float32"),
+                {
+                    "units": "degC",
+                    "coordinates": "XC YC RC iter",
+                    "long_name": "potential_temperature",
+                },
+            ),
+        },
+        coords={
+            "T": (
+                ["T"],
+                np.arange(0, T, dtype="float64"),
+                {
+                    "long_name": "model_time",
+                    "units": "s",
+                },
+            ),
+            "Z": (
+                ["Z"],
+                np.linspace(-25, -5000, Z, dtype="float64"),
+                {
+                    "long_name": "vertical coordinate of cell center",
+                    "units": "meters",
+                    "positive": "up",
+                },
+            ),
+            "Zl": (
+                ["Zl"],
+                np.linspace(0, -4500, Z, dtype="float64"),
+                {
+                    "long_name": "vertical coordinate of upper cell interface",
+                    "units": "meters",
+                    "positive": "up",
+                },
+            ),
+            "Y": (
+                ["Y"],
+                np.linspace(500, 5000, Y, dtype="float64"),
+                {
+                    "long_name": "Y-Coordinate of cell center",
+                    "units": "meters",
+                },
+            ),
+            "Yp1": (
+                ["Yp1"],
+                np.linspace(0, 4500, Y + 1, dtype="float64"),
+                {
+                    "long_name": "Y-Coordinate of cell corner",
+                    "units": "meters",
+                },
+            ),
+            "X": (
+                ["X"],
+                np.linspace(500, 5000, X, dtype="float64"),
+                {
+                    "long_name": "X-coordinate of cell center",
+                    "units": "meters",
+                },
+            ),
+            "Xp1": (
+                ["Xp1"],
+                np.linspace(0, 4100, X + 1, dtype="float64"),
+                {
+                    "long_name": "X-Coordinate of cell corner",
+                    "units": "meters",
+                },
+            ),
+        },
+    ),
     "ds_ERA5_wind": xr.Dataset(
         # ERA5 10m wind model dataset
         {
