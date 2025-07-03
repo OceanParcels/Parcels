@@ -6,6 +6,9 @@ import pytest
 import xarray as xr
 
 from parcels import xgcm
+from parcels._datasets.structured.circulation_models import (
+    datasets as datasets_circulation_models,  # noqa: F401
+)  # just making sure the import works. Will eventually be used in tests
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
