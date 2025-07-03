@@ -47,7 +47,7 @@ def test_uxstommelgyre_pset_execute(verbose_progress):
         lon=[30.0],
         lat=[5.0],
         depth=[50.0],
-        time=[0.0],
+        time=[timedelta(seconds=0.0)],
         pclass=Particle,
     )
     pset.execute(
