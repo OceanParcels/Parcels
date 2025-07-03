@@ -10,9 +10,9 @@ __all__ = ["T", "X", "Y", "Z", "datasets"]
 TIME = xr.date_range("2000", "2001", T)
 
 
-datasets = {
-    "ds_copernicusmarine": xr.Dataset(
-        # Copernicus Marine Service dataset as retrieved by the `copernicusmarine` toolkit
+def _copernicusmarine():
+    """Copernicus Marine Service dataset as retrieved by the `copernicusmarine` toolkit"""
+    return xr.Dataset(
         {
             "uo": (
                 ["time", "depth", "latitude", "longitude"],
@@ -85,9 +85,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_copernicusmarine_globcurrents": xr.Dataset(
-        # Copernicus Marine Service GlobCurrent dataset (MULTIOBS_GLO_PHY_MYNRT_015_003)
+    )
+
+
+def _copernicusmarine_globcurrents():
+    """Copernicus Marine Service GlobCurrent dataset (MULTIOBS_GLO_PHY_MYNRT_015_003)"""
+    return xr.Dataset(
         {
             "ue": (
                 ["time", "depth", "latitude", "longitude"],
@@ -154,9 +157,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_NEMO_MOI_U": xr.Dataset(
-        # NEMO model dataset (U component) as serviced by Mercator Ocean International
+    )
+
+
+def _NEMO_MOI_U():
+    """NEMO model dataset (U component) as serviced by Mercator Ocean International"""
+    return xr.Dataset(
         {
             "vozocrtx": (
                 ["deptht", "y", "x"],
@@ -259,9 +265,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_NEMO_MOI_V": xr.Dataset(
-        # NEMO model dataset (V component) as serviced by Mercator Ocean International
+    )
+
+
+def _NEMO_MOI_V():
+    """NEMO model dataset (V component) as serviced by Mercator Ocean International"""
+    return xr.Dataset(
         {
             "vomecrty": (
                 ["deptht", "y", "x"],
@@ -348,92 +357,101 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_CESM": xr.Dataset(
-        # CESM model dataset
-        {
-            "UVEL": (
-                ["time", "z_t", "nlat", "nlon"],
-                np.random.rand(T, Z, Y, X, dtype="float32"),
-                {
-                    "long_name": "Velocity in grid-x direction",
-                    "units": "centimeter/s",
-                    "grid_loc": 3221,
-                    "cell_methods": "time:mean",
-                },
-            ),
-            "VVEL": (
-                ["time", "z_t", "nlat", "nlon"],
-                np.random.rand(T, Z, Y, X, dtype="float32"),
-                {
-                    "long_name": "Velocity in grid-y direction",
-                    "units": "centimeter/s",
-                    "grid_loc": 3221,
-                    "cell_methods": "time:mean",
-                },
-            ),
-            "WVEL": (
-                ["time", "z_w_top", "nlat", "nlon"],
-                np.random.rand(T, Z, Y, X, dtype="float32"),
-                {
-                    "long_name": "Vertical Velocity",
-                    "units": "centimeter/s",
-                    "grid_loc": 3112,
-                    "cell_methods": "time:mean",
-                },
-            ),
-        },
-        coords={
-            "time": (
-                ["time"],
-                TIME,
-                {
-                    "long_name": "time",
-                    "bounds": "time_bounds",
-                },
-            ),
-            "z_t": (
-                ["z_t"],
-                np.linspace(0, 5000, Z, dtype="float32"),
-                {
-                    "long_name": "depth from surface to midpoint of layer",
-                    "units": "centimeters",
-                    "positive": "down",
-                    "valid_min": 500.0,
-                    "valid_max": 537500.0,
-                },
-            ),
-            "z_w_top": (
-                ["z_w_top"],
-                np.linspace(0, 5000, Z, dtype="float32"),
-                {
-                    "long_name": "depth from surface to top of layer",
-                    "units": "centimeters",
-                    "positive": "down",
-                    "valid_min": 0.0,
-                    "valid_max": 525000.94,
-                },
-            ),
-            "ULONG": (
-                ["nlat", "nlon"],
-                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
-                {
-                    "long_name": "array of u-grid longitudes",
-                    "units": "degrees_east",
-                },
-            ),
-            "ULAT": (
-                ["nlat", "nlon"],
-                np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
-                {
-                    "long_name": "array of u-grid latitudes",
-                    "units": "degrees_north",
-                },
-            ),
-        },
-    ),
-    "ds_MITgcm_netcdf": xr.Dataset(
-        # MITgcm model dataset in netCDF format
+    )
+
+
+def _CESM():
+    """CESM model dataset"""
+    return (
+        xr.Dataset(
+            {
+                "UVEL": (
+                    ["time", "z_t", "nlat", "nlon"],
+                    np.random.rand(T, Z, Y, X, dtype="float32"),
+                    {
+                        "long_name": "Velocity in grid-x direction",
+                        "units": "centimeter/s",
+                        "grid_loc": 3221,
+                        "cell_methods": "time:mean",
+                    },
+                ),
+                "VVEL": (
+                    ["time", "z_t", "nlat", "nlon"],
+                    np.random.rand(T, Z, Y, X, dtype="float32"),
+                    {
+                        "long_name": "Velocity in grid-y direction",
+                        "units": "centimeter/s",
+                        "grid_loc": 3221,
+                        "cell_methods": "time:mean",
+                    },
+                ),
+                "WVEL": (
+                    ["time", "z_w_top", "nlat", "nlon"],
+                    np.random.rand(T, Z, Y, X, dtype="float32"),
+                    {
+                        "long_name": "Vertical Velocity",
+                        "units": "centimeter/s",
+                        "grid_loc": 3112,
+                        "cell_methods": "time:mean",
+                    },
+                ),
+            },
+            coords={
+                "time": (
+                    ["time"],
+                    TIME,
+                    {
+                        "long_name": "time",
+                        "bounds": "time_bounds",
+                    },
+                ),
+                "z_t": (
+                    ["z_t"],
+                    np.linspace(0, 5000, Z, dtype="float32"),
+                    {
+                        "long_name": "depth from surface to midpoint of layer",
+                        "units": "centimeters",
+                        "positive": "down",
+                        "valid_min": 500.0,
+                        "valid_max": 537500.0,
+                    },
+                ),
+                "z_w_top": (
+                    ["z_w_top"],
+                    np.linspace(0, 5000, Z, dtype="float32"),
+                    {
+                        "long_name": "depth from surface to top of layer",
+                        "units": "centimeters",
+                        "positive": "down",
+                        "valid_min": 0.0,
+                        "valid_max": 525000.94,
+                    },
+                ),
+                "ULONG": (
+                    ["nlat", "nlon"],
+                    np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
+                    {
+                        "long_name": "array of u-grid longitudes",
+                        "units": "degrees_east",
+                    },
+                ),
+                "ULAT": (
+                    ["nlat", "nlon"],
+                    np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
+                    {
+                        "long_name": "array of u-grid latitudes",
+                        "units": "degrees_north",
+                    },
+                ),
+            },
+        ),
+    )
+
+
+def _MITgcm_netcdf():
+    """MITgcm model dataset in netCDF format"""
+    return xr.Dataset(
+        #
         {
             "U": (
                 ["T", "Z", "Y", "Xp1"],
@@ -529,9 +547,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_ERA5_wind": xr.Dataset(
-        # ERA5 10m wind model dataset
+    )
+
+
+def _ERA5_wind():
+    """ERA5 10m wind model dataset"""
+    return xr.Dataset(
         {
             "u10": (
                 ["time", "latitude", "longitude"],
@@ -575,9 +596,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_FES_tides": xr.Dataset(
-        # FES tidal model dataset
+    )
+
+
+def _FES_tides():
+    """FES tidal model dataset"""
+    return xr.Dataset(
         {
             "Ug": (
                 ["lat", "lon"],
@@ -624,9 +648,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_hycom_espc": xr.Dataset(
-        # HYCOM ESPC model dataset from https://data.hycom.org/datasets/ESPC-D-V02/data/daily_netcdf/2025/
+    )
+
+
+def _hycom_espc():
+    """HYCOM ESPC model dataset from https://data.hycom.org/datasets/ESPC-D-V02/data/daily_netcdf/2025/"""
+    return xr.Dataset(
         {
             "water_u": (
                 ["time", "depth", "lat", "lon"],
@@ -703,9 +730,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_ecco4": xr.Dataset(
-        # ECCO V4r4 model dataset (from https://podaac.jpl.nasa.gov/dataset/ECCO_L4_OCEAN_VEL_LLC0090GRID_DAILY_V4R4#capability-modal-download)
+    )
+
+
+def _ecco4():
+    """ECCO V4r4 model dataset (from https://podaac.jpl.nasa.gov/dataset/ECCO_L4_OCEAN_VEL_LLC0090GRID_DAILY_V4R4#capability-modal-download)"""
+    return xr.Dataset(
         {
             "UVEL": (
                 ["time", "k", "tile", "j", "i_g"],
@@ -925,9 +955,12 @@ datasets = {
                 },
             ),
         },
-    ),
-    "ds_CROCO_idealized": xr.Dataset(
-        # CROCO idealized model dataset
+    )
+
+
+def _CROCO_idealized():
+    """CROCO idealized model dataset"""
+    return xr.Dataset(
         {
             "u": (
                 ["time", "s_rho", "eta_rho", "xi_u"],
@@ -1049,7 +1082,7 @@ datasets = {
                     "standard_name": "y_grid_index_at_v_location",
                     "axis": "Y",
                     "c_grid_axis_shift": 0.5,
-                    "c_grid_dynamic_range": f"2:{Y-1}",
+                    "c_grid_dynamic_range": f"2:{Y - 1}",
                 },
             ),
             "xi_rho": (
@@ -1070,7 +1103,7 @@ datasets = {
                     "standard_name": "x_grid_index_at_u_location",
                     "axis": "X",
                     "c_grid_axis_shift": 0.5,
-                    "c_grid_dynamic_range": f"2:{X-1}",
+                    "c_grid_dynamic_range": f"2:{X - 1}",
                 },
             ),
             "x_rho": (
@@ -1094,5 +1127,19 @@ datasets = {
                 },
             ),
         },
-    ),
+    )
+
+
+datasets = {
+    "ds_copernicusmarine": _copernicusmarine(),
+    "ds_copernicusmarine_globcurrents": _copernicusmarine_globcurrents(),
+    "ds_NEMO_MOI_U": _NEMO_MOI_U(),
+    "ds_NEMO_MOI_V": _NEMO_MOI_V(),
+    "ds_CESM": _CESM(),
+    "ds_MITgcm_netcdf": _MITgcm_netcdf(),
+    "ds_ERA5_wind": _ERA5_wind(),
+    "ds_FES_tides": _FES_tides(),
+    "ds_hycom_espc": _hycom_espc(),
+    "ds_ecco4": _ecco4(),
+    "ds_CROCO_idealized": _CROCO_idealized(),
 }
