@@ -22,7 +22,6 @@ test_cases = [
     GridTestCase(datasets["ds_2d_left"], "ydim", Y),
     GridTestCase(datasets["ds_2d_left"], "zdim", Z),
     GridTestCase(datasets["ds_2d_left"], "tdim", T),
-    GridTestCase(datasets["ds_2d_left"], "time_origin", TimeConverter(datasets["ds_2d_left"].time.values[0])),
 ]
 
 
@@ -56,7 +55,6 @@ def test_xgrid_properties_ground_truth(ds, attr, expected):
         "ydim",
         "zdim",
         "tdim",
-        "time_origin",
         "_gtype",
     ],
 )
@@ -69,7 +67,6 @@ def test_xgrid_against_old(ds, attr):
         lat=ds.lat.values,
         depth=ds.depth.values,
         time=ds.time.values.astype("float64") / 1e9,
-        time_origin=TimeConverter(ds.time.values[0]),
         mesh="spherical",
     )
     actual = getattr(grid, attr)

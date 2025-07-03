@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import inspect
-from datetime import timedelta
 from math import cos, pi
 
 import cftime
@@ -13,7 +12,6 @@ __all__ = [
     "GeographicPolar",
     "GeographicPolarSquare",
     "GeographicSquare",
-    "TimeConverter",
     "UnitConverter",
     "convert_to_flat_array",
     "unitconverters_map",
@@ -40,122 +38,6 @@ def _get_cftime_datetimes() -> list[str]:
 
 def _get_cftime_calendars() -> list[str]:
     return [getattr(cftime, cf_datetime)(1990, 1, 1).calendar for cf_datetime in _get_cftime_datetimes()]
-
-
-class TimeConverter:
-    """Converter class for dates with different calendars in FieldSets
-
-    Parameters
-    ----------
-    time_origin : float, integer, numpy.datetime64 or cftime.DatetimeNoLeap
-        time origin of the class.
-    """
-
-    def __init__(self, time_origin: float | np.datetime64 | np.timedelta64 | cftime.datetime = 0):
-        self.time_origin = time_origin
-        self.calendar: str | None = None
-        if isinstance(time_origin, np.datetime64):
-            self.calendar = "np_datetime64"
-        elif isinstance(time_origin, np.timedelta64):
-            self.calendar = "np_timedelta64"
-        elif isinstance(time_origin, cftime.datetime):
-            self.calendar = time_origin.calendar
-
-    def reltime(self, time: TimeConverter | np.datetime64 | np.timedelta64 | cftime.datetime) -> float | npt.NDArray:
-        """Method to compute the difference, in seconds, between a time and the time_origin
-        of the TimeConverter
-
-        Parameters
-        ----------
-        time :
-
-
-        Returns
-        -------
-        type
-            time - self.time_origin
-
-        """
-        time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar in ["np_datetime64", "np_timedelta64"]:
-            return (time - self.time_origin) / np.timedelta64(1, "s")  # type: ignore
-        elif self.calendar in _get_cftime_calendars():
-            if isinstance(time, (list, np.ndarray)):
-                try:
-                    return np.array([(t - self.time_origin).total_seconds() for t in time])  # type: ignore
-                except ValueError:
-                    raise ValueError(
-                        f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
-                        f"Provide 'time' as a {type(self.time_origin)} object?"
-                    )
-            else:
-                try:
-                    return (time - self.time_origin).total_seconds()  # type: ignore
-                except ValueError:
-                    raise ValueError(
-                        f"Cannot subtract 'time' (a {type(time)} object) from a {self.calendar} calendar.\n"
-                        f"Provide 'time' as a {type(self.time_origin)} object?"
-                    )
-        elif self.calendar is None:
-            return time - self.time_origin  # type: ignore
-        else:
-            raise RuntimeError(f"Calendar {self.calendar} not implemented in TimeConverter")
-
-    def fulltime(self, time):
-        """Method to convert a time difference in seconds to a date, based on the time_origin
-
-        Parameters
-        ----------
-        time :
-
-
-        Returns
-        -------
-        type
-            self.time_origin + time
-
-        """
-        time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar in ["np_datetime64", "np_timedelta64"]:
-            if isinstance(time, (list, np.ndarray)):
-                return [self.time_origin + np.timedelta64(int(t), "s") for t in time]
-            else:
-                return self.time_origin + np.timedelta64(int(time), "s")
-        elif self.calendar in _get_cftime_calendars():
-            return self.time_origin + timedelta(seconds=time)
-        elif self.calendar is None:
-            return self.time_origin + time
-        else:
-            raise RuntimeError(f"Calendar {self.calendar} not implemented in TimeConverter")
-
-    def __repr__(self):
-        return f"{self.time_origin}"
-
-    def __eq__(self, other):
-        other = other.time_origin if isinstance(other, TimeConverter) else other
-        return self.time_origin == other
-
-    def __ne__(self, other):
-        other = other.time_origin if isinstance(other, TimeConverter) else other
-        if not isinstance(other, type(self.time_origin)):
-            return True
-        return self.time_origin != other
-
-    def __gt__(self, other):
-        other = other.time_origin if isinstance(other, TimeConverter) else other
-        return self.time_origin > other
-
-    def __lt__(self, other):
-        other = other.time_origin if isinstance(other, TimeConverter) else other
-        return self.time_origin < other
-
-    def __ge__(self, other):
-        other = other.time_origin if isinstance(other, TimeConverter) else other
-        return self.time_origin >= other
-
-    def __le__(self, other):
-        other = other.time_origin if isinstance(other, TimeConverter) else other
-        return self.time_origin <= other
 
 
 class UnitConverter:
