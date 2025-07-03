@@ -116,17 +116,21 @@ class ParticleSet:
             depth = convert_to_flat_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
-        time = convert_to_flat_array(time)
-        time = np.repeat(time, lon.size) if time.size == 1 else time
+        if time is not None:
+            time = convert_to_flat_array(time)
+            time = np.repeat(time, lon.size) if time.size == 1 else time
 
-        if time.size > 0 and type(time[0]) in [np.datetime64, np.timedelta64]:
-            pass  # already in the right format
-        elif time.size > 0 and type(time[0]) in [datetime, date]:
-            time = np.array([np.datetime64(t) for t in time])
-        else:
-            raise NotImplementedError("particle time must be a datetime or date object")
+            if time.size > 0 and type(time[0]) in [np.datetime64, np.timedelta64]:
+                pass  # already in the right format
+            elif time.size > 0 and type(time[0]) in [datetime, date]:
+                time = np.array([np.datetime64(t) for t in time])
+            elif time.size > 0 and type(time[0]) in [timedelta]:
+                time = np.array([np.timedelta64(t) for t in time])
+            else:
+                raise NotImplementedError("particle time must be a datetime, timedelta, or date object")
 
-        time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
+            time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
+
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
         if fieldset.time_interval:
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
@@ -153,7 +157,7 @@ class ParticleSet:
             time=time,
             lonlatdepth_dtype=lonlatdepth_dtype,
             pid_orig=pid_orig,
-            ngrid=fieldset.gridset_size,
+            ngrid=len(fieldset.gridset),
             **kwargs,
         )
 
