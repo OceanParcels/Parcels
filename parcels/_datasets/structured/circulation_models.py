@@ -166,7 +166,7 @@ def _NEMO_MOI_U():
         {
             "vozocrtx": (
                 ["deptht", "y", "x"],
-                np.random.rand(Z, Y, X, dtype="float64"),
+                np.random.rand(Z, Y, X),
                 {
                     "units": "m s-1",
                     "valid_min": -10.0,
@@ -183,7 +183,7 @@ def _NEMO_MOI_U():
             ),
             "sotkeavmu1": (
                 ["y", "x"],
-                np.random.rand(Y, X, dtype="float64"),
+                np.random.rand(Y, X),
                 {
                     "units": "m2 s-1",
                     "valid_min": 0.0,
@@ -274,7 +274,7 @@ def _NEMO_MOI_V():
         {
             "vomecrty": (
                 ["deptht", "y", "x"],
-                np.random.rand(Z, Y, X, dtype="float64"),
+                np.random.rand(Z, Y, X),
                 {
                     "units": "m s-1",
                     "valid_min": -10.0,
