@@ -119,7 +119,9 @@ class ParticleSet:
         time = convert_to_flat_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
-        if time.size > 0 and type(time[0]) in [datetime, date]:
+        if time.size > 0 and type(time[0]) in [np.datetime64, np.timedelta64]:
+            pass  # already in the right format
+        elif time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
         else:
             raise NotImplementedError("particle time must be a datetime or date object")
