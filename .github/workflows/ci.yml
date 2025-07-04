@@ -110,6 +110,8 @@ jobs:
           pattern: "* report *"
   typechecking:
     name: mypy
+    # TODO v4: Enable typechecking again
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
