@@ -23,13 +23,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos] #, mac, windows] # TODO v4: Re-enable windows and mac
+        os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
         python-version: ["3.12"]
         include:
           - os: ubuntu
             python-version: "3.11"
-          - os: ubuntu
-            python-version: "3.12"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
