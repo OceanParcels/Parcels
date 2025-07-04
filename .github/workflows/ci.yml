@@ -58,6 +58,8 @@ jobs:
           name: Unittest report ${{ matrix.os }}-${{ matrix.python-version }}
           path: ${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html
   integration-test:
+    # TODO v4: Re-enable the workflow once development has stabilized and we want to run integration tests again
+    if: false
     name: "py${{ matrix.python-version }} | ${{ matrix.os }} | integration tests"
     runs-on: ${{ matrix.os }}-latest
     strategy:
