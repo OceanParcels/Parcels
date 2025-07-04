@@ -736,6 +736,12 @@ def _hycom_espc():
 def _ecco4():
     """ECCO V4r4 model dataset (from https://podaac.jpl.nasa.gov/dataset/ECCO_L4_OCEAN_VEL_LLC0090GRID_DAILY_V4R4#capability-modal-download)"""
     tiles = 13
+    lon_grid = np.tile(
+        np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)), (tiles, 1, 1)
+    )  # NOTE this grid is not correct, as duplicates for each tile
+    lat_grid = np.tile(
+        np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (tiles, 1, 1)
+    )  # NOTE this grid is not correct, as duplicates for each tile
     return xr.Dataset(
         {
             "UVEL": (
@@ -899,9 +905,7 @@ def _ecco4():
             ),
             "YC": (
                 ["tile", "j", "i"],
-                np.tile(
-                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (tiles, 1, 1)
-                ),  # NOTE this grid is not correct, as duplicates for each tile
+                lat_grid,
                 {
                     "long_name": "latitude of tracer grid cell center",
                     "standard_name": "latitude",
@@ -914,9 +918,7 @@ def _ecco4():
             ),
             "YG": (
                 ["tile", "j_g", "i_g"],
-                np.tile(
-                    np.tile(np.linspace(-89, 89, Y), (X, 1)).T, (tiles, 1, 1)
-                ),  # NOTE this grid is not correct, as duplicates for each tile
+                lat_grid,
                 {
                     "long_name": "latitude of 'southwest' corner of tracer grid cell",
                     "standard_name": "latitude",
@@ -928,9 +930,7 @@ def _ecco4():
             ),
             "XC": (
                 ["tile", "j", "i"],
-                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)).reshape(
-                    tiles, Y, X
-                ),  # NOTE this grid is not correct, as duplicates for each tile
+                lon_grid,
                 {
                     "long_name": "longitude of tracer grid cell center",
                     "standard_name": "longitude",
@@ -943,9 +943,7 @@ def _ecco4():
             ),
             "XG": (
                 ["tile", "j_g", "i_g"],
-                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)).reshape(
-                    tiles, Y, X
-                ),  # NOTE this grid is not correct, as duplicates for each tile
+                lon_grid,
                 {
                     "long_name": "longitude of 'southwest' corner of tracer grid cell",
                     "standard_name": "longitude",
