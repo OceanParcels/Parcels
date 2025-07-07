@@ -106,8 +106,13 @@ def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
         print(f"    {ds1_name} size: {ds1.dims[dim_name]}, {ds2_name} size: {ds2.dims[dim_name]}")
         # Check if coordinates associated with dimensions are sorted (increasing)
         if dim_name in ds1.coords and dim_name in ds2.coords:
-            is_ds1_sorted = np.all(np.diff(ds1[dim_name].values) >= 0) if len(ds1[dim_name].values) > 1 else True
-            is_ds2_sorted = np.all(np.diff(ds2[dim_name].values) >= 0) if len(ds2[dim_name].values) > 1 else True
+            check_val = np.timedelta64(0, "s") if isinstance(ds1[dim_name].values[0], np.datetime64) else 0.0
+            is_ds1_sorted = (
+                np.all(np.diff(ds1[dim_name].values) >= check_val) if len(ds1[dim_name].values) > 1 else True
+            )
+            is_ds2_sorted = (
+                np.all(np.diff(ds2[dim_name].values) >= check_val) if len(ds2[dim_name].values) > 1 else True
+            )
             if is_ds1_sorted == is_ds2_sorted:
                 print(f"    Order for '{dim_name}' is consistent (both sorted: {is_ds1_sorted})")
             else:
