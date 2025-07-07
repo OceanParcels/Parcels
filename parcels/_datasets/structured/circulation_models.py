@@ -7,7 +7,7 @@ from . import T, X, Y, Z
 
 __all__ = ["T", "X", "Y", "Z", "datasets"]
 
-TIME = xr.date_range("2000", "2001", T)
+TIME = np.datetime64("2000-01-01") + np.arange(T) * np.timedelta64(1, "D")
 
 
 def _copernicusmarine():
