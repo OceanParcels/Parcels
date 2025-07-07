@@ -119,7 +119,8 @@ local_scheme = "no-local-version"
 [tool.pytest.ini_options]
 addopts = ["--strict-config", "--strict-markers"]
 xfail_strict = true
-testpaths = ["tests", "docs/examples"]
+# testpaths = ["tests", "docs/examples"] # TODO v4: Re-enable once `tests/v4` separation is gone
+testpaths = ["tests/v4"]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 minversion = "7"
 markers = [ # can be skipped by doing `pytest -m "not slow"` etc.
