@@ -363,89 +363,87 @@ def _NEMO_MOI_V():
 
 def _CESM():
     """CESM model dataset"""
-    return (
-        xr.Dataset(
-            {
-                "UVEL": (
-                    ["time", "z_t", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X).astype("float32"),
-                    {
-                        "long_name": "Velocity in grid-x direction",
-                        "units": "centimeter/s",
-                        "grid_loc": 3221,
-                        "cell_methods": "time:mean",
-                    },
-                ),
-                "VVEL": (
-                    ["time", "z_t", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X).astype("float32"),
-                    {
-                        "long_name": "Velocity in grid-y direction",
-                        "units": "centimeter/s",
-                        "grid_loc": 3221,
-                        "cell_methods": "time:mean",
-                    },
-                ),
-                "WVEL": (
-                    ["time", "z_w_top", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X).astype("float32"),
-                    {
-                        "long_name": "Vertical Velocity",
-                        "units": "centimeter/s",
-                        "grid_loc": 3112,
-                        "cell_methods": "time:mean",
-                    },
-                ),
-            },
-            coords={
-                "time": (
-                    ["time"],
-                    TIME,
-                    {
-                        "long_name": "time",
-                        "bounds": "time_bounds",
-                    },
-                ),
-                "z_t": (
-                    ["z_t"],
-                    np.linspace(0, 5000, Z, dtype="float32"),
-                    {
-                        "long_name": "depth from surface to midpoint of layer",
-                        "units": "centimeters",
-                        "positive": "down",
-                        "valid_min": 500.0,
-                        "valid_max": 537500.0,
-                    },
-                ),
-                "z_w_top": (
-                    ["z_w_top"],
-                    np.linspace(0, 5000, Z, dtype="float32"),
-                    {
-                        "long_name": "depth from surface to top of layer",
-                        "units": "centimeters",
-                        "positive": "down",
-                        "valid_min": 0.0,
-                        "valid_max": 525000.94,
-                    },
-                ),
-                "ULONG": (
-                    ["nlat", "nlon"],
-                    np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
-                    {
-                        "long_name": "array of u-grid longitudes",
-                        "units": "degrees_east",
-                    },
-                ),
-                "ULAT": (
-                    ["nlat", "nlon"],
-                    np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
-                    {
-                        "long_name": "array of u-grid latitudes",
-                        "units": "degrees_north",
-                    },
-                ),
-            },
-        ),
+    return xr.Dataset(
+        {
+            "UVEL": (
+                ["time", "z_t", "nlat", "nlon"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "long_name": "Velocity in grid-x direction",
+                    "units": "centimeter/s",
+                    "grid_loc": "3221",
+                    "cell_methods": "time: mean",
+                },
+            ),
+            "VVEL": (
+                ["time", "z_t", "nlat", "nlon"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "long_name": "Velocity in grid-y direction",
+                    "units": "centimeter/s",
+                    "grid_loc": "3221",
+                    "cell_methods": "time: mean",
+                },
+            ),
+            "WVEL": (
+                ["time", "z_w_top", "nlat", "nlon"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "long_name": "Vertical Velocity",
+                    "units": "centimeter/s",
+                    "grid_loc": "3112",
+                    "cell_methods": "time: mean",
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                np.linspace(0, 5000, T),
+                {
+                    "long_name": "time",
+                    "bounds": "time_bound",
+                },
+            ),
+            "z_t": (
+                ["z_t"],
+                np.linspace(0, 5000, Z, dtype="float32"),
+                {
+                    "long_name": "depth from surface to midpoint of layer",
+                    "units": "centimeters",
+                    "positive": "down",
+                    "valid_min": 500.0,
+                    "valid_max": 537500.0,
+                },
+            ),
+            "z_w_top": (
+                ["z_w_top"],
+                np.linspace(0, 5000, Z, dtype="float32"),
+                {
+                    "long_name": "depth from surface to top of layer",
+                    "units": "centimeters",
+                    "positive": "down",
+                    "valid_min": 0.0,
+                    "valid_max": 525000.9375,
+                },
+            ),
+            "ULONG": (
+                ["nlat", "nlon"],
+                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
+                {
+                    "long_name": "array of u-grid longitudes",
+                    "units": "degrees_east",
+                },
+            ),
+            "ULAT": (
+                ["nlat", "nlon"],
+                np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
+                {
+                    "long_name": "array of u-grid latitudes",
+                    "units": "degrees_north",
+                },
+            ),
+        },
     )
 
 
