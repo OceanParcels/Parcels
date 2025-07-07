@@ -7,7 +7,7 @@ from . import T, X, Y, Z
 
 __all__ = ["T", "X", "Y", "Z", "datasets"]
 
-TIME = xr.date_range("2000", "2001", T)
+TIME = np.datetime64("2000-01-01") + np.arange(T) * np.timedelta64(1, "D")
 
 
 def _copernicusmarine():
@@ -47,7 +47,7 @@ def _copernicusmarine():
                     "unit_long": "Meters",
                     "units": "m",
                     "axis": "Z",
-                    "long_name": "depth",
+                    "long_name": "Depth",
                     "standard_name": "depth",
                     "positive": "down",
                 },
@@ -88,7 +88,7 @@ def _copernicusmarine():
     )
 
 
-def _copernicusmarine_globcurrents():
+def _copernicusmarine_globcurrent():
     """Copernicus Marine Service GlobCurrent dataset (MULTIOBS_GLO_PHY_MYNRT_015_003)"""
     return xr.Dataset(
         {
@@ -121,6 +121,7 @@ def _copernicusmarine_globcurrents():
                     "standard_name": "depth",
                     "long_name": "Depth",
                     "units": "m",
+                    "unit_long": "Meters",
                     "axis": "Z",
                     "positive": "down",
                 },
@@ -172,7 +173,6 @@ def _NEMO_MOI_U():
                     "valid_min": -10.0,
                     "valid_max": 10.0,
                     "long_name": "Zonal velocity",
-                    "unit_long": "Meters per second",
                     "standard_name": "sea_water_x_velocity",
                     "short_name": "vozocrtx",
                     "online_operation": "N/A",
@@ -241,16 +241,6 @@ def _NEMO_MOI_U():
                     "units": "1",
                 },
             ),
-            "time_counter": (
-                ["time_counter"],
-                np.empty(0, dtype="datetime64[ns]"),
-                {
-                    "standard_name": "time",
-                    "long_name": "Time axis",
-                    "axis": "T",
-                    "time_origin": "1950-JAN-01 00:00:00",
-                },
-            ),
             "deptht": (
                 ["deptht"],
                 np.linspace(1, 5500, Z, dtype="float64"),
@@ -280,7 +270,6 @@ def _NEMO_MOI_V():
                     "valid_min": -10.0,
                     "valid_max": 10.0,
                     "long_name": "Meridional velocity",
-                    "unit_long": "Meters per second",
                     "standard_name": "sea_water_y_velocity",
                     "short_name": "vomecrty",
                     "online_operation": "N/A",
@@ -296,8 +285,8 @@ def _NEMO_MOI_V():
                 np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
                 {
                     "units": "degrees_east",
-                    "valid_min": -179.99984754002182,
-                    "valid_max": 179.999842386314,
+                    "valid_min": -179.9999951021171,
+                    "valid_max": 180.0,
                     "long_name": "Longitude",
                     "nav_model": "Default grid",
                     "standard_name": "longitude",
@@ -308,8 +297,8 @@ def _NEMO_MOI_V():
                 np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
                 {
                     "units": "degrees_north",
-                    "valid_min": -77.0104751586914,
-                    "valid_max": 89.9591064453125,
+                    "valid_min": -77.00110752801133,
+                    "valid_max": 89.95529158641207,
                     "long_name": "Latitude",
                     "nav_model": "Default grid",
                     "standard_name": "latitude",
@@ -333,16 +322,6 @@ def _NEMO_MOI_V():
                     "units": "1",
                 },
             ),
-            "time_counter": (
-                ["time_counter"],
-                np.empty(0, dtype="datetime64[ns]"),
-                {
-                    "standard_name": "time",
-                    "long_name": "Time axis",
-                    "axis": "T",
-                    "time_origin": "1950-JAN-01 00:00:00",
-                },
-            ),
             "deptht": (
                 ["deptht"],
                 np.linspace(1, 5500, Z, dtype="float64"),
@@ -362,89 +341,87 @@ def _NEMO_MOI_V():
 
 def _CESM():
     """CESM model dataset"""
-    return (
-        xr.Dataset(
-            {
-                "UVEL": (
-                    ["time", "z_t", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X).astype("float32"),
-                    {
-                        "long_name": "Velocity in grid-x direction",
-                        "units": "centimeter/s",
-                        "grid_loc": 3221,
-                        "cell_methods": "time:mean",
-                    },
-                ),
-                "VVEL": (
-                    ["time", "z_t", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X).astype("float32"),
-                    {
-                        "long_name": "Velocity in grid-y direction",
-                        "units": "centimeter/s",
-                        "grid_loc": 3221,
-                        "cell_methods": "time:mean",
-                    },
-                ),
-                "WVEL": (
-                    ["time", "z_w_top", "nlat", "nlon"],
-                    np.random.rand(T, Z, Y, X).astype("float32"),
-                    {
-                        "long_name": "Vertical Velocity",
-                        "units": "centimeter/s",
-                        "grid_loc": 3112,
-                        "cell_methods": "time:mean",
-                    },
-                ),
-            },
-            coords={
-                "time": (
-                    ["time"],
-                    TIME,
-                    {
-                        "long_name": "time",
-                        "bounds": "time_bounds",
-                    },
-                ),
-                "z_t": (
-                    ["z_t"],
-                    np.linspace(0, 5000, Z, dtype="float32"),
-                    {
-                        "long_name": "depth from surface to midpoint of layer",
-                        "units": "centimeters",
-                        "positive": "down",
-                        "valid_min": 500.0,
-                        "valid_max": 537500.0,
-                    },
-                ),
-                "z_w_top": (
-                    ["z_w_top"],
-                    np.linspace(0, 5000, Z, dtype="float32"),
-                    {
-                        "long_name": "depth from surface to top of layer",
-                        "units": "centimeters",
-                        "positive": "down",
-                        "valid_min": 0.0,
-                        "valid_max": 525000.94,
-                    },
-                ),
-                "ULONG": (
-                    ["nlat", "nlon"],
-                    np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
-                    {
-                        "long_name": "array of u-grid longitudes",
-                        "units": "degrees_east",
-                    },
-                ),
-                "ULAT": (
-                    ["nlat", "nlon"],
-                    np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
-                    {
-                        "long_name": "array of u-grid latitudes",
-                        "units": "degrees_north",
-                    },
-                ),
-            },
-        ),
+    return xr.Dataset(
+        {
+            "UVEL": (
+                ["time", "z_t", "nlat", "nlon"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "long_name": "Velocity in grid-x direction",
+                    "units": "centimeter/s",
+                    "grid_loc": "3221",
+                    "cell_methods": "time: mean",
+                },
+            ),
+            "VVEL": (
+                ["time", "z_t", "nlat", "nlon"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "long_name": "Velocity in grid-y direction",
+                    "units": "centimeter/s",
+                    "grid_loc": "3221",
+                    "cell_methods": "time: mean",
+                },
+            ),
+            "WVEL": (
+                ["time", "z_w_top", "nlat", "nlon"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "long_name": "Vertical Velocity",
+                    "units": "centimeter/s",
+                    "grid_loc": "3112",
+                    "cell_methods": "time: mean",
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                np.linspace(0, 5000, T),
+                {
+                    "long_name": "time",
+                    "bounds": "time_bound",
+                },
+            ),
+            "z_t": (
+                ["z_t"],
+                np.linspace(0, 5000, Z, dtype="float32"),
+                {
+                    "long_name": "depth from surface to midpoint of layer",
+                    "units": "centimeters",
+                    "positive": "down",
+                    "valid_min": 500.0,
+                    "valid_max": 537500.0,
+                },
+            ),
+            "z_w_top": (
+                ["z_w_top"],
+                np.linspace(0, 5000, Z, dtype="float32"),
+                {
+                    "long_name": "depth from surface to top of layer",
+                    "units": "centimeters",
+                    "positive": "down",
+                    "valid_min": 0.0,
+                    "valid_max": 525000.9375,
+                },
+            ),
+            "ULONG": (
+                ["nlat", "nlon"],
+                np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
+                {
+                    "long_name": "array of u-grid longitudes",
+                    "units": "degrees_east",
+                },
+            ),
+            "ULAT": (
+                ["nlat", "nlon"],
+                np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
+                {
+                    "long_name": "array of u-grid latitudes",
+                    "units": "degrees_north",
+                },
+            ),
+        },
     )
 
 
@@ -544,6 +521,142 @@ def _MITgcm_netcdf():
                 {
                     "long_name": "X-Coordinate of cell corner",
                     "units": "meters",
+                },
+            ),
+        },
+    )
+
+
+def _MITgcm_mds():
+    """MITgcm model dataset in native MDS format"""
+    return xr.Dataset(
+        {
+            "U": (
+                ["time", "Z", "YC", "XG"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_x_velocity",
+                    "mate": "V",
+                    "long_name": "Zonal Component of Velocity",
+                    "units": "m s-1",
+                },
+            ),
+            "V": (
+                ["time", "Z", "YG", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_y_velocity",
+                    "mate": "U",
+                    "long_name": "Meridional Component of Velocity",
+                    "units": "m s-1",
+                },
+            ),
+            "W": (
+                ["time", "Zl", "YC", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_z_velocity",
+                    "long_name": "Vertical Component of Velocity",
+                    "units": "m s-1",
+                },
+            ),
+            "S": (
+                ["time", "Z", "YC", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_salinity",
+                    "long_name": "Salinity",
+                    "units": "g kg-1",
+                },
+            ),
+            "T": (
+                ["time", "Z", "YC", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_potential_temperature",
+                    "long_name": "Potential Temperature",
+                    "units": "degree_Celcius",
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                np.arange(T) * np.timedelta64(1, "D"),
+                {
+                    "standard_name": "time",
+                    "long_name": "Time",
+                    "axis": "T",
+                    "calendar": "gregorian",
+                },
+            ),
+            "Z": (
+                ["Z"],
+                np.linspace(-25, -5000, Z, dtype="float64"),
+                {
+                    "standard_name": "depth",
+                    "long_name": "vertical coordinate of cell center",
+                    "units": "m",
+                    "positive": "down",
+                    "axis": "Z",
+                },
+            ),
+            "Zl": (
+                ["Zl"],
+                np.linspace(0, -4500, Z, dtype="float64"),
+                {
+                    "standard_name": "depth_at_lower_w_location",
+                    "long_name": "vertical coordinate of lower cell interface",
+                    "units": "m",
+                    "positive": "down",
+                    "axis": "Z",
+                    "c_grid_axis_shift": -0.5,
+                },
+            ),
+            "YC": (
+                ["YC"],
+                np.linspace(500, 5000, Y, dtype="float64"),
+                {
+                    "standard_name": "latitude",
+                    "long_name": "latitude",
+                    "units": "degrees_north",
+                    "coordinate": "YC XC",
+                    "axis": "Y",
+                },
+            ),
+            "YG": (
+                ["YG"],
+                np.linspace(0, 5000, Y, dtype="float64"),
+                {
+                    "standard_name": "latitude_at_f_location",
+                    "long_name": "latitude",
+                    "units": "degrees_north",
+                    "coordinate": "YG XG",
+                    "axis": "Y",
+                    "c_grid_axis_shift": -0.5,
+                },
+            ),
+            "XC": (
+                ["XC"],
+                np.linspace(500, 5000, X, dtype="float64"),
+                {
+                    "standard_name": "longitude",
+                    "long_name": "longitude",
+                    "units": "degrees_east",
+                    "coordinate": "YC XC",
+                    "axis": "X",
+                },
+            ),
+            "XG": (
+                ["XG"],
+                np.linspace(0, 5000, X, dtype="float64"),
+                {
+                    "standard_name": "longitude_at_f_location",
+                    "long_name": "longitude",
+                    "units": "degrees_east",
+                    "coordinate": "YG XG",
+                    "axis": "X",
+                    "c_grid_axis_shift": -0.5,
                 },
             ),
         },
@@ -663,7 +776,7 @@ def _hycom_espc():
                     "standard_name": "eastward_sea_water_velocity",
                     "units": "m/s",
                     "NAVO_code": 17,
-                    "actual_range": [-3.3700001, 3.6840003],
+                    "actual_range": np.array([-3.3700001, 3.6840003], dtype="float32"),
                     "cell_methods": "time: mean",
                 },
             ),
@@ -925,7 +1038,7 @@ def _ecco4():
                     "units": "degrees_north",
                     "coordinate": "YG XG",
                     "coverage_content_type": "coordinate",
-                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm documentation for details.",
+                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm dcoumentation for details.",
                 },
             ),
             "XC": (
@@ -950,7 +1063,7 @@ def _ecco4():
                     "units": "degrees_east",
                     "coordinate": "YG XG",
                     "coverage_content_type": "coordinate",
-                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm documentation for details.",
+                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm dcoumentation for details.",
                 },
             ),
         },
@@ -1008,7 +1121,7 @@ def _CROCO_idealized():
                 {
                     "long_name": "free-surface",
                     "units": "meter",
-                    "field": "free_surface, scalar, series",
+                    "field": "free-surface, scalar, series",
                     "standard_name": "sea_surface_height",
                 },
             ),
@@ -1067,7 +1180,7 @@ def _CROCO_idealized():
                 ["eta_rho"],
                 np.arange(Y, dtype="float32"),
                 {
-                    "long name": "y-dimension of the grid",
+                    "long_name": "y-dimension of the grid",
                     "standard_name": "y_grid_index",
                     "axis": "Y",
                     "c_grid_dynamic_range": f"2:{Y}",
@@ -1077,8 +1190,8 @@ def _CROCO_idealized():
                 ["eta_v"],
                 np.arange(Y - 1, dtype="float32"),
                 {
-                    "long name": "y-dimension of the grid at v location",
-                    "standard_name": "y_grid_index_at_v_location",
+                    "long_name": "y-dimension of the grid at v location",
+                    "standard_name": "x_grid_index_at_v_location",
                     "axis": "Y",
                     "c_grid_axis_shift": 0.5,
                     "c_grid_dynamic_range": f"2:{Y - 1}",
@@ -1088,7 +1201,7 @@ def _CROCO_idealized():
                 ["xi_rho"],
                 np.arange(X, dtype="float32"),
                 {
-                    "long name": "x-dimension of the grid",
+                    "long_name": "x-dimension of the grid",
                     "standard_name": "x_grid_index",
                     "axis": "X",
                     "c_grid_dynamic_range": f"2:{X}",
@@ -1098,7 +1211,7 @@ def _CROCO_idealized():
                 ["xi_u"],
                 np.arange(X - 1, dtype="float32"),
                 {
-                    "long name": "x-dimension of the grid at u location",
+                    "long_name": "x-dimension of the grid at u location",
                     "standard_name": "x_grid_index_at_u_location",
                     "axis": "X",
                     "c_grid_axis_shift": 0.5,
@@ -1122,7 +1235,7 @@ def _CROCO_idealized():
                     "long_name": "y-locations of RHO-points",
                     "units": "meter",
                     "standard_name": "plane_y_coordinate",
-                    "field": "y_rho, scalar",
+                    "field": "y_rho, scal",
                 },
             ),
         },
@@ -1131,11 +1244,12 @@ def _CROCO_idealized():
 
 datasets = {
     "ds_copernicusmarine": _copernicusmarine(),
-    "ds_copernicusmarine_globcurrents": _copernicusmarine_globcurrents(),
+    "ds_copernicusmarine_globcurrent": _copernicusmarine_globcurrent(),
     "ds_NEMO_MOI_U": _NEMO_MOI_U(),
     "ds_NEMO_MOI_V": _NEMO_MOI_V(),
     "ds_CESM": _CESM(),
     "ds_MITgcm_netcdf": _MITgcm_netcdf(),
+    "ds_MITgcm_mds": _MITgcm_mds(),
     "ds_ERA5_wind": _ERA5_wind(),
     "ds_FES_tides": _FES_tides(),
     "ds_hycom_espc": _hycom_espc(),

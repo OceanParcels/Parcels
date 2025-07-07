@@ -67,13 +67,32 @@ def dataset_repr_diff(ds1: xr.Dataset, ds2: xr.Dataset) -> str:
     return "".join(diff)
 
 
-def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
+def _dicts_equal(d1, d2):
+    # compare two dictionaries, including when their entries are lists or arrays ( == throws an error then)
+    if d1.keys() != d2.keys():
+        return False
+    for k in d1:
+        v1, v2 = d1[k], d2[k]
+        # Compare lists or arrays element-wise
+        if isinstance(v1, (list, np.ndarray)) and isinstance(v2, (list, np.ndarray)):
+            if not np.array_equal(np.array(v1), np.array(v2)):
+                return False
+        else:
+            if v1 != v2:
+                return False
+    return True
+
+
+def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2", verbose=True):
     print(f"Comparing {ds1_name} and {ds2_name}\n")
 
-    # Compare dataset attributes
-    print("Dataset Attributes Comparison:")
+    def verbose_print(*args, **kwargs):
+        if verbose:
+            print(*args, **kwargs)
+
+    verbose_print("Dataset Attributes Comparison:")
     if ds1.attrs == ds2.attrs:
-        print("  Dataset attributes are identical.")
+        verbose_print("  Dataset attributes are identical.")
     else:
         print("  Dataset attributes differ.")
         for attr_name in set(ds1.attrs.keys()) | set(ds2.attrs.keys()):
@@ -85,14 +104,14 @@ def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
                 print(f"    Attribute '{attr_name}' differs:")
                 print(f"      {ds1_name}: {ds1.attrs[attr_name]}")
                 print(f"      {ds2_name}: {ds2.attrs[attr_name]}")
-    print("-" * 30)
+    verbose_print("-" * 30)
 
     # Compare dimensions
-    print("Dimensions Comparison:")
+    verbose_print("Dimensions Comparison:")
     ds1_dims = set(ds1.dims)
     ds2_dims = set(ds2.dims)
     if ds1_dims == ds2_dims:
-        print("  Dimension names are identical.")
+        verbose_print("  Dimension names are identical.")
     else:
         print("  Dimension names differ:")
         print(f"    {ds1_name} dims: {sorted(list(ds1_dims))}")
@@ -101,28 +120,35 @@ def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
     # For common dimensions, compare order (implicit by comparing coordinate values for sortedness)
     # and size (though size is parameterized and expected to be different)
     for dim_name in ds1_dims.intersection(ds2_dims):
-        print(f"  Dimension '{dim_name}':")
+        verbose_print(f"  Dimension '{dim_name}':")
         # Sizes will differ due to DIM_SIZE, so we don't strictly compare them.
-        print(f"    {ds1_name} size: {ds1.dims[dim_name]}, {ds2_name} size: {ds2.dims[dim_name]}")
+        verbose_print(f"    {ds1_name} size: {ds1.dims[dim_name]}, {ds2_name} size: {ds2.dims[dim_name]}")
         # Check if coordinates associated with dimensions are sorted (increasing)
         if dim_name in ds1.coords and dim_name in ds2.coords:
-            is_ds1_sorted = np.all(np.diff(ds1[dim_name].values) >= 0) if len(ds1[dim_name].values) > 1 else True
-            is_ds2_sorted = np.all(np.diff(ds2[dim_name].values) >= 0) if len(ds2[dim_name].values) > 1 else True
+            check_val = (
+                np.timedelta64(0, "s") if isinstance(ds1[dim_name].values[0], (np.datetime64, np.timedelta64)) else 0.0
+            )
+            is_ds1_sorted = (
+                np.all(np.diff(ds1[dim_name].values) >= check_val) if len(ds1[dim_name].values) > 1 else True
+            )
+            is_ds2_sorted = (
+                np.all(np.diff(ds2[dim_name].values) >= check_val) if len(ds2[dim_name].values) > 1 else True
+            )
             if is_ds1_sorted == is_ds2_sorted:
-                print(f"    Order for '{dim_name}' is consistent (both sorted: {is_ds1_sorted})")
+                verbose_print(f"    Order for '{dim_name}' is consistent (both sorted: {is_ds1_sorted})")
             else:
                 print(
                     f"    Order for '{dim_name}' differs: {ds1_name} sorted: {is_ds1_sorted}, {ds2_name} sorted: {is_ds2_sorted}"
                 )
-    print("-" * 30)
+    verbose_print("-" * 30)
 
     # Compare variables (name, attributes, dimensions used)
-    print("Variables Comparison:")
+    verbose_print("Variables Comparison:")
     ds1_vars = set(ds1.variables.keys())
     ds2_vars = set(ds2.variables.keys())
 
     if ds1_vars == ds2_vars:
-        print("  Variable names are identical.")
+        verbose_print("  Variable names are identical.")
     else:
         print("  Variable names differ:")
         print(f"    {ds1_name} vars: {sorted(list(ds1_vars - ds2_vars))}")
@@ -130,13 +156,13 @@ def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
         print(f"    Common vars: {sorted(list(ds1_vars.intersection(ds2_vars)))}")
 
     for var_name in ds1_vars.intersection(ds2_vars):
-        print(f"  Variable '{var_name}':")
+        verbose_print(f"  Variable '{var_name}':")
         var1 = ds1[var_name]
         var2 = ds2[var_name]
 
         # Compare attributes
-        if var1.attrs == var2.attrs:
-            print("    Attributes are identical.")
+        if _dicts_equal(var1.attrs, var2.attrs):
+            verbose_print("    Attributes are identical.")
         else:
             print("    Attributes differ.")
             for attr_name in set(var1.attrs.keys()) | set(var2.attrs.keys()):
@@ -151,9 +177,9 @@ def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
 
         # Compare dimensions used by the variable
         if var1.dims == var2.dims:
-            print(f"    Dimensions used are identical: {var1.dims}")
+            verbose_print(f"    Dimensions used are identical: {var1.dims}")
         else:
             print("    Dimensions used differ:")
             print(f"      {ds1_name}: {var1.dims}")
             print(f"      {ds2_name}: {var2.dims}")
-    print("=" * 30 + " End of Comparison " + "=" * 30)
+    verbose_print("=" * 30 + " End of Comparison " + "=" * 30)
