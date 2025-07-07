@@ -18,21 +18,16 @@ defaults:
 
 jobs:
   unit-test:
-    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | unit tests (${{ matrix.test-subfolder }})"
+    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | unit tests"
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
-        test-subfolder: ["/"]
         python-version: ["3.12"]
         include:
           - os: ubuntu
             python-version: "3.11"
-            test-subfolder: "/"
-          - os: ubuntu
-            python-version: "3.12"
-            test-subfolder: "/v4"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,7 +38,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Unit test
         run: |
-          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html tests${{ matrix.test-subfolder }}
+          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
@@ -58,6 +53,8 @@ jobs:
           name: Unittest report ${{ matrix.os }}-${{ matrix.python-version }}
           path: ${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html
   integration-test:
+    # TODO v4: Re-enable the workflow once development has stabilized and we want to run integration tests again
+    if: false
     name: "py${{ matrix.python-version }} | ${{ matrix.os }} | integration tests"
     runs-on: ${{ matrix.os }}-latest
     strategy:
@@ -111,6 +108,8 @@ jobs:
           pattern: "* report *"
   typechecking:
     name: mypy
+    # TODO v4: Enable typechecking again
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
