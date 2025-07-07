@@ -8,7 +8,6 @@ from numpy.testing import assert_allclose
 from parcels import xgcm
 from parcels._datasets.structured.generic import T, X, Y, Z, datasets
 from parcels.grid import Grid as OldGrid
-from parcels.tools.converters import TimeConverter
 from parcels.xgrid import XGrid, _search_1d_array
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
@@ -28,8 +27,6 @@ test_cases = [
 def assert_equal(actual, expected):
     if expected is None:
         assert actual is None
-    elif isinstance(expected, TimeConverter):
-        assert actual == expected
     elif isinstance(expected, np.ndarray):
         assert actual.shape == expected.shape
         assert_allclose(actual, expected)

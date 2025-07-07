@@ -4,7 +4,6 @@ import numpy as np
 import numpy.typing as npt
 
 from parcels._typing import Mesh, assert_valid_mesh
-from parcels.tools.converters import TimeConverter
 
 __all__ = [
     "CurvilinearSGrid",
@@ -31,7 +30,6 @@ class Grid:
         lon: npt.NDArray,
         lat: npt.NDArray,
         time: npt.NDArray | None,
-        time_origin: TimeConverter | None,
         mesh: Mesh,
     ):
         lon = np.array(lon)
@@ -52,8 +50,6 @@ class Grid:
         self._lat = lat
         self.time = time
         self.tdim = time.size
-        self._time_origin = TimeConverter() if time_origin is None else time_origin
-        assert isinstance(self.time_origin, TimeConverter), "time_origin needs to be a TimeConverter object"
         assert_valid_mesh(mesh)
         self._mesh = mesh
         self._zonal_periodic = False
@@ -63,11 +59,7 @@ class Grid:
 
     def __repr__(self):
         with np.printoptions(threshold=5, suppress=True, linewidth=120, formatter={"float": "{: 0.2f}".format}):
-            return (
-                f"{type(self).__name__}("
-                f"lon={self.lon!r}, lat={self.lat!r}, time={self.time!r}, "
-                f"time_origin={self.time_origin!r}, mesh={self.mesh!r})"
-            )
+            return f"{type(self).__name__}(lon={self.lon!r}, lat={self.lat!r}, time={self.time!r}, "
 
     @property
     def lon(self):
@@ -90,10 +82,6 @@ class Grid:
         return self._lonlat_minmax
 
     @property
-    def time_origin(self):
-        return self._time_origin
-
-    @property
     def zonal_periodic(self):
         return self._zonal_periodic
 
@@ -103,7 +91,6 @@ class Grid:
         lat: npt.ArrayLike,
         depth,
         time,
-        time_origin,
         mesh: Mesh,
     ):
         lon = np.array(lon)
@@ -114,14 +101,14 @@ class Grid:
 
         if len(lon.shape) <= 1:
             if depth is None or len(depth.shape) <= 1:
-                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                return RectilinearZGrid(lon, lat, depth, time, mesh=mesh)
             else:
-                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                return RectilinearSGrid(lon, lat, depth, time, mesh=mesh)
         else:
             if depth is None or len(depth.shape) <= 1:
-                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                return CurvilinearZGrid(lon, lat, depth, time, mesh=mesh)
             else:
-                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                return CurvilinearSGrid(lon, lat, depth, time, mesh=mesh)
 
     def _check_zonal_periodic(self):
         if self.zonal_periodic or self.mesh == "flat" or self.lon.size == 1:
@@ -167,14 +154,14 @@ class RectilinearGrid(Grid):
 
     """
 
-    def __init__(self, lon, lat, time, time_origin, mesh: Mesh):
+    def __init__(self, lon, lat, time, mesh: Mesh):
         assert isinstance(lon, np.ndarray) and len(lon.shape) <= 1, "lon is not a numpy vector"
         assert isinstance(lat, np.ndarray) and len(lat.shape) <= 1, "lat is not a numpy vector"
         assert isinstance(time, np.ndarray) or not time, "time is not a numpy array"
         if isinstance(time, np.ndarray):
             assert len(time.shape) == 1, "time is not a vector"
 
-        super().__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, mesh)
 
     @property
     def xdim(self):
@@ -199,8 +186,6 @@ class RectilinearZGrid(RectilinearGrid):
         The depth of the different layers is thus constant.
     time :
         Vector containing the time coordinates of the grid
-    time_origin : parcels.tools.converters.TimeConverter
-        Time origin of the time axis
     mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
@@ -210,8 +195,8 @@ class RectilinearZGrid(RectilinearGrid):
         2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh: Mesh = "flat"):
-        super().__init__(lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth=None, time=None, mesh: Mesh = "flat"):
+        super().__init__(lon, lat, time, mesh)
         if isinstance(depth, np.ndarray):
             assert len(depth.shape) <= 1, "depth is not a vector"
 
@@ -247,8 +232,6 @@ class RectilinearSGrid(RectilinearGrid):
         depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     time :
         Vector containing the time coordinates of the grid
-    time_origin : parcels.tools.converters.TimeConverter
-        Time origin of the time axis
     mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
@@ -264,10 +247,9 @@ class RectilinearSGrid(RectilinearGrid):
         lat: npt.NDArray,
         depth: npt.NDArray,
         time: npt.NDArray | None = None,
-        time_origin: TimeConverter | None = None,
         mesh: Mesh = "flat",
     ):
-        super().__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, mesh)
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 3D or 4D numpy array"
 
         self._gtype = GridType.RectilinearSGrid
@@ -306,7 +288,6 @@ class CurvilinearGrid(Grid):
         lon: npt.NDArray,
         lat: npt.NDArray,
         time: npt.NDArray | None = None,
-        time_origin: TimeConverter | None = None,
         mesh: Mesh = "flat",
     ):
         assert isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2, "lon is not a 2D numpy array"
@@ -317,7 +298,7 @@ class CurvilinearGrid(Grid):
 
         lon = lon.squeeze()
         lat = lat.squeeze()
-        super().__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, mesh)
 
     @property
     def xdim(self):
@@ -342,8 +323,6 @@ class CurvilinearZGrid(CurvilinearGrid):
         The depth of the different layers is thus constant.
     time :
         Vector containing the time coordinates of the grid
-    time_origin : parcels.tools.converters.TimeConverter
-        Time origin of the time axis
     mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
@@ -359,10 +338,9 @@ class CurvilinearZGrid(CurvilinearGrid):
         lat: npt.NDArray,
         depth: npt.NDArray | None = None,
         time: npt.NDArray | None = None,
-        time_origin: TimeConverter | None = None,
         mesh: Mesh = "flat",
     ):
-        super().__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, mesh)
         if isinstance(depth, np.ndarray):
             assert len(depth.shape) == 1, "depth is not a vector"
 
@@ -396,8 +374,6 @@ class CurvilinearSGrid(CurvilinearGrid):
         depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     time :
         Vector containing the time coordinates of the grid
-    time_origin : parcels.tools.converters.TimeConverter
-        Time origin of the time axis
     mesh : str
         String indicating the type of mesh coordinates and
         units used during velocity interpolation:
@@ -413,10 +389,9 @@ class CurvilinearSGrid(CurvilinearGrid):
         lat: npt.NDArray,
         depth: npt.NDArray,
         time: npt.NDArray | None = None,
-        time_origin: TimeConverter | None = None,
         mesh: Mesh = "flat",
     ):
-        super().__init__(lon, lat, time, time_origin, mesh)
+        super().__init__(lon, lat, time, mesh)
         assert isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4], "depth is not a 4D numpy array"
 
         self._gtype = GridType.CurvilinearSGrid
