@@ -47,7 +47,7 @@ def _copernicusmarine():
                     "unit_long": "Meters",
                     "units": "m",
                     "axis": "Z",
-                    "long_name": "depth",
+                    "long_name": "Depth",
                     "standard_name": "depth",
                     "positive": "down",
                 },
@@ -173,7 +173,6 @@ def _NEMO_MOI_U():
                     "valid_min": -10.0,
                     "valid_max": 10.0,
                     "long_name": "Zonal velocity",
-                    "unit_long": "Meters per second",
                     "standard_name": "sea_water_x_velocity",
                     "short_name": "vozocrtx",
                     "online_operation": "N/A",
@@ -242,16 +241,6 @@ def _NEMO_MOI_U():
                     "units": "1",
                 },
             ),
-            "time_counter": (
-                ["time_counter"],
-                np.empty(0, dtype="datetime64[ns]"),
-                {
-                    "standard_name": "time",
-                    "long_name": "Time axis",
-                    "axis": "T",
-                    "time_origin": "1950-JAN-01 00:00:00",
-                },
-            ),
             "deptht": (
                 ["deptht"],
                 np.linspace(1, 5500, Z, dtype="float64"),
@@ -281,7 +270,6 @@ def _NEMO_MOI_V():
                     "valid_min": -10.0,
                     "valid_max": 10.0,
                     "long_name": "Meridional velocity",
-                    "unit_long": "Meters per second",
                     "standard_name": "sea_water_y_velocity",
                     "short_name": "vomecrty",
                     "online_operation": "N/A",
@@ -297,8 +285,8 @@ def _NEMO_MOI_V():
                 np.tile(np.linspace(-179, 179, X, endpoint=False), (Y, 1)),  # note that this is not curvilinear
                 {
                     "units": "degrees_east",
-                    "valid_min": -179.99984754002182,
-                    "valid_max": 179.999842386314,
+                    "valid_min": -179.9999951021171,
+                    "valid_max": 180.0,
                     "long_name": "Longitude",
                     "nav_model": "Default grid",
                     "standard_name": "longitude",
@@ -309,8 +297,8 @@ def _NEMO_MOI_V():
                 np.tile(np.linspace(-75, 85, Y).reshape(-1, 1), (1, X)),  # note that this is not curvilinear
                 {
                     "units": "degrees_north",
-                    "valid_min": -77.0104751586914,
-                    "valid_max": 89.9591064453125,
+                    "valid_min": -77.00110752801133,
+                    "valid_max": 89.95529158641207,
                     "long_name": "Latitude",
                     "nav_model": "Default grid",
                     "standard_name": "latitude",
@@ -332,16 +320,6 @@ def _NEMO_MOI_V():
                     "standard_name": "projection_y_coordinate",
                     "axis": "Y",
                     "units": "1",
-                },
-            ),
-            "time_counter": (
-                ["time_counter"],
-                np.empty(0, dtype="datetime64[ns]"),
-                {
-                    "standard_name": "time",
-                    "long_name": "Time axis",
-                    "axis": "T",
-                    "time_origin": "1950-JAN-01 00:00:00",
                 },
             ),
             "deptht": (
@@ -924,7 +902,7 @@ def _ecco4():
                     "units": "degrees_north",
                     "coordinate": "YG XG",
                     "coverage_content_type": "coordinate",
-                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm documentation for details.",
+                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm dcoumentation for details.",
                 },
             ),
             "XC": (
@@ -949,7 +927,7 @@ def _ecco4():
                     "units": "degrees_east",
                     "coordinate": "YG XG",
                     "coverage_content_type": "coordinate",
-                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm documentation for details.",
+                    "comment": "Nonuniform grid spacing. Note: 'southwest' does not correspond to geographic orientation but is used for convenience to describe the computational grid. See MITgcm dcoumentation for details.",
                 },
             ),
         },
@@ -1007,7 +985,7 @@ def _CROCO_idealized():
                 {
                     "long_name": "free-surface",
                     "units": "meter",
-                    "field": "free_surface, scalar, series",
+                    "field": "free-surface, scalar, series",
                     "standard_name": "sea_surface_height",
                 },
             ),
@@ -1066,7 +1044,7 @@ def _CROCO_idealized():
                 ["eta_rho"],
                 np.arange(Y, dtype="float32"),
                 {
-                    "long name": "y-dimension of the grid",
+                    "long_name": "y-dimension of the grid",
                     "standard_name": "y_grid_index",
                     "axis": "Y",
                     "c_grid_dynamic_range": f"2:{Y}",
@@ -1076,8 +1054,8 @@ def _CROCO_idealized():
                 ["eta_v"],
                 np.arange(Y - 1, dtype="float32"),
                 {
-                    "long name": "y-dimension of the grid at v location",
-                    "standard_name": "y_grid_index_at_v_location",
+                    "long_name": "y-dimension of the grid at v location",
+                    "standard_name": "x_grid_index_at_v_location",
                     "axis": "Y",
                     "c_grid_axis_shift": 0.5,
                     "c_grid_dynamic_range": f"2:{Y - 1}",
@@ -1087,7 +1065,7 @@ def _CROCO_idealized():
                 ["xi_rho"],
                 np.arange(X, dtype="float32"),
                 {
-                    "long name": "x-dimension of the grid",
+                    "long_name": "x-dimension of the grid",
                     "standard_name": "x_grid_index",
                     "axis": "X",
                     "c_grid_dynamic_range": f"2:{X}",
@@ -1097,7 +1075,7 @@ def _CROCO_idealized():
                 ["xi_u"],
                 np.arange(X - 1, dtype="float32"),
                 {
-                    "long name": "x-dimension of the grid at u location",
+                    "long_name": "x-dimension of the grid at u location",
                     "standard_name": "x_grid_index_at_u_location",
                     "axis": "X",
                     "c_grid_axis_shift": 0.5,
@@ -1121,7 +1099,7 @@ def _CROCO_idealized():
                     "long_name": "y-locations of RHO-points",
                     "units": "meter",
                     "standard_name": "plane_y_coordinate",
-                    "field": "y_rho, scalar",
+                    "field": "y_rho, scal",
                 },
             ),
         },
