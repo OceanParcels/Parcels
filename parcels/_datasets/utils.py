@@ -67,6 +67,22 @@ def dataset_repr_diff(ds1: xr.Dataset, ds2: xr.Dataset) -> str:
     return "".join(diff)
 
 
+def _dicts_equal(d1, d2):
+    # compare two dictionaries, including when their entries are lists or arrays ( == throws an error then)
+    if d1.keys() != d2.keys():
+        return False
+    for k in d1:
+        v1, v2 = d1[k], d2[k]
+        # Compare lists or arrays element-wise
+        if isinstance(v1, (list, np.ndarray)) and isinstance(v2, (list, np.ndarray)):
+            if not np.array_equal(np.array(v1), np.array(v2)):
+                return False
+        else:
+            if v1 != v2:
+                return False
+    return True
+
+
 def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
     print(f"Comparing {ds1_name} and {ds2_name}\n")
 
@@ -140,7 +156,7 @@ def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2"):
         var2 = ds2[var_name]
 
         # Compare attributes
-        if var1.attrs == var2.attrs:
+        if _dicts_equal(var1.attrs, var2.attrs):
             print("    Attributes are identical.")
         else:
             print("    Attributes differ.")
