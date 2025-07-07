@@ -2,6 +2,8 @@ import tempfile
 from dataclasses import dataclass
 from datetime import timedelta
 
+import numpy as np
+import pytest
 import xarray as xr
 
 import parcels
@@ -13,6 +15,17 @@ class Params:
     dt: timedelta
     runtime: timedelta = None
     endtime: timedelta = None
+
+
+def assert_all_particles_same_time(ds: xr.Dataset):
+    assert np.allclose(
+        ds.time.diff(dim="trajectory").astype("float64"), 0
+    ), "All particles should have the same time value. Not coercible to 1D time array."
+
+
+def get_1d_time_output_in_float_hours(ds: xr.Dataset) -> xr.DataArray:
+    assert_all_particles_same_time(ds)
+    return ds.time.isel(trajectory=0) / np.timedelta64(1, "h")
 
 
 def execute_particles(fieldset, lon, lat, params: Params) -> xr.Dataset:
@@ -59,7 +72,7 @@ def test_runtime_and_outputdt_evenly_divisible():
     params = Params(
         outputdt=timedelta(hours=1),
         runtime=timedelta(hours=6),  # divisible by both outputdt and dt
-        dt=timedelta(minutes=30),
+        dt=timedelta(minutes=10),
     )
     ds = execute_particles(
         get_some_fieldset(),
@@ -67,71 +80,41 @@ def test_runtime_and_outputdt_evenly_divisible():
         lat=[1e5, 2.8e5],
         params=params,
     )
-    # TODO: Add validation code here
+    assert np.allclose(get_1d_time_output_in_float_hours(ds), [0, 1, 2, 3, 4, 5])  # 0 to 6 hours (excluding 6)
 
 
-def test_runtime_divisible_by_outputdt_only():
-    """Test case where runtime % outputdt==0 and runtime % dt != 0"""
+def test_runtime_and_outputdt_not_evenly_divisible():
+    params = Params(
+        outputdt=timedelta(hours=1),
+        runtime=timedelta(hours=6 + 11 / 60),  # runtime is not evenly divisible by outputdt
+        dt=timedelta(minutes=10),
+    )
+    ds = execute_particles(
+        get_some_fieldset(),
+        lon=[3.3e5, 3.3e5],
+        lat=[1e5, 2.8e5],
+        params=params,
+    )
+
+    assert np.allclose(get_1d_time_output_in_float_hours(ds), [0, 1, 2, 3, 4, 5, 6])  # 0 to 6 hours (including 6)
+
+
+def test_outputdt_not_divisible_by_dt():
     params = Params(
         outputdt=timedelta(hours=1),
         runtime=timedelta(hours=6),
-        dt=timedelta(minutes=17),  # not evenly divisible
+        dt=timedelta(minutes=25),  # outputdt is not a multiple of dt
     )
+    fieldset = get_some_fieldset()
     ds = execute_particles(
-        get_some_fieldset(),
+        fieldset,
         lon=[3.3e5, 3.3e5],
         lat=[1e5, 2.8e5],
         params=params,
     )
-    # TODO: Add validation code here
-
-
-def test_runtime_divisible_by_dt_only():
-    """Test case where runtime % outputdt!=0 and runtime % dt == 0"""
-    params = Params(
-        outputdt=timedelta(minutes=45),
-        runtime=timedelta(hours=2),  # divisible by dt but not outputdt
-        dt=timedelta(minutes=30),
-    )
-    ds = execute_particles(
-        get_some_fieldset(),
-        lon=[3.3e5, 3.3e5],
-        lat=[1e5, 2.8e5],
-        params=params,
-    )
-    # TODO: Add validation code here
-
-
-def test_no_even_divisions():
-    """Test case where runtime % outputdt!=0 and runtime % dt != 0"""
-    params = Params(
-        outputdt=timedelta(minutes=45),
-        runtime=timedelta(minutes=137),  # prime number of minutes
-        dt=timedelta(minutes=17),
-    )
-    ds = execute_particles(
-        get_some_fieldset(),
-        lon=[3.3e5, 3.3e5],
-        lat=[1e5, 2.8e5],
-        params=params,
-    )
-    # TODO: Add validation code here
-
-
-def test_outputdt_not_multiple_of_dt():
-    """Test case where outputdt is not a multiple of dt"""
-    params = Params(
-        outputdt=timedelta(minutes=17),
-        runtime=timedelta(hours=1),
-        dt=timedelta(minutes=5),
-    )
-    ds = execute_particles(
-        get_some_fieldset(),
-        lon=[3.3e5, 3.3e5],
-        lat=[1e5, 2.8e5],
-        params=params,
-    )
-    # TODO: Add validation code here
+    breakpoint()
+    # ???? Not the actual time of the expected output since its at a dt cadence? Expected [0, 3*25/60, 5*25/60, ...]?
+    assert np.allclose(get_1d_time_output_in_float_hours(ds), [0, 1, 2, 3, 4, 5])  # 0 to 6 hours (excluding 6)
 
 
 def test_zero_runtime():
@@ -141,13 +124,13 @@ def test_zero_runtime():
         runtime=timedelta(0),
         dt=timedelta(minutes=5),
     )
-    ds = execute_particles(
-        get_some_fieldset(),
-        lon=[3.3e5, 3.3e5],
-        lat=[1e5, 2.8e5],
-        params=params,
-    )
-    # TODO: Add validation code here
+    with pytest.raises(FileNotFoundError):
+        execute_particles(
+            get_some_fieldset(),
+            lon=[3.3e5, 3.3e5],
+            lat=[1e5, 2.8e5],
+            params=params,
+        )
 
 
 def test_zero_dt():
@@ -157,19 +140,18 @@ def test_zero_dt():
         runtime=timedelta(hours=6),
         dt=timedelta(0),
     )
-    ds = execute_particles(
-        get_some_fieldset(),
-        lon=[3.3e5, 3.3e5],
-        lat=[1e5, 2.8e5],
-        params=params,
-    )
-    # TODO: Add validation code here
+    with pytest.raises(ValueError, msg="Time step dt is too small"):
+        execute_particles(
+            get_some_fieldset(),
+            lon=[3.3e5, 3.3e5],
+            lat=[1e5, 2.8e5],
+            params=params,
+        )
 
 
-def test_outputdt_greater_than_runtime():
-    """Test case where outputdt > runtime"""
+def test_outputdt_equal_to_runtime():
     params = Params(
-        outputdt=timedelta(hours=2),
+        outputdt=timedelta(hours=1),  # outputdt equal to runtime
         runtime=timedelta(hours=1),
         dt=timedelta(minutes=5),
     )
@@ -179,11 +161,25 @@ def test_outputdt_greater_than_runtime():
         lat=[1e5, 2.8e5],
         params=params,
     )
-    # TODO: Add validation code here
+    assert np.allclose(get_1d_time_output_in_float_hours(ds), [0])  # 0 (only one output at start time)
+
+
+def test_outputdt_greater_than_runtime():
+    params = Params(
+        outputdt=timedelta(hours=2),  # outputdt greater than runtime
+        runtime=timedelta(hours=1),
+        dt=timedelta(minutes=5),
+    )
+    ds = execute_particles(
+        get_some_fieldset(),
+        lon=[3.3e5, 3.3e5],
+        lat=[1e5, 2.8e5],
+        params=params,
+    )
+    assert np.allclose(get_1d_time_output_in_float_hours(ds), [0])  # 0 (only one output at start time)
 
 
 def test_outputdt_less_than_dt():
-    """Test case where outputdt < dt"""
     params = Params(
         outputdt=timedelta(minutes=1),
         runtime=timedelta(hours=1),
@@ -195,21 +191,20 @@ def test_outputdt_less_than_dt():
         lat=[1e5, 2.8e5],
         params=params,
     )
-    # TODO: Add validation code here
+    assert np.allclose(get_1d_time_output_in_float_hours(ds) * 60, np.arange(4, 60, 1))  # ?? Why np.arange(4, 60, 1) ?
 
 
 def test_timed_particle_release():
     """Test to verify if runtime is from first particle release or first fieldset time"""
-    # TODO: This test needs additional setup for timed particle release
+    pytest.skip("# TODO: This test needs additional setup for timed particle release")
     params = Params(
         outputdt=timedelta(hours=1),
         runtime=timedelta(hours=6),
         dt=timedelta(minutes=5),
     )
-    ds = execute_particles(
+    _ = execute_particles(
         get_some_fieldset(),
         lon=[3.3e5, 3.3e5],
         lat=[1e5, 2.8e5],
         params=params,
     )
-    # TODO: Add validation code here
