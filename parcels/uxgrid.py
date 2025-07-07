@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 import uxarray as ux
 from uxarray.grid.neighbors import _barycentric_coordinates
 
 from parcels.field import FieldOutOfBoundError  # Adjust import as necessary
+from parcels.xgrid import _search_1d_array
 
 from .basegrid import BaseGrid
+
+_UXGRID_AXES = Literal["Z", "FACE"]
 
 
 class UxGrid(BaseGrid):
@@ -49,9 +54,7 @@ class UxGrid(BaseGrid):
             return np.zeros(1)
         return self.z.values
 
-    def search(
-        self, z: float, y: float, x: float, ei: int | None = None, search2D: bool = False
-    ) -> tuple[np.ndarray, int]:
+    def search(self, z, y, x, ei=None):
         tol = 1e-10
 
         def try_face(fid):
@@ -60,21 +63,7 @@ class UxGrid(BaseGrid):
                 return bcoords, fid
             return None, None
 
-        def find_vertical_index() -> int:
-            if search2D:
-                return 0
-            else:
-                nz = self.z.shape[0]
-                if nz == 1:
-                    return 0
-                zf = self.z.values
-                # Return zi such that zf[zi] <= z < zf[zi+1]
-                zi = np.searchsorted(zf, z, side="right") - 1  # Search assumes that z is positive and increasing with i
-                if zi < 0 or zi >= nz - 1:
-                    raise FieldOutOfBoundError(z, y, x)
-                return zi
-
-        zi = find_vertical_index()  # Find the vertical cell center nearest to z
+        zi, zeta = _search_1d_array(self.z.values, z)
 
         if ei is not None:
             _, fi = self.unravel_index(ei)
@@ -94,7 +83,7 @@ class UxGrid(BaseGrid):
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
 
-        return bcoords[0], self.ravel_index(zi, fi[0])
+        return {"Z": (zi, zeta), "FACE": (fi, bcoords[0])}
 
     def _get_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
@@ -113,40 +102,10 @@ class UxGrid(BaseGrid):
         err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
         return bcoord, err
 
-    def ravel_index(self, zi, fi):
-        """
-        Converts a face index and a vertical index into a single encoded index.
+    def ravel_index(self, axis_indices: dict[_UXGRID_AXES, int]):
+        return axis_indices["FACE"] + self.uxgrid.n_face * axis_indices["Z"]
 
-        Parameters
-        ----------
-        zi : int
-            Vertical index (not used in unstructured grids, but kept for compatibility).
-        fi : int
-            Face index.
-
-        Returns
-        -------
-        int
-            Encoded index combining the face index and vertical index.
-        """
-        return fi + self.uxgrid.n_face * zi
-
-    def unravel_index(self, ei):
-        """
-        Converts a single encoded index back into a vertical index and face index.
-
-        Parameters
-        ----------
-        ei : int
-            Encoded index to be unraveled.
-
-        Returns
-        -------
-        zi : int
-            Vertical index.
-        fi : int
-            Face index.
-        """
+    def unravel_index(self, ei) -> dict[_UXGRID_AXES, int]:
         zi = ei // self.uxgrid.n_face
         fi = ei % self.uxgrid.n_face
-        return zi, fi
+        return {"Z": zi, "FACE": fi}

@@ -356,7 +356,7 @@ def _search_indices_curvilinear_2d(
 
 
 ## TODO :  Still need to implement the search_indices_curvilinear
-def _search_indices_curvilinear(field: Field, time, z, y, x, ti, particle=None, search2D=False):
+def _search_indices_curvilinear(field, time, z, y, x, ti, particle=None, search2D=False):
     if particle:
         zi, yi, xi = field.unravel_index(particle.ei)
     else:

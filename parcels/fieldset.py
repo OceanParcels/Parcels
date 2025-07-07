@@ -15,7 +15,7 @@ from parcels.field import Field, VectorField
 from parcels.xgrid import XGrid
 
 if TYPE_CHECKING:
-    from parcels._typing import DatetimeLike
+    from parcels._typing import TimeLike
     from parcels.basegrid import BaseGrid
 __all__ = ["FieldSet"]
 
@@ -57,7 +57,7 @@ class FieldSet:
         assert_compatible_calendars(fields)
 
         self.fields = {f.name: f for f in fields}
-        self.constants = {}
+        self.constants: dict[str, float] = {}
 
     def __getattr__(self, name):
         """Get the field by name. If the field is not found, check if it's a constant."""
@@ -236,7 +236,7 @@ class CalendarError(Exception):  # TODO: Move to a parcels errors module
     """Exception raised when the calendar of a field is not compatible with the rest of the Fields. The user should ensure that they only add fields to a FieldSet that have compatible CFtime calendars."""
 
 
-def assert_compatible_calendars(fields: Iterable[Field]):
+def assert_compatible_calendars(fields: Iterable[Field | VectorField]):
     time_intervals = [f.time_interval for f in fields if f.time_interval is not None]
 
     if len(time_intervals) == 0:  # All time intervals are none
@@ -253,7 +253,7 @@ def assert_compatible_calendars(fields: Iterable[Field]):
             raise CalendarError(msg)
 
 
-def _datetime_to_msg(example_datetime: DatetimeLike) -> str:
+def _datetime_to_msg(example_datetime: TimeLike) -> str:
     datetime_type, calendar = get_datetime_type_calendar(example_datetime)
     msg = str(datetime_type)
     if calendar is not None:
@@ -261,5 +261,5 @@ def _datetime_to_msg(example_datetime: DatetimeLike) -> str:
     return msg
 
 
-def _format_calendar_error_message(field: Field, reference_datetime: DatetimeLike) -> str:
+def _format_calendar_error_message(field: Field, reference_datetime: TimeLike) -> str:
     return f"Expected field {field.name!r} to have calendar compatible with datetime object {_datetime_to_msg(reference_datetime)}. Got field with calendar {_datetime_to_msg(field.time_interval.left)}. Have you considered using xarray to update the time dimension of the dataset to have a compatible calendar?"
