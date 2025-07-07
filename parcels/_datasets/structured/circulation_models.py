@@ -527,6 +527,142 @@ def _MITgcm_netcdf():
     )
 
 
+def _MITgcm_mds():
+    """MITgcm model dataset in native MDS format"""
+    return xr.Dataset(
+        {
+            "U": (
+                ["time", "Z", "YC", "XG"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_x_velocity",
+                    "mate": "V",
+                    "long_name": "Zonal Component of Velocity",
+                    "units": "m s-1",
+                },
+            ),
+            "V": (
+                ["time", "Z", "YG", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_y_velocity",
+                    "mate": "U",
+                    "long_name": "Meridional Component of Velocity",
+                    "units": "m s-1",
+                },
+            ),
+            "W": (
+                ["time", "Zl", "YC", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_z_velocity",
+                    "long_name": "Vertical Component of Velocity",
+                    "units": "m s-1",
+                },
+            ),
+            "S": (
+                ["time", "Z", "YC", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_salinity",
+                    "long_name": "Salinity",
+                    "units": "g kg-1",
+                },
+            ),
+            "T": (
+                ["time", "Z", "YC", "XC"],
+                np.random.rand(T, Z, Y, X).astype("float32"),
+                {
+                    "standard_name": "sea_water_potential_temperature",
+                    "long_name": "Potential Temperature",
+                    "units": "degree_Celcius",
+                },
+            ),
+        },
+        coords={
+            "time": (
+                ["time"],
+                np.arange(T) * np.timedelta64(1, "D"),
+                {
+                    "standard_name": "time",
+                    "long_name": "Time",
+                    "axis": "T",
+                    "calendar": "gregorian",
+                },
+            ),
+            "Z": (
+                ["Z"],
+                np.linspace(-25, -5000, Z, dtype="float64"),
+                {
+                    "standard_name": "depth",
+                    "long_name": "vertical coordinate of cell center",
+                    "units": "m",
+                    "positive": "down",
+                    "axis": "Z",
+                },
+            ),
+            "Zl": (
+                ["Zl"],
+                np.linspace(0, -4500, Z, dtype="float64"),
+                {
+                    "standard_name": "depth_at_lower_w_location",
+                    "long_name": "vertical coordinate of lower cell interface",
+                    "units": "m",
+                    "positive": "down",
+                    "axis": "Z",
+                    "c_grid_axis_shift": -0.5,
+                },
+            ),
+            "YC": (
+                ["YC"],
+                np.linspace(500, 5000, Y, dtype="float64"),
+                {
+                    "standard_name": "latitude",
+                    "long_name": "latitude",
+                    "units": "degrees_north",
+                    "coordinate": "YC XC",
+                    "axis": "Y",
+                },
+            ),
+            "YG": (
+                ["YG"],
+                np.linspace(0, 5000, Y, dtype="float64"),
+                {
+                    "standard_name": "latitude_at_f_location",
+                    "long_name": "latitude",
+                    "units": "degrees_north",
+                    "coordinate": "YG XG",
+                    "axis": "Y",
+                    "c_grid_axis_shift": -0.5,
+                },
+            ),
+            "XC": (
+                ["XC"],
+                np.linspace(500, 5000, X, dtype="float64"),
+                {
+                    "standard_name": "longitude",
+                    "long_name": "longitude",
+                    "units": "degrees_east",
+                    "coordinate": "YC XC",
+                    "axis": "X",
+                },
+            ),
+            "XG": (
+                ["XG"],
+                np.linspace(0, 5000, X, dtype="float64"),
+                {
+                    "standard_name": "longitude_at_f_location",
+                    "long_name": "longitude",
+                    "units": "degrees_east",
+                    "coordinate": "YG XG",
+                    "axis": "X",
+                    "c_grid_axis_shift": -0.5,
+                },
+            ),
+        },
+    )
+
+
 def _ERA5_wind():
     """ERA5 10m wind model dataset"""
     return xr.Dataset(
@@ -1113,6 +1249,7 @@ datasets = {
     "ds_NEMO_MOI_V": _NEMO_MOI_V(),
     "ds_CESM": _CESM(),
     "ds_MITgcm_netcdf": _MITgcm_netcdf(),
+    "ds_MITgcm_mds": _MITgcm_mds(),
     "ds_ERA5_wind": _ERA5_wind(),
     "ds_FES_tides": _FES_tides(),
     "ds_hycom_espc": _hycom_espc(),
