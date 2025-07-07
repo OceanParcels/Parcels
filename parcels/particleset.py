@@ -15,7 +15,6 @@ from parcels.grid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
 from parcels.particle import Particle
-from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
@@ -77,7 +76,7 @@ class ParticleSet:
         pid_orig=None,
         **kwargs,
     ):
-        self.particledata = None
+        self.data = None
         self._repeat_starttime = None
         self._repeatlon = None
         self._repeatlat = None
@@ -141,24 +140,35 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self.particledata = ParticleData(
-            self._pclass,
-            lon=lon,
-            lat=lat,
-            depth=depth,
-            time=time,
-            lonlatdepth_dtype=lonlatdepth_dtype,
-            pid_orig=pid_orig,
-            ngrid=len(fieldset.gridset),
-            **kwargs,
+        self.data = xr.Dataset(
+            {
+                "lon": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=lonlatdepth_dtype)),
+                "lat": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=lonlatdepth_dtype)),
+                "depth": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=lonlatdepth_dtype)),
+                "time": (
+                    ["trajectory", "obs"],
+                    np.zeros((len(pid_orig), 1)),
+                ),  # , dtype=np.datetime64)),  #TODO make datetime64
+                "dt": (["trajectory", "obs"], np.zeros((len(pid_orig), 1))),  # TODO make timedelta64
+                "state": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=np.int32)),
+            },
+            coords={
+                "obs": ("obs", [0]),
+                "trajectory": ("trajectory", pid_orig),
+            },
+            attrs={
+                "ngrid": len(fieldset.gridset),
+                "pclass": self._pclass,
+                "ptype": self._pclass.getPType(),  # TODO check why both pclass and ptype needed
+            },
         )
 
         self._kernel = None
 
     def __del__(self):
-        if self.particledata is not None and isinstance(self.particledata, ParticleData):
-            del self.particledata
-        self.particledata = None
+        if self.data is not None and isinstance(self.data, xr.Dataset):
+            del self.data
+        self.data = None
 
     def __iter__(self):
         return iter(self.particledata)
@@ -192,8 +202,7 @@ class ParticleSet:
 
     @property
     def size(self):
-        # ==== to change at some point - len and size are different things ==== #
-        return len(self.particledata)
+        return (len(self.data["trajectory"]), len(self.data["obs"]))
 
     @property
     def pclass(self):
@@ -203,10 +212,7 @@ class ParticleSet:
         return particleset_repr(self)
 
     def __len__(self):
-        return len(self.particledata)
-
-    def __sizeof__(self):
-        return sys.getsizeof(self.particledata)
+        return len(self.data["trajectory"])
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -296,7 +302,7 @@ class ParticleSet:
         if "horiz_dist" in self.particledata._ptype.variables:
             self.particledata.data["vert_dist"][neighbor_idx] = distances[0, mask]
             self.particledata.data["horiz_dist"][neighbor_idx] = distances[1, mask]
-        return ParticleDataIterator(self.particledata, subset=neighbor_idx)
+        return True  # TODO fix for v4 ParticleDataIterator(self.particledata, subset=neighbor_idx)
 
     def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
@@ -664,19 +670,19 @@ class ParticleSet:
         if isinstance(pyfunc, list):
             return Kernel.from_list(
                 self.fieldset,
-                self.particledata.ptype,
+                self.data.ptype,
                 pyfunc,
             )
         return Kernel(
             self.fieldset,
-            self.particledata.ptype,
+            self.data.ptype,
             pyfunc=pyfunc,
         )
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(self.fieldset, self.particledata.ptype, pyfunc=pyfunc_inter)
+        return InteractionKernel(self.fieldset, self.data.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
@@ -714,10 +720,10 @@ class ParticleSet:
         Returns
         -------
         iterator
-            ParticleDataIterator over error particles.
+            ParticleDataIterator over error particles.  # TODO update this return
         """
         error_indices = self.data_indices("state", [StatusCode.Success, StatusCode.Evaluate], invert=True)
-        return ParticleDataIterator(self.particledata, subset=error_indices)
+        return error_indices  # TODO fix to return old ParticleDataIterator(self.particledata, subset=error_indices)
 
     @property
     def _num_error_particles(self):
@@ -830,7 +836,7 @@ class ParticleSet:
 
         # dt must be converted to float to avoid "TypeError: float() argument must be a string or a real number, not 'datetime.timedelta'"
         dt_seconds = dt / np.timedelta64(1, "s")
-        self.particledata._data["dt"][:] = dt_seconds
+        self.data["dt"][:] = dt_seconds
 
         # Set up pbar
         if output_file:
