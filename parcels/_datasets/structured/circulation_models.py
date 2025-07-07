@@ -88,7 +88,7 @@ def _copernicusmarine():
     )
 
 
-def _copernicusmarine_globcurrents():
+def _copernicusmarine_globcurrent():
     """Copernicus Marine Service GlobCurrent dataset (MULTIOBS_GLO_PHY_MYNRT_015_003)"""
     return xr.Dataset(
         {
@@ -121,6 +121,7 @@ def _copernicusmarine_globcurrents():
                     "standard_name": "depth",
                     "long_name": "Depth",
                     "units": "m",
+                    "unit_long": "Meters",
                     "axis": "Z",
                     "positive": "down",
                 },
@@ -663,7 +664,7 @@ def _hycom_espc():
                     "standard_name": "eastward_sea_water_velocity",
                     "units": "m/s",
                     "NAVO_code": 17,
-                    "actual_range": [-3.3700001, 3.6840003],
+                    "actual_range": np.array([-3.3700001, 3.6840003], dtype="float32"),
                     "cell_methods": "time: mean",
                 },
             ),
@@ -1131,7 +1132,7 @@ def _CROCO_idealized():
 
 datasets = {
     "ds_copernicusmarine": _copernicusmarine(),
-    "ds_copernicusmarine_globcurrents": _copernicusmarine_globcurrents(),
+    "ds_copernicusmarine_globcurrent": _copernicusmarine_globcurrent(),
     "ds_NEMO_MOI_U": _NEMO_MOI_U(),
     "ds_NEMO_MOI_V": _NEMO_MOI_V(),
     "ds_CESM": _CESM(),
