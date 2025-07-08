@@ -8,7 +8,6 @@ import xarray as xr
 from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
-from parcels.tools.converters import TimeConverter
 
 _XGRID_AXES_ORDERING = "ZYX"
 _XGRID_AXES = Literal["X", "Y", "Z"]
@@ -128,16 +127,6 @@ class XGrid(BaseGrid):
     @property
     def tdim(self):
         return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("T"))
-
-    @property
-    def time_origin(self):
-        """
-        Note
-        ----
-        Included for compatibility with v3 codebase. May be removed in future.
-        TODO v4: Evaluate
-        """
-        return TimeConverter(self._datetimes[0])
 
     @property
     def _z4d(self) -> Literal[0, 1]:

@@ -2,7 +2,6 @@ import os
 import tempfile
 from datetime import timedelta
 
-import cftime
 import numpy as np
 import pytest
 import xarray as xr
@@ -17,8 +16,6 @@ from parcels import (
     ParticleSet,
     Variable,
 )
-from parcels.particlefile import _set_calendar
-from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_zeros_simple
 
@@ -303,13 +300,6 @@ def test_write_xiyi(fieldset, tmp_zarrfile):
         for yi, lat in zip(pyi[p, 1:], lats[p, 1:], strict=True):
             assert fieldset.U.grid.lat[yi] <= lat < fieldset.U.grid.lat[yi + 1]
     ds.close()
-
-
-def test_set_calendar():
-    for _calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes(), strict=True):
-        date = getattr(cftime, cf_datetime)(1990, 1, 1)
-        assert _set_calendar(date.calendar) == date.calendar
-    assert _set_calendar("np_datetime64") == "standard"
 
 
 def test_reset_dt(fieldset, tmp_zarrfile):

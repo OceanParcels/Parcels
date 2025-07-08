@@ -7,8 +7,6 @@ from numpy.testing import assert_allclose
 
 from parcels import xgcm
 from parcels._datasets.structured.generic import T, X, Y, Z, datasets
-from parcels.grid import Grid as OldGrid
-from parcels.tools.converters import TimeConverter
 from parcels.xgrid import XGrid, _search_1d_array
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
@@ -22,15 +20,12 @@ test_cases = [
     GridTestCase(datasets["ds_2d_left"], "ydim", Y),
     GridTestCase(datasets["ds_2d_left"], "zdim", Z),
     GridTestCase(datasets["ds_2d_left"], "tdim", T),
-    GridTestCase(datasets["ds_2d_left"], "time_origin", TimeConverter(datasets["ds_2d_left"].time.values[0])),
 ]
 
 
 def assert_equal(actual, expected):
     if expected is None:
         assert actual is None
-    elif isinstance(expected, TimeConverter):
-        assert actual == expected
     elif isinstance(expected, np.ndarray):
         assert actual.shape == expected.shape
         assert_allclose(actual, expected)
@@ -42,38 +37,6 @@ def assert_equal(actual, expected):
 def test_xgrid_properties_ground_truth(ds, attr, expected):
     grid = XGrid(xgcm.Grid(ds, periodic=False))
     actual = getattr(grid, attr)
-    assert_equal(actual, expected)
-
-
-@pytest.mark.parametrize(
-    "attr",
-    [
-        "lon",
-        "lat",
-        "depth",
-        "time",
-        "xdim",
-        "ydim",
-        "zdim",
-        "tdim",
-        "time_origin",
-        "_gtype",
-    ],
-)
-@pytest.mark.parametrize("ds", [pytest.param(ds, id=key) for key, ds in datasets.items()])
-def test_xgrid_against_old(ds, attr):
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
-
-    old_grid = OldGrid.create_grid(
-        lon=ds.lon.values,
-        lat=ds.lat.values,
-        depth=ds.depth.values,
-        time=ds.time.values.astype("float64") / 1e9,
-        time_origin=TimeConverter(ds.time.values[0]),
-        mesh="spherical",
-    )
-    actual = getattr(grid, attr)
-    expected = getattr(old_grid, attr)
     assert_equal(actual, expected)
 
 

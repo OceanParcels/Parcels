@@ -11,25 +11,18 @@ from tqdm import tqdm
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.grid import GridType
+from parcels.basegrid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
 from parcels.particle import Particle
 from parcels.particledata import ParticleData, ParticleDataIterator
 from parcels.particlefile import ParticleFile
-from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_array
+from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
 from parcels.tools.warnings import ParticleSetWarning
 
 __all__ = ["ParticleSet"]
-
-
-def _convert_to_reltime(time):
-    """Check to determine if the value of the time parameter needs to be converted to a relative value (relative to the time_origin)."""
-    if isinstance(time, np.datetime64) or (hasattr(time, "calendar") and time.calendar in _get_cftime_calendars()):
-        return True
-    return False
 
 
 class ParticleSet:
@@ -128,8 +121,6 @@ class ParticleSet:
                 time = np.array([np.timedelta64(t) for t in time])
             else:
                 raise NotImplementedError("particle time must be a datetime, timedelta, or date object")
-
-            time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
 
             assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
