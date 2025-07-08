@@ -15,6 +15,8 @@ from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
 
+zarr.config.set({"default_zarr_version": "2"})  # TODO v4: Migrate to Zarr 3.x spec
+
 
 def _set_calendar(origin_calendar):
     if origin_calendar == "np_datetime64":
@@ -92,7 +94,7 @@ class ParticleFile:
             np.uint32: np.iinfo(np.uint32).max,
             np.uint64: np.iinfo(np.uint64).max,
         }
-        if issubclass(type(name), zarr.storage.Store):
+        if isinstance(name, zarr.abc.store.Store):
             # If we already got a Zarr store, we won't need any of the naming logic below.
             # But we need to handle incompatibility with MPI mode for now:
             if MPI and MPI.COMM_WORLD.Get_size() > 1:
@@ -252,7 +254,7 @@ class ParticleFile:
         if axis == 1:
             a = np.full((Z.shape[0], self.chunks[1]), self._fill_value_map[dtype], dtype=dtype)
             obs = zarr.group(store=store, overwrite=False)["obs"]
-            if len(obs) == Z.shape[1]:
+            if obs.shape[0] == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
         else:
             extra_trajs = self._maxids - Z.shape[0]
@@ -347,11 +349,11 @@ class ParticleFile:
             ds.to_zarr(self.fname, mode="w")
             self._create_new_zarrfile = False
         else:
-            # Either use the store that was provided directly or create a DirectoryStore:
-            if isinstance(self.fname, zarr.storage.Store):
+            # Either use the store that was provided directly or create a LocalStore:
+            if isinstance(self.fname, zarr.abc.store.Store):
                 store = self.fname
             else:
-                store = zarr.DirectoryStore(self.fname)
+                store = zarr.storage.LocalStore(self.fname)
             Z = zarr.group(store=store, overwrite=False)
             obs = pset.particledata.getvardata("obs_written", indices_to_write)
             for var in self.vars_to_write:
