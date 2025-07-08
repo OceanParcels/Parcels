@@ -746,9 +746,9 @@ class ParticleSet:
     def execute(
         self,
         pyfunc=AdvectionRK4,
-        endtime: timedelta | datetime | None = None,
-        runtime: timedelta | None = None,
-        dt: np.float64 | np.float32 | timedelta | None = None,
+        endtime: np.timedelta64 | np.datetime64 | None = None,
+        runtime: np.timedelta64 | None = None,
+        dt: np.timedelta64 | None = None,
         output_file=None,
         verbose_progress=True,
     ):
@@ -763,16 +763,15 @@ class ParticleSet:
             Kernel function to execute. This can be the name of a
             defined Python function or a :class:`parcels.kernel.Kernel` object.
             Kernels can be concatenated using the + operator (Default value = AdvectionRK4)
-        endtime (datetime or timedelta): :
-            End time for the timestepping loop. If a timedelta is provided, it is interpreted as the total simulation time. In this case,
-            the absolute end time is the start of the fieldset's time interval plus the timedelta.
+        endtime (np.datetime64 or np.timedelta64): :
+            End time for the timestepping loop. If a np.timedelta64 is provided, it is interpreted as the total simulation time. In this case,
+            the absolute end time is the start of the fieldset's time interval plus the np.timedelta64.
             If a datetime is provided, it is interpreted as the absolute end time of the simulation.
-        runtime (timedelta):
-            The duration of the simuulation execution. Must be a timedelta object and is required to be set when the `fieldset.time_interval` is not defined.
+        runtime (np.timedelta64):
+            The duration of the simuulation execution. Must be a np.timedelta64 object and is required to be set when the `fieldset.time_interval` is not defined.
             If the `fieldset.time_interval` is defined and the runtime is provided, the end time will be the start of the fieldset's time interval plus the runtime.
-        dt (timedelta):
-            Timestep interval (in seconds) to be passed to the kernel.
-            It is either a timedelta object or a double.
+        dt (np.timedelta64):
+            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
             Use a negative value for a backward-in-time simulation. (Default value = 1 second)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
@@ -799,15 +798,15 @@ class ParticleSet:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
         if self.fieldset.time_interval is None:
-            start_time = timedelta(seconds=0)  # For the execution loop, we need a start time as a timedelta object
+            start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
             if runtime is None:
                 raise ValueError("The runtime must be provided when the time_interval is not defined for a fieldset.")
 
             else:
-                if isinstance(runtime, timedelta):
+                if isinstance(runtime, np.timedelta64):
                     end_time = runtime
                 else:
-                    raise ValueError("The runtime must be a timedelta object")
+                    raise ValueError("The runtime must be a np.timedelta64 object")
 
         else:
             start_time = self.fieldset.time_interval.left
@@ -829,7 +828,6 @@ class ParticleSet:
 
         outputdt = output_file.outputdt if output_file else None
 
-        dt = dt.astype(np.timedelta64(1, "ns"))
         self.data["dt"][:] = dt
 
         # Set up pbar
@@ -837,37 +835,27 @@ class ParticleSet:
             logger.info(f"Output files are stored in {output_file.fname}.")
 
         if verbose_progress:
-            pbar = tqdm(total=(start_time - end_time).total_seconds(), file=sys.stdout)
+            pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
 
-        if output_file:
-            next_output = outputdt
-        else:
-            next_output = None
-
-        tol = 1e-12
+        next_output = outputdt if output_file else None
 
         time = start_time
         while time <= end_time:
-            t0 = time
-            next_time = t0 + dt
-            # Kernel and particledata currently expect all time objects to be numpy floats.
-            # When converting absolute times to floats, we do them all relative to the start time.
-            # TODO: To completely support datetime or timedelta objects, this really needs to be addressed in the kernels and particledata
+            next_time = time + dt
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
 
-            # End of interaction specific code
             # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:
-                if abs(next_time - next_output) < tol:
+                if abs(next_time - next_output) < 1e-12:
                     if output_file:
                         output_file.write(self, next_output)
                     if np.isfinite(outputdt):
                         next_output += outputdt
 
             if verbose_progress:
-                pbar.update(dt.total_seconds())
+                pbar.update(dt / np.timedelta64(1, "s"))
 
             time = next_time
 
