@@ -4,7 +4,6 @@ import inspect
 import warnings
 from collections.abc import Callable
 from datetime import datetime
-from enum import IntEnum
 
 import numpy as np
 import uxarray as ux
@@ -34,14 +33,7 @@ from parcels.xgrid import XGrid
 
 from ._index_search import _search_time_index
 
-__all__ = ["Field", "GridType", "VectorField"]
-
-
-class GridType(IntEnum):
-    RectilinearZGrid = 0
-    RectilinearSGrid = 1
-    CurvilinearZGrid = 2
-    CurvilinearSGrid = 3
+__all__ = ["Field", "VectorField"]
 
 
 def _isParticle(key):

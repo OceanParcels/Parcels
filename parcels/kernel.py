@@ -16,7 +16,7 @@ from parcels.application_kernels.advection import (
     AdvectionRK4_3D_CROCO,
     AdvectionRK45,
 )
-from parcels.grid import GridType
+from parcels.basegrid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
     TimeExtrapolationError,

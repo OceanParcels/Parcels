@@ -11,7 +11,7 @@ from tqdm import tqdm
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.grid import GridType
+from parcels.basegrid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
 from parcels.particle import Particle
