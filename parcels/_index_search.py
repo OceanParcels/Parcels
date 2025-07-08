@@ -18,13 +18,12 @@ from parcels.tools.statuscodes import (
     _raise_time_extrapolation_error,
 )
 
-from .grid import GridType
+from .basegrid import GridType
 
 if TYPE_CHECKING:
     from parcels.xgrid import XGrid
 
     from .field import Field
-    # from .grid import Grid
 
 
 def _search_time_index(field: Field, time: datetime):

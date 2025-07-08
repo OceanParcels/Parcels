@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from enum import IntEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np
+
+
+class GridType(IntEnum):
+    RectilinearZGrid = 0
+    RectilinearSGrid = 1
+    CurvilinearZGrid = 2
+    CurvilinearSGrid = 3
 
 
 class BaseGrid(ABC):
