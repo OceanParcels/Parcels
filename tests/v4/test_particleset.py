@@ -95,6 +95,27 @@ def test_particleset_endtime_type(fieldset, endtime, expectation):
         pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
 
 
+def test_pset_add_explicit(fieldset):
+    npart = 11
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+    pset = ParticleSet(fieldset, lon=lon[0], lat=lat[0], pclass=Particle)
+    for i in range(1, npart):
+        particle = ParticleSet(pclass=Particle, lon=lon[i], lat=lat[i], fieldset=fieldset)
+        pset.add(particle)
+    assert len(pset) == npart
+    assert np.allclose(pset.data["lon"][:, 0], lon, atol=1e-12)
+    assert np.allclose(pset.data["lat"][:, 0], lat, atol=1e-12)
+    assert np.allclose(np.diff(pset.data.trajectory), np.ones(pset.data.trajectory.size - 1), atol=1e-12)
+
+
+def test_pset_add_implicit(fieldset):
+    pset = ParticleSet(fieldset, lon=np.zeros(3), lat=np.ones(3), pclass=Particle)
+    pset += ParticleSet(fieldset, lon=np.ones(4), lat=np.zeros(4), pclass=Particle)
+    assert len(pset) == 7
+    assert np.allclose(np.diff(pset.data.trajectory), np.ones(6), atol=1e-12)
+
+
 @pytest.mark.parametrize("verbose_progress", [True, False])
 def test_uxstommelgyre_pset_execute(verbose_progress):
     ds = datasets_unstructured["stommel_gyre_delaunay"]

@@ -233,8 +233,10 @@ class ParticleSet:
 
         """
         if isinstance(particles, type(self)):
-            particles = particles.particledata
-        self.particledata += particles
+            particles.data["trajectory"] = (
+                particles.data["trajectory"].values + self.data["trajectory"].values.max() + 1
+            )
+        self.data = xr.concat([self.data, particles.data], dim="trajectory")
         # Adding particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         return self
@@ -263,8 +265,8 @@ class ParticleSet:
         self.data = self.data.drop_sel(trajectory=indices)
 
     def _active_particles_mask(self, time, dt):
-        active_indices = (time - self.particledata.data["time"]) / dt >= 0
-        non_err_indices = np.isin(self.particledata.data["state"], [StatusCode.Success, StatusCode.Evaluate])
+        active_indices = (time - self.data["time"]) / dt >= 0
+        non_err_indices = np.isin(self.data["state"], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
@@ -274,9 +276,9 @@ class ParticleSet:
 
         self._values = np.vstack(
             (
-                self.particledata.data["depth"],
-                self.particledata.data["lat"],
-                self.particledata.data["lon"],
+                self.data["depth"],
+                self.data["lat"],
+                self.data["lon"],
             )
         )
         if self._dirty_neighbor:
@@ -290,14 +292,14 @@ class ParticleSet:
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         mask = neighbor_idx != particle_idx
         neighbor_idx = neighbor_idx[mask]
-        if "horiz_dist" in self.particledata._ptype.variables:
-            self.particledata.data["vert_dist"][neighbor_idx] = distances[0, mask]
-            self.particledata.data["horiz_dist"][neighbor_idx] = distances[1, mask]
+        if "horiz_dist" in self.data._ptype.variables:
+            self.data["vert_dist"][neighbor_idx] = distances[0, mask]
+            self.data["horiz_dist"][neighbor_idx] = distances[1, mask]
         return True  # TODO fix for v4 ParticleDataIterator(self.particledata, subset=neighbor_idx)
 
     def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
-        neighbor_ids = self.particledata.data["id"][neighbor_idx]
+        neighbor_ids = self.data["id"][neighbor_idx]
         return neighbor_ids
 
     # TODO: This method is only tested in tutorial notebook. Add unit test?
@@ -725,7 +727,7 @@ class ParticleSet:
         int
             Number of error particles.
         """
-        return np.sum(np.isin(self.particledata.data["state"], [StatusCode.Success, StatusCode.Evaluate], invert=True))
+        return np.sum(np.isin(self.data["state"], [StatusCode.Success, StatusCode.Evaluate], invert=True))
 
     def set_variable_write_status(self, var, write_status):
         """Method to set the write status of a Variable.
