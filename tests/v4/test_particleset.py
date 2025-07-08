@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import numpy as np
 import pytest
 
 from parcels import (
@@ -47,11 +48,14 @@ def test_uxstommelgyre_pset_execute(verbose_progress):
         lon=[30.0],
         lat=[5.0],
         depth=[50.0],
-        time=[timedelta(seconds=0.0)],
+        time=[np.timedelta64(0, "s")],
         pclass=Particle,
     )
     pset.execute(
-        runtime=timedelta(minutes=10), dt=timedelta(seconds=60), pyfunc=AdvectionEE, verbose_progress=verbose_progress
+        runtime=np.timedelta64(10, "m"),
+        dt=np.timedelta64(60, "s"),
+        pyfunc=AdvectionEE,
+        verbose_progress=verbose_progress,
     )
 
 
@@ -94,4 +98,6 @@ def test_uxstommelgyre_pset_execute_output():
         name="stommel_uxarray_particles.zarr",  # the file name
         outputdt=timedelta(minutes=5),  # the time step of the outputs
     )
-    pset.execute(runtime=timedelta(minutes=10), dt=timedelta(seconds=60), pyfunc=AdvectionEE, output_file=output_file)
+    pset.execute(
+        runtime=np.timedelta64(10, "m"), dt=np.timedelta64(60, "s"), pyfunc=AdvectionEE, output_file=output_file
+    )
