@@ -378,15 +378,11 @@ class Kernel(BaseKernel):
             computational integration timestep
         """
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            pre_dt = p.dt
+            pre_dt = p["dt"]
 
             sign_dt = np.sign(p.dt.values).astype(int)
-            if p.dt.values[0] > np.timedelta64(0, "ns"):
-                if p.time_nextloop > endtime:
-                    return p
-            else:
-                if p.time_nextloop < endtime:
-                    return p
+            if sign_dt * (p.time_nextloop - endtime) > np.timedelta64(0, "ns"):
+                return p
 
             # TODO implement below later again
             # try:  # Use next_dt from AdvectionRK45 if it is set
@@ -399,10 +395,7 @@ class Kernel(BaseKernel):
 
             if res is None:
                 if p.state == StatusCode.Success:
-                    if sign_dt > 0 and (p.time < endtime):
-                        p.state = StatusCode.Evaluate
-
-                    if sign_dt < 0 and (p.time < endtime):
+                    if sign_dt * (p.time - endtime) > np.timedelta64(0, "ns"):
                         p.state = StatusCode.Evaluate
             else:
                 p.state = res
