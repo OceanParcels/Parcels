@@ -142,15 +142,22 @@ class ParticleSet:
 
         self.data = xr.Dataset(
             {
-                "lon": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=lonlatdepth_dtype)),
-                "lat": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=lonlatdepth_dtype)),
-                "depth": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=lonlatdepth_dtype)),
-                "time": (
+                "lon": (
                     ["trajectory", "obs"],
-                    np.zeros((len(pid_orig), 1)),
-                ),  # , dtype=np.datetime64)),  #TODO make datetime64
-                "dt": (["trajectory", "obs"], np.zeros((len(pid_orig), 1))),  # TODO make timedelta64
+                    np.array(lon[:, np.newaxis], dtype=lonlatdepth_dtype),
+                ),  # TODO check if newaxis is needed
+                "lat": (["trajectory", "obs"], np.array(lat[:, np.newaxis], dtype=lonlatdepth_dtype)),
+                "depth": (["trajectory", "obs"], np.array(depth[:, np.newaxis], dtype=lonlatdepth_dtype)),
+                "time": (["trajectory", "obs"], np.array(time[:, np.newaxis])),
+                "dt": (["trajectory", "obs"], np.timedelta64(1, "ns") * np.ones((len(pid_orig), 1))),
                 "state": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=np.int32)),
+                "lon_nextloop": (
+                    ["trajectory", "obs"],
+                    np.array(lon[:, np.newaxis], dtype=lonlatdepth_dtype),
+                ),  # TODO check if newaxis is needed
+                "lat_nextloop": (["trajectory", "obs"], np.array(lat[:, np.newaxis], dtype=lonlatdepth_dtype)),
+                "depth_nextloop": (["trajectory", "obs"], np.array(depth[:, np.newaxis], dtype=lonlatdepth_dtype)),
+                "time_nextloop": (["trajectory", "obs"], np.array(time[:, np.newaxis])),
             },
             coords={
                 "obs": ("obs", [0]),
@@ -171,7 +178,7 @@ class ParticleSet:
         self.data = None
 
     def __iter__(self):
-        return iter(self.particledata)
+        return iter(self.data)  # TODO write an iter that iterates over particles (instead of variables)
 
     def __getattr__(self, name):
         """
@@ -182,9 +189,8 @@ class ParticleSet:
         name : str
             Name of the property
         """
-        for v in self.particledata.ptype.variables:
-            if v.name == name:
-                return getattr(self.particledata, name)
+        if name in self.data:
+            return self.data[name]
         if name in self.__dict__ and name[0] != "_":
             return self.__dict__[name]
         else:
@@ -192,7 +198,7 @@ class ParticleSet:
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return self.particledata.get_single_by_index(index)
+        return self.data.sel(trajectory=index)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
@@ -258,18 +264,7 @@ class ParticleSet:
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`."""
-        # Removing particles invalidates the neighbor search structure.
-        self._dirty_neighbor = True
-        if type(indices) in [int, np.int32, np.intp]:
-            self.particledata.remove_single_by_index(indices)
-        else:
-            self.particledata.remove_multi_by_indices(indices)
-
-    def remove_booleanvector(self, indices):
-        """Method to remove particles from the ParticleSet, based on an array of booleans."""
-        # Removing particles invalidates the neighbor search structure.
-        self._dirty_neighbor = True
-        self.remove_indices(np.where(indices)[0])
+        self.data = self.data.drop_sel(trajectory=indices)
 
     def _active_particles_mask(self, time, dt):
         active_indices = (time - self.particledata.data["time"]) / dt >= 0
@@ -834,9 +829,8 @@ class ParticleSet:
 
         outputdt = output_file.outputdt if output_file else None
 
-        # dt must be converted to float to avoid "TypeError: float() argument must be a string or a real number, not 'datetime.timedelta'"
-        dt_seconds = dt / np.timedelta64(1, "s")
-        self.data["dt"][:] = dt_seconds
+        dt = dt.astype(np.timedelta64(1, "ns"))
+        self.data["dt"][:] = dt
 
         # Set up pbar
         if output_file:
@@ -848,7 +842,7 @@ class ParticleSet:
         if output_file:
             next_output = outputdt
         else:
-            next_output = np.inf
+            next_output = None
 
         tol = 1e-12
 
@@ -859,18 +853,18 @@ class ParticleSet:
             # Kernel and particledata currently expect all time objects to be numpy floats.
             # When converting absolute times to floats, we do them all relative to the start time.
             # TODO: To completely support datetime or timedelta objects, this really needs to be addressed in the kernels and particledata
-            next_time_float = (next_time - start_time) / np.timedelta64(1, "s")
-            res = self._kernel.execute(self, endtime=next_time_float, dt=dt_seconds)
+            res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
 
             # End of interaction specific code
             # TODO: Handle IO timing based of timedelta or datetime objects
-            if abs(next_time_float - next_output) < tol:
-                if output_file:
-                    output_file.write(self, next_output)
-                if np.isfinite(outputdt):
-                    next_output += outputdt
+            if next_output:
+                if abs(next_time - next_output) < tol:
+                    if output_file:
+                        output_file.write(self, next_output)
+                    if np.isfinite(outputdt):
+                        next_output += outputdt
 
             if verbose_progress:
                 pbar.update(dt.total_seconds())
