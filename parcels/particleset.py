@@ -1,7 +1,6 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from datetime import date, datetime, timedelta
 
 import numpy as np
 import xarray as xr
@@ -109,19 +108,16 @@ class ParticleSet:
             depth = convert_to_flat_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
-        if time.size > 0:
-            time = np.repeat(time, lon.size) if time.size == 1 else time
+        if time is None or len(time) == 0:
+            time = fieldset.U.time.values[0]  # TODO set this to NaT if no time is given
+        time = np.repeat(time, lon.size) if time.size == 1 else time
 
-            if type(time[0]) in [np.datetime64, np.timedelta64]:
-                pass  # already in the right format
-            elif type(time[0]) in [datetime, date]:
-                time = np.array([np.datetime64(t) for t in time])
-            elif type(time[0]) in [timedelta]:
-                time = np.array([np.timedelta64(t) for t in time])
-            else:
-                raise NotImplementedError("particle time must be a datetime, timedelta, or date object")
+        if type(time[0]) in [np.datetime64, np.timedelta64]:
+            pass  # already in the right format
+        else:
+            raise TypeError("particle time must be a datetime, timedelta, or date object")
 
-            assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
+        assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
         if fieldset.time_interval:
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
@@ -800,13 +796,13 @@ class ParticleSet:
         if self.fieldset.time_interval is None:
             start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
             if runtime is None:
-                raise ValueError("The runtime must be provided when the time_interval is not defined for a fieldset.")
+                raise TypeError("The runtime must be provided when the time_interval is not defined for a fieldset.")
 
             else:
                 if isinstance(runtime, np.timedelta64):
                     end_time = runtime
                 else:
-                    raise ValueError("The runtime must be a np.timedelta64 object")
+                    raise TypeError("The runtime must be a np.timedelta64 object")
 
         else:
             start_time = self.fieldset.time_interval.left
@@ -822,7 +818,7 @@ class ParticleSet:
                         raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
                     end_time = min(endtime, self.fieldset.time_interval.right)
                 else:
-                    raise ValueError("The endtime must be of the same type as the fieldset.time_interval start time.")
+                    raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
             else:
                 end_time = start_time + runtime
 

@@ -1,4 +1,5 @@
-from datetime import timedelta
+from contextlib import nullcontext as does_not_raise
+from datetime import datetime, timedelta
 
 import numpy as np
 import pytest
@@ -11,9 +12,87 @@ from parcels import (
     ParticleSet,
     UXPiecewiseConstantFace,
     VectorField,
+    xgcm,
 )
+from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
+from parcels.xgrid import XGrid
+
+
+@pytest.fixture
+def fieldset() -> FieldSet:
+    ds = datasets_structured["ds_2d_left"]
+    grid = XGrid(xgcm.Grid(ds))
+    U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
+    V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
+    return FieldSet([U, V])
+
+
+def DoNothing(particle, fieldset, time):
+    pass
+
+
+@pytest.mark.parametrize(
+    "time, expectation",
+    [
+        (np.timedelta64(0, "s"), does_not_raise()),
+        (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
+        (0.0, pytest.raises(TypeError)),
+        (timedelta(seconds=0), pytest.raises(TypeError)),
+        (datetime(2023, 1, 1, 0, 0, 0), pytest.raises(TypeError)),
+    ],
+)
+def test_particleset_init_time_type(fieldset, time, expectation):
+    with expectation:
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], time=[time], pclass=Particle)
+
+
+@pytest.mark.parametrize(
+    "dt, expectation",
+    [
+        (np.timedelta64(5, "s"), does_not_raise()),
+        (5.0, pytest.raises(TypeError)),
+        (np.datetime64("2000-01-02T00:00:00"), pytest.raises(TypeError)),
+        (timedelta(seconds=2), pytest.raises(TypeError)),
+    ],
+)
+def test_particleset_dt_type(fieldset, dt, expectation):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    with expectation:
+        pset.execute(runtime=np.timedelta64(10, "s"), dt=dt, pyfunc=DoNothing)
+
+
+@pytest.mark.parametrize(
+    "runtime, expectation",
+    [
+        (np.timedelta64(5, "s"), does_not_raise()),
+        (5.0, pytest.raises(TypeError)),
+        (timedelta(seconds=2), pytest.raises(TypeError)),
+        (np.datetime64("2001-01-02T00:00:00"), pytest.raises(TypeError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(TypeError)),
+    ],
+)
+def test_particleset_runtime_type(fieldset, runtime, expectation):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    with expectation:
+        pset.execute(runtime=runtime, dt=np.timedelta64(10, "s"), pyfunc=DoNothing)
+
+
+@pytest.mark.parametrize(
+    "endtime, expectation",
+    [
+        (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
+        (5.0, pytest.raises(TypeError)),
+        (np.timedelta64(5, "s"), pytest.raises(TypeError)),
+        (timedelta(seconds=2), pytest.raises(TypeError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(TypeError)),
+    ],
+)
+def test_particleset_endtime_type(fieldset, endtime, expectation):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    with expectation:
+        pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])
