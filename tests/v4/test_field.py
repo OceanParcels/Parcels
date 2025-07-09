@@ -118,7 +118,6 @@ def test_vectorfield_init_different_time_intervals():
 
 
 def test_field_invalid_interpolator():
-    """Test that Field initialization fails with invalid interpolation methods."""
     ds = datasets_structured["ds_2d_left"]
     grid = XGrid(xgcm.Grid(ds))
 
@@ -130,14 +129,11 @@ def test_field_invalid_interpolator():
         Field(name="test", data=ds["data_g"], grid=grid, interp_method=invalid_interpolator_wrong_signature)
 
 
-@pytest.mark.xfail
 def test_vectorfield_invalid_interpolator():
-    """Test that VectorField initialization fails with invalid interpolation methods."""
     ds = datasets_structured["ds_2d_left"]
     grid = XGrid(xgcm.Grid(ds))
 
-    def invalid_interpolator_wrong_signature(self):
-        # Missing required parameters from _interp_template signature
+    def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, invalid):
         return 0.0
 
     # Create component fields
