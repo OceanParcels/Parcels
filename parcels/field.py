@@ -73,6 +73,12 @@ def ZeroInterpolator(
     return 0.0
 
 
+_DEFAULT_INTERPOLATOR_MAPPING = {
+    XGrid: ZeroInterpolator,  # TODO v4: Update these to better defaults
+    UxGrid: ZeroInterpolator,
+}
+
+
 def _assert_same_function_signature(f: Callable, *, ref: Callable) -> None:
     """Ensures a function `f` has the same signature as the reference function `ref`."""
     sig_ref = inspect.signature(ref)
@@ -173,7 +179,7 @@ class Field:
 
         # Setting the interpolation method dynamically
         if interp_method is None:
-            self._interp_method = ZeroInterpolator  # Default to method that returns 0 always
+            self._interp_method = _DEFAULT_INTERPOLATOR_MAPPING[type(self.grid)]
         else:
             _assert_same_function_signature(interp_method, ref=ZeroInterpolator)
             self._interp_method = interp_method
