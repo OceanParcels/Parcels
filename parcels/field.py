@@ -37,7 +37,7 @@ __all__ = ["Field", "VectorField"]
 
 
 def _isParticle(key):
-    if hasattr(key, "obs_written"):
+    if hasattr(key, "_data"):
         return True
     else:
         return False

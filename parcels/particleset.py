@@ -227,7 +227,7 @@ class ParticleSet:
 
     @property
     def size(self):
-        return (len(self._data["trajectory"]), len(self._data["obs"]))
+        return len(self._data["trajectory"])
 
     @property
     def pclass(self):
