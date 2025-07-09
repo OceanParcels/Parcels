@@ -343,8 +343,8 @@ class VectorField:
     def _vector_interp_template(
         self,
         ti: int,
-        ei: int,
-        bcoords: np.ndarray,
+        position: dict[str, tuple[int, float | np.ndarray]],
+        tau: np.float32 | np.float64,
         t: np.float32 | np.float64,
         z: np.float32 | np.float64,
         y: np.float32 | np.float64,
