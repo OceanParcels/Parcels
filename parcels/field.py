@@ -124,18 +124,10 @@ class Field:
                 raise ValueError(
                     f"Parameter '{_name2}' has incorrect parameter kind. Expected {param1.kind}, got {param2.kind}"
                 )
-            if param1.annotation != param2.annotation:
+            if param1.name != param2.name:
                 raise ValueError(
-                    f"Parameter '{_name2}' has incorrect type annotation. Expected {param1.annotation}, got {param2.annotation}"
+                    f"Parameter '{_name2}' has incorrect name. Expected '{param1.name}', got '{param2.name}'"
                 )
-
-        return_annotation = func_sig.return_annotation
-        template_return = template_sig.return_annotation
-
-        if return_annotation != template_return:
-            raise ValueError(
-                f"Interpolation function has incorrect return type. Expected {template_return}, got {return_annotation}"
-            )
 
     def __init__(
         self,
@@ -344,20 +336,6 @@ class Field:
 
 class VectorField:
     """VectorField class that holds vector field data needed to execute particles."""
-
-    @staticmethod
-    def _vector_interp_template(
-        self,
-        ti: int,
-        position: dict[str, tuple[int, float | np.ndarray]],
-        tau: np.float32 | np.float64,
-        t: np.float32 | np.float64,
-        z: np.float32 | np.float64,
-        y: np.float32 | np.float64,
-        x: np.float32 | np.float64,
-    ) -> np.float32 | np.float64:
-        """Template function used for the signature check of the lateral interpolation methods."""
-        return 0.0
 
     def _validate_vector_interp_function(self, func: Callable):
         """Ensures that the function has the correct signature."""

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import uxarray as ux
 import xarray as xr
 
-from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, xgcm
+from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, VectorField, xgcm
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
@@ -113,6 +115,38 @@ def test_field_time_interval(data, grid):
 def test_vectorfield_init_different_time_intervals():
     # Tests that a VectorField raises a ValueError if the component fields have different time domains.
     ...
+
+
+def test_field_invalid_interpolator():
+    """Test that Field initialization fails with invalid interpolation methods."""
+    ds = datasets_structured["ds_2d_left"]
+    grid = XGrid(xgcm.Grid(ds))
+
+    def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, invalid):
+        return 0.0
+
+    # Test invalid interpolator with wrong signature
+    with pytest.raises(ValueError, match=".*incorrect name.*"):
+        Field(name="test", data=ds["data_g"], grid=grid, interp_method=invalid_interpolator_wrong_signature)
+
+
+@pytest.mark.xfail
+def test_vectorfield_invalid_interpolator():
+    """Test that VectorField initialization fails with invalid interpolation methods."""
+    ds = datasets_structured["ds_2d_left"]
+    grid = XGrid(xgcm.Grid(ds))
+
+    def invalid_interpolator_wrong_signature(self):
+        # Missing required parameters from _interp_template signature
+        return 0.0
+
+    # Create component fields
+    U = Field(name="U", data=ds["data_g"], grid=grid)
+    V = Field(name="V", data=ds["data_g"], grid=grid)
+
+    # Test invalid interpolator with wrong signature
+    with pytest.raises(ValueError, match=".*incorrect name.*"):
+        VectorField(name="UV", U=U, V=V, vector_interp_method=invalid_interpolator_wrong_signature)
 
 
 def test_field_unstructured_z_linear():
