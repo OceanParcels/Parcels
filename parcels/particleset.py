@@ -23,6 +23,28 @@ from parcels.tools.warnings import ParticleSetWarning
 __all__ = ["ParticleSet"]
 
 
+class TestParticle:
+    # Temporary class to allow for testing of ParticleSet without needing to change v3-Particle class. TODO update the Particle class
+    def __init__(self, data, index=None):
+        self._data = data
+        self._index = index
+
+    def __getattr__(self, name):
+        if name in ["_data", "_index"]:
+            return object.__getattribute__(self, name)
+        _data = object.__getattribute__(self, "_data")
+        if name in _data:
+            return _data[name].values[self._index]
+        else:
+            return False
+
+    def __setattr__(self, name, value):
+        if name in ["_data", "_index"]:
+            object.__setattr__(self, name, value)
+        else:
+            self._data[name][self._index] = value
+
+
 class ParticleSet:
     """Class for storing particle and executing kernel over them.
 
@@ -138,25 +160,18 @@ class ParticleSet:
 
         self._data = xr.Dataset(
             {
-                "lon": (
-                    ["trajectory", "obs"],
-                    np.array(lon[:, np.newaxis], dtype=lonlatdepth_dtype),
-                ),  # TODO check if newaxis is needed
-                "lat": (["trajectory", "obs"], np.array(lat[:, np.newaxis], dtype=lonlatdepth_dtype)),
-                "depth": (["trajectory", "obs"], np.array(depth[:, np.newaxis], dtype=lonlatdepth_dtype)),
-                "time": (["trajectory", "obs"], np.array(time[:, np.newaxis])),
-                "dt": (["trajectory", "obs"], np.timedelta64(1, "ns") * np.ones((len(pid_orig), 1))),
-                "state": (["trajectory", "obs"], np.zeros((len(pid_orig), 1), dtype=np.int32)),
-                "lon_nextloop": (
-                    ["trajectory", "obs"],
-                    np.array(lon[:, np.newaxis], dtype=lonlatdepth_dtype),
-                ),  # TODO check if newaxis is needed
-                "lat_nextloop": (["trajectory", "obs"], np.array(lat[:, np.newaxis], dtype=lonlatdepth_dtype)),
-                "depth_nextloop": (["trajectory", "obs"], np.array(depth[:, np.newaxis], dtype=lonlatdepth_dtype)),
-                "time_nextloop": (["trajectory", "obs"], np.array(time[:, np.newaxis])),
+                "lon": (["trajectory"], lon),
+                "lat": (["trajectory"], lat),
+                "depth": (["trajectory"], depth),
+                "time": (["trajectory"], time),
+                "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(pid_orig))),
+                "state": (["trajectory"], np.zeros((len(pid_orig)), dtype=np.int32)),
+                "lon_nextloop": (["trajectory"], lon),
+                "lat_nextloop": (["trajectory"], lat),
+                "depth_nextloop": (["trajectory"], depth),
+                "time_nextloop": (["trajectory"], time),
             },
             coords={
-                "obs": ("obs", [0]),
                 "trajectory": ("trajectory", pid_orig),
             },
             attrs={
@@ -179,7 +194,7 @@ class ParticleSet:
 
     def __next__(self):
         if self._index < len(self):
-            p = self._data.sel(trajectory=self._index)
+            p = self.__getitem__(self._index)
             self._index += 1
             return p
         raise StopIteration
@@ -202,7 +217,7 @@ class ParticleSet:
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return self._data.sel(trajectory=index)
+        return TestParticle(self._data, index=index)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):

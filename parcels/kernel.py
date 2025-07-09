@@ -186,16 +186,16 @@ class Kernel(BaseKernel):
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
             particle_ddepth = 0  # noqa
-            particle["lon"][:] = particle.lon_nextloop
-            particle["lat"][:] = particle.lat_nextloop
-            particle["depth"][:] = particle.depth_nextloop
-            particle["time"][:] = particle.time_nextloop
+            particle.lon = particle.lon_nextloop
+            particle.lat = particle.lat_nextloop
+            particle.depth = particle.depth_nextloop
+            particle.time = particle.time_nextloop
 
         def Updatecoords(particle, fieldset, time):  # pragma: no cover
-            particle["lon_nextloop"][:] = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
-            particle["lat_nextloop"][:] = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
-            particle["depth_nextloop"][:] = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
-            particle["time_nextloop"][:] = particle.time + particle.dt
+            particle.lon_nextloop = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
+            particle.lat_nextloop = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
+            particle.depth_nextloop = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
+            particle.time_nextloop = particle.time + particle.dt
 
         self._pyfunc = (Setcoords + self + Updatecoords)._pyfunc
 
@@ -377,9 +377,9 @@ class Kernel(BaseKernel):
             computational integration timestep
         """
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            pre_dt = p["dt"]
+            pre_dt = p.dt
 
-            sign_dt = np.sign(p.dt.values).astype(int)
+            sign_dt = np.sign(p.dt).astype(int)
             if sign_dt * (p.time_nextloop - endtime) > np.timedelta64(0, "ns"):
                 return p
 
@@ -399,5 +399,5 @@ class Kernel(BaseKernel):
             else:
                 p.state = res
 
-            p["dt"][:] = pre_dt
+            p.dt = pre_dt
         return p
