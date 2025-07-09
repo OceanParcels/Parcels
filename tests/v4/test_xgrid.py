@@ -45,6 +45,35 @@ def test_xgrid_init_on_generic_datasets(ds):
     XGrid(xgcm.Grid(ds, periodic=False))
 
 
+@pytest.mark.parametrize(
+    "ds, expected",
+    [
+        (
+            datasets["ds_2d_left"],
+            {
+                "Y": [("center", "YC"), ("edge", "YG")],
+                "T": [("center", "time")],
+                "X": [("center", "XC"), ("edge", "XG")],
+                "Z": [("center", "ZC"), ("edge", "ZG")],
+            },
+        ),
+        (
+            datasets["2d_left_rotated"],
+            {
+                "Y": [("center", "YC"), ("edge", "YG")],
+                "X": [("center", "XC"), ("edge", "XG")],
+                "T": [("center", "time")],
+                "Z": [("center", "ZC"), ("edge", "ZG")],
+            },
+        ),
+    ],
+)
+def test_xgrid_axes_positions(ds, expected):
+    # Tests that the xgrid.axes property correctly identifies the axes and ordering
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    assert grid.axes_positions == expected
+
+
 def test_xgrid_axes():
     # Tests that the xgrid.axes property correctly identifies the axes and ordering
     ...

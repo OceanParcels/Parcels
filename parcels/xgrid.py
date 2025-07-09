@@ -1,4 +1,5 @@
 from collections.abc import Hashable, Mapping
+from functools import cached_property
 from typing import Literal, cast
 
 import numpy as np
@@ -10,7 +11,8 @@ from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
 
 _XGRID_AXES_ORDERING = "ZYX"
-_XGRID_AXES = Literal["X", "Y", "Z"]
+_XGRID_AXIS_DIRECTION = Literal["X", "Y", "Z"]
+_XGRID_AXIS_POSITION = Literal["center", "edge"]
 
 _XGCM_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
 _XGCM_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
@@ -30,8 +32,12 @@ def get_time(axis: xgcm.Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
-def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXES]:
-    spatial_axes = [a for a in grid.axes.keys() if a in ["X", "Y", "Z"]]
+def _is_xgrid_axis_direction(direction: str) -> bool:
+    return direction in ["X", "Y", "Z"]
+
+
+def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXIS_DIRECTION]:
+    spatial_axes = [a for a in grid.axes.keys() if _is_xgrid_axis_direction(a)]
     return sorted(spatial_axes, key=_XGRID_AXES_ORDERING.index)
 
 
@@ -55,7 +61,7 @@ class XGrid(BaseGrid):
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
 
     @property
-    def axes(self) -> list[_XGRID_AXES]:
+    def axes(self) -> list[_XGRID_AXIS_DIRECTION]:
         return _get_xgrid_axes(self.xgcm_grid)
 
     @property
@@ -184,19 +190,37 @@ class XGrid(BaseGrid):
 
         raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
 
-    def ravel_index(self, axis_indices: dict[_XGRID_AXES, int]) -> int:
+    def ravel_index(self, axis_indices: dict[_XGRID_AXIS_DIRECTION, int]) -> int:
         xi = axis_indices.get("X", 0)
         yi = axis_indices.get("Y", 0)
         zi = axis_indices.get("Z", 0)
         return xi + self.xdim * yi + self.xdim * self.ydim * zi
 
-    def unravel_index(self, ei) -> dict[_XGRID_AXES, int]:
+    def unravel_index(self, ei) -> dict[_XGRID_AXIS_DIRECTION, int]:
         zi = ei // (self.xdim * self.ydim)
         ei = ei % (self.xdim * self.ydim)
 
         yi = ei // self.xdim
         xi = ei % self.xdim
         return {"Z": zi, "Y": yi, "X": xi}
+
+    @cached_property
+    def axes_positions(self) -> dict[_XGRID_AXIS_DIRECTION, list[tuple[_XGRID_AXIS_POSITION, str]]]:
+        """
+        Provides information on each axis about whether the xarray variables are defined on the center or (left) edge of the grid.
+
+        Notes
+        -----
+        This concept of grid position for XGrid is made distinct from that of xgcm because Parcels does not differentiate between left/right/inner/outer in its data model. Parcels only works with interpolation at the subgrid level, so all positions are interpreted as "outer" in xgcm terminology.
+        """
+        out = {}
+        for axis_direction, axis in self.xgcm_grid.axes.items():
+            if not _is_xgrid_axis_direction(axis_direction):
+                continue
+            out[axis_direction] = [
+                (_xgridify_axis_position(position), xarray_var) for (position, xarray_var) in axis.coords.items()
+            ]
+        return out
 
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
@@ -215,6 +239,18 @@ def get_xgcm_position_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_PO
         if dim in var_to_position:
             return var_to_position[dim]
     return None
+
+
+def _xgridify_axis_position(pos: _XGCM_AXIS_POSITION) -> _XGRID_AXIS_POSITION:
+    """Converts an xgcm axis position to an xgrid axis position."""
+    if pos in {"left", "right", "inner", "outer"}:
+        return "edge"
+    elif pos == "center":
+        return "center"
+    else:
+        raise ValueError(
+            f"Invalid xgcm axis position: {pos!r}. Expected one of 'center', 'left', 'right', 'inner', 'outer'."
+        )
 
 
 def assert_all_dimensions_correspond_with_axis(da: xr.DataArray, axes: _XGCM_AXES) -> None:
