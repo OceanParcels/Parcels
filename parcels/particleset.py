@@ -174,7 +174,15 @@ class ParticleSet:
         self._data = None
 
     def __iter__(self):
-        return iter(self._data)  # TODO write an iter that iterates over particles (instead of variables)
+        self._index = 0
+        return self
+
+    def __next__(self):
+        if self._index < len(self):
+            p = self._data.sel(trajectory=self._index)
+            self._index += 1
+            return p
+        raise StopIteration
 
     def __getattr__(self, name):
         """

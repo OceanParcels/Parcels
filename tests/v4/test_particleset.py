@@ -116,6 +116,14 @@ def test_pset_add_implicit(fieldset):
     assert np.allclose(np.diff(pset._data.trajectory), np.ones(6), atol=1e-12)
 
 
+def test_pset_iterator(fieldset):
+    npart = 10
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.ones(npart))
+    for i, particle in enumerate(pset):
+        assert particle.trajectory == i
+    assert i == npart - 1
+
+
 @pytest.mark.parametrize("verbose_progress", [True, False])
 def test_uxstommelgyre_pset_execute(verbose_progress):
     ds = datasets_unstructured["stommel_gyre_delaunay"]

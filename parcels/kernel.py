@@ -316,8 +316,7 @@ class Kernel(BaseKernel):
             self.add_positionupdate_kernels()
             self._positionupdate_kernels_added = True
 
-        for i in pset.trajectory.values:
-            p = pset[i]
+        for p in pset:
             self.evaluate_particle(p, endtime)
             if p.state == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
