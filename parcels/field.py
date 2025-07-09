@@ -283,16 +283,6 @@ class Field:
                 stacklevel=2,
             )
 
-    def __getitem__(self, key):
-        self._check_velocitysampling()
-        try:
-            if _isParticle(key):
-                return self.eval(key.time, key.depth, key.lat, key.lon, key)
-            else:
-                return self.eval(*key)
-        except tuple(AllParcelsErrorCodes.keys()) as error:
-            return _deal_with_errors(error, key, vector_type=None)
-
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
@@ -331,6 +321,16 @@ class Field:
 
     def __getattr__(self, key: str):
         return getattr(self.data, key)
+
+    def __getitem__(self, key):
+        self._check_velocitysampling()
+        try:
+            if _isParticle(key):
+                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+            else:
+                return self.eval(*key)
+        except tuple(AllParcelsErrorCodes.keys()) as error:
+            return _deal_with_errors(error, key, vector_type=None)
 
     def __contains__(self, key: str):
         return key in self.data
