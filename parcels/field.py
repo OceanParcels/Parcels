@@ -59,6 +59,39 @@ def _deal_with_errors(error, key, vector_type: VectorType):
         return 0
 
 
+def ZeroInterpolator(
+    field: Field,
+    ti: int,
+    position: dict[str, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+) -> np.float32 | np.float64:
+    """Template function used for the signature check of the lateral interpolation methods."""
+    return 0.0
+
+
+def _assert_same_function_signature(f: Callable, *, ref: Callable) -> None:
+    """Ensures a function `f` has the same signature as the reference function `ref`."""
+    sig_ref = inspect.signature(ref)
+    sig = inspect.signature(f)
+
+    if len(sig_ref.parameters) != len(sig.parameters):
+        raise ValueError(
+            f"Interpolation function must have {len(sig_ref.parameters)} parameters, got {len(sig.parameters)}"
+        )
+
+    for (_name1, param1), (_name2, param2) in zip(sig_ref.parameters.items(), sig.parameters.items(), strict=False):
+        if param1.kind != param2.kind:
+            raise ValueError(
+                f"Parameter '{_name2}' has incorrect parameter kind. Expected {param1.kind}, got {param2.kind}"
+            )
+        if param1.name != param2.name:
+            raise ValueError(f"Parameter '{_name2}' has incorrect name. Expected '{param1.name}', got '{param2.name}'")
+
+
 class Field:
     """The Field class that holds scalar field data.
     The `Field` object is a wrapper around a xarray.DataArray or uxarray.UxDataArray object.
@@ -92,42 +125,6 @@ class Field:
       See https://ugrid-conventions.github.io/ugrid-conventions/ for more information.
 
     """
-
-    @staticmethod
-    def _interp_template(
-        self,
-        ti: int,
-        position: dict[str, tuple[int, float | np.ndarray]],
-        tau: np.float32 | np.float64,
-        t: np.float32 | np.float64,
-        z: np.float32 | np.float64,
-        y: np.float32 | np.float64,
-        x: np.float32 | np.float64,
-    ) -> np.float32 | np.float64:
-        """Template function used for the signature check of the lateral interpolation methods."""
-        return 0.0
-
-    def _validate_interp_function(self, func: Callable) -> None:
-        """Ensures that the function has the correct signature."""
-        template_sig = inspect.signature(self._interp_template)
-        func_sig = inspect.signature(func)
-
-        if len(template_sig.parameters) != len(func_sig.parameters):
-            raise ValueError(
-                f"Interpolation function must have {len(template_sig.parameters)} parameters, got {len(func_sig.parameters)}"
-            )
-
-        for (_name1, param1), (_name2, param2) in zip(
-            template_sig.parameters.items(), func_sig.parameters.items(), strict=False
-        ):
-            if param1.kind != param2.kind:
-                raise ValueError(
-                    f"Parameter '{_name2}' has incorrect parameter kind. Expected {param1.kind}, got {param2.kind}"
-                )
-            if param1.name != param2.name:
-                raise ValueError(
-                    f"Parameter '{_name2}' has incorrect name. Expected '{param1.name}', got '{param2.name}'"
-                )
 
     def __init__(
         self,
@@ -176,9 +173,9 @@ class Field:
 
         # Setting the interpolation method dynamically
         if interp_method is None:
-            self._interp_method = self._interp_template  # Default to method that returns 0 always
+            self._interp_method = ZeroInterpolator  # Default to method that returns 0 always
         else:
-            self._validate_interp_function(interp_method)
+            _assert_same_function_signature(interp_method, ref=ZeroInterpolator)
             self._interp_method = interp_method
 
         self.igrid = -1  # Default the grid index to -1
@@ -270,7 +267,7 @@ class Field:
 
     @interp_method.setter
     def interp_method(self, method: Callable):
-        self._validate_interp_function(method)
+        _assert_same_function_signature(method, ref=ZeroInterpolator)
         self._interp_method = method
 
     def _check_velocitysampling(self):
@@ -337,23 +334,6 @@ class Field:
 class VectorField:
     """VectorField class that holds vector field data needed to execute particles."""
 
-    def _validate_vector_interp_function(self, func: Callable):
-        """Ensures that the function has the correct signature."""
-        expected_params = ["ti", "ei", "bcoords", "t", "z", "y", "x"]
-        expected_return_types = (np.float32, np.float64)
-
-        sig = inspect.signature(func)
-        params = list(sig.parameters.keys())
-
-        # Check the parameter names and count
-        if params != expected_params:
-            raise TypeError(f"Function must have parameters {expected_params}, but got {params}")
-
-        # Check return annotation if present
-        return_annotation = sig.return_annotation
-        if return_annotation not in (inspect.Signature.empty, *expected_return_types):
-            raise TypeError(f"Function must return a float, but got {return_annotation}")
-
     def __init__(
         self, name: str, U: Field, V: Field, W: Field | None = None, vector_interp_method: Callable | None = None
     ):
@@ -379,7 +359,7 @@ class VectorField:
         if vector_interp_method is None:
             self._vector_interp_method = None
         else:
-            self._validate_vector_interp_function(vector_interp_method)
+            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator)
             self._interp_method = vector_interp_method
 
     def __repr__(self):
@@ -395,7 +375,7 @@ class VectorField:
 
     @vector_interp_method.setter
     def vector_interp_method(self, method: Callable):
-        self._validate_vector_interp_function(method)
+        _assert_same_function_signature(method, ref=ZeroInterpolator)
         self._vector_interp_method = method
 
     # @staticmethod
