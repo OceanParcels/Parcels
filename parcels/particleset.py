@@ -75,7 +75,7 @@ class ParticleSet:
         pid_orig=None,
         **kwargs,
     ):
-        self.data = None
+        self._data = None
         self._repeat_starttime = None
         self._repeatlon = None
         self._repeatlat = None
@@ -136,7 +136,7 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self.data = xr.Dataset(
+        self._data = xr.Dataset(
             {
                 "lon": (
                     ["trajectory", "obs"],
@@ -169,12 +169,12 @@ class ParticleSet:
         self._kernel = None
 
     def __del__(self):
-        if self.data is not None and isinstance(self.data, xr.Dataset):
-            del self.data
-        self.data = None
+        if self._data is not None and isinstance(self._data, xr.Dataset):
+            del self._data
+        self._data = None
 
     def __iter__(self):
-        return iter(self.data)  # TODO write an iter that iterates over particles (instead of variables)
+        return iter(self._data)  # TODO write an iter that iterates over particles (instead of variables)
 
     def __getattr__(self, name):
         """
@@ -185,8 +185,8 @@ class ParticleSet:
         name : str
             Name of the property
         """
-        if name in self.data:
-            return self.data[name]
+        if name in self._data:
+            return self._data[name]
         if name in self.__dict__ and name[0] != "_":
             return self.__dict__[name]
         else:
@@ -194,7 +194,7 @@ class ParticleSet:
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return self.data.sel(trajectory=index)
+        return self._data.sel(trajectory=index)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
@@ -204,7 +204,7 @@ class ParticleSet:
 
     @property
     def size(self):
-        return (len(self.data["trajectory"]), len(self.data["obs"]))
+        return (len(self._data["trajectory"]), len(self._data["obs"]))
 
     @property
     def pclass(self):
@@ -214,7 +214,7 @@ class ParticleSet:
         return particleset_repr(self)
 
     def __len__(self):
-        return len(self.data["trajectory"])
+        return len(self._data["trajectory"])
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -233,10 +233,10 @@ class ParticleSet:
 
         """
         if isinstance(particles, type(self)):
-            particles.data["trajectory"] = (
-                particles.data["trajectory"].values + self.data["trajectory"].values.max() + 1
+            particles._data["trajectory"] = (
+                particles._data["trajectory"].values + self._data["trajectory"].values.max() + 1
             )
-        self.data = xr.concat([self.data, particles.data], dim="trajectory")
+        self._data = xr.concat([self._data, particles._data], dim="trajectory")
         # Adding particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         return self
@@ -262,11 +262,11 @@ class ParticleSet:
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`."""
-        self.data = self.data.drop_sel(trajectory=indices)
+        self._data = self._data.drop_sel(trajectory=indices)
 
     def _active_particles_mask(self, time, dt):
-        active_indices = (time - self.data["time"]) / dt >= 0
-        non_err_indices = np.isin(self.data["state"], [StatusCode.Success, StatusCode.Evaluate])
+        active_indices = (time - self._data["time"]) / dt >= 0
+        non_err_indices = np.isin(self._data["state"], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
@@ -276,9 +276,9 @@ class ParticleSet:
 
         self._values = np.vstack(
             (
-                self.data["depth"],
-                self.data["lat"],
-                self.data["lon"],
+                self._data["depth"],
+                self._data["lat"],
+                self._data["lon"],
             )
         )
         if self._dirty_neighbor:
@@ -292,14 +292,14 @@ class ParticleSet:
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         mask = neighbor_idx != particle_idx
         neighbor_idx = neighbor_idx[mask]
-        if "horiz_dist" in self.data._ptype.variables:
-            self.data["vert_dist"][neighbor_idx] = distances[0, mask]
-            self.data["horiz_dist"][neighbor_idx] = distances[1, mask]
+        if "horiz_dist" in self._data._ptype.variables:
+            self._data["vert_dist"][neighbor_idx] = distances[0, mask]
+            self._data["horiz_dist"][neighbor_idx] = distances[1, mask]
         return True  # TODO fix for v4 ParticleDataIterator(self.particledata, subset=neighbor_idx)
 
     def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
-        neighbor_ids = self.data["id"][neighbor_idx]
+        neighbor_ids = self._data["id"][neighbor_idx]
         return neighbor_ids
 
     # TODO: This method is only tested in tutorial notebook. Add unit test?
@@ -317,13 +317,13 @@ class ParticleSet:
             IN = np.all(~np.isnan(tree_data), axis=1)
             tree = KDTree(tree_data[IN, :])
             # stack all the particle positions for a single query
-            pts = np.stack((self.particledata.data["lon"], self.particledata.data["lat"]), axis=-1)
+            pts = np.stack((self._data["lon"], self._data["lat"]), axis=-1)
             # query datatype needs to match tree datatype
             _, idx_nan = tree.query(pts.astype(tree_data.dtype))
 
             idx = np.where(IN)[0][idx_nan]
 
-            self.particledata.data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
+            self._data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
 
     @classmethod
     def from_list(
@@ -663,19 +663,19 @@ class ParticleSet:
         if isinstance(pyfunc, list):
             return Kernel.from_list(
                 self.fieldset,
-                self.data.ptype,
+                self._data.ptype,
                 pyfunc,
             )
         return Kernel(
             self.fieldset,
-            self.data.ptype,
+            self._data.ptype,
             pyfunc=pyfunc,
         )
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(self.fieldset, self.data.ptype, pyfunc=pyfunc_inter)
+        return InteractionKernel(self.fieldset, self._data.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
@@ -704,7 +704,9 @@ class ParticleSet:
         compare_values = (
             np.array([compare_values]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
         )
-        return np.where(np.isin(self.particledata.data[variable_name], compare_values, invert=invert))[0]
+        return np.where(np.isin(self._data[variable_name], compare_values, invert=invert))[
+            0
+        ]  # TODO check if this can be faster with xarray indexing?
 
     @property
     def _error_particles(self):
@@ -727,7 +729,7 @@ class ParticleSet:
         int
             Number of error particles.
         """
-        return np.sum(np.isin(self.data["state"], [StatusCode.Success, StatusCode.Evaluate], invert=True))
+        return np.sum(np.isin(self._data["state"], [StatusCode.Success, StatusCode.Evaluate], invert=True))
 
     def set_variable_write_status(self, var, write_status):
         """Method to set the write status of a Variable.
@@ -739,7 +741,7 @@ class ParticleSet:
         write_status :
             Write status of the variable (True, False or 'once')
         """
-        self.particledata.set_variable_write_status(var, write_status)
+        self._data[var].set_variable_write_status(write_status)
 
     def execute(
         self,
@@ -826,7 +828,7 @@ class ParticleSet:
 
         outputdt = output_file.outputdt if output_file else None
 
-        self.data["dt"][:] = dt
+        self._data["dt"][:] = dt
 
         # Set up pbar
         if output_file:

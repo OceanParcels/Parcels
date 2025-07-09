@@ -70,7 +70,7 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
-        bool_indices = pset.data["state"] == StatusCode.Delete
+        bool_indices = pset._data["state"] == StatusCode.Delete
         indices = np.where(bool_indices)[0]
         if len(indices) > 0 and self.fieldset.particlefile is not None:
             self.fieldset.particlefile.write(pset, None, indices=indices)
@@ -303,7 +303,7 @@ class Kernel(BaseKernel):
 
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
-        pset.data["state"][:] = StatusCode.Evaluate
+        pset._data["state"][:] = StatusCode.Evaluate
 
         if abs(dt) < np.timedelta64(1, "ns"):  # TODO still needed?
             warnings.warn(

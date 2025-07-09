@@ -104,16 +104,16 @@ def test_pset_add_explicit(fieldset):
         particle = ParticleSet(pclass=Particle, lon=lon[i], lat=lat[i], fieldset=fieldset)
         pset.add(particle)
     assert len(pset) == npart
-    assert np.allclose(pset.data["lon"][:, 0], lon, atol=1e-12)
-    assert np.allclose(pset.data["lat"][:, 0], lat, atol=1e-12)
-    assert np.allclose(np.diff(pset.data.trajectory), np.ones(pset.data.trajectory.size - 1), atol=1e-12)
+    assert np.allclose(pset._data["lon"][:, 0], lon, atol=1e-12)
+    assert np.allclose(pset._data["lat"][:, 0], lat, atol=1e-12)
+    assert np.allclose(np.diff(pset._data.trajectory), np.ones(pset._data.trajectory.size - 1), atol=1e-12)
 
 
 def test_pset_add_implicit(fieldset):
     pset = ParticleSet(fieldset, lon=np.zeros(3), lat=np.ones(3), pclass=Particle)
     pset += ParticleSet(fieldset, lon=np.ones(4), lat=np.zeros(4), pclass=Particle)
     assert len(pset) == 7
-    assert np.allclose(np.diff(pset.data.trajectory), np.ones(6), atol=1e-12)
+    assert np.allclose(np.diff(pset._data.trajectory), np.ones(6), atol=1e-12)
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])
