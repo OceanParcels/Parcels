@@ -107,29 +107,35 @@ class Field:
         """Template function used for the signature check of the lateral interpolation methods."""
         return 0.0
 
-    def _validate_interp_function(self, func: Callable) -> bool:
+    def _validate_interp_function(self, func: Callable) -> None:
         """Ensures that the function has the correct signature."""
         template_sig = inspect.signature(self._interp_template)
         func_sig = inspect.signature(func)
 
         if len(template_sig.parameters) != len(func_sig.parameters):
-            return False
+            raise ValueError(
+                f"Interpolation function must have {len(template_sig.parameters)} parameters, got {len(func_sig.parameters)}"
+            )
 
         for (_name1, param1), (_name2, param2) in zip(
             template_sig.parameters.items(), func_sig.parameters.items(), strict=False
         ):
             if param1.kind != param2.kind:
-                return False
+                raise ValueError(
+                    f"Parameter '{_name2}' has incorrect parameter kind. Expected {param1.kind}, got {param2.kind}"
+                )
             if param1.annotation != param2.annotation:
-                return False
+                raise ValueError(
+                    f"Parameter '{_name2}' has incorrect type annotation. Expected {param1.annotation}, got {param2.annotation}"
+                )
 
         return_annotation = func_sig.return_annotation
         template_return = template_sig.return_annotation
 
         if return_annotation != template_return:
-            return False
-
-        return True
+            raise ValueError(
+                f"Interpolation function has incorrect return type. Expected {template_return}, got {return_annotation}"
+            )
 
     def __init__(
         self,
