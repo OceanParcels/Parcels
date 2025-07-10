@@ -187,22 +187,6 @@ class XGrid(BaseGrid):
 
         raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
 
-    def ravel_index(self, axis_indices: dict[_XGRID_AXES, int]) -> int:
-        xi = axis_indices.get("X", 0)
-        yi = axis_indices.get("Y", 0)
-        zi = axis_indices.get("Z", 0)
-        xdim = self.get_axis_dim("X")
-        ydim = self.get_axis_dim("Y")
-        return xi + xdim * yi + xdim * ydim * zi
-
-    def unravel_index(self, ei) -> dict[_XGRID_AXES, int]:
-        zi = ei // (self.xdim * self.ydim)
-        ei = ei % (self.xdim * self.ydim)
-
-        yi = ei // self.xdim
-        xi = ei % self.xdim
-        return {"Z": zi, "Y": yi, "X": xi}
-
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
     """For a given dimension name in a grid, returns the direction axis it is on."""
