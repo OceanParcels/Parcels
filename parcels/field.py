@@ -384,14 +384,6 @@ class VectorField:
         _assert_same_function_signature(method, ref=ZeroInterpolator)
         self._vector_interp_method = method
 
-    # @staticmethod
-    # TODO : def _check_grid_dimensions(grid1, grid2):
-    #     return (
-    #         np.allclose(grid1.lon, grid2.lon)
-    #         and np.allclose(grid1.lat, grid2.lat)
-    #         and np.allclose(grid1.depth, grid2.depth)
-    #         and np.allclose(grid1.time, grid2.time)
-    #     )
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
