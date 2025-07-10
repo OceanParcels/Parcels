@@ -158,7 +158,7 @@ class Field:
         self.grid = grid
 
         try:
-            self.time_interval = get_time_interval(data)
+            self.time_interval = _get_time_interval(data)
         except ValueError as e:
             e.add_note(
                 f"Error getting time interval for field {name!r}. Are you sure that the time dimension on the xarray dataset is stored as timedelta, datetime or cftime datetime objects?"
@@ -340,9 +340,9 @@ class VectorField:
         self.grid = U.grid
 
         if W is None:
-            assert_same_time_interval((U, V))
+            _assert_same_time_interval((U, V))
         else:
-            assert_same_time_interval((U, V, W))
+            _assert_same_time_interval((U, V, W))
 
         self.time_interval = U.time_interval
 
@@ -480,14 +480,14 @@ def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux
             )
 
 
-def get_time_interval(data: xr.DataArray | ux.UxDataArray) -> TimeInterval | None:
+def _get_time_interval(data: xr.DataArray | ux.UxDataArray) -> TimeInterval | None:
     if len(data.time) == 1:
         return None
 
     return TimeInterval(data.time.values[0], data.time.values[-1])
 
 
-def assert_same_time_interval(fields: list[Field]) -> None:
+def _assert_same_time_interval(fields: list[Field]) -> None:
     if len(fields) == 0:
         return
 
