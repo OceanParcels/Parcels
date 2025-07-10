@@ -70,7 +70,7 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
-        bool_indices = pset.particledata.state == StatusCode.Delete
+        bool_indices = pset._data["state"] == StatusCode.Delete
         indices = np.where(bool_indices)[0]
         if len(indices) > 0 and self.fieldset.particlefile is not None:
             self.fieldset.particlefile.write(pset, None, indices=indices)
@@ -303,7 +303,7 @@ class Kernel(BaseKernel):
 
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
-        pset.particledata.state[:] = StatusCode.Evaluate
+        pset._data["state"][:] = StatusCode.Evaluate
 
         if abs(dt) < 1e-6:
             warnings.warn(
@@ -379,8 +379,8 @@ class Kernel(BaseKernel):
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
             pre_dt = p.dt
 
-            sign_dt = np.sign(p.dt)
-            if sign_dt * p.time_nextloop >= sign_dt * endtime:
+            sign_dt = np.sign(p.dt).astype(int)
+            if sign_dt * (p.time_nextloop - endtime) > np.timedelta64(0, "ns"):
                 return p
 
             try:  # Use next_dt from AdvectionRK45 if it is set

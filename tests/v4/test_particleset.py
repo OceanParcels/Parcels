@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import numpy as np
 import pytest
 
 from parcels import (
@@ -13,6 +14,35 @@ from parcels import (
 )
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
+
+
+def test_pset_add_explicit(fieldset):
+    npart = 11
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+    pset = ParticleSet(fieldset, lon=lon[0], lat=lat[0], pclass=Particle)
+    for i in range(1, npart):
+        particle = ParticleSet(pclass=Particle, lon=lon[i], lat=lat[i], fieldset=fieldset)
+        pset.add(particle)
+    assert len(pset) == npart
+    assert np.allclose([p.lon for p in pset], lon, atol=1e-12)
+    assert np.allclose([p.lat for p in pset], lat, atol=1e-12)
+    assert np.allclose(np.diff(pset._data.trajectory), np.ones(pset._data.trajectory.size - 1), atol=1e-12)
+
+
+def test_pset_add_implicit(fieldset):
+    pset = ParticleSet(fieldset, lon=np.zeros(3), lat=np.ones(3), pclass=Particle)
+    pset += ParticleSet(fieldset, lon=np.ones(4), lat=np.zeros(4), pclass=Particle)
+    assert len(pset) == 7
+    assert np.allclose(np.diff(pset._data.trajectory), np.ones(6), atol=1e-12)
+
+
+def test_pset_iterator(fieldset):
+    npart = 10
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.ones(npart))
+    for i, particle in enumerate(pset):
+        assert particle.trajectory == i
+    assert i == npart - 1
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])
