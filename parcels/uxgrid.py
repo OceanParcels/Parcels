@@ -114,11 +114,3 @@ class UxGrid(BaseGrid):
         bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
         err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
         return bcoord, err
-
-    def ravel_index(self, axis_indices: dict[_UXGRID_AXES, int]):
-        return axis_indices["FACE"] + self.uxgrid.n_face * axis_indices["Z"]
-
-    def unravel_index(self, ei) -> dict[_UXGRID_AXES, int]:
-        zi = ei // self.uxgrid.n_face
-        fi = ei % self.uxgrid.n_face
-        return {"Z": zi, "FACE": fi}

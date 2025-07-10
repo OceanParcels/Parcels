@@ -90,30 +90,6 @@ def test_invalid_lon_lat():
         XGrid(xgcm.Grid(ds, periodic=False))
 
 
-def test_xgrid_ravel_unravel_index():
-    ds = datasets["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
-
-    xdim = grid.xdim
-    ydim = grid.ydim
-    zdim = grid.zdim
-
-    encountered_eis = []
-    for xi in range(xdim):
-        for yi in range(ydim):
-            for zi in range(zdim):
-                axis_indices = {"Z": zi, "Y": yi, "X": xi}
-                ei = grid.ravel_index(axis_indices)
-                axis_indices_test = grid.unravel_index(ei)
-                assert axis_indices_test == axis_indices
-                encountered_eis.append(ei)
-
-    encountered_eis = sorted(encountered_eis)
-    assert len(set(encountered_eis)) == len(encountered_eis), "Raveled indices are not unique."
-    assert np.allclose(np.diff(np.array(encountered_eis)), 1), "Raveled indices are not consecutive integers."
-    assert encountered_eis[0] == 0, "Raveled indices do not start at 0."
-
-
 @pytest.mark.parametrize(
     "ds",
     [
