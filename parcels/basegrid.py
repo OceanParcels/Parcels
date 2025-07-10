@@ -135,3 +135,38 @@ class BaseGrid(ABC):
             Raised if the method is not implemented for the current grid type.
         """
         ...
+
+    @property
+    @abstractmethod
+    def axes(self) -> list[str]:
+        """
+        Return a list of axis names that are part of this grid.
+
+        Returns
+        -------
+        list[str]
+            List of axis names, e.g. ["Z", "Y", "X"] for a 3D structured grid or ["Z", "FACE"] for an unstructured grid.
+        """
+        ...
+
+    @abstractmethod
+    def get_axis_dim(self, axis: str) -> int:
+        """
+        Return the dimensionality (number of cells/edges) along a specific axis.
+
+        Parameters
+        ----------
+        axis : str
+            The name of the axis to get the dimensionality for. Must be one of the values returned by self.axes.
+
+        Returns
+        -------
+        int
+            The number of cells/edges along the specified axis.
+
+        Raises
+        ------
+        ValueError
+            If the specified axis is not part of this grid.
+        """
+        ...

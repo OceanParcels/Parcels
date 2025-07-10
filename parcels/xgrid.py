@@ -1,4 +1,5 @@
 from collections.abc import Hashable, Mapping
+from functools import cached_property
 from typing import Literal, cast
 
 import numpy as np
@@ -112,21 +113,23 @@ class XGrid(BaseGrid):
     def time(self):
         return self._datetimes.astype(np.float64) / 1e9
 
-    @property
-    def xdim(self):
-        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("X"))
+    @cached_property
+    def xdim(self) -> int:
+        return self.get_axis_dim("X")
 
-    @property
-    def ydim(self):
-        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("Y"))
+    @cached_property
+    def ydim(self) -> int:
+        return self.get_axis_dim("Y")
 
-    @property
-    def zdim(self):
-        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("Z"))
+    @cached_property
+    def zdim(self) -> int:
+        return self.get_axis_dim("Z")
 
-    @property
-    def tdim(self):
-        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get("T"))
+    def get_axis_dim(self, axis: _XGRID_AXES) -> int:
+        if axis not in self.axes:
+            raise ValueError(f"Axis {axis!r} is not part of this grid. Available axes: {self.axes}")
+
+        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get(axis))
 
     @property
     def _z4d(self) -> Literal[0, 1]:
@@ -188,7 +191,9 @@ class XGrid(BaseGrid):
         xi = axis_indices.get("X", 0)
         yi = axis_indices.get("Y", 0)
         zi = axis_indices.get("Z", 0)
-        return xi + self.xdim * yi + self.xdim * self.ydim * zi
+        xdim = self.get_axis_dim("X")
+        ydim = self.get_axis_dim("Y")
+        return xi + xdim * yi + xdim * ydim * zi
 
     def unravel_index(self, ei) -> dict[_XGRID_AXES, int]:
         zi = ei // (self.xdim * self.ydim)

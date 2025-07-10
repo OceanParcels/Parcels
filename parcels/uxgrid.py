@@ -54,6 +54,19 @@ class UxGrid(BaseGrid):
             return np.zeros(1)
         return self.z.values
 
+    @property
+    def axes(self) -> list[_UXGRID_AXES]:
+        return ["Z", "FACE"]
+
+    def get_axis_dim(self, axis: _UXGRID_AXES) -> int:
+        if axis not in self.axes:
+            raise ValueError(f"Axis {axis!r} is not part of this grid. Available axes: {self.axes}")
+
+        if axis == "Z":
+            return len(self.z.values)
+        elif axis == "FACE":
+            return self.uxgrid.n_face
+
     def search(self, z, y, x, ei=None):
         tol = 1e-10
 
