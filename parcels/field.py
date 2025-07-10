@@ -10,7 +10,6 @@ import uxarray as ux
 import xarray as xr
 
 from parcels._core.utils.time import TimeInterval
-from parcels._core.utils.unstructured import get_vertical_location_from_dims
 from parcels._reprs import default_repr
 from parcels._typing import (
     Mesh,
@@ -205,41 +204,6 @@ class Field:
         if not isinstance(value, UnitConverter):
             raise ValueError(f"Units must be a UnitConverter object, got {type(value)}")
         self._units = value
-
-    @property
-    def lat(self):
-        if type(self.data) is ux.UxDataArray:
-            if self.data.attrs["location"] == "node":
-                return self.grid.node_lat
-            elif self.data.attrs["location"] == "face":
-                return self.grid.face_lat
-            elif self.data.attrs["location"] == "edge":
-                return self.grid.edge_lat
-        else:
-            return self.grid.lat
-
-    @property
-    def lon(self):
-        if type(self.data) is ux.UxDataArray:
-            if self.data.attrs["location"] == "node":
-                return self.grid.node_lon
-            elif self.data.attrs["location"] == "face":
-                return self.grid.face_lon
-            elif self.data.attrs["location"] == "edge":
-                return self.grid.edge_lon
-        else:
-            return self.grid.lon
-
-    @property
-    def depth(self):
-        if type(self.data) is ux.UxDataArray:
-            vertical_location = get_vertical_location_from_dims(self.data.dims)
-            if vertical_location == "center":
-                return self.grid.nz1
-            elif vertical_location == "face":
-                return self.grid.nz
-        else:
-            return self.grid.depth
 
     @property
     def xdim(self):
