@@ -176,33 +176,6 @@ class FieldSet:
                 grids.append(field.grid)
         return grids
 
-    # def computeTimeChunk(self, time=0.0, dt=1):
-    #     """Load a chunk of three data time steps into the FieldSet.
-    #     This is used when FieldSet uses data imported from netcdf,
-    #     with default option deferred_load. The loaded time steps are at or immediatly before time
-    #     and the two time steps immediately following time if dt is positive (and inversely for negative dt)
-
-    #     Parameters
-    #     ----------
-    #     time :
-    #         Time around which the FieldSet data are to be loaded.
-    #         Time is provided as a double, relatively to Fieldset.time_origin.
-    #         Default is 0.
-    #     dt :
-    #         time step of the integration scheme, needed to set the direction of time chunk loading.
-    #         Default is 1.
-    #     """
-    #     nextTime = np.inf if dt > 0 else -np.inf
-
-    #     if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
-    #         return nextTime
-    #     else:
-    #         nSteps = int((nextTime - time) / dt)
-    #         if nSteps == 0:
-    #             return nextTime
-    #         else:
-    #             return time + nSteps * dt
-
 
 class CalendarError(Exception):  # TODO: Move to a parcels errors module
     """Exception raised when the calendar of a field is not compatible with the rest of the Fields. The user should ensure that they only add fields to a FieldSet that have compatible CFtime calendars."""
