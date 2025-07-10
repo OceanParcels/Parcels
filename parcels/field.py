@@ -316,10 +316,6 @@ class Field:
         else:
             return value
 
-    def _rescale_and_set_minmax(self, data):
-        data[np.isnan(data)] = 0
-        return data
-
     def __getattr__(self, key: str):
         return getattr(self.data, key)
 
