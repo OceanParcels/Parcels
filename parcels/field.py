@@ -316,9 +316,6 @@ class Field:
         else:
             return value
 
-    def __getattr__(self, key: str):
-        return getattr(self.data, key)
-
     def __getitem__(self, key):
         self._check_velocitysampling()
         try:
@@ -328,9 +325,6 @@ class Field:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=None)
-
-    def __contains__(self, key: str):
-        return key in self.data
 
 
 class VectorField:
