@@ -183,6 +183,8 @@ class Kernel(BaseKernel):
     def add_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
         def Setcoords(particle, fieldset, time):  # pragma: no cover
+            import numpy as np  # noqa
+
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
             particle_ddepth = 0  # noqa
