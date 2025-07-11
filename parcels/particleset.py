@@ -248,9 +248,11 @@ class ParticleSet:
 
         """
         if isinstance(particles, type(self)):
-            particles._data["trajectory"] = (
-                particles._data["trajectory"].values + self._data["trajectory"].values.max() + 1
-            )
+            if len(self._data["trajectory"]) > 0:
+                offset = self._data["trajectory"].values.max() + 1
+            else:
+                offset = 0
+            particles._data["trajectory"] = particles._data["trajectory"].values + offset
         self._data = xr.concat([self._data, particles._data], dim="trajectory")
         # Adding particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
@@ -646,10 +648,7 @@ class ParticleSet:
             if v not in ["lon", "lat", "depth", "time", "id"]:
                 kwargs[v] = vars[v]
 
-        if restart:
-            pclass.setLastID(0)  # reset to zero offset
-        else:
-            vars["id"] = None
+        vars["id"] = None
 
         return cls(
             fieldset=fieldset,

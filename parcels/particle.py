@@ -193,10 +193,6 @@ class Particle:
         cls.lat_nextloop.dtype = dtype
         cls.depth_nextloop.dtype = dtype
 
-    @classmethod
-    def setLastID(cls, offset):  # TODO v4: check if we can implement this in another way
-        Particle.lastID = offset
-
 
 InteractionParticle = Particle.add_variables(
     [Variable("vert_dist", dtype=np.float32), Variable("horiz_dist", dtype=np.float32)]

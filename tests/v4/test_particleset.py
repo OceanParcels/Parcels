@@ -202,6 +202,22 @@ def test_pset_add_implicit(fieldset):
     assert np.allclose(np.diff(pset._data.trajectory), np.ones(6), atol=1e-12)
 
 
+def test_pset_add_execute(fieldset, npart=10):
+    pset = ParticleSet(fieldset, lon=[], lat=[])
+    for _ in range(npart):
+        pset += ParticleSet(pclass=Particle, lon=0.1, lat=0.1, fieldset=fieldset)
+    assert pset.size == npart
+
+
+def test_pset_merge_inplace(fieldset, npart=100):
+    pset1 = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
+    pset2 = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(0, 1, npart))
+    assert pset1.size == npart
+    assert pset2.size == npart
+    pset1.add(pset2)
+    assert pset1.size == 2 * npart
+
+
 def test_pset_iterator(fieldset):
     npart = 10
     pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.ones(npart))
