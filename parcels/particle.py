@@ -1,9 +1,6 @@
-from operator import attrgetter
 from typing import Literal
 
 import numpy as np
-
-from parcels.tools.statuscodes import StatusCode
 
 __all__ = ["InteractionParticle", "Particle", "Variable"]
 
@@ -110,44 +107,24 @@ class Particle:
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    lon = Variable("lon", dtype=np.float32)
-    lon_nextloop = Variable("lon_nextloop", dtype=np.float32, to_write=False)
-    lat = Variable("lat", dtype=np.float32)
-    lat_nextloop = Variable("lat_nextloop", dtype=np.float32, to_write=False)
-    depth = Variable("depth", dtype=np.float32)
-    depth_nextloop = Variable("depth_nextloop", dtype=np.float32, to_write=False)
-    time = Variable("time", dtype=np.float64)
-    time_nextloop = Variable("time_nextloop", dtype=np.float64, to_write=False)
-    id = Variable("id", dtype=np.int64, to_write="once")
-    obs_written = Variable("obs_written", dtype=np.int32, initial=0, to_write=False)
-    dt = Variable("dt", dtype=np.float64, to_write=False)
-    state = Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
+    def __init__(self, data, index=None):
+        self._data = data
+        self._index = index
 
-    lastID = 0  # class-level variable keeping track of last Particle ID used
+    def __getattr__(self, name):
+        if name in ["_data", "_index"]:
+            return object.__getattribute__(self, name)
+        _data = object.__getattribute__(self, "_data")
+        if name in _data:
+            return _data[name].values[self._index]
+        else:
+            return False
 
-    def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0.0, time=0.0, cptr=None):
-        # Enforce default values through Variable descriptor
-        type(self).lon.initial = lon
-        type(self).lon_nextloop.initial = lon
-        type(self).lat.initial = lat
-        type(self).lat_nextloop.initial = lat
-        type(self).depth.initial = depth
-        type(self).depth_nextloop.initial = depth
-        type(self).time.initial = time
-        type(self).time_nextloop.initial = time
-        type(self).id.initial = pid
-        type(self).lastID = max(type(self).lastID, pid)
-        type(self).obs_written.initial = 0
-        type(self).dt.initial = None
-
-        ptype = self.getPType()
-        # Explicit initialisation of all particle variables
-        for v in ptype.variables:
-            if isinstance(v.initial, attrgetter):
-                initial = v.initial(self)
-            else:
-                initial = v.initial
-            setattr(self, v.name, v.dtype(initial))
+    def __setattr__(self, name, value):
+        if name in ["_data", "_index"]:
+            object.__setattr__(self, name, value)
+        else:
+            self._data[name][self._index] = value
 
     def __repr__(self):
         time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else f"{self.time:f}"

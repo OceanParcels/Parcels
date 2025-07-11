@@ -1,6 +1,7 @@
 import sys
 import warnings
 from collections.abc import Iterable
+from operator import attrgetter
 
 import numpy as np
 import xarray as xr
@@ -13,7 +14,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
-from parcels.particle import Particle
+from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
@@ -21,28 +22,6 @@ from parcels.tools.statuscodes import StatusCode
 from parcels.tools.warnings import ParticleSetWarning
 
 __all__ = ["ParticleSet"]
-
-
-class TestParticle:
-    # Temporary class to allow for testing of ParticleSet without needing to change v3-Particle class. TODO update the Particle class
-    def __init__(self, data, index=None):
-        self._data = data
-        self._index = index
-
-    def __getattr__(self, name):
-        if name in ["_data", "_index"]:
-            return object.__getattribute__(self, name)
-        _data = object.__getattribute__(self, "_data")
-        if name in _data:
-            return _data[name].values[self._index]
-        else:
-            return False
-
-    def __setattr__(self, name, value):
-        if name in ["_data", "_index"]:
-            object.__setattr__(self, name, value)
-        else:
-            self._data[name][self._index] = value
 
 
 class ParticleSet:
@@ -179,6 +158,20 @@ class ParticleSet:
                 "ptype": self._pclass.getPType(),  # TODO check why both pclass and ptype needed
             },
         )
+        # add extra fields from the custom Particle class
+        for v in self.pclass.__dict__.values():
+            if isinstance(v, Variable):
+                if isinstance(v.initial, attrgetter):
+                    initial = v.initial(self).values
+                else:
+                    initial = v.initial * np.ones(len(pid_orig), dtype=v.dtype)
+                self._data[v.name] = (["trajectory"], initial)
+
+        # update initial values provided on ParticleSet creation
+        for kwvar, kwval in kwargs.items():
+            if not hasattr(pclass, kwvar):
+                raise RuntimeError(f"Particle class does not have Variable {kwvar}")
+            self._data[kwvar][:] = kwval
 
         self._kernel = None
 
@@ -216,7 +209,7 @@ class ParticleSet:
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return TestParticle(self._data, index=index)
+        return Particle(self._data, index=index)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):

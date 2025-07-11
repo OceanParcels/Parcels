@@ -1,5 +1,6 @@
 from contextlib import nullcontext as does_not_raise
 from datetime import datetime, timedelta
+from operator import attrgetter
 
 import numpy as np
 import pytest
@@ -64,6 +65,39 @@ def test_create_empty_pset(fieldset):
 
     pset.execute(DoNothing, endtime=1.0, dt=1.0)
     assert pset.size == 0
+
+
+def test_pset_custominit_on_pset(fieldset):
+    MyParticle = Particle.add_variable("sample_var")
+
+    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, sample_var=5)
+
+    pset.execute(DoNothing, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
+    assert np.allclose([p.sample_var for p in pset], 5.0)
+
+
+def test_pset_custominit_on_pset_attrgetter(fieldset):
+    MyParticle = Particle.add_variable("sample_var", initial=attrgetter("lon"))
+
+    pset = ParticleSet(fieldset, lon=3, lat=0, pclass=MyParticle)
+
+    pset.execute(DoNothing, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
+    assert np.allclose([p.sample_var for p in pset], 3.0)
+
+
+@pytest.mark.parametrize("pset_override", [True, False])
+def test_pset_custominit_on_pclass(fieldset, pset_override):
+    MyParticle = Particle.add_variable("sample_var", initial=4)
+
+    if pset_override:
+        pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, sample_var=5)
+    else:
+        pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle)
+
+    pset.execute(DoNothing, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
+
+    check_val = 5.0 if pset_override else 4.0
+    assert np.allclose([p.sample_var for p in pset], check_val)
 
 
 @pytest.mark.parametrize(
