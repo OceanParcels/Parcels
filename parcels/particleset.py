@@ -822,7 +822,7 @@ class ParticleSet:
                     raise TypeError("The runtime must be a np.timedelta64 object")
 
         else:
-            start_time = self.fieldset.time_interval.left
+            start_time = self._data["time_nextloop"].min().values
 
             if runtime is None:
                 if endtime is None:

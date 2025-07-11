@@ -49,6 +49,24 @@ def test_pset_stop_simulation(fieldset):
     assert pset[0].time == fieldset.U.time[0].values + np.timedelta64(4, "s")
 
 
+@pytest.mark.parametrize("with_delete", [True, False])
+def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
+
+    def AddLat(particle, fieldset, time):  # pragma: no cover
+        particle_dlat += 0.1  # noqa
+
+    k_add = pset.Kernel(AddLat)
+    for _ in range(n + 1):
+        pset.execute(k_add, runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
+        if with_delete:
+            pset.remove_indices(len(pset) - 1)
+    if with_delete:
+        assert np.allclose(pset.lat, n * 0.1, atol=1e-12)
+    else:
+        assert np.allclose([p.lat - n * 0.1 for p in pset], np.zeros(npart), rtol=1e-12)
+
+
 @pytest.mark.parametrize("verbose_progress", [True, False])
 def test_uxstommelgyre_pset_execute(verbose_progress):
     ds = datasets_unstructured["stommel_gyre_delaunay"]
