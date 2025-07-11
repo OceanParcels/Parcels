@@ -129,6 +129,23 @@ class XGrid(BaseGrid):
 
         return get_cell_count_along_dim(self.xgcm_grid.axes[axis])
 
+    def localize(self, position: dict[_XGRID_AXES, tuple[int, float]], dims: list[str]) -> dict[str, tuple[int, float]]:
+        """
+        Uses the grid context (i.e., the staggering of the grid) to convert a position relative
+        to the F-points in the grid to a position relative to the dimensions of the array
+        of interest.
+        """
+        axis_to_var = {get_axis_from_dim_name(self.xgcm_grid.axes, dim): dim for dim in dims}
+        var_positions = {
+            axis: get_xgcm_position_from_dim_name(self.xgcm_grid.axes, dim) for axis, dim in axis_to_var.items()
+        }
+        return {
+            axis_to_var[axis]: _convert_center_pos_to_fpoint(
+                index=index, bcoord=bcoord, position=var_positions[axis], f_points_position=self._fpoint_info[axis]
+            )
+            for axis, (index, bcoord) in position.items()
+        }
+
     @property
     def _z4d(self) -> Literal[0, 1]:
         """
@@ -184,6 +201,19 @@ class XGrid(BaseGrid):
             return {"Z": (zi, zeta), "Y": (yi, eta), "X": (xi, xsi)}
 
         raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
+
+    @cached_property
+    def _fpoint_info(self):
+        xgcm_axes = self.xgcm_grid.axes
+        f_point_positions = ["left", "right", "inner", "outer"]
+        axis_position_mapping = {}
+        for axis in self.axes:
+            coords = xgcm_axes[axis].coords
+            edge_positions = list(filter(lambda x: x in f_point_positions, coords.keys()))
+            assert len(edge_positions) == 1, f"Axis {axis} has multiple edge positions: {edge_positions}"
+            axis_position_mapping[axis] = edge_positions[0]
+
+        return axis_position_mapping
 
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
@@ -337,3 +367,22 @@ def _search_1d_array(
     i = np.argmin(arr <= x) - 1
     bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
     return i, bcoord
+
+
+def _convert_center_pos_to_fpoint(
+    *, index: int, bcoord: float, position: _XGCM_AXIS_POSITION, f_points_position: _XGCM_AXIS_POSITION
+) -> tuple[int, float]:
+    """Converts a position relative to the center point along an axis to a reposition relative to the cell edges."""
+    if position != "center":
+        return index, bcoord
+
+    bcoord = bcoord - 0.5
+    if bcoord < 0:
+        bcoord += 1.0
+        index -= 1
+
+    # Correct relative to the f-point position
+    if f_points_position in ["inner", "right"]:
+        index += 1
+
+    return index, bcoord
