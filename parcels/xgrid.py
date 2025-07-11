@@ -18,13 +18,11 @@ _XGCM_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
 _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
 
 
-def get_cell_edge_count_along_dim(axis: xgcm.Axis | None) -> int:
-    if axis is None:
-        return 1
+def get_cell_count_along_dim(axis: xgcm.Axis) -> int:
     first_coord = list(axis.coords.items())[0]
     _, coord_var = first_coord
 
-    return axis._ds[coord_var].size
+    return axis._ds[coord_var].size - 1
 
 
 def get_time(axis: xgcm.Axis) -> npt.NDArray:
@@ -129,7 +127,7 @@ class XGrid(BaseGrid):
         if axis not in self.axes:
             raise ValueError(f"Axis {axis!r} is not part of this grid. Available axes: {self.axes}")
 
-        return get_cell_edge_count_along_dim(self.xgcm_grid.axes.get(axis))
+        return get_cell_count_along_dim(self.xgcm_grid.axes[axis])
 
     @property
     def _z4d(self) -> Literal[0, 1]:

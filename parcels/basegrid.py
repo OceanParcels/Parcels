@@ -159,7 +159,7 @@ class BaseGrid(ABC):
     @abstractmethod
     def get_axis_dim(self, axis: str) -> int:
         """
-        Return the dimensionality (number of cells/edges) along a specific axis.
+        Return the dimensionality (number of cells/faces) along a specific axis.
 
         Parameters
         ----------
