@@ -102,6 +102,19 @@ def test_particleset_dt_type(fieldset, dt, expectation):
         pset.execute(runtime=np.timedelta64(10, "s"), dt=dt, pyfunc=DoNothing)
 
 
+def test_pset_starttime_not_multiple_dt(fieldset):
+    times = [0, 1, 2]
+    datetimes = [fieldset.U.time[0].values + np.timedelta64(t, "s") for t in times]
+    pset = ParticleSet(fieldset, lon=[0] * len(times), lat=[0] * len(times), pclass=Particle, time=datetimes)
+
+    def Addlon(particle, fieldset, time):  # pragma: no cover
+        print(f"Addlon: {time} {particle.trajectory}")
+        particle_dlon += particle.dt / np.timedelta64(1, "s")  # noqa
+
+    pset.execute(Addlon, dt=np.timedelta64(2, "s"), runtime=np.timedelta64(8, "s"), verbose_progress=False)
+    assert np.allclose([p.lon_nextloop for p in pset], [8 - t for t in times])
+
+
 @pytest.mark.parametrize(
     "runtime, expectation",
     [

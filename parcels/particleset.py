@@ -861,8 +861,8 @@ class ParticleSet:
         next_output = outputdt if output_file else None
 
         time = start_time
-        while time <= end_time:
-            next_time = time + dt
+        while time < end_time:
+            next_time = min(time + dt, end_time)  # TODO also for time-backward
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution

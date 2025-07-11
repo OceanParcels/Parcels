@@ -381,7 +381,7 @@ class Kernel(BaseKernel):
             pre_dt = p.dt
 
             sign_dt = np.sign(p.dt).astype(int)
-            if sign_dt * (p.time_nextloop - endtime) > np.timedelta64(0, "ns"):
+            if sign_dt * (endtime - p.time_nextloop) <= np.timedelta64(0, "ns"):
                 return p
 
             # TODO implement below later again
@@ -389,8 +389,8 @@ class Kernel(BaseKernel):
             #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
             #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
             # except AttributeError:
-            # if abs(endtime - p.time_nextloop) < abs(p.dt) - 1e-6:
-            #     p.dt = abs(endtime - p.time_nextloop) * sign_dt
+            if abs(endtime - p.time_nextloop) <= abs(p.dt):
+                p.dt = abs(endtime - p.time_nextloop) * sign_dt
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
