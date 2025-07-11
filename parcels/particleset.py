@@ -159,15 +159,15 @@ class ParticleSet:
 
         self._data = xr.Dataset(
             {
-                "lon": (["trajectory"], lon),
-                "lat": (["trajectory"], lat),
-                "depth": (["trajectory"], depth),
+                "lon": (["trajectory"], lon.astype(lonlatdepth_dtype)),
+                "lat": (["trajectory"], lat.astype(lonlatdepth_dtype)),
+                "depth": (["trajectory"], depth.astype(lonlatdepth_dtype)),
                 "time": (["trajectory"], time),
                 "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(pid_orig))),
                 "state": (["trajectory"], np.zeros((len(pid_orig)), dtype=np.int32)),
-                "lon_nextloop": (["trajectory"], lon),
-                "lat_nextloop": (["trajectory"], lat),
-                "depth_nextloop": (["trajectory"], depth),
+                "lon_nextloop": (["trajectory"], lon.astype(lonlatdepth_dtype)),
+                "lat_nextloop": (["trajectory"], lat.astype(lonlatdepth_dtype)),
+                "depth_nextloop": (["trajectory"], depth.astype(lonlatdepth_dtype)),
                 "time_nextloop": (["trajectory"], time),
             },
             coords={
