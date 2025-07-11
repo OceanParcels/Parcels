@@ -32,7 +32,7 @@ def UXPiecewiseConstantFace(
     This interpolation method is appropriate for fields that are
     face registered, such as u,v in FESOM.
     """
-    return field.data.values[ti, position["Z"][0], position["FACE"][0]]
+    return field.data.values[ti, position["Z"][0], position["FACE"][0]][0]
 
 
 def UXPiecewiseLinearNode(
