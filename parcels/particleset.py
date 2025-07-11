@@ -132,12 +132,11 @@ class ParticleSet:
 
         if time is None or len(time) == 0:
             time = fieldset.U.time.values[0]  # TODO set this to NaT if no time is given
-        time = np.repeat(time, lon.size) if time.size == 1 else time
-
-        if type(time[0]) in [np.datetime64, np.timedelta64]:
+        elif type(time[0]) in [np.datetime64, np.timedelta64]:
             pass  # already in the right format
         else:
             raise TypeError("particle time must be a datetime, timedelta, or date object")
+        time = np.repeat(time, lon.size) if time.size == 1 else time
 
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
