@@ -330,9 +330,8 @@ class Kernel(BaseKernel):
         n_error = pset._num_error_particles
 
         while n_error > 0:
-            error_pset = pset._error_particles
-            # Check for StatusCodes
-            for p in error_pset:
+            for i in pset._error_particles:
+                p = pset[i]
                 if p.state == StatusCode.StopExecution:
                     return
                 if p.state == StatusCode.StopAllExecution:

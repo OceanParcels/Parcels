@@ -732,15 +732,14 @@ class ParticleSet:
 
     @property
     def _error_particles(self):
-        """Get an iterator over all particles that are in an error state.
+        """Get indices of all particles that are in an error state.
 
         Returns
         -------
-        iterator
-            ParticleDataIterator over error particles.  # TODO update this return
+        indices
+            Indices of error particles.
         """
-        error_indices = self.data_indices("state", [StatusCode.Success, StatusCode.Evaluate], invert=True)
-        return error_indices  # TODO fix to return old ParticleDataIterator(self.particledata, subset=error_indices)
+        return self.data_indices("state", [StatusCode.Success, StatusCode.Evaluate], invert=True)
 
     @property
     def _num_error_particles(self):
