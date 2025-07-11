@@ -2,6 +2,8 @@ from typing import Literal
 
 import numpy as np
 
+from parcels.tools.statuscodes import StatusCode
+
 __all__ = ["InteractionParticle", "Particle", "Variable"]
 
 
@@ -135,6 +137,10 @@ class Particle:
             if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
                 p_string += f"{var}={getattr(self, var):f}, "
         return p_string + f"time={time_string})"
+
+    def delete(self):
+        """Signal the particle for deletion."""
+        self.state = StatusCode.Delete
 
     @classmethod
     def add_variable(cls, var, *args, **kwargs):

@@ -218,6 +218,27 @@ def test_pset_merge_inplace(fieldset, npart=100):
     assert pset1.size == 2 * npart
 
 
+def test_pset_remove_index(fieldset, npart=100):
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+    pset = ParticleSet(fieldset, lon=lon, lat=lat, lonlatdepth_dtype=np.float64)
+    indices_to_remove = [0, 10, 20]
+    pset.remove_indices(indices_to_remove)
+    assert pset.size == 97
+    assert not np.any(np.in1d(pset.trajectory, indices_to_remove))
+
+
+def test_pset_remove_particle_in_kernel(fieldset, npart=100):
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
+
+    def DeleteKernel(particle, fieldset, time):  # pragma: no cover
+        if particle.lon >= 0.4:
+            particle.delete()
+
+    pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
+    assert pset.size == 40
+
+
 def test_pset_iterator(fieldset):
     npart = 10
     pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.ones(npart))

@@ -72,8 +72,9 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
         """Utility to remove all particles that signalled deletion."""
         bool_indices = pset._data["state"] == StatusCode.Delete
         indices = np.where(bool_indices)[0]
-        if len(indices) > 0 and self.fieldset.particlefile is not None:
-            self.fieldset.particlefile.write(pset, None, indices=indices)
+        # TODO v4: need to implement ParticleFile writing of deleted particles
+        # if len(indices) > 0 and self.fieldset.particlefile is not None:
+        #     self.fieldset.particlefile.write(pset, None, indices=indices)
         pset.remove_indices(indices)
 
 
