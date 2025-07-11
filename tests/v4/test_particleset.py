@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from parcels import (
     AdvectionEE,
@@ -10,6 +11,7 @@ from parcels import (
     FieldSet,
     Particle,
     ParticleSet,
+    ParticleSetWarning,
     StatusCode,
     UXPiecewiseConstantFace,
     VectorField,
@@ -77,6 +79,12 @@ def test_create_empty_pset(fieldset):
 def test_particleset_init_time_type(fieldset, time, expectation):
     with expectation:
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], time=[time], pclass=Particle)
+
+
+def test_pset_create_outside_time(fieldset):
+    time = xr.date_range("1999", "2001", 20)
+    with pytest.warns(ParticleSetWarning, match="Some particles are set to be released*"):
+        ParticleSet(fieldset, pclass=Particle, lon=[0] * len(time), lat=[0] * len(time), time=time)
 
 
 @pytest.mark.parametrize(
