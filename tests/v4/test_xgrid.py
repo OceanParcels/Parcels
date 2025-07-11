@@ -16,9 +16,9 @@ test_cases = [
     GridTestCase(datasets["ds_2d_left"], "lat", datasets["ds_2d_left"].YG.values),
     GridTestCase(datasets["ds_2d_left"], "depth", datasets["ds_2d_left"].ZG.values),
     GridTestCase(datasets["ds_2d_left"], "time", datasets["ds_2d_left"].time.values.astype(np.float64) / 1e9),
-    GridTestCase(datasets["ds_2d_left"], "xdim", X),
-    GridTestCase(datasets["ds_2d_left"], "ydim", Y),
-    GridTestCase(datasets["ds_2d_left"], "zdim", Z),
+    GridTestCase(datasets["ds_2d_left"], "xdim", X - 1),
+    GridTestCase(datasets["ds_2d_left"], "ydim", Y - 1),
+    GridTestCase(datasets["ds_2d_left"], "zdim", Z - 1),
 ]
 
 
@@ -53,9 +53,9 @@ def test_xgrid_axes(ds):
 @pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
 def test_xgrid_get_axis_dim(ds):
     grid = XGrid(xgcm.Grid(ds, periodic=False))
-    assert grid.get_axis_dim("Z") == Z
-    assert grid.get_axis_dim("Y") == Y
-    assert grid.get_axis_dim("X") == X
+    assert grid.get_axis_dim("Z") == Z - 1
+    assert grid.get_axis_dim("Y") == Y - 1
+    assert grid.get_axis_dim("X") == X - 1
 
 
 def test_invalid_xgrid_field_array():
