@@ -10,6 +10,7 @@ from parcels import (
     FieldSet,
     Particle,
     ParticleSet,
+    StatusCode,
     UXPiecewiseConstantFace,
     VectorField,
     xgcm,
@@ -122,6 +123,17 @@ def test_pset_iterator(fieldset):
     for i, particle in enumerate(pset):
         assert particle.trajectory == i
     assert i == npart - 1
+
+
+def test_pset_stop_simulation(fieldset):
+    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=Particle)
+
+    def Delete(particle, fieldset, time):  # pragma: no cover
+        if time >= fieldset.U.time[0].values + np.timedelta64(4, "s"):
+            return StatusCode.StopExecution
+
+    pset.execute(Delete, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
+    assert pset[0].time == fieldset.U.time[0].values + np.timedelta64(4, "s")
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])
