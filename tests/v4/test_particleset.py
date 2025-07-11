@@ -16,6 +16,7 @@ from parcels import (
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.xgrid import XGrid
+from tests.common_kernels import DoNothing
 
 
 @pytest.fixture
@@ -25,10 +26,6 @@ def fieldset() -> FieldSet:
     U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
     V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
     return FieldSet([U, V])
-
-
-def DoNothing(particle, fieldset, time):
-    pass
 
 
 def test_pset_create_lon_lat(fieldset):

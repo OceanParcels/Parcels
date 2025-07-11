@@ -16,6 +16,7 @@ from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
+from tests.common_kernels import DoNothing
 
 
 @pytest.fixture
@@ -65,6 +66,25 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
         assert np.allclose(pset.lat, n * 0.1, atol=1e-12)
     else:
         assert np.allclose([p.lat - n * 0.1 for p in pset], np.zeros(npart), rtol=1e-12)
+
+
+@pytest.mark.parametrize(
+    "starttime, endtime, dt",
+    [
+        (0, 10, 1),
+        (0, 10, 3),
+        (2, 16, 3),
+        (20, 10, -1),
+        (20, -10, -2),
+    ],
+)
+def test_execution_endtime(fieldset, starttime, endtime, dt):
+    starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
+    endtime = fieldset.time_interval.left + np.timedelta64(endtime, "s")
+    dt = np.timedelta64(dt, "s")
+    pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
+    pset.execute(DoNothing, endtime=endtime, dt=dt)
+    assert np.isclose(pset.time_nextloop.values, endtime)
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])
