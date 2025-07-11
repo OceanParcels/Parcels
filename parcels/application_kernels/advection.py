@@ -16,9 +16,7 @@ __all__ = [
 
 def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration."""
-    import numpy as np
-
-    dt = particle.dt / np.timedelta64(1, "s")  # TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * 0.5 * dt, particle.lat + v1 * 0.5 * dt)
     (u2, v2) = fieldset.UV[time + 0.5 * dt, particle.depth, lat1, lon1, particle]
@@ -32,9 +30,7 @@ def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
 
 def AdvectionRK4_3D(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity."""
-    import numpy as np
-
-    dt = particle.dt / np.timedelta64(1, "s")  # TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
     (u1, v1, w1) = fieldset.UVW[particle]
     lon1 = particle.lon + u1 * 0.5 * dt
     lat1 = particle.lat + v1 * 0.5 * dt
@@ -57,9 +53,7 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """
-    import numpy as np
-
-    dt = particle.dt / np.timedelta64(1, "s")  # TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
     sig_dep = particle.depth / fieldset.H[time, 0, particle.lat, particle.lon]
 
     (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon, particle]
@@ -103,9 +97,7 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
 
 def AdvectionEE(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using Explicit Euler (aka Euler Forward) integration."""
-    import numpy as np
-
-    dt = particle.dt / np.timedelta64(1, "s")  # TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
     (u1, v1) = fieldset.UV[particle]
     particle_dlon += u1 * dt  # noqa
     particle_dlat += v1 * dt  # noqa
@@ -121,11 +113,7 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     Time-step dt is halved if error is larger than fieldset.RK45_tol,
     and doubled if error is smaller than 1/10th of tolerance.
     """
-    import numpy as np
-
-    dt = min(particle.next_dt, fieldset.RK45_max_dt) / np.timedelta64(
-        1, "s"
-    )  # TODO improve API for converting dt to seconds
+    dt = min(particle.next_dt, fieldset.RK45_max_dt) / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
     A = [
         [1.0 / 4.0, 0.0, 0.0, 0.0, 0.0],
