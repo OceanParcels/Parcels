@@ -41,7 +41,7 @@ dependencies: #! Keep in sync with [tool.pixi.dependencies] in pyproject.toml
 
   # Docs
   - ipython
-  - numpydoc
+  - numpydoc<1.9.0 # TODO: Remove upper after https://github.com/numpy/numpydoc/issues/638 is resolved
   - nbsphinx
   - sphinx
   - pandoc
