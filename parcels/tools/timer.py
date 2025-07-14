@@ -48,7 +48,7 @@ class Timer:
         if step > 0:
             print(f"({round(time / parent_time * 100):3d}%) ", end="")
         t_str = f"{time:1.3e} s" if root_time < 300 else datetime.timedelta(seconds=time)
-        print(f"Timer {(self._name).ljust(20 - 2*step + 7*(step == 0))}: {t_str}")
+        print(f"Timer {(self._name).ljust(20 - 2 * step + 7 * (step == 0))}: {t_str}")
         for child in self._children:
             child.print_tree_sequential(step + 1, root_time, time)
 

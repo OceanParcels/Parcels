@@ -334,9 +334,9 @@ class Field:
         self.grid.depth_field = kwargs.pop("depth_field", None)
 
         if self.grid.depth_field == "not_yet_set":
-            assert (
-                self.grid._z4d
-            ), "Providing the depth dimensions from another field data is only available for 4d S grids"
+            assert self.grid._z4d, (
+                "Providing the depth dimensions from another field data is only available for 4d S grids"
+            )
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
@@ -572,20 +572,20 @@ class Field:
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
             if isinstance(filenames, list):
-                assert len(filenames) == len(
-                    timestamps
-                ), "Outer dimension of timestamps should correspond to number of files."
+                assert len(filenames) == len(timestamps), (
+                    "Outer dimension of timestamps should correspond to number of files."
+                )
             elif isinstance(filenames, dict):
                 for k in filenames.keys():
                     if k not in ["lat", "lon", "depth", "time"]:
                         if isinstance(filenames[k], list):
-                            assert len(filenames[k]) == len(
-                                timestamps
-                            ), "Outer dimension of timestamps should correspond to number of files."
+                            assert len(filenames[k]) == len(timestamps), (
+                                "Outer dimension of timestamps should correspond to number of files."
+                            )
                         else:
-                            assert (
-                                len(timestamps) == 1
-                            ), "Outer dimension of timestamps should correspond to number of files."
+                            assert len(timestamps) == 1, (
+                                "Outer dimension of timestamps should correspond to number of files."
+                            )
                         for t in timestamps:
                             assert isinstance(t, (list, np.ndarray)), "timestamps should be a list for each file"
 
@@ -597,13 +597,13 @@ class Field:
         if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
             variable = (variable, variable)
         elif isinstance(variable, dict):
-            assert (
-                len(variable) == 1
-            ), "Field.from_netcdf() supports only one variable at a time. Use FieldSet.from_netcdf() for multiple variables."
+            assert len(variable) == 1, (
+                "Field.from_netcdf() supports only one variable at a time. Use FieldSet.from_netcdf() for multiple variables."
+            )
             variable = tuple(variable.items())[0]
-        assert (
-            len(variable) == 2
-        ), "The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables"
+        assert len(variable) == 2, (
+            "The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables"
+        )
 
         data_filenames = cls._get_dim_filenames(filenames, "data")
         lonlat_filename = cls._get_dim_filenames(filenames, "lon")
@@ -2136,21 +2136,21 @@ class NestedField(list):
             if isinstance(F[0], VectorField):
                 vector_type = F[0].vector_type
             for Fi in F:
-                assert isinstance(Fi, Field) or (
-                    isinstance(Fi, VectorField) and Fi.vector_type == vector_type
-                ), "Components of a NestedField must be Field or VectorField"
+                assert isinstance(Fi, Field) or (isinstance(Fi, VectorField) and Fi.vector_type == vector_type), (
+                    "Components of a NestedField must be Field or VectorField"
+                )
                 self.append(Fi)
         elif W is None:
             for i, Fi, Vi in zip(range(len(F)), F, V, strict=True):
-                assert isinstance(Fi, Field) and isinstance(
-                    Vi, Field
-                ), "F, and V components of a NestedField must be Field"
+                assert isinstance(Fi, Field) and isinstance(Vi, Field), (
+                    "F, and V components of a NestedField must be Field"
+                )
                 self.append(VectorField(f"{name}_{i}", Fi, Vi))
         else:
             for i, Fi, Vi, Wi in zip(range(len(F)), F, V, W, strict=True):
-                assert (
-                    isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field)
-                ), "F, V and W components of a NestedField must be Field"
+                assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), (
+                    "F, V and W components of a NestedField must be Field"
+                )
                 self.append(VectorField(f"{name}_{i}", Fi, Vi, Wi))
         self.name = name
 
