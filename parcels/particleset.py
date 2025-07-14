@@ -810,6 +810,13 @@ class ParticleSet:
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
+        if np.isnat(dt) or dt is None:
+            dt = np.timedelta64(1, "s")
+        self._data["dt"][:] = dt
+        sign_dt = np.sign(dt).astype(int)
+        if sign_dt not in [-1, 1]:
+            raise ValueError("dt must be a positive or negative np.timedelta64 object")
+
         if self.fieldset.time_interval is None:
             start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
             if runtime is None:
@@ -831,17 +838,22 @@ class ParticleSet:
                     )
                 # Ensure that the endtime uses the same type as the start_time
                 if isinstance(endtime, self.fieldset.time_interval.left.__class__):
-                    if endtime < self.fieldset.time_interval.left:
-                        raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
-                    end_time = min(endtime, self.fieldset.time_interval.right)
+                    if sign_dt > 0:
+                        if endtime < self.fieldset.time_interval.left:
+                            raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
+                        end_time = min(endtime, self.fieldset.time_interval.right)
+                    else:
+                        if endtime > self.fieldset.time_interval.right:
+                            raise ValueError(
+                                "The endtime must be before the end time of the fieldset.time_interval when dt < 0"
+                            )
+                        end_time = max(endtime, self.fieldset.time_interval.left)
                 else:
                     raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
             else:
-                end_time = start_time + runtime
+                end_time = start_time + runtime * sign_dt
 
         outputdt = output_file.outputdt if output_file else None
-
-        self._data["dt"][:] = dt
 
         # Set up pbar
         if output_file:
@@ -853,8 +865,11 @@ class ParticleSet:
         next_output = outputdt if output_file else None
 
         time = start_time
-        while time < end_time:
-            next_time = min(time + dt, end_time)  # TODO also for time-backward
+        while sign_dt * (time - end_time) < 0:
+            if sign_dt > 0:
+                next_time = min(time + dt, end_time)
+            else:
+                next_time = max(time + dt, end_time)
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution

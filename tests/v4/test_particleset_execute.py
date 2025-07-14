@@ -70,13 +70,7 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
 
 @pytest.mark.parametrize(
     "starttime, endtime, dt",
-    [
-        (0, 10, 1),
-        (0, 10, 3),
-        (2, 16, 3),
-        (20, 10, -1),
-        (20, -10, -2),
-    ],
+    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
 )
 def test_execution_endtime(fieldset, starttime, endtime, dt):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
@@ -84,7 +78,7 @@ def test_execution_endtime(fieldset, starttime, endtime, dt):
     dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
     pset.execute(DoNothing, endtime=endtime, dt=dt)
-    assert np.isclose(pset.time_nextloop.values, endtime)
+    assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])
