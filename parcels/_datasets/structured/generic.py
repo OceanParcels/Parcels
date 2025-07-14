@@ -178,5 +178,47 @@ datasets = {
             "time": (["time"], TIME, {"axis": "T"}),
         },
     ),
+    "ds_2d_right": xr.Dataset(
+        {
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, Z, Y, X)),
+            "U (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "V (A grid)": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "U (C grid)": (["time", "ZG", "YC", "XG"], np.random.rand(T, Z, Y, X)),
+            "V (C grid)": (["time", "ZG", "YG", "XC"], np.random.rand(T, Z, Y, X)),
+        },
+        coords={
+            "XG": (
+                ["XG"],
+                2 * np.pi / X * np.arange(0, X),
+                {"axis": "X", "c_grid_axis_shift": 0.5},
+            ),
+            "XC": (["XC"], 2 * np.pi / X * (np.arange(0, X) - 0.5), {"axis": "X"}),
+            "YG": (
+                ["YG"],
+                2 * np.pi / (Y) * np.arange(0, Y),
+                {"axis": "Y", "c_grid_axis_shift": 0.5},
+            ),
+            "YC": (
+                ["YC"],
+                2 * np.pi / (Y) * (np.arange(0, Y) - 0.5),
+                {"axis": "Y"},
+            ),
+            "ZG": (
+                ["ZG"],
+                np.arange(Z),
+                {"axis": "Z", "c_grid_axis_shift": 0.5},
+            ),
+            "ZC": (
+                ["ZC"],
+                np.arange(Z) - 0.5,
+                {"axis": "Z"},
+            ),
+            "lon": (["XG"], 2 * np.pi / X * np.arange(0, X)),
+            "lat": (["YG"], 2 * np.pi / (Y) * np.arange(0, Y)),
+            "depth": (["ZG"], np.arange(Z)),
+            "time": (["time"], TIME, {"axis": "T"}),
+        },
+    ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
 }
