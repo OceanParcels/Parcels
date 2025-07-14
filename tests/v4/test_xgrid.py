@@ -145,3 +145,57 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
     xi, xsi = _search_1d_array(array, x)
     assert xi == expected_xi
     assert np.isclose(xsi, expected_xsi)
+
+
+@pytest.mark.parametrize(
+    "grid, da_name, expected",
+    [
+        pytest.param(
+            XGrid(xgcm.Grid(datasets["ds_2d_left"], periodic=False)),
+            "U (C grid)",
+            {
+                "XG": (np.int64(0), np.float64(0.0)),
+                "YC": (np.int64(-1), np.float64(0.5)),
+                "ZG": (np.int64(0), np.float64(0.0)),
+            },
+            id="MITgcm indexing style U (C grid)",
+        ),
+        pytest.param(
+            XGrid(xgcm.Grid(datasets["ds_2d_left"], periodic=False)),
+            "V (C grid)",
+            {
+                "XC": (np.int64(-1), np.float64(0.5)),
+                "YG": (np.int64(0), np.float64(0.0)),
+                "ZG": (np.int64(0), np.float64(0.0)),
+            },
+            id="MITgcm indexing style V (C grid)",
+        ),
+        pytest.param(
+            XGrid(xgcm.Grid(datasets["ds_2d_right"], periodic=False)),
+            "U (C grid)",
+            {
+                "XG": (np.int64(0), np.float64(0.0)),
+                "YC": (np.int64(0), np.float64(0.5)),
+                "ZG": (np.int64(0), np.float64(0.0)),
+            },
+            id="NEMO indexing style U (C grid)",
+        ),
+        pytest.param(
+            XGrid(xgcm.Grid(datasets["ds_2d_right"], periodic=False)),
+            "V (C grid)",
+            {
+                "XC": (np.int64(0), np.float64(0.5)),
+                "YG": (np.int64(0), np.float64(0.0)),
+                "ZG": (np.int64(0), np.float64(0.0)),
+            },
+            id="NEMO indexing style V (C grid)",
+        ),
+    ],
+)
+def test_xgrid_localize_zero_position(grid, da_name, expected):
+    """Test localize function using left and right datasets."""
+    position = grid.search(0, 0, 0)
+    da = grid.xgcm_grid._ds[da_name]
+
+    local_position = grid.localize(position, da.dims)
+    assert local_position == expected, f"Expected {expected}, got {local_position}"

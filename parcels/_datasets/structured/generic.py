@@ -136,7 +136,7 @@ def _unrolled_cone_curvilinear_grid():
 
 datasets = {
     "2d_left_rotated": _rotated_curvilinear_grid(),
-    "ds_2d_left": xr.Dataset(
+    "ds_2d_left": xr.Dataset(  # MITgcm indexing style
         {
             "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
             "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, Z, Y, X)),
@@ -178,7 +178,7 @@ datasets = {
             "time": (["time"], TIME, {"axis": "T"}),
         },
     ),
-    "ds_2d_right": xr.Dataset(
+    "ds_2d_right": xr.Dataset(  # NEMO indexing style
         {
             "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
             "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, Z, Y, X)),
