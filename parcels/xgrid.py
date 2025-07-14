@@ -132,8 +132,33 @@ class XGrid(BaseGrid):
     def localize(self, position: dict[_XGRID_AXES, tuple[int, float]], dims: list[str]) -> dict[str, tuple[int, float]]:
         """
         Uses the grid context (i.e., the staggering of the grid) to convert a position relative
-        to the F-points in the grid to a position relative to the dimensions of the array
-        of interest.
+        to the F-points in the grid to a position relative to the staggered grid the array
+        of interest is defined on.
+
+        Uses dimensions of the DataArray to determine the staggered grid.
+
+        Parameters
+        ----------
+        position : dict
+            A mapping of the axis to a tuple of (index, barycentric coordinate) for the
+            F-points in the grid.
+        dims : list[str]
+            A list of dimension names that the DataArray is defined on. This is used to determine
+            the staggering of the grid and which axis each dimension corresponds to.
+
+        Returns
+        -------
+        dict[str, tuple[int, float]]
+            A mapping of the dimension names to a tuple of (index, barycentric coordinate) for
+            the staggered grid the DataArray is defined on.
+
+        Example
+        -------
+        >>> position = {'X': (5, 0.51), 'Y': (
+            10, 0.25), 'Z': (3, 0.75)}
+        >>> dims = ['time', 'depth', 'YC', 'XC']
+        >>> grid.localize(position, dims)
+        {'depth': (3, 0.75), 'YC': (9, 0.75), 'XC': (5, 0.01)}
         """
         axis_to_var = {get_axis_from_dim_name(self.xgcm_grid.axes, dim): dim for dim in dims}
         var_positions = {
@@ -141,7 +166,10 @@ class XGrid(BaseGrid):
         }
         return {
             axis_to_var[axis]: _convert_center_pos_to_fpoint(
-                index=index, bcoord=bcoord, position=var_positions[axis], f_points_position=self._fpoint_info[axis]
+                index=index,
+                bcoord=bcoord,
+                xgcm_position=var_positions[axis],
+                f_points_xgcm_position=self._fpoint_info[axis],
             )
             for axis, (index, bcoord) in position.items()
         }
@@ -204,12 +232,13 @@ class XGrid(BaseGrid):
 
     @cached_property
     def _fpoint_info(self):
+        """Returns a mapping of the spatial axes in the Grid to their XGCM positions."""
         xgcm_axes = self.xgcm_grid.axes
         f_point_positions = ["left", "right", "inner", "outer"]
         axis_position_mapping = {}
         for axis in self.axes:
             coords = xgcm_axes[axis].coords
-            edge_positions = list(filter(lambda x: x in f_point_positions, coords.keys()))
+            edge_positions = [pos for pos in coords.keys() if pos in f_point_positions]
             assert len(edge_positions) == 1, f"Axis {axis} has multiple edge positions: {edge_positions}"
             axis_position_mapping[axis] = edge_positions[0]
 
@@ -370,10 +399,16 @@ def _search_1d_array(
 
 
 def _convert_center_pos_to_fpoint(
-    *, index: int, bcoord: float, position: _XGCM_AXIS_POSITION, f_points_position: _XGCM_AXIS_POSITION
+    *, index: int, bcoord: float, xgcm_position: _XGCM_AXIS_POSITION, f_points_xgcm_position: _XGCM_AXIS_POSITION
 ) -> tuple[int, float]:
-    """Converts a position relative to the center point along an axis to a reposition relative to the cell edges."""
-    if position != "center":
+    """Converts a physical position relative to the cell edges defined in the grid to be relative to the center point.
+
+    This is used to "localize" a position to be relative to the staggered grid at which the field is defined, so that
+    it can be easily interpolated.
+
+    This also handles different model input cell edges and centers are staggered in different directions (e.g., with NEMO and MITgcm).
+    """
+    if xgcm_position != "center":  # Data is already defined on the F points
         return index, bcoord
 
     bcoord = bcoord - 0.5
@@ -382,7 +417,7 @@ def _convert_center_pos_to_fpoint(
         index -= 1
 
     # Correct relative to the f-point position
-    if f_points_position in ["inner", "right"]:
+    if f_points_xgcm_position in ["inner", "right"]:
         index += 1
 
     return index, bcoord
