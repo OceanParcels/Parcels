@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import inspect
 from math import cos, pi
 
-import cftime
 import numpy as np
 import numpy.typing as npt
 
@@ -27,17 +25,6 @@ def convert_to_flat_array(var: npt.ArrayLike) -> npt.NDArray:
         list or numeric to convert to a one-dimensional numpy array
     """
     return np.array(var).flatten()
-
-
-def _get_cftime_datetimes() -> list[str]:
-    # Is there a more elegant way to parse these from cftime?
-    cftime_calendars = tuple(x[1].__name__ for x in inspect.getmembers(cftime._cftime, inspect.isclass))
-    cftime_datetime_names = [ca for ca in cftime_calendars if "Datetime" in ca]
-    return cftime_datetime_names
-
-
-def _get_cftime_calendars() -> list[str]:
-    return [getattr(cftime, cf_datetime)(1990, 1, 1).calendar for cf_datetime in _get_cftime_datetimes()]
 
 
 class UnitConverter:

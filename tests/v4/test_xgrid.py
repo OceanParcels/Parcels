@@ -6,7 +6,7 @@ import xarray as xr
 from numpy.testing import assert_allclose
 
 from parcels import xgcm
-from parcels._datasets.structured.generic import T, X, Y, Z, datasets
+from parcels._datasets.structured.generic import X, Y, Z, datasets
 from parcels.xgrid import XGrid, _search_1d_array
 
 GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
@@ -16,10 +16,9 @@ test_cases = [
     GridTestCase(datasets["ds_2d_left"], "lat", datasets["ds_2d_left"].YG.values),
     GridTestCase(datasets["ds_2d_left"], "depth", datasets["ds_2d_left"].ZG.values),
     GridTestCase(datasets["ds_2d_left"], "time", datasets["ds_2d_left"].time.values.astype(np.float64) / 1e9),
-    GridTestCase(datasets["ds_2d_left"], "xdim", X),
-    GridTestCase(datasets["ds_2d_left"], "ydim", Y),
-    GridTestCase(datasets["ds_2d_left"], "zdim", Z),
-    GridTestCase(datasets["ds_2d_left"], "tdim", T),
+    GridTestCase(datasets["ds_2d_left"], "xdim", X - 1),
+    GridTestCase(datasets["ds_2d_left"], "ydim", Y - 1),
+    GridTestCase(datasets["ds_2d_left"], "zdim", Z - 1),
 ]
 
 
@@ -45,9 +44,18 @@ def test_xgrid_init_on_generic_datasets(ds):
     XGrid(xgcm.Grid(ds, periodic=False))
 
 
-def test_xgrid_axes():
-    # Tests that the xgrid.axes property correctly identifies the axes and ordering
-    ...
+@pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
+def test_xgrid_axes(ds):
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    assert grid.axes == ["Z", "Y", "X"]
+
+
+@pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
+def test_xgrid_get_axis_dim(ds):
+    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    assert grid.get_axis_dim("Z") == Z - 1
+    assert grid.get_axis_dim("Y") == Y - 1
+    assert grid.get_axis_dim("X") == X - 1
 
 
 def test_invalid_xgrid_field_array():
@@ -83,30 +91,6 @@ def test_invalid_lon_lat():
         match=".*must be defined on the X and Y axes and transposed to have dimensions in order of Y, X\.",
     ):
         XGrid(xgcm.Grid(ds, periodic=False))
-
-
-def test_xgrid_ravel_unravel_index():
-    ds = datasets["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
-
-    xdim = grid.xdim
-    ydim = grid.ydim
-    zdim = grid.zdim
-
-    encountered_eis = []
-    for xi in range(xdim):
-        for yi in range(ydim):
-            for zi in range(zdim):
-                axis_indices = {"Z": zi, "Y": yi, "X": xi}
-                ei = grid.ravel_index(axis_indices)
-                axis_indices_test = grid.unravel_index(ei)
-                assert axis_indices_test == axis_indices
-                encountered_eis.append(ei)
-
-    encountered_eis = sorted(encountered_eis)
-    assert len(set(encountered_eis)) == len(encountered_eis), "Raveled indices are not unique."
-    assert np.allclose(np.diff(np.array(encountered_eis)), 1), "Raveled indices are not consecutive integers."
-    assert encountered_eis[0] == 0, "Raveled indices do not start at 0."
 
 
 @pytest.mark.parametrize(

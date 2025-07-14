@@ -82,34 +82,6 @@ class FieldSet:
             return None
         return functools.reduce(lambda x, y: x.intersection(y), time_intervals)
 
-    def dimrange(self, dim):
-        """Returns maximum value of a dimension (lon, lat, depth or time)
-        on 'left' side and minimum value on 'right' side for all grids
-        in a gridset. Useful for finding e.g. longitude range that
-        overlaps on all grids in a gridset.
-        """
-        maxleft, minright = (-np.inf, np.inf)
-        dim2ds = {
-            "depth": ["nz1", "nz"],
-            "lat": ["node_lat", "face_lat", "edge_lat"],
-            "lon": ["node_lon", "face_lon", "edge_lon"],
-            "time": ["time"],
-        }
-        for ds in self.datasets:
-            for field in ds.data_vars:
-                for d in dim2ds[dim]:  # check all possible dimensions
-                    if d in ds[field].dims:
-                        if dim == "depth":
-                            maxleft = max(maxleft, ds[field][d].min().data)
-                            minright = min(minright, ds[field][d].max().data)
-                        else:
-                            maxleft = max(maxleft, ds[field][d].data[0])
-                            minright = min(minright, ds[field][d].data[-1])
-        maxleft = 0 if maxleft == -np.inf else maxleft  # if all len(dim) == 1
-        minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
-
-        return maxleft, minright
-
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
@@ -203,33 +175,6 @@ class FieldSet:
             if field.grid not in grids:
                 grids.append(field.grid)
         return grids
-
-    # def computeTimeChunk(self, time=0.0, dt=1):
-    #     """Load a chunk of three data time steps into the FieldSet.
-    #     This is used when FieldSet uses data imported from netcdf,
-    #     with default option deferred_load. The loaded time steps are at or immediatly before time
-    #     and the two time steps immediately following time if dt is positive (and inversely for negative dt)
-
-    #     Parameters
-    #     ----------
-    #     time :
-    #         Time around which the FieldSet data are to be loaded.
-    #         Time is provided as a double, relatively to Fieldset.time_origin.
-    #         Default is 0.
-    #     dt :
-    #         time step of the integration scheme, needed to set the direction of time chunk loading.
-    #         Default is 1.
-    #     """
-    #     nextTime = np.inf if dt > 0 else -np.inf
-
-    #     if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
-    #         return nextTime
-    #     else:
-    #         nSteps = int((nextTime - time) / dt)
-    #         if nSteps == 0:
-    #             return nextTime
-    #         else:
-    #             return time + nSteps * dt
 
 
 class CalendarError(Exception):  # TODO: Move to a parcels errors module

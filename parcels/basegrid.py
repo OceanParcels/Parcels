@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 if TYPE_CHECKING:
     import numpy as np
 
@@ -67,7 +69,6 @@ class BaseGrid(ABC):
         """
         ...
 
-    @abstractmethod
     def ravel_index(self, axis_indices: dict[str, int]) -> int:
         """
         Convert a dictionary of axis indices to a single encoded index (ei).
@@ -101,9 +102,10 @@ class BaseGrid(ABC):
         NotImplementedError
             Raised if the method is not implemented for the current grid type.
         """
-        ...
+        dims = np.array([self.get_axis_dim(axis) for axis in self.axes], dtype=int)
+        indices = np.array([axis_indices[axis] for axis in self.axes], dtype=int)
+        return _ravel(dims, indices)
 
-    @abstractmethod
     def unravel_index(self, ei: int) -> dict[str, int]:
         """
         Convert a single encoded index (ei) back to a dictionary of axis indices.
@@ -134,4 +136,106 @@ class BaseGrid(ABC):
         NotImplementedError
             Raised if the method is not implemented for the current grid type.
         """
+        dims = np.array([self.get_axis_dim(axis) for axis in self.axes], dtype=int)
+        indices = _unravel(dims, ei)
+        return dict(zip(self.axes, indices, strict=True))
+
+    @property
+    @abstractmethod
+    def axes(self) -> list[str]:
+        """
+        Return a list of axis names that are part of this grid.
+
+        This list must at least be of length 1, and `get_axis_dim` should
+        return a valid integer for each axis name in the list.
+
+        Returns
+        -------
+        list[str]
+            List of axis names, e.g. ["Z", "Y", "X"] for a 3D structured grid or ["Z", "FACE"] for an unstructured grid.
+        """
         ...
+
+    @abstractmethod
+    def get_axis_dim(self, axis: str) -> int:
+        """
+        Return the dimensionality (number of cells/faces) along a specific axis.
+
+        Parameters
+        ----------
+        axis : str
+            The name of the axis to get the dimensionality for. Must be one of the values returned by self.axes.
+
+        Returns
+        -------
+        int
+            The number of cells/edges along the specified axis.
+
+        Raises
+        ------
+        ValueError
+            If the specified axis is not part of this grid.
+        """
+        ...
+
+
+def _unravel(dims, ei):
+    """
+    Converts a flattened (raveled) index back to multi-dimensional indices.
+
+    Args:
+        dims (1d-array-like): The dimensions along each axis
+        ei (int): The flattened index to convert
+
+    Returns
+    -------
+        array-like: Indices along each axis corresponding to the given flattened index
+
+    Example:
+        >>> dims = [2, 3, 4]
+        >>> ei = 9
+        >>> unravel(dims, ei)
+        array([0, 2, 1])
+        # Calculation:
+        # i0 = 9 // (3*4) = 9 // 12 = 0
+        # remainder = 9 % 12 = 9
+        # i1 = 9 // 4 = 2
+        # i2 = 9 % 4 = 1
+    """
+    strides = np.cumprod(dims[::-1])[::-1]
+
+    indices = np.empty(len(dims), dtype=int)
+
+    for i in range(len(dims) - 1):
+        indices[i] = ei // strides[i + 1]
+        ei = ei % strides[i + 1]
+
+    indices[-1] = ei
+    return indices
+
+
+def _ravel(dims, indices):
+    """
+    Converts indices to a flattened (raveled) index.
+
+    Args:
+        dims (1d-array-like): The dimensions along each axis
+        indices (array-like): Indices along each axis to convert
+
+    Returns
+    -------
+        int: The flattened index corresponding to the given indices
+
+    Example:
+        >>> dims = [2, 3, 4]
+        >>> indices = [0, 2, 1]
+        >>> ravel(dims, indices)
+        9
+        # Calculation: 0 * (3 * 4) + 2 * (4) + 1 = 0 + 8 + 1 = 9
+    """
+    strides = np.cumprod(dims[::-1])[::-1]
+    ei = 0
+    for i in range(len(dims) - 1):
+        ei += indices[i] * strides[i + 1]
+
+    return ei + indices[-1]

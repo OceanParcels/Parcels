@@ -54,6 +54,19 @@ class UxGrid(BaseGrid):
             return np.zeros(1)
         return self.z.values
 
+    @property
+    def axes(self) -> list[_UXGRID_AXES]:
+        return ["Z", "FACE"]
+
+    def get_axis_dim(self, axis: _UXGRID_AXES) -> int:
+        if axis not in self.axes:
+            raise ValueError(f"Axis {axis!r} is not part of this grid. Available axes: {self.axes}")
+
+        if axis == "Z":
+            return len(self.z.values)
+        elif axis == "FACE":
+            return self.uxgrid.n_face
+
     def search(self, z, y, x, ei=None):
         tol = 1e-10
 
@@ -101,11 +114,3 @@ class UxGrid(BaseGrid):
         bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
         err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
         return bcoord, err
-
-    def ravel_index(self, axis_indices: dict[_UXGRID_AXES, int]):
-        return axis_indices["FACE"] + self.uxgrid.n_face * axis_indices["Z"]
-
-    def unravel_index(self, ei) -> dict[_UXGRID_AXES, int]:
-        zi = ei // self.uxgrid.n_face
-        fi = ei % self.uxgrid.n_face
-        return {"Z": zi, "FACE": fi}
