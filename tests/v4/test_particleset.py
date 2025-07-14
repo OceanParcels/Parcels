@@ -58,6 +58,15 @@ def test_create_empty_pset(fieldset):
     assert pset.size == 0
 
 
+@pytest.mark.parametrize("offset", [0, 1, 200])
+def test_pset_with_pids(fieldset, offset, npart=100):
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
+    trajectory_ids = np.arange(offset, npart + offset)
+    pset = ParticleSet(fieldset, lon=lon, lat=lat, trajectory_ids=trajectory_ids)
+    assert np.allclose([p.trajectory for p in pset], trajectory_ids, atol=1e-12)
+
+
 def test_pset_custominit_on_pset(fieldset):
     MyParticle = Particle.add_variable("sample_var")
 

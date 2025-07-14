@@ -52,8 +52,8 @@ class ParticleSet:
         Floating precision for lon, lat, depth particle coordinates.
         It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
         and np.float64 if the interpolation method is 'cgrid_velocity'
-    pid_orig :
-        Optional list of (offsets for) the particle IDs
+    trajectory_ids :
+        Optional list of "trajectory" values (integers) for the particle IDs
     partition_function :
         Function to use for partitioning particles over processors. Default is to use kMeans
     periodic_domain_zonal :
@@ -73,7 +73,7 @@ class ParticleSet:
         time=None,
         repeatdt=None,
         lonlatdepth_dtype=None,
-        pid_orig=None,
+        trajectory_ids=None,
         **kwargs,
     ):
         self._data = None
@@ -96,8 +96,8 @@ class ParticleSet:
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
         time = np.empty(shape=0) if time is None else convert_to_flat_array(time)
 
-        if isinstance(pid_orig, (type(None), bool)):
-            pid_orig = np.arange(lon.size)
+        if isinstance(trajectory_ids, (type(None), bool)):
+            trajectory_ids = np.arange(lon.size)
 
         if depth is None:
             mindepth = 0
@@ -142,15 +142,15 @@ class ParticleSet:
                 "lat": (["trajectory"], lat.astype(lonlatdepth_dtype)),
                 "depth": (["trajectory"], depth.astype(lonlatdepth_dtype)),
                 "time": (["trajectory"], time),
-                "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(pid_orig))),
-                "state": (["trajectory"], np.zeros((len(pid_orig)), dtype=np.int32)),
+                "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(trajectory_ids))),
+                "state": (["trajectory"], np.zeros((len(trajectory_ids)), dtype=np.int32)),
                 "lon_nextloop": (["trajectory"], lon.astype(lonlatdepth_dtype)),
                 "lat_nextloop": (["trajectory"], lat.astype(lonlatdepth_dtype)),
                 "depth_nextloop": (["trajectory"], depth.astype(lonlatdepth_dtype)),
                 "time_nextloop": (["trajectory"], time),
             },
             coords={
-                "trajectory": ("trajectory", pid_orig),
+                "trajectory": ("trajectory", trajectory_ids),
             },
             attrs={
                 "ngrid": len(fieldset.gridset),
@@ -164,7 +164,7 @@ class ParticleSet:
                 if isinstance(v.initial, attrgetter):
                     initial = v.initial(self).values
                 else:
-                    initial = v.initial * np.ones(len(pid_orig), dtype=v.dtype)
+                    initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
                 self._data[v.name] = (["trajectory"], initial)
 
         # update initial values provided on ParticleSet creation
@@ -213,6 +213,7 @@ class ParticleSet:
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
+        # TODO update this when now interp methods are implemented
         if field.interp_method == "cgrid_velocity":
             return np.float64
         return np.float32
@@ -557,9 +558,7 @@ class ParticleSet:
         )
 
     @classmethod
-    def from_particlefile(
-        cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs
-    ):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, **kwargs):
         """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
         in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
@@ -581,87 +580,12 @@ class ParticleSet:
             a callable function such as np.nanmin. The last is useful when running with dt < 0.
         repeatdt : datetime.timedelta or float, optional
             Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
-        lonlatdepth_dtype :
-            Floating precision for lon, lat, depth particle coordinates.
-            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-            and np.float64 if the interpolation method is 'cgrid_velocity'
         **kwargs :
             Keyword arguments passed to the particleset constructor.
         """
-        if repeatdt is not None:
-            warnings.warn(
-                f"Note that the `repeatdt` argument is not retained from {filename}, and that "
-                "setting a new repeatdt will start particles from the _new_ particle "
-                "locations.",
-                ParticleSetWarning,
-                stacklevel=2,
-            )
-
-        pfile = xr.open_zarr(str(filename))
-        pfile_vars = [v for v in pfile.data_vars]
-
-        vars = {}
-        to_write = {}
-        for v in pclass.getPType().variables:
-            if v.name in pfile_vars:
-                vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif (
-                v.name
-                not in [
-                    "ei",
-                    "dt",
-                    "depth",
-                    "id",
-                    "obs_written",
-                    "state",
-                    "lon_nextloop",
-                    "lat_nextloop",
-                    "depth_nextloop",
-                    "time_nextloop",
-                ]
-                and v.to_write
-            ):
-                raise RuntimeError(f"Variable {v.name} is in pclass but not in the particlefile")
-            to_write[v.name] = v.to_write
-        vars["depth"] = np.ma.filled(pfile.variables["z"], np.nan)
-        vars["id"] = np.ma.filled(pfile.variables["trajectory"], np.nan)
-
-        for v in ["lon", "lat", "depth", "time"]:
-            to_write[v] = True
-
-        if isinstance(vars["time"][0, 0], np.timedelta64):
-            vars["time"] = np.array([t / np.timedelta64(1, "s") for t in vars["time"]])
-
-        if restarttime is None:
-            restarttime = np.nanmax(vars["time"])
-        elif callable(restarttime):
-            restarttime = restarttime(vars["time"])
-        else:
-            restarttime = restarttime
-
-        inds = np.where(vars["time"] == restarttime)
-        for v in vars:
-            if to_write[v] is True:
-                vars[v] = vars[v][inds]
-            elif to_write[v] == "once":
-                vars[v] = vars[v][inds[0]]
-            if v not in ["lon", "lat", "depth", "time", "id"]:
-                kwargs[v] = vars[v]
-
-        vars["id"] = None
-
-        return cls(
-            fieldset=fieldset,
-            pclass=pclass,
-            lon=vars["lon"],
-            lat=vars["lat"],
-            depth=vars["depth"],
-            time=vars["time"],
-            pid_orig=vars["id"],
-            lonlatdepth_dtype=lonlatdepth_dtype,
-            repeatdt=repeatdt,
-            **kwargs,
-        )
+        raise NotImplementedError(
+            "ParticleSet.from_particlefile is not yet implemented in v4."
+        )  # TODO implement this when ParticleFile is implemented in v4
 
     def Kernel(self, pyfunc):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
