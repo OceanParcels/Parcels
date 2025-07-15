@@ -87,7 +87,6 @@ class ParticleSet:
         self._interaction_kernel = None
 
         self.fieldset = fieldset
-        self._pclass = pclass
 
         if repeatdt:
             NotImplementedError("ParticleSet.repeatdt is not implemented yet in v4")
@@ -154,12 +153,11 @@ class ParticleSet:
             },
             attrs={
                 "ngrid": len(fieldset.gridset),
-                "pclass": self._pclass,
-                "ptype": self._pclass.getPType(),  # TODO check why both pclass and ptype needed
+                "ptype": pclass.getPType(),
             },
         )
         # add extra fields from the custom Particle class
-        for v in self.pclass.__dict__.values():
+        for v in pclass.__dict__.values():
             if isinstance(v, Variable):
                 if isinstance(v.initial, attrgetter):
                     initial = v.initial(self).values
@@ -221,10 +219,6 @@ class ParticleSet:
     @property
     def size(self):
         return len(self._data["trajectory"])
-
-    @property
-    def pclass(self):
-        return self._pclass
 
     def __repr__(self):
         return particleset_repr(self)
