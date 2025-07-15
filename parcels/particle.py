@@ -128,16 +128,6 @@ class Particle:
         else:
             self._data[name][self._index] = value
 
-    def __repr__(self):
-        time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else f"{self.time:f}"
-        p_string = f"P[{self.id}](lon={self.lon:f}, lat={self.lat:f}, depth={self.depth:f}, "
-        for var in vars(type(self)):
-            if var in ["lon_nextloop", "lat_nextloop", "depth_nextloop", "time_nextloop"]:
-                continue
-            if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
-                p_string += f"{var}={getattr(self, var):f}, "
-        return p_string + f"time={time_string})"
-
     def delete(self):
         """Signal the particle for deletion."""
         self.state = StatusCode.Delete
@@ -189,15 +179,6 @@ class Particle:
     @classmethod
     def getPType(cls):
         return ParticleType(cls)
-
-    @classmethod
-    def set_lonlatdepth_dtype(cls, dtype):
-        cls.lon.dtype = dtype
-        cls.lat.dtype = dtype
-        cls.depth.dtype = dtype
-        cls.lon_nextloop.dtype = dtype
-        cls.lat_nextloop.dtype = dtype
-        cls.depth_nextloop.dtype = dtype
 
 
 InteractionParticle = Particle.add_variables(
