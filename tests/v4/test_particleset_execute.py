@@ -81,6 +81,36 @@ def test_execution_endtime(fieldset, starttime, endtime, dt):
     assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
 
 
+@pytest.mark.parametrize(
+    "starttime, runtime, dt",
+    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
+)
+def test_execution_runtime(fieldset, starttime, runtime, dt):
+    starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
+    runtime = np.timedelta64(runtime, "s")
+    sign_dt = 1 if dt is None else np.sign(dt)
+    dt = np.timedelta64(dt, "s")
+    pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
+    pset.execute(DoNothing, runtime=runtime, dt=dt)
+    assert abs(pset.time_nextloop - starttime - runtime * sign_dt) < np.timedelta64(1, "ms")
+
+
+def test_execution_fail_python_exception(fieldset, npart=10):
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
+
+    def PythonFail(particle, fieldset, time):  # pragma: no cover
+        if particle.time >= fieldset.time_interval.left + np.timedelta64(10, "s"):
+            raise RuntimeError("Enough is enough!")
+        else:
+            pass
+
+    with pytest.raises(RuntimeError):
+        pset.execute(PythonFail, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(2, "s"))
+    assert len(pset) == npart
+    assert pset.time[0] == fieldset.time_interval.left + np.timedelta64(10, "s")
+    assert all([time == fieldset.time_interval.left + np.timedelta64(8, "s") for time in pset.time[1:]])
+
+
 @pytest.mark.parametrize("verbose_progress", [True, False])
 def test_uxstommelgyre_pset_execute(verbose_progress):
     ds = datasets_unstructured["stommel_gyre_delaunay"]

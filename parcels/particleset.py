@@ -729,7 +729,9 @@ class ParticleSet:
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
-        if np.isnat(dt) or dt is None:
+        if (dt is not None) and (not isinstance(dt, np.timedelta64)):
+            raise TypeError("dt must be a np.timedelta64 object")
+        if dt is None or np.isnat(dt):
             dt = np.timedelta64(1, "s")
         self._data["dt"][:] = dt
         sign_dt = np.sign(dt).astype(int)
