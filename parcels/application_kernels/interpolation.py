@@ -33,15 +33,16 @@ def XTriCurviLinear(
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
     data = field.data
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
 
     return (
         (
-            (1 - xsi) * (1 - eta) * data.isel(YG=yi, XG=xi)
-            + xsi * (1 - eta) * data.isel(YG=yi, XG=xi + 1)
-            + xsi * eta * data.isel(YG=yi + 1, XG=xi + 1)
-            + (1 - xsi) * eta * data.isel(YG=yi + 1, XG=xi)
+            (1 - xsi) * (1 - eta) * data.isel({axis_dim["Y"]: yi, axis_dim["X"]: xi})
+            + xsi * (1 - eta) * data.isel({axis_dim["Y"]: yi, axis_dim["X"]: xi + 1})
+            + xsi * eta * data.isel({axis_dim["Y"]: yi + 1, axis_dim["X"]: xi + 1})
+            + (1 - xsi) * eta * data.isel({axis_dim["Y"]: yi + 1, axis_dim["X"]: xi})
         )
-        .interp(time=t, ZG=zi + zeta)
+        .interp(time=t, **{axis_dim["Z"]: zi + zeta})
         .values
     )
 
@@ -57,10 +58,13 @@ def XTriRectiLinear(
     x: np.float32 | np.float64,
 ):
     """Trilinear interpolation on a rectilinear grid."""
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+
     xi, xsi = position["X"]
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
-    return field.data.interp(time=t, ZG=zi + zeta, YG=yi + eta, XG=xi + xsi).values
+    kwargs = {axis_dim["X"]: xi + xsi, axis_dim["Y"]: yi + eta, axis_dim["Z"]: zi + zeta}
+    return field.data.interp(time=t, **kwargs).values
 
 
 def UXPiecewiseConstantFace(
