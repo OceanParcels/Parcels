@@ -142,6 +142,7 @@ class ParticleSet:
                 "depth": (["trajectory"], depth.astype(lonlatdepth_dtype)),
                 "time": (["trajectory"], time),
                 "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(trajectory_ids))),
+                "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
                 "state": (["trajectory"], np.zeros((len(trajectory_ids)), dtype=np.int32)),
                 "lon_nextloop": (["trajectory"], lon.astype(lonlatdepth_dtype)),
                 "lat_nextloop": (["trajectory"], lat.astype(lonlatdepth_dtype)),
