@@ -138,7 +138,7 @@ def test_particleset_dt_type(fieldset, dt, expectation):
 
 def test_pset_starttime_not_multiple_dt(fieldset):
     times = [0, 1, 2]
-    datetimes = [fieldset.U.time[0].values + np.timedelta64(t, "s") for t in times]
+    datetimes = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in times]
     pset = ParticleSet(fieldset, lon=[0] * len(times), lat=[0] * len(times), pclass=Particle, time=datetimes)
 
     def Addlon(particle, fieldset, time):  # pragma: no cover

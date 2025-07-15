@@ -110,7 +110,7 @@ class ParticleSet:
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
         if time is None or len(time) == 0:
-            time = fieldset.U.time.values[0]  # TODO set this to NaT if no time is given
+            time = np.datetime64("NaT", "ns")  # do not set a time yet (because sign_dt not known)
         elif type(time[0]) in [np.datetime64, np.timedelta64]:
             pass  # already in the right format
         else:
@@ -753,7 +753,16 @@ class ParticleSet:
                     raise TypeError("The runtime must be a np.timedelta64 object")
 
         else:
-            start_time = self._data["time_nextloop"].min().values
+            if not np.isnat(self._data["time_nextloop"]).any():
+                if sign_dt > 0:
+                    start_time = self._data["time_nextloop"].min().values
+                else:
+                    start_time = self._data["time_nextloop"].max().values
+            else:
+                if sign_dt > 0:
+                    start_time = self.fieldset.time_interval.left
+                else:
+                    start_time = self.fieldset.time_interval.right
 
             if runtime is None:
                 if endtime is None:
@@ -776,6 +785,11 @@ class ParticleSet:
                     raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
             else:
                 end_time = start_time + runtime * sign_dt
+
+        # Set the time of the particles if it hadn't been set on initialisation
+        if np.isnat(self._data["time"]).any():
+            self._data["time"][:] = start_time
+            self._data["time_nextloop"][:] = start_time
 
         outputdt = output_file.outputdt if output_file else None
 

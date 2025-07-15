@@ -43,11 +43,11 @@ def test_pset_stop_simulation(fieldset):
     pset = ParticleSet(fieldset, lon=0, lat=0, pclass=Particle)
 
     def Delete(particle, fieldset, time):  # pragma: no cover
-        if time >= fieldset.U.time[0].values + np.timedelta64(4, "s"):
+        if time >= fieldset.time_interval.left + np.timedelta64(4, "s"):
             return StatusCode.StopExecution
 
     pset.execute(Delete, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
-    assert pset[0].time == fieldset.U.time[0].values + np.timedelta64(4, "s")
+    assert pset[0].time == fieldset.time_interval.left + np.timedelta64(4, "s")
 
 
 @pytest.mark.parametrize("with_delete", [True, False])
