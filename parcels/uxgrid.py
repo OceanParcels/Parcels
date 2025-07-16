@@ -95,8 +95,7 @@ class UxGrid(BaseGrid):
         fi, bcoords = self.uxgrid.get_spatial_hash().query([[x, y]])
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
-
-        return {"Z": (zi, zeta), "FACE": (fi, bcoords[0])}
+        return {"Z": (zi, zeta), "FACE": (fi[0], bcoords[0])}
 
     def _get_barycentric_coordinates(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
