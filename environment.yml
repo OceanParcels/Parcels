@@ -41,7 +41,7 @@ dependencies: #! Keep in sync with [tool.pixi.dependencies] in pyproject.toml
 
   # Docs
   - ipython
-  - numpydoc
+  - numpydoc!=1.9.0
   - nbsphinx
   - sphinx
   - pandoc
