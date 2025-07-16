@@ -308,7 +308,7 @@ class Kernel(BaseKernel):
         """Execute this Kernel over a ParticleSet for several timesteps."""
         pset._data["state"][:] = StatusCode.Evaluate
 
-        if abs(dt) < np.timedelta64(1, "ns"):  # TODO still needed?
+        if abs(dt) < np.timedelta64(1000, "ns"):  # TODO still needed?
             warnings.warn(
                 "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
                 RuntimeWarning,

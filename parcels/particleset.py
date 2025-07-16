@@ -95,7 +95,7 @@ class ParticleSet:
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
         time = np.empty(shape=0) if time is None else convert_to_flat_array(time)
 
-        if isinstance(trajectory_ids, (type(None), bool)):
+        if trajectory_ids is None:
             trajectory_ids = np.arange(lon.size)
 
         if depth is None:
@@ -199,12 +199,7 @@ class ParticleSet:
         name : str
             Name of the property
         """
-        if name in self._data:
-            return self._data[name]
-        if name in self.__dict__ and name[0] != "_":
-            return self.__dict__[name]
-        else:
-            return False
+        return self._data[name]
 
     def __getitem__(self, index):
         """Get a single particle by index."""
@@ -219,7 +214,7 @@ class ParticleSet:
 
     @property
     def size(self):
-        return len(self._data["trajectory"])
+        return len(self)
 
     def __repr__(self):
         return particleset_repr(self)
