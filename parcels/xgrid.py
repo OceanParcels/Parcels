@@ -137,6 +137,8 @@ class XGrid(BaseGrid):
 
         Uses dimensions of the DataArray to determine the staggered grid.
 
+        WARNING: This API is unstable and subject to change in future versions.
+
         Parameters
         ----------
         position : dict
