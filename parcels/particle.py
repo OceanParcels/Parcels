@@ -117,10 +117,7 @@ class Particle:
         if name in ["_data", "_index"]:
             return object.__getattribute__(self, name)
         _data = object.__getattribute__(self, "_data")
-        if name in _data:
-            return _data[name].values[self._index]
-        else:
-            return False
+        return _data[name].values[self._index]
 
     def __setattr__(self, name, value):
         if name in ["_data", "_index"]:

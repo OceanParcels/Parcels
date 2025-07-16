@@ -37,6 +37,16 @@ def test_multi_kernel_reuse_varnames(fieldset):
     assert np.allclose(pset.lon, [0.9], atol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
 
 
+def test_unknown_var_in_kernel(fieldset):
+    pset = ParticleSet(fieldset, lon=[0.5], lat=[0.5])
+
+    def ErrorKernel(particle, fieldset, time):  # pragma: no cover
+        particle.unknown_varname += 0.2
+
+    with pytest.raises(KeyError, match="No variable named 'unknown_varname'"):
+        pset.execute(ErrorKernel, runtime=np.timedelta64(2, "s"))
+
+
 def test_combined_kernel_from_list(fieldset):
     """
     Test pset.Kernel(List[function])
