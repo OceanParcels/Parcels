@@ -142,7 +142,6 @@ def test_pset_starttime_not_multiple_dt(fieldset):
     pset = ParticleSet(fieldset, lon=[0] * len(times), lat=[0] * len(times), pclass=Particle, time=datetimes)
 
     def Addlon(particle, fieldset, time):  # pragma: no cover
-        print(f"Addlon: {time} {particle.trajectory}")
         particle_dlon += particle.dt / np.timedelta64(1, "s")  # noqa
 
     pset.execute(Addlon, dt=np.timedelta64(2, "s"), runtime=np.timedelta64(8, "s"), verbose_progress=False)
@@ -202,7 +201,7 @@ def test_pset_add_implicit(fieldset):
     assert np.allclose(np.diff(pset._data.trajectory), np.ones(6), atol=1e-12)
 
 
-def test_pset_add_execute(fieldset, npart=10):
+def test_pset_add_implicit(fieldset, npart=10):
     pset = ParticleSet(fieldset, lon=[], lat=[])
     for _ in range(npart):
         pset += ParticleSet(pclass=Particle, lon=0.1, lat=0.1, fieldset=fieldset)
