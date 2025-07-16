@@ -115,8 +115,7 @@ class Particle:
         self._index = index
 
     def __getattr__(self, name):
-        _data = object.__getattribute__(self, "_data")
-        return _data[name].values[self._index]
+        return self._data[name].values[self._index]
 
     def __setattr__(self, name, value):
         if name in ["_data", "_index"]:
