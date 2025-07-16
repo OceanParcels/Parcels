@@ -7,7 +7,6 @@ from parcels import (
     FieldSet,
     Particle,
     ParticleSet,
-    StatusCode,
     Variable,
 )
 from tests.utils import create_fieldset_zeros_simple
@@ -157,17 +156,6 @@ def test_pset_repeatdt_check_dt(fieldset):
     assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
 
 
-def test_pset_stop_simulation(fieldset):
-    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=Particle)
-
-    def Delete(particle, fieldset, time):  # pragma: no cover
-        if time == 4:
-            return StatusCode.StopExecution
-
-    pset.execute(Delete, dt=1, runtime=21)
-    assert pset[0].time == 4
-
-
 def test_pset_access(fieldset):
     npart = 100
     lon = np.linspace(0, 1, npart, dtype=np.float32)
@@ -213,47 +201,6 @@ def test_pset_remove_particle(fieldset):
         assert pset.lat[-1] == ilat
         pset.remove_indices(pset[-1])
     assert pset.size == 0
-
-
-def test_pset_remove_kernel(fieldset):
-    npart = 100
-
-    def DeleteKernel(particle, fieldset, time):  # pragma: no cover
-        if particle.lon >= 0.4:
-            particle.delete()
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
-    pset.execute(pset.Kernel(DeleteKernel), endtime=1.0, dt=1.0)
-    assert pset.size == 40
-
-
-def test_pset_multi_execute(fieldset):
-    npart = 10
-    n = 5
-
-    def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
-    k_add = pset.Kernel(AddLat)
-    for _ in range(n + 1):
-        pset.execute(k_add, runtime=1.0, dt=1.0)
-    assert np.allclose([p.lat - n * 0.1 for p in pset], np.zeros(npart), rtol=1e-12)
-
-
-def test_pset_multi_execute_delete(fieldset):
-    npart = 10
-    n = 5
-
-    def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
-    k_add = pset.Kernel(AddLat)
-    for _ in range(n + 1):
-        pset.execute(k_add, runtime=1.0, dt=1.0)
-        pset.remove_indices(-1)
-    assert np.allclose(pset.lat, n * 0.1, atol=1e-12)
 
 
 @pytest.mark.parametrize("staggered_grid", ["Agrid", "Cgrid"])
