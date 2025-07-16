@@ -1,6 +1,7 @@
 from typing import Literal
 
 import numpy as np
+import xarray as xr
 
 from parcels.tools.statuscodes import StatusCode
 
@@ -109,7 +110,7 @@ class Particle:
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    def __init__(self, data, index=None):
+    def __init__(self, data: xr.Dataset, index: int):
         self._data = data
         self._index = index
 
