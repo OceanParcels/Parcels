@@ -28,15 +28,20 @@ def fieldset() -> FieldSet:
     return FieldSet([U, V])
 
 
-def test_pset_remove_particle_in_kernel(fieldset, npart=100):
+def test_pset_remove_particle_in_kernel(fieldset):
+    npart = 100
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
     def DeleteKernel(particle, fieldset, time):  # pragma: no cover
-        if particle.lon >= 0.4:
+        if particle.lon >= 0.4 and particle.lon <= 0.6:
             particle.delete()
 
     pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
-    assert pset.size == 40
+    indices = [i for i in range(npart) if not (40 <= i < 60)]
+    assert [p.trajectory for p in pset] == indices
+    assert pset[70].trajectory == 90
+    assert pset[-1].trajectory == npart - 1
+    assert pset.size == 80
 
 
 def test_pset_stop_simulation(fieldset):
