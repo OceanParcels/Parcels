@@ -131,47 +131,26 @@ class Particle:
         self.state = StatusCode.Delete
 
     @classmethod
-    def add_variable(cls, var, *args, **kwargs):
+    def add_variable(cls, variable: Variable | list[Variable]):
         """Add a new variable to the Particle class
 
         Parameters
         ----------
-        var : str, Variable or list of Variables
-            Variable object to be added. Can be the name of the Variable,
-            a Variable object, or a list of Variable objects
+        variable : Variable or list[Variable]
+            Variable or list of Variables to be added to the Particle class.
+            If a list is provided, all variables will be added to the class.
         """
-        if isinstance(var, list):
-            return cls.add_variables(var)
-        if not isinstance(var, Variable):
-            if len(args) > 0 and "dtype" not in kwargs:
-                kwargs["dtype"] = args[0]
-            if len(args) > 1 and "initial" not in kwargs:
-                kwargs["initial"] = args[1]
-            if len(args) > 2 and "to_write" not in kwargs:
-                kwargs["to_write"] = args[2]
-            dtype = kwargs.pop("dtype", np.float32)
-            initial = kwargs.pop("initial", 0)
-            to_write = kwargs.pop("to_write", True)
-            var = Variable(var, dtype=dtype, initial=initial, to_write=to_write)
 
         class NewParticle(cls):
             pass
 
-        setattr(NewParticle, var.name, var)
-        return NewParticle
-
-    @classmethod
-    def add_variables(cls, variables):
-        """Add multiple new variables to the Particle class
-
-        Parameters
-        ----------
-        variables : list of Variable
-            Variable objects to be added. Has to be a list of Variable objects
-        """
-        NewParticle = cls
-        for var in variables:
-            NewParticle = NewParticle.add_variable(var)
+        if isinstance(variable, Variable):
+            setattr(NewParticle, variable.name, variable)
+        elif isinstance(variable, list):
+            for var in variable:
+                if not isinstance(var, Variable):
+                    raise TypeError(f"Expected Variable, got {type(var)}")
+                setattr(NewParticle, var.name, var)
         return NewParticle
 
     @classmethod
@@ -179,7 +158,7 @@ class Particle:
         return ParticleType(cls)
 
 
-InteractionParticle = Particle.add_variables(
+InteractionParticle = Particle.add_variable(
     [Variable("vert_dist", dtype=np.float32), Variable("horiz_dist", dtype=np.float32)]
 )
 

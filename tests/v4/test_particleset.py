@@ -12,6 +12,7 @@ from parcels import (
     Particle,
     ParticleSet,
     ParticleSetWarning,
+    Variable,
     xgcm,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
@@ -67,17 +68,23 @@ def test_pset_with_pids(fieldset, offset, npart=100):
     assert np.allclose([p.trajectory for p in pset], trajectory_ids, atol=1e-12)
 
 
-def test_pset_custominit_on_pset(fieldset):
-    MyParticle = Particle.add_variable("sample_var")
-
-    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, sample_var=5)
+@pytest.mark.parametrize("aslist", [True, False])
+def test_pset_customvars_on_pset(fieldset, aslist):
+    if aslist:
+        MyParticle = Particle.add_variable([Variable("sample_var"), Variable("sample_var2")])
+        pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, sample_var=5.0, sample_var2=10.0)
+    else:
+        MyParticle = Particle.add_variable(Variable("sample_var"))
+        pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, sample_var=5.0)
 
     pset.execute(DoNothing, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
     assert np.allclose([p.sample_var for p in pset], 5.0)
+    if aslist:
+        assert np.allclose([p.sample_var2 for p in pset], 10.0)
 
 
 def test_pset_custominit_on_pset_attrgetter(fieldset):
-    MyParticle = Particle.add_variable("sample_var", initial=attrgetter("lon"))
+    MyParticle = Particle.add_variable(Variable("sample_var", initial=attrgetter("lon")))
 
     pset = ParticleSet(fieldset, lon=3, lat=0, pclass=MyParticle)
 
@@ -87,7 +94,7 @@ def test_pset_custominit_on_pset_attrgetter(fieldset):
 
 @pytest.mark.parametrize("pset_override", [True, False])
 def test_pset_custominit_on_pclass(fieldset, pset_override):
-    MyParticle = Particle.add_variable("sample_var", initial=4)
+    MyParticle = Particle.add_variable(Variable("sample_var", initial=4))
 
     if pset_override:
         pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, sample_var=5)
