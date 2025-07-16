@@ -1,7 +1,7 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from datetime import date, datetime, timedelta
+from operator import attrgetter
 
 import numpy as np
 import xarray as xr
@@ -14,8 +14,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
-from parcels.particle import Particle
-from parcels.particledata import ParticleData, ParticleDataIterator
+from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
@@ -53,8 +52,8 @@ class ParticleSet:
         Floating precision for lon, lat, depth particle coordinates.
         It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
         and np.float64 if the interpolation method is 'cgrid_velocity'
-    pid_orig :
-        Optional list of (offsets for) the particle IDs
+    trajectory_ids :
+        Optional list of "trajectory" values (integers) for the particle IDs
     partition_function :
         Function to use for partitioning particles over processors. Default is to use kMeans
     periodic_domain_zonal :
@@ -74,10 +73,10 @@ class ParticleSet:
         time=None,
         repeatdt=None,
         lonlatdepth_dtype=None,
-        pid_orig=None,
+        trajectory_ids=None,
         **kwargs,
     ):
-        self.particledata = None
+        self._data = None
         self._repeat_starttime = None
         self._repeatlon = None
         self._repeatlat = None
@@ -88,7 +87,6 @@ class ParticleSet:
         self._interaction_kernel = None
 
         self.fieldset = fieldset
-        self._pclass = pclass
 
         if repeatdt:
             NotImplementedError("ParticleSet.repeatdt is not implemented yet in v4")
@@ -97,8 +95,8 @@ class ParticleSet:
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
         time = np.empty(shape=0) if time is None else convert_to_flat_array(time)
 
-        if isinstance(pid_orig, (type(None), bool)):
-            pid_orig = np.arange(lon.size)
+        if trajectory_ids is None:
+            trajectory_ids = np.arange(lon.size)
 
         if depth is None:
             mindepth = 0
@@ -110,19 +108,15 @@ class ParticleSet:
             depth = convert_to_flat_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
-        if time.size > 0:
-            time = np.repeat(time, lon.size) if time.size == 1 else time
+        if time is None or len(time) == 0:
+            time = np.datetime64("NaT", "ns")  # do not set a time yet (because sign_dt not known)
+        elif type(time[0]) in [np.datetime64, np.timedelta64]:
+            pass  # already in the right format
+        else:
+            raise TypeError("particle time must be a datetime, timedelta, or date object")
+        time = np.repeat(time, lon.size) if time.size == 1 else time
 
-            if type(time[0]) in [np.datetime64, np.timedelta64]:
-                pass  # already in the right format
-            elif type(time[0]) in [datetime, date]:
-                time = np.array([np.datetime64(t) for t in time])
-            elif type(time[0]) in [timedelta]:
-                time = np.array([np.timedelta64(t) for t in time])
-            else:
-                raise NotImplementedError("particle time must be a datetime, timedelta, or date object")
-
-            assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
+        assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
 
         if fieldset.time_interval:
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
@@ -141,27 +135,60 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self.particledata = ParticleData(
-            self._pclass,
-            lon=lon,
-            lat=lat,
-            depth=depth,
-            time=time,
-            lonlatdepth_dtype=lonlatdepth_dtype,
-            pid_orig=pid_orig,
-            ngrid=len(fieldset.gridset),
-            **kwargs,
+        self._data = xr.Dataset(
+            {
+                "lon": (["trajectory"], lon.astype(lonlatdepth_dtype)),
+                "lat": (["trajectory"], lat.astype(lonlatdepth_dtype)),
+                "depth": (["trajectory"], depth.astype(lonlatdepth_dtype)),
+                "time": (["trajectory"], time),
+                "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(trajectory_ids))),
+                "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
+                "state": (["trajectory"], np.zeros((len(trajectory_ids)), dtype=np.int32)),
+                "lon_nextloop": (["trajectory"], lon.astype(lonlatdepth_dtype)),
+                "lat_nextloop": (["trajectory"], lat.astype(lonlatdepth_dtype)),
+                "depth_nextloop": (["trajectory"], depth.astype(lonlatdepth_dtype)),
+                "time_nextloop": (["trajectory"], time),
+            },
+            coords={
+                "trajectory": ("trajectory", trajectory_ids),
+            },
+            attrs={
+                "ngrid": len(fieldset.gridset),
+                "ptype": pclass.getPType(),
+            },
         )
+        # add extra fields from the custom Particle class
+        for v in pclass.__dict__.values():
+            if isinstance(v, Variable):
+                if isinstance(v.initial, attrgetter):
+                    initial = v.initial(self).values
+                else:
+                    initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
+                self._data[v.name] = (["trajectory"], initial)
+
+        # update initial values provided on ParticleSet creation
+        for kwvar, kwval in kwargs.items():
+            if not hasattr(pclass, kwvar):
+                raise RuntimeError(f"Particle class does not have Variable {kwvar}")
+            self._data[kwvar][:] = kwval
 
         self._kernel = None
 
     def __del__(self):
-        if self.particledata is not None and isinstance(self.particledata, ParticleData):
-            del self.particledata
-        self.particledata = None
+        if self._data is not None and isinstance(self._data, xr.Dataset):
+            del self._data
+        self._data = None
 
     def __iter__(self):
-        return iter(self.particledata)
+        self._index = 0
+        return self
+
+    def __next__(self):
+        if self._index < len(self):
+            p = self.__getitem__(self._index)
+            self._index += 1
+            return p
+        raise StopIteration
 
     def __getattr__(self, name):
         """
@@ -172,41 +199,28 @@ class ParticleSet:
         name : str
             Name of the property
         """
-        for v in self.particledata.ptype.variables:
-            if v.name == name:
-                return getattr(self.particledata, name)
-        if name in self.__dict__ and name[0] != "_":
-            return self.__dict__[name]
-        else:
-            return False
+        return self._data[name]
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return self.particledata.get_single_by_index(index)
+        return Particle(self._data, index=index)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
+        # TODO update this when now interp methods are implemented
         if field.interp_method == "cgrid_velocity":
             return np.float64
         return np.float32
 
     @property
     def size(self):
-        # ==== to change at some point - len and size are different things ==== #
-        return len(self.particledata)
-
-    @property
-    def pclass(self):
-        return self._pclass
+        return len(self)
 
     def __repr__(self):
         return particleset_repr(self)
 
     def __len__(self):
-        return len(self.particledata)
-
-    def __sizeof__(self):
-        return sys.getsizeof(self.particledata)
+        return len(self._data["trajectory"])
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -225,8 +239,12 @@ class ParticleSet:
 
         """
         if isinstance(particles, type(self)):
-            particles = particles.particledata
-        self.particledata += particles
+            if len(self._data["trajectory"]) > 0:
+                offset = self._data["trajectory"].values.max() + 1
+            else:
+                offset = 0
+            particles._data["trajectory"] = particles._data["trajectory"].values + offset
+        self._data = xr.concat([self._data, particles._data], dim="trajectory")
         # Adding particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         return self
@@ -252,22 +270,11 @@ class ParticleSet:
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`."""
-        # Removing particles invalidates the neighbor search structure.
-        self._dirty_neighbor = True
-        if type(indices) in [int, np.int32, np.intp]:
-            self.particledata.remove_single_by_index(indices)
-        else:
-            self.particledata.remove_multi_by_indices(indices)
-
-    def remove_booleanvector(self, indices):
-        """Method to remove particles from the ParticleSet, based on an array of booleans."""
-        # Removing particles invalidates the neighbor search structure.
-        self._dirty_neighbor = True
-        self.remove_indices(np.where(indices)[0])
+        self._data = self._data.drop_sel(trajectory=indices)
 
     def _active_particles_mask(self, time, dt):
-        active_indices = (time - self.particledata.data["time"]) / dt >= 0
-        non_err_indices = np.isin(self.particledata.data["state"], [StatusCode.Success, StatusCode.Evaluate])
+        active_indices = (time - self._data["time"]) / dt >= 0
+        non_err_indices = np.isin(self._data["state"], [StatusCode.Success, StatusCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
         self._active_particle_idx = np.where(active_indices)[0]
         return active_indices
@@ -277,9 +284,9 @@ class ParticleSet:
 
         self._values = np.vstack(
             (
-                self.particledata.data["depth"],
-                self.particledata.data["lat"],
-                self.particledata.data["lon"],
+                self._data["depth"],
+                self._data["lat"],
+                self._data["lon"],
             )
         )
         if self._dirty_neighbor:
@@ -293,14 +300,14 @@ class ParticleSet:
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         mask = neighbor_idx != particle_idx
         neighbor_idx = neighbor_idx[mask]
-        if "horiz_dist" in self.particledata._ptype.variables:
-            self.particledata.data["vert_dist"][neighbor_idx] = distances[0, mask]
-            self.particledata.data["horiz_dist"][neighbor_idx] = distances[1, mask]
-        return ParticleDataIterator(self.particledata, subset=neighbor_idx)
+        if "horiz_dist" in self._data._ptype.variables:
+            self._data["vert_dist"][neighbor_idx] = distances[0, mask]
+            self._data["horiz_dist"][neighbor_idx] = distances[1, mask]
+        return True  # TODO fix for v4 ParticleDataIterator(self.particledata, subset=neighbor_idx)
 
     def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
-        neighbor_ids = self.particledata.data["id"][neighbor_idx]
+        neighbor_ids = self._data["id"][neighbor_idx]
         return neighbor_ids
 
     # TODO: This method is only tested in tutorial notebook. Add unit test?
@@ -318,13 +325,13 @@ class ParticleSet:
             IN = np.all(~np.isnan(tree_data), axis=1)
             tree = KDTree(tree_data[IN, :])
             # stack all the particle positions for a single query
-            pts = np.stack((self.particledata.data["lon"], self.particledata.data["lat"]), axis=-1)
+            pts = np.stack((self._data["lon"], self._data["lat"]), axis=-1)
             # query datatype needs to match tree datatype
             _, idx_nan = tree.query(pts.astype(tree_data.dtype))
 
             idx = np.where(IN)[0][idx_nan]
 
-            self.particledata.data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
+            self._data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
 
     @classmethod
     def from_list(
@@ -541,9 +548,7 @@ class ParticleSet:
         )
 
     @classmethod
-    def from_particlefile(
-        cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs
-    ):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, **kwargs):
         """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
         in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
@@ -565,90 +570,12 @@ class ParticleSet:
             a callable function such as np.nanmin. The last is useful when running with dt < 0.
         repeatdt : datetime.timedelta or float, optional
             Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
-        lonlatdepth_dtype :
-            Floating precision for lon, lat, depth particle coordinates.
-            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-            and np.float64 if the interpolation method is 'cgrid_velocity'
         **kwargs :
             Keyword arguments passed to the particleset constructor.
         """
-        if repeatdt is not None:
-            warnings.warn(
-                f"Note that the `repeatdt` argument is not retained from {filename}, and that "
-                "setting a new repeatdt will start particles from the _new_ particle "
-                "locations.",
-                ParticleSetWarning,
-                stacklevel=2,
-            )
-
-        pfile = xr.open_zarr(str(filename))
-        pfile_vars = [v for v in pfile.data_vars]
-
-        vars = {}
-        to_write = {}
-        for v in pclass.getPType().variables:
-            if v.name in pfile_vars:
-                vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif (
-                v.name
-                not in [
-                    "ei",
-                    "dt",
-                    "depth",
-                    "id",
-                    "obs_written",
-                    "state",
-                    "lon_nextloop",
-                    "lat_nextloop",
-                    "depth_nextloop",
-                    "time_nextloop",
-                ]
-                and v.to_write
-            ):
-                raise RuntimeError(f"Variable {v.name} is in pclass but not in the particlefile")
-            to_write[v.name] = v.to_write
-        vars["depth"] = np.ma.filled(pfile.variables["z"], np.nan)
-        vars["id"] = np.ma.filled(pfile.variables["trajectory"], np.nan)
-
-        for v in ["lon", "lat", "depth", "time"]:
-            to_write[v] = True
-
-        if isinstance(vars["time"][0, 0], np.timedelta64):
-            vars["time"] = np.array([t / np.timedelta64(1, "s") for t in vars["time"]])
-
-        if restarttime is None:
-            restarttime = np.nanmax(vars["time"])
-        elif callable(restarttime):
-            restarttime = restarttime(vars["time"])
-        else:
-            restarttime = restarttime
-
-        inds = np.where(vars["time"] == restarttime)
-        for v in vars:
-            if to_write[v] is True:
-                vars[v] = vars[v][inds]
-            elif to_write[v] == "once":
-                vars[v] = vars[v][inds[0]]
-            if v not in ["lon", "lat", "depth", "time", "id"]:
-                kwargs[v] = vars[v]
-
-        if restart:
-            pclass.setLastID(0)  # reset to zero offset
-        else:
-            vars["id"] = None
-
-        return cls(
-            fieldset=fieldset,
-            pclass=pclass,
-            lon=vars["lon"],
-            lat=vars["lat"],
-            depth=vars["depth"],
-            time=vars["time"],
-            pid_orig=vars["id"],
-            lonlatdepth_dtype=lonlatdepth_dtype,
-            repeatdt=repeatdt,
-            **kwargs,
-        )
+        raise NotImplementedError(
+            "ParticleSet.from_particlefile is not yet implemented in v4."
+        )  # TODO implement this when ParticleFile is implemented in v4
 
     def Kernel(self, pyfunc):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object.
@@ -664,19 +591,19 @@ class ParticleSet:
         if isinstance(pyfunc, list):
             return Kernel.from_list(
                 self.fieldset,
-                self.particledata.ptype,
+                self._data.ptype,
                 pyfunc,
             )
         return Kernel(
             self.fieldset,
-            self.particledata.ptype,
+            self._data.ptype,
             pyfunc=pyfunc,
         )
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(self.fieldset, self.particledata.ptype, pyfunc=pyfunc_inter)
+        return InteractionKernel(self.fieldset, self._data.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
@@ -705,19 +632,20 @@ class ParticleSet:
         compare_values = (
             np.array([compare_values]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
         )
-        return np.where(np.isin(self.particledata.data[variable_name], compare_values, invert=invert))[0]
+        return np.where(np.isin(self._data[variable_name], compare_values, invert=invert))[
+            0
+        ]  # TODO check if this can be faster with xarray indexing?
 
     @property
     def _error_particles(self):
-        """Get an iterator over all particles that are in an error state.
+        """Get indices of all particles that are in an error state.
 
         Returns
         -------
-        iterator
-            ParticleDataIterator over error particles.
+        indices
+            Indices of error particles.
         """
-        error_indices = self.data_indices("state", [StatusCode.Success, StatusCode.Evaluate], invert=True)
-        return ParticleDataIterator(self.particledata, subset=error_indices)
+        return self.data_indices("state", [StatusCode.Success, StatusCode.Evaluate], invert=True)
 
     @property
     def _num_error_particles(self):
@@ -728,7 +656,7 @@ class ParticleSet:
         int
             Number of error particles.
         """
-        return np.sum(np.isin(self.particledata.data["state"], [StatusCode.Success, StatusCode.Evaluate], invert=True))
+        return np.sum(np.isin(self._data["state"], [StatusCode.Success, StatusCode.Evaluate], invert=True))
 
     def set_variable_write_status(self, var, write_status):
         """Method to set the write status of a Variable.
@@ -740,14 +668,14 @@ class ParticleSet:
         write_status :
             Write status of the variable (True, False or 'once')
         """
-        self.particledata.set_variable_write_status(var, write_status)
+        self._data[var].set_variable_write_status(write_status)
 
     def execute(
         self,
         pyfunc=AdvectionRK4,
-        endtime: timedelta | datetime | None = None,
-        runtime: timedelta | None = None,
-        dt: np.float64 | np.float32 | timedelta | None = None,
+        endtime: np.timedelta64 | np.datetime64 | None = None,
+        runtime: np.timedelta64 | None = None,
+        dt: np.timedelta64 | None = None,
         output_file=None,
         verbose_progress=True,
     ):
@@ -762,16 +690,15 @@ class ParticleSet:
             Kernel function to execute. This can be the name of a
             defined Python function or a :class:`parcels.kernel.Kernel` object.
             Kernels can be concatenated using the + operator (Default value = AdvectionRK4)
-        endtime (datetime or timedelta): :
-            End time for the timestepping loop. If a timedelta is provided, it is interpreted as the total simulation time. In this case,
-            the absolute end time is the start of the fieldset's time interval plus the timedelta.
+        endtime (np.datetime64 or np.timedelta64): :
+            End time for the timestepping loop. If a np.timedelta64 is provided, it is interpreted as the total simulation time. In this case,
+            the absolute end time is the start of the fieldset's time interval plus the np.timedelta64.
             If a datetime is provided, it is interpreted as the absolute end time of the simulation.
-        runtime (timedelta):
-            The duration of the simuulation execution. Must be a timedelta object and is required to be set when the `fieldset.time_interval` is not defined.
+        runtime (np.timedelta64):
+            The duration of the simuulation execution. Must be a np.timedelta64 object and is required to be set when the `fieldset.time_interval` is not defined.
             If the `fieldset.time_interval` is defined and the runtime is provided, the end time will be the start of the fieldset's time interval plus the runtime.
-        dt (timedelta):
-            Timestep interval (in seconds) to be passed to the kernel.
-            It is either a timedelta object or a double.
+        dt (np.timedelta64):
+            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
             Use a negative value for a backward-in-time simulation. (Default value = 1 second)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
@@ -797,19 +724,37 @@ class ParticleSet:
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
+        if (dt is not None) and (not isinstance(dt, np.timedelta64)):
+            raise TypeError("dt must be a np.timedelta64 object")
+        if dt is None or np.isnat(dt):
+            dt = np.timedelta64(1, "s")
+        self._data["dt"][:] = dt
+        sign_dt = np.sign(dt).astype(int)
+        if sign_dt not in [-1, 1]:
+            raise ValueError("dt must be a positive or negative np.timedelta64 object")
+
         if self.fieldset.time_interval is None:
-            start_time = timedelta(seconds=0)  # For the execution loop, we need a start time as a timedelta object
+            start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
             if runtime is None:
-                raise ValueError("The runtime must be provided when the time_interval is not defined for a fieldset.")
+                raise TypeError("The runtime must be provided when the time_interval is not defined for a fieldset.")
 
             else:
-                if isinstance(runtime, timedelta):
+                if isinstance(runtime, np.timedelta64):
                     end_time = runtime
                 else:
-                    raise ValueError("The runtime must be a timedelta object")
+                    raise TypeError("The runtime must be a np.timedelta64 object")
 
         else:
-            start_time = self.fieldset.time_interval.left
+            if not np.isnat(self._data["time_nextloop"]).any():
+                if sign_dt > 0:
+                    start_time = self._data["time_nextloop"].min().values
+                else:
+                    start_time = self._data["time_nextloop"].max().values
+            else:
+                if sign_dt > 0:
+                    start_time = self.fieldset.time_interval.left
+                else:
+                    start_time = self.fieldset.time_interval.right
 
             if runtime is None:
                 if endtime is None:
@@ -818,56 +763,57 @@ class ParticleSet:
                     )
                 # Ensure that the endtime uses the same type as the start_time
                 if isinstance(endtime, self.fieldset.time_interval.left.__class__):
-                    if endtime < self.fieldset.time_interval.left:
-                        raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
-                    end_time = min(endtime, self.fieldset.time_interval.right)
+                    if sign_dt > 0:
+                        if endtime < self.fieldset.time_interval.left:
+                            raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
+                        end_time = min(endtime, self.fieldset.time_interval.right)
+                    else:
+                        if endtime > self.fieldset.time_interval.right:
+                            raise ValueError(
+                                "The endtime must be before the end time of the fieldset.time_interval when dt < 0"
+                            )
+                        end_time = max(endtime, self.fieldset.time_interval.left)
                 else:
-                    raise ValueError("The endtime must be of the same type as the fieldset.time_interval start time.")
+                    raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
             else:
-                end_time = start_time + runtime
+                end_time = start_time + runtime * sign_dt
+
+        # Set the time of the particles if it hadn't been set on initialisation
+        if np.isnat(self._data["time"]).any():
+            self._data["time"][:] = start_time
+            self._data["time_nextloop"][:] = start_time
 
         outputdt = output_file.outputdt if output_file else None
-
-        # dt must be converted to float to avoid "TypeError: float() argument must be a string or a real number, not 'datetime.timedelta'"
-        dt_seconds = dt / np.timedelta64(1, "s")
-        self.particledata._data["dt"][:] = dt_seconds
 
         # Set up pbar
         if output_file:
             logger.info(f"Output files are stored in {output_file.fname}.")
 
         if verbose_progress:
-            pbar = tqdm(total=(start_time - end_time).total_seconds(), file=sys.stdout)
+            pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
 
-        if output_file:
-            next_output = outputdt
-        else:
-            next_output = np.inf
-
-        tol = 1e-12
+        next_output = outputdt if output_file else None
 
         time = start_time
-        while time <= end_time:
-            t0 = time
-            next_time = t0 + dt
-            # Kernel and particledata currently expect all time objects to be numpy floats.
-            # When converting absolute times to floats, we do them all relative to the start time.
-            # TODO: To completely support datetime or timedelta objects, this really needs to be addressed in the kernels and particledata
-            next_time_float = (next_time - start_time) / np.timedelta64(1, "s")
-            res = self._kernel.execute(self, endtime=next_time_float, dt=dt_seconds)
+        while sign_dt * (time - end_time) < 0:
+            if sign_dt > 0:
+                next_time = min(time + dt, end_time)
+            else:
+                next_time = max(time + dt, end_time)
+            res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
 
-            # End of interaction specific code
             # TODO: Handle IO timing based of timedelta or datetime objects
-            if abs(next_time_float - next_output) < tol:
-                if output_file:
-                    output_file.write(self, next_output)
-                if np.isfinite(outputdt):
-                    next_output += outputdt
+            if next_output:
+                if abs(next_time - next_output) < 1e-12:
+                    if output_file:
+                        output_file.write(self, next_output)
+                    if np.isfinite(outputdt):
+                        next_output += outputdt
 
             if verbose_progress:
-                pbar.update(dt.total_seconds())
+                pbar.update(dt / np.timedelta64(1, "s"))
 
             time = next_time
 

@@ -43,3 +43,11 @@ Here, important things to note are:
 - The `grid` object, in the case of unstructured grids, will be the `Grid` class from UXarray. For structured `Grid`s, it will be an object similar to that of `xgcm.Grid` (note that it will be very different from the v3 `Grid` object hierarchy).
 
 - The `Field.eval` method takes as input the t,z,y,x spatio-temporal position as required arguments; the `particle` is optional and defaults to `None` and the `applyConversion` argument is optional and defaults to `True`. Initially, we will calculate the element index for a particle. As a future optimization, we could pass via the `particle` object a "cached" index value that could be used to bypass an index search. This will effectively provide `(ti,zi,yi,xi)` on a structured grid and `(ti,zi,fi)` on an unstructured grid (where `fi` is the lateral face id); within `eval` these indices will be `ravel`'ed to a single index that can be `unravel`'ed in the `interpolate` method. The `ravel`'ed index is referred to as `rid` in the `Field.Interpolator.interpolate` method. In the `interpolate` method, we envision that a user will benefit from knowing the nearest cell/index from the `ravel`'ed index (which can be `unravel`'ed) in addition the exact coordinate that we want to interpolate onto. This can permit calculation of interpolation weights using points in the neighborhood of `(t,z,y,x)`.
+
+## Changes in API
+
+Below a list of changes in the API that are relevant to users:
+
+- `starttime`, `endtime` and `dt` in `ParticleSet.execute()` are now `numpy.timedelta64` or `numpy.datetime64` objects. This allows for more precise time handling and is consistent with the `numpy` time handling.
+
+- `pid_orig` in `ParticleSet` is removed. Instead, `trajectory_ids` is used to provide a list of "trajectory" values (integers) for the particle IDs.

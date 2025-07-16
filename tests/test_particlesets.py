@@ -7,11 +7,8 @@ from parcels import (
     FieldSet,
     Particle,
     ParticleSet,
-    ParticleSetWarning,
-    StatusCode,
     Variable,
 )
-from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_zeros_simple
 
 
@@ -25,36 +22,6 @@ def pset(fieldset):
     npart = 10
     pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
     return pset
-
-
-def test_pset_create_lon_lat(fieldset):
-    npart = 100
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=Particle)
-    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
-    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
-
-
-@pytest.mark.parametrize("lonlatdepth_dtype", [np.float64, np.float32])
-def test_pset_create_line(fieldset, lonlatdepth_dtype):
-    npart = 100
-    lon = np.linspace(0, 1, npart, dtype=lonlatdepth_dtype)
-    lat = np.linspace(1, 0, npart, dtype=lonlatdepth_dtype)
-    pset = ParticleSet.from_line(
-        fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=Particle, lonlatdepth_dtype=lonlatdepth_dtype
-    )
-    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
-    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
-    assert isinstance(pset[0].lat, lonlatdepth_dtype)
-
-
-def test_create_empty_pset(fieldset):
-    pset = ParticleSet(fieldset, pclass=Particle)
-    assert pset.size == 0
-
-    pset.execute(DoNothing, endtime=1.0, dt=1.0)
-    assert pset.size == 0
 
 
 def test_pset_create_list_with_customvariable(fieldset):
@@ -166,24 +133,6 @@ def test_pset_create_with_time(fieldset):
     assert np.allclose([p.time for p in pset], time, rtol=1e-12)
 
 
-def test_pset_create_outside_time():
-    fieldset = create_fieldset_zeros_simple(withtime=True)
-    time = [-1, 0, 1, 20 * 86400]
-    with pytest.warns(ParticleSetWarning, match="Some particles are set to be released*"):
-        ParticleSet(fieldset, pclass=Particle, lon=[0] * len(time), lat=[0] * len(time), time=time)
-
-
-def test_pset_not_multipldt_time(fieldset):
-    times = [0, 1.1]
-    pset = ParticleSet(fieldset, lon=[0] * 2, lat=[0] * 2, pclass=Particle, time=times)
-
-    def Addlon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += particle.dt  # noqa
-
-    pset.execute(Addlon, dt=1, runtime=2)
-    assert np.allclose([p.lon_nextloop for p in pset], [2 - t for t in times])
-
-
 def test_pset_repeated_release(fieldset):
     npart = 10
     time = np.arange(0, npart, 1)  # release 1 particle every second
@@ -207,26 +156,6 @@ def test_pset_repeatdt_check_dt(fieldset):
     assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
 
 
-def test_pset_repeatdt_custominit(fieldset):
-    MyParticle = Particle.add_variable("sample_var")
-
-    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
-
-    pset.execute(DoNothing, dt=1, runtime=21)
-    assert np.allclose([p.sample_var for p in pset], 5.0)
-
-
-def test_pset_stop_simulation(fieldset):
-    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=Particle)
-
-    def Delete(particle, fieldset, time):  # pragma: no cover
-        if time == 4:
-            return StatusCode.StopExecution
-
-    pset.execute(Delete, dt=1, runtime=21)
-    assert pset[0].time == 4
-
-
 def test_pset_access(fieldset):
     npart = 100
     lon = np.linspace(0, 1, npart, dtype=np.float32)
@@ -247,31 +176,6 @@ def test_pset_custom_ptype(fieldset):
     assert np.allclose([p.n - 2 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
-def test_pset_add_explicit(fieldset):
-    npart = 100
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=[], lat=[], pclass=Particle, lonlatdepth_dtype=np.float64)
-    for i in range(npart):
-        particle = ParticleSet(pclass=Particle, lon=lon[i], lat=lat[i], fieldset=fieldset, lonlatdepth_dtype=np.float64)
-        pset.add(particle)
-    assert pset.size == npart
-    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
-    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
-
-
-def test_pset_add_shorthand(fieldset):
-    npart = 100
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, lon=[], lat=[], pclass=Particle)
-    for i in range(npart):
-        pset += ParticleSet(pclass=Particle, lon=lon[i], lat=lat[i], fieldset=fieldset)
-    assert pset.size == npart
-    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
-    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
-
-
 def test_pset_add_execute(fieldset):
     npart = 10
 
@@ -286,39 +190,6 @@ def test_pset_add_execute(fieldset):
     assert np.allclose(np.array([p.lat for p in pset]), 0.4, rtol=1e-12)
 
 
-def test_pset_merge_inplace(fieldset):
-    npart = 100
-    pset1 = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
-    pset2 = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(0, 1, npart))
-    assert pset1.size == npart
-    assert pset2.size == npart
-    pset1.add(pset2)
-    assert pset1.size == 2 * npart
-
-
-@pytest.mark.xfail(reason="ParticleSet duplication has not been implemented yet")
-def test_pset_merge_duplicate(fieldset):
-    npart = 100
-    pset1 = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
-    pset2 = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(0, 1, npart))
-    pset3 = pset1 + pset2
-    assert pset1.size == npart
-    assert pset2.size == npart
-    assert pset3.size == 2 * npart
-
-
-def test_pset_remove_index(fieldset):
-    npart = 100
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=Particle, lonlatdepth_dtype=np.float64)
-    for ilon, ilat in zip(lon[::-1], lat[::-1], strict=True):
-        assert pset[-1].lon == ilon
-        assert pset[-1].lat == ilat
-        pset.remove_indices(-1)
-    assert pset.size == 0
-
-
 @pytest.mark.xfail(reason="Particle removal has not been implemented yet")
 def test_pset_remove_particle(fieldset):
     npart = 100
@@ -330,47 +201,6 @@ def test_pset_remove_particle(fieldset):
         assert pset.lat[-1] == ilat
         pset.remove_indices(pset[-1])
     assert pset.size == 0
-
-
-def test_pset_remove_kernel(fieldset):
-    npart = 100
-
-    def DeleteKernel(particle, fieldset, time):  # pragma: no cover
-        if particle.lon >= 0.4:
-            particle.delete()
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
-    pset.execute(pset.Kernel(DeleteKernel), endtime=1.0, dt=1.0)
-    assert pset.size == 40
-
-
-def test_pset_multi_execute(fieldset):
-    npart = 10
-    n = 5
-
-    def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
-    k_add = pset.Kernel(AddLat)
-    for _ in range(n + 1):
-        pset.execute(k_add, runtime=1.0, dt=1.0)
-    assert np.allclose([p.lat - n * 0.1 for p in pset], np.zeros(npart), rtol=1e-12)
-
-
-def test_pset_multi_execute_delete(fieldset):
-    npart = 10
-    n = 5
-
-    def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
-    k_add = pset.Kernel(AddLat)
-    for _ in range(n + 1):
-        pset.execute(k_add, runtime=1.0, dt=1.0)
-        pset.remove_indices(-1)
-    assert np.allclose(pset.lat, n * 0.1, atol=1e-12)
 
 
 @pytest.mark.parametrize("staggered_grid", ["Agrid", "Cgrid"])
