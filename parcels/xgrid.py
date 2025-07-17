@@ -195,7 +195,12 @@ class XGrid(BaseGrid):
 
         return get_cell_count_along_dim(self.xgcm_grid.axes[axis])
 
-    def localize(self, position: dict[_XGRID_AXES, tuple[int, float]], dims: list[str]) -> dict[str, tuple[int, float]]:
+    def localize(
+        self,
+        position: dict[_XGRID_AXES, tuple[int, float]]
+        | dict[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION], tuple[int, float]],
+        dims: list[str],
+    ) -> dict[str, tuple[int, float]]:
         """
         Uses the grid context (i.e., the staggering of the grid) to convert a position relative
         to the F-points in the grid to a position relative to the staggered grid the array
@@ -228,18 +233,12 @@ class XGrid(BaseGrid):
         >>> grid.localize(position, dims)
         {'depth': (3, 0.75), 'YC': (9, 0.75), 'XC': (5, 0.01)}
         """
-        axis_to_var = {get_axis_from_dim_name(self.xgcm_grid.axes, dim): dim for dim in dims}
-        var_positions = {
-            axis: get_xgcm_position_from_dim_name(self.xgcm_grid.axes, dim) for axis, dim in axis_to_var.items()
-        }
+        position = _maybe_make_full_position(position, self._fpoint_info)
+        target = [self._dim_to_axis_position[dim] for dim in dims if dim in self._dim_to_axis_position]
+        position = _localize_full_position_to_target(position, target)
         return {
-            axis_to_var[axis]: _convert_center_pos_to_fpoint(
-                index=index,
-                bcoord=bcoord,
-                xgcm_position=var_positions[axis],
-                f_points_xgcm_position=self._fpoint_info[axis],
-            )
-            for axis, (index, bcoord) in position.items()
+            self._axis_position_to_dim[axis_position]: (index, bcoord)
+            for axis_position, (index, bcoord) in position.items()
         }
 
     @property
@@ -452,31 +451,6 @@ def _search_1d_array(
     return i, bcoord
 
 
-def _convert_center_pos_to_fpoint(
-    *, index: int, bcoord: float, xgcm_position: _XGCM_AXIS_POSITION, f_points_xgcm_position: _XGCM_AXIS_POSITION
-) -> tuple[int, float]:
-    """Converts a physical position relative to the cell edges defined in the grid to be relative to the center point.
-
-    This is used to "localize" a position to be relative to the staggered grid at which the field is defined, so that
-    it can be easily interpolated.
-
-    This also handles different model input cell edges and centers are staggered in different directions (e.g., with NEMO and MITgcm).
-    """
-    if xgcm_position != "center":  # Data is already defined on the F points
-        return index, bcoord
-
-    bcoord = bcoord - 0.5
-    if bcoord < 0:
-        bcoord += 1.0
-        index -= 1
-
-    # Correct relative to the f-point position
-    if f_points_xgcm_position in ["inner", "right"]:
-        index += 1
-
-    return index, bcoord
-
-
 def _get_fpoint_info(xgcm_grid) -> dict[_XGRID_AXES, _XGCM_AXIS_POSITION]:
     """Returns a mapping of the spatial axes in the Grid to their XGCM positions.
 
@@ -505,3 +479,81 @@ def _get_dim_to_axis_position_mapping(grid: xgcm.Grid) -> dict[str, tuple[_XGRID
             ret[dim] = (axis, position)
 
     return {dim: axis_position for dim, axis_position in ret.items() if _is_xgrid_axis(axis_position[0])}
+
+
+def _maybe_make_full_position(
+    position: dict[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION], tuple[int, float]],
+    fpoint_info: dict[_XGRID_AXES, _XGCM_AXIS_POSITION],
+) -> dict[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION], tuple[int, float]]:
+    """Converts a position relative to the f-points to a full position on a staggered grid.
+
+    Example
+    -------
+    >>> fpoint_info = {"X": "left", "Y": "center", "Z": "right"}
+    >>> position = {"X": (5, 0.51), "Y": (10, 0.25), "Z": (3, 0.75)}
+    >>> _maybe_make_full_position(position, fpoint_info)
+    {("X", "left"): (5, 0.51), ("Y", "center"): (10, 0.25), ("Z", "right"): (3, 0.75)}
+
+    >>> position = {("X", "left"): (5, 0.51), ("Y", "center"): (10, 0.25), ("Z", "right"): (3, 0.75)}
+    >>> _maybe_make_full_position(position, fpoint_info)
+    {("X", "left"): (5, 0.51), ("Y", "center"): (10, 0.25), ("Z", "right"): (3, 0.75)}
+    """
+    if len(position) == 0:
+        return position
+    first_key = next(iter(position))
+    if isinstance(first_key, tuple):
+        return position
+
+    return {(axis, fpoint_info[axis]): index_bcoord for axis, index_bcoord in position.items()}
+
+
+_relative_axis_positioning = {
+    "left": 0.0,
+    "center": 0.5,
+    "right": 1.0,
+    "outer": 0.0,
+    "inner": 1.0,
+}
+
+
+def _localize_1d(index: int, bcoord: float, from_: _XGCM_AXIS_POSITION, to: _XGCM_AXIS_POSITION) -> tuple[int, float]:
+    delta = -(_relative_axis_positioning[to] - _relative_axis_positioning[from_])
+    if delta == 0.0:
+        return index, bcoord
+
+    bcoord += delta
+    if bcoord < 0.0:
+        bcoord += 1.0
+        index -= 1
+    elif bcoord > 1.0:
+        bcoord -= 1.0
+        index += 1
+
+    return index, bcoord
+
+
+def _localize_full_position_to_target(
+    position_full: dict[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION], tuple[int, float]],
+    target_grid: list[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION]],
+) -> dict[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION], tuple[int, float]]:
+    """
+    Localizes a position from one grid to another based on the target grid's axis and position.
+
+    Parameters
+    ----------
+    position_full : dict[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION], tuple[int, float]]
+        A mapping of the full position in the source grid.
+    target_grid : list[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION]]
+        A list of tuples representing the target grid's axes and their positions.
+
+    Returns
+    -------
+    dict[tuple[_XGRID_AXES, _XGCM_AXIS_POSITION], tuple[int, float]]
+        A mapping of the localized position in the target grid.
+    """
+    localized_position = {}
+    for (axis, from_), (target_axis, to) in zip(position_full.keys(), target_grid, strict=True):
+        index, bcoord = position_full[(axis, from_)]
+        localized_position[(target_axis, to)] = _localize_1d(index, bcoord, from_, to)
+
+    return localized_position
