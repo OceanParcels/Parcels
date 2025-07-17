@@ -92,7 +92,7 @@ def test_fieldset_time_interval():
     field1 = Field("field1", ds["U (A grid)"], grid1, mesh_type="flat")
 
     ds2 = ds.copy()
-    ds2["time"] = ds2["time"] + np.timedelta64(timedelta(days=1))
+    ds2["time"] = (ds2["time"].dims, ds2["time"].data + np.timedelta64(timedelta(days=1)), ds2["time"].attrs)
     grid2 = XGrid.from_dataset(ds2)
     field2 = Field("field2", ds2["U (A grid)"], grid2, mesh_type="flat")
 
@@ -113,7 +113,11 @@ def test_fieldset_time_interval_constant_fields():
 
 def test_fieldset_init_incompatible_calendars():
     ds1 = ds.copy()
-    ds1["time"] = xr.date_range("2000", "2001", T_structured, calendar="365_day", use_cftime=True)
+    ds1["time"] = (
+        ds1["time"].dims,
+        xr.date_range("2000", "2001", T_structured, calendar="365_day", use_cftime=True),
+        ds1["time"].attrs,
+    )
 
     grid = XGrid.from_dataset(ds1)
     U = Field("U", ds1["U (A grid)"], grid, mesh_type="flat")
@@ -121,7 +125,11 @@ def test_fieldset_init_incompatible_calendars():
     UV = VectorField("UV", U, V)
 
     ds2 = ds.copy()
-    ds2["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
+    ds2["time"] = (
+        ds2["time"].dims,
+        xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True),
+        ds2["time"].attrs,
+    )
     grid2 = XGrid.from_dataset(ds2)
     incompatible_calendar = Field("test", ds2["data_g"], grid2, mesh_type="flat")
 
@@ -131,7 +139,11 @@ def test_fieldset_init_incompatible_calendars():
 
 def test_fieldset_add_field_incompatible_calendars(fieldset):
     ds_test = ds.copy()
-    ds_test["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
+    ds_test["time"] = (
+        ds_test["time"].dims,
+        xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True),
+        ds_test["time"].attrs,
+    )
     grid = XGrid.from_dataset(ds_test)
     field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
 
@@ -139,7 +151,11 @@ def test_fieldset_add_field_incompatible_calendars(fieldset):
         fieldset.add_field(field, "test_field")
 
     ds_test = ds.copy()
-    ds_test["time"] = np.linspace(0, 100, T_structured, dtype="timedelta64[s]")
+    ds_test["time"] = (
+        ds_test["time"].dims,
+        np.linspace(0, 100, T_structured, dtype="timedelta64[s]"),
+        ds_test["time"].attrs,
+    )
     grid = XGrid.from_dataset(ds_test)
     field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
 
