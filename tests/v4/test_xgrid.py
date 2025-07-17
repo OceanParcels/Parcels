@@ -7,7 +7,7 @@ import xarray as xr
 from numpy.testing import assert_allclose
 
 from parcels._datasets.structured.generic import X, Y, Z, datasets
-from parcels.xgrid import XGrid, _drop_field_data, _search_1d_array, _transpose_xfield_data_to_tzyx
+from parcels.xgrid import XGrid, _search_1d_array, _transpose_xfield_data_to_tzyx
 from tests import utils
 
 GridTestCase = namedtuple("GridTestCase", ["ds", "attr", "expected"])
