@@ -5,7 +5,7 @@ import pytest
 import uxarray as ux
 import xarray as xr
 
-from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, VectorField, xgcm
+from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, VectorField
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
@@ -15,7 +15,7 @@ from parcels.xgrid import XGrid
 
 def test_field_init_param_types():
     data = datasets_structured["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(data))
+    grid = XGrid.from_dataset(data)
     with pytest.raises(ValueError, match="Expected `name` to be a string"):
         Field(name=123, data=data["data_g"], grid=grid)
 
@@ -32,7 +32,7 @@ def test_field_init_param_types():
 @pytest.mark.parametrize(
     "data,grid",
     [
-        pytest.param(ux.UxDataArray(), XGrid(xgcm.Grid(datasets_structured["ds_2d_left"])), id="uxdata-grid"),
+        pytest.param(ux.UxDataArray(), XGrid.from_dataset(datasets_structured["ds_2d_left"]), id="uxdata-grid"),
         pytest.param(
             xr.DataArray(),
             UxGrid(
@@ -57,7 +57,7 @@ def test_field_incompatible_combination(data, grid):
     [
         pytest.param(
             datasets_structured["ds_2d_left"]["data_g"],
-            XGrid(xgcm.Grid(datasets_structured["ds_2d_left"])),
+            XGrid.from_dataset(datasets_structured["ds_2d_left"]),
             id="ds_2d_left",
         ),  # TODO: Perhaps this test should be expanded to cover more datasets?
     ],
@@ -80,10 +80,10 @@ def test_field_init_fail_on_float_time_dim():
     (users are expected to use timedelta64 or datetime).
     """
     ds = datasets_structured["ds_2d_left"].copy()
-    ds["time"] = np.arange(0, T_structured, dtype="float64")
+    ds["time"] = (ds["time"].dims, np.arange(0, T_structured, dtype="float64"), ds["time"].attrs)
 
     data = ds["data_g"]
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     with pytest.raises(
         ValueError,
         match="Error getting time interval.*. Are you sure that the time dimension on the xarray dataset is stored as timedelta, datetime or cftime datetime objects\?",
@@ -100,7 +100,7 @@ def test_field_init_fail_on_float_time_dim():
     [
         pytest.param(
             datasets_structured["ds_2d_left"]["data_g"],
-            XGrid(xgcm.Grid(datasets_structured["ds_2d_left"])),
+            XGrid.from_dataset(datasets_structured["ds_2d_left"]),
             id="ds_2d_left",
         ),
     ],
@@ -119,7 +119,7 @@ def test_vectorfield_init_different_time_intervals():
 
 def test_field_invalid_interpolator():
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
 
     def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, invalid):
         return 0.0
@@ -131,7 +131,7 @@ def test_field_invalid_interpolator():
 
 def test_vectorfield_invalid_interpolator():
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
 
     def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, invalid):
         return 0.0
