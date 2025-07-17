@@ -1,3 +1,4 @@
+import itertools
 from collections import namedtuple
 
 import numpy as np
@@ -6,7 +7,8 @@ import xarray as xr
 from numpy.testing import assert_allclose
 
 from parcels._datasets.structured.generic import X, Y, Z, datasets
-from parcels.xgrid import XGrid, _drop_field_data, _search_1d_array
+from parcels.xgrid import XGrid, _drop_field_data, _search_1d_array, _transpose_xfield_data_to_tzyx
+from tests import utils
 
 GridTestCase = namedtuple("GridTestCase", ["ds", "attr", "expected"])
 
@@ -47,6 +49,20 @@ def test_xgrid_from_dataset_on_generic_datasets(ds):
 def test_xgrid_axes(ds):
     grid = XGrid.from_dataset(ds)
     assert grid.axes == ["Z", "Y", "X"]
+
+
+@pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
+def test_transpose_xfield_data_to_tzyx(ds):
+    da = ds["data_g"]
+    grid = XGrid.from_dataset(ds)
+
+    all_combinations = (itertools.combinations(da.dims, n) for n in range(len(da.dims)))
+    all_combinations = itertools.chain(*all_combinations)
+    for subset_dims in all_combinations:
+        isel = {dim: 0 for dim in subset_dims}
+        da_subset = da.isel(isel, drop=True)
+        da_test = _transpose_xfield_data_to_tzyx(da_subset, grid.xgcm_grid)
+        utils.assert_valid_field_data(da_test, grid)
 
 
 @pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
