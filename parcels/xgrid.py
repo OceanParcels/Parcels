@@ -33,8 +33,12 @@ def get_time(axis: xgcm.Axis) -> npt.NDArray:
     return axis._ds[axis.coords["center"]].values
 
 
+def _is_xgrid_axis(axis: str) -> bool:
+    return axis in ["X", "Y", "Z"]
+
+
 def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXES]:
-    spatial_axes = [a for a in grid.axes.keys() if a in ["X", "Y", "Z"]]
+    spatial_axes = [a for a in grid.axes.keys() if _is_xgrid_axis(a)]
     return sorted(spatial_axes, key=_XGRID_AXES_ORDERING.index)
 
 
@@ -98,6 +102,10 @@ class XGrid(BaseGrid):
 
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
+
+        self._dim_to_axis_position = _get_dim_to_axis_position_mapping(self.xgcm_grid)
+        self._axis_position_to_dim = {v: k for k, v in self._dim_to_axis_position.items()}
+        self._fpoint_info = _get_fpoint_info(self.xgcm_grid)
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset, mesh="flat", xgcm_kwargs=None):
@@ -290,20 +298,6 @@ class XGrid(BaseGrid):
 
         raise NotImplementedError("Searching in >2D lon/lat arrays is not implemented yet.")
 
-    @cached_property
-    def _fpoint_info(self):
-        """Returns a mapping of the spatial axes in the Grid to their XGCM positions."""
-        xgcm_axes = self.xgcm_grid.axes
-        f_point_positions = ["left", "right", "inner", "outer"]
-        axis_position_mapping = {}
-        for axis in self.axes:
-            coords = xgcm_axes[axis].coords
-            edge_positions = [pos for pos in coords.keys() if pos in f_point_positions]
-            assert len(edge_positions) == 1, f"Axis {axis} has multiple edge positions: {edge_positions}"
-            axis_position_mapping[axis] = edge_positions[0]
-
-        return axis_position_mapping
-
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
     """For a given dimension name in a grid, returns the direction axis it is on."""
@@ -481,3 +475,33 @@ def _convert_center_pos_to_fpoint(
         index += 1
 
     return index, bcoord
+
+
+def _get_fpoint_info(xgcm_grid) -> dict[_XGRID_AXES, _XGCM_AXIS_POSITION]:
+    """Returns a mapping of the spatial axes in the Grid to their XGCM positions.
+
+    e.g., {
+        "X": "left",
+        "Y": "left",
+        "Z": "left",
+        }
+    """
+    xgcm_axes = xgcm_grid.axes
+    f_point_positions = ["left", "right", "inner", "outer"]
+    axis_position_mapping = {}
+    for axis in _get_xgrid_axes(xgcm_grid):
+        coords = xgcm_axes[axis].coords
+        edge_positions = [pos for pos in coords.keys() if pos in f_point_positions]
+        assert len(edge_positions) == 1, f"Axis {axis} has multiple edge positions: {edge_positions}"
+        axis_position_mapping[axis] = edge_positions[0]
+
+    return axis_position_mapping
+
+
+def _get_dim_to_axis_position_mapping(grid: xgcm.Grid) -> dict[str, tuple[_XGRID_AXES, _XGCM_AXIS_POSITION]]:
+    ret = {}
+    for axis, axes in grid.axes.items():
+        for position, dim in axes.coords.items():
+            ret[dim] = (axis, position)
+
+    return {dim: axis_position for dim, axis_position in ret.items() if _is_xgrid_axis(axis_position[0])}
