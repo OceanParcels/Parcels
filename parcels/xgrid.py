@@ -1,4 +1,4 @@
-from collections.abc import Hashable, Mapping
+from collections.abc import Hashable, Mapping, Sequence
 from functools import cached_property
 from typing import Literal, cast
 
@@ -10,12 +10,15 @@ from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
 
-_XGRID_AXES_ORDERING = "ZYX"
 _XGRID_AXES = Literal["X", "Y", "Z"]
+_XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"
 
 _XGCM_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
 _XGCM_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
 _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
+
+_FIELD_DATA_ORDERING: Sequence[_XGCM_AXIS_DIRECTION] = "TZYX"
+
 _DEFAULT_XGCM_KWARGS = {"periodic": False}
 
 
@@ -35,13 +38,46 @@ def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXES]:
     return sorted(spatial_axes, key=_XGRID_AXES_ORDERING.index)
 
 
-def drop_field_data(ds: xr.Dataset) -> xr.Dataset:
+def _drop_field_data(ds: xr.Dataset) -> xr.Dataset:
     """
     Removes DataArrays from the dataset that are associated with field data so that
     when passed to the XGCM grid, the object only functions as an in memory representation
     of the grid.
     """
     return ds.drop_vars(ds.data_vars)
+
+
+def _transpose_xfield_data_to_tzyx(da: xr.DataArray, xgcm_grid: xgcm.Grid) -> xr.DataArray:
+    """
+    Transpose a DataArray of any shape into a 4D array of order TZYX. Uses xgcm to determine
+    the axes, and inserts dummy dimensions of size 1 for any axes not present in the DataArray.
+    """
+    ax_dims = [(get_axis_from_dim_name(xgcm_grid.axes, dim), dim) for dim in da.dims]
+
+    if all(ax_dim[0] is None for ax_dim in ax_dims):
+        # Assuming its a 1D constant field (hence has no axes)
+        assert da.shape == (1, 1, 1, 1)
+        return da.rename({old_dim: f"dummy{axis}" for old_dim, axis in zip(da.dims, _FIELD_DATA_ORDERING, strict=True)})
+
+    # All dimensions must be associated with an axis in the grid
+    if any(ax_dim[0] is None for ax_dim in ax_dims):
+        raise ValueError(
+            f"DataArray {da.name!r} with dims {da.dims} has dimensions that are not associated with a direction on the provided grid."
+        )
+
+    axes_not_in_field = set(_FIELD_DATA_ORDERING) - set(ax_dim[0] for ax_dim in ax_dims)
+
+    dummy_dims_to_create = {}
+    for ax in axes_not_in_field:
+        dummy_dims_to_create[f"dummy{ax}"] = 1
+        ax_dims.append((ax, f"dummy{ax}"))
+
+    if dummy_dims_to_create:
+        da = da.expand_dims(dummy_dims_to_create, create_index_for_new_dim=False)
+
+    ax_dims = sorted(ax_dims, key=lambda x: _FIELD_DATA_ORDERING.index(x[0]))
+
+    return da.transpose(*[ax_dim[1] for ax_dim in ax_dims])
 
 
 class XGrid(BaseGrid):
@@ -71,7 +107,7 @@ class XGrid(BaseGrid):
 
         xgcm_kwargs = {**_DEFAULT_XGCM_KWARGS, **xgcm_kwargs}
 
-        ds = drop_field_data(ds)
+        ds = _drop_field_data(ds)
         grid = xgcm.Grid(ds, **xgcm_kwargs)
         return cls(grid, mesh=mesh)
 
