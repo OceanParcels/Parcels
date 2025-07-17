@@ -12,7 +12,7 @@ from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
 from parcels.fieldset import CalendarError, FieldSet, _datetime_to_msg
-from parcels.xgrid import XGrid
+from parcels.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
 
 ds = datasets_structured["ds_2d_left"]
 
@@ -82,6 +82,30 @@ def test_fieldset_gridset(fieldset):
 
     fieldset.add_constant_field("constant_field", 1.0)
     assert len(fieldset.gridset) == 2
+
+
+@pytest.mark.parametrize("ds", [pytest.param(ds, id=k) for k, ds in datasets_structured.items()])
+def test_fieldset_from_structured_generic_datasets(ds):
+    grid = XGrid.from_dataset(ds)
+    fields = []
+    for var in ds.data_vars:
+        fields.append(Field(var, ds[var], grid, mesh_type="flat"))
+
+    fieldset = FieldSet(fields)
+
+    assert len(fieldset.fields) == len(ds.data_vars)
+    for field in fieldset.fields.values():
+        assert (
+            len(field.data.shape) == 4
+        ), f"Field data should have 4 dimensions (time, depth, lat, lon), got {len(field.data.shape)}"
+
+        for ax_expected, dim in zip(_FIELD_DATA_ORDERING, field.data.dims, strict=True):
+            ax_actual = get_axis_from_dim_name(field.grid.xgcm_grid.axes, dim)
+            if ax_actual is None:
+                continue  # None is ok
+            assert ax_actual == ax_expected, f"Expected axis {ax_expected} for dimension '{dim}', got {ax_actual}"
+
+    assert len(fieldset.gridset) == 1
 
 
 def test_fieldset_gridset_multiple_grids(): ...
