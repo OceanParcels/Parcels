@@ -16,6 +16,7 @@ _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGCM_AXIS_DIRECTION = Literal["X", "Y", "Z", "T"]
 _XGCM_AXIS_POSITION = Literal["center", "left", "right", "inner", "outer"]
 _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
+_DEFAULT_XGCM_KWARGS = {"periodic": False}
 
 
 def get_cell_count_along_dim(axis: xgcm.Axis) -> int:
@@ -32,6 +33,15 @@ def get_time(axis: xgcm.Axis) -> npt.NDArray:
 def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXES]:
     spatial_axes = [a for a in grid.axes.keys() if a in ["X", "Y", "Z"]]
     return sorted(spatial_axes, key=_XGRID_AXES_ORDERING.index)
+
+
+def drop_field_data(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Removes DataArrays from the dataset that are associated with field data so that
+    when passed to the XGCM grid, the object only functions as an in memory representation
+    of the grid.
+    """
+    return ds.drop_vars(ds.data_vars)
 
 
 class XGrid(BaseGrid):
@@ -52,6 +62,18 @@ class XGrid(BaseGrid):
 
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
+
+    @classmethod
+    def from_dataset(cls, ds: xr.Dataset, mesh="flat", xgcm_kwargs=None):
+        """WARNING: unstable API, subject to change in future versions."""
+        if xgcm_kwargs is None:
+            xgcm_kwargs = {}
+
+        xgcm_kwargs = {**_DEFAULT_XGCM_KWARGS, **xgcm_kwargs}
+
+        ds = drop_field_data(ds)
+        grid = xgcm.Grid(ds, **xgcm_kwargs)
+        return cls(grid, mesh=mesh)
 
     @property
     def axes(self) -> list[_XGRID_AXES]:
