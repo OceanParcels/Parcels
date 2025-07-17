@@ -308,7 +308,7 @@ class Kernel(BaseKernel):
         """Execute this Kernel over a ParticleSet for several timesteps."""
         pset._data["state"][:] = StatusCode.Evaluate
 
-        if abs(dt) < np.timedelta64(1000, "ns"):  # TODO still needed?
+        if abs(dt) < 1e-6:
             warnings.warn(
                 "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
                 RuntimeWarning,
@@ -381,23 +381,21 @@ class Kernel(BaseKernel):
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
             pre_dt = p.dt
 
-            sign_dt = np.sign(p.dt).astype(int)
-            if sign_dt * (endtime - p.time_nextloop) <= np.timedelta64(0, "ns"):
+            sign_dt = np.sign(p.dt)
+            if sign_dt * p.time_nextloop >= sign_dt * endtime:
                 return p
 
-            # TODO implement below later again
-            # try:  # Use next_dt from AdvectionRK45 if it is set
-            #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
-            #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
-            # except AttributeError:
-            if abs(endtime - p.time_nextloop) <= abs(p.dt):
-                p.dt = abs(endtime - p.time_nextloop) * sign_dt
+            try:  # Use next_dt from AdvectionRK45 if it is set
+                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
+                    p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
+            except KeyError:
+                if abs(endtime - p.time_nextloop) < abs(p.dt) - 1e-6:
+                    p.dt = abs(endtime - p.time_nextloop) * sign_dt
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
-                if p.state == StatusCode.Success:
-                    if sign_dt * (p.time - endtime) > np.timedelta64(0, "ns"):
-                        p.state = StatusCode.Evaluate
+                if sign_dt * p.time < sign_dt * endtime and p.state == StatusCode.Success:
+                    p.state = StatusCode.Evaluate
             else:
                 p.state = res
 
