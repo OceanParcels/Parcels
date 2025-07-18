@@ -121,7 +121,7 @@ class Particle:
         if name in ["_data", "_index"]:
             object.__setattr__(self, name, value)
         else:
-            self._data[name][self._index] = value
+            self._data[name].data[self._index] = value
 
     def delete(self):
         """Signal the particle for deletion."""
