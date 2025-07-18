@@ -189,6 +189,10 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
+        if self.data.shape[0] > 1:
+            if "time" not in self.data.coords:
+                raise ValueError("Field data is missing a 'time' coordinate.")
+
     @property
     def units(self):
         return self._units
