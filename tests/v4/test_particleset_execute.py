@@ -112,7 +112,8 @@ def test_execution_fail_python_exception(fieldset, npart=10):
     with pytest.raises(RuntimeError):
         pset.execute(PythonFail, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(2, "s"))
     assert len(pset) == npart
-    assert all([time == fieldset.time_interval.left + np.timedelta64(10, "s") for time in pset.time])
+    assert pset.time[0] == fieldset.time_interval.left + np.timedelta64(10, "s")
+    assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])
