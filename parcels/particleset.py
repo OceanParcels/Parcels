@@ -797,9 +797,9 @@ class ParticleSet:
         time = start_time
         while sign_dt * (time - end_time) < 0:
             if sign_dt > 0:
-                next_time = min(time + dt, end_time)
+                next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
             else:
-                next_time = max(time + dt, end_time)
+                next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
@@ -813,7 +813,7 @@ class ParticleSet:
                         next_output += outputdt
 
             if verbose_progress:
-                pbar.update(dt / np.timedelta64(1, "s"))
+                pbar.update((next_time - time) / np.timedelta64(1, "s"))
 
             time = next_time
 
