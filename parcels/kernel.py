@@ -389,12 +389,8 @@ class Kernel(BaseKernel):
             #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
             #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
             # except AttributeError:
-            if sign_dt == 1:
-                if (endtime - p.time_nextloop) <= p.dt:
-                    p.dt = endtime - p.time_nextloop
-            else:
-                if (endtime - p.time_nextloop) >= p.dt:
-                    p.dt = -(endtime - p.time_nextloop)
+            if sign_dt * (endtime - p.time_nextloop) <= p.dt:
+                p.dt = sign_dt * (endtime - p.time_nextloop)
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
