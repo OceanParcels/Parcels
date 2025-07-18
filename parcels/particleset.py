@@ -135,28 +135,21 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self._data = xr.Dataset(
-            {
-                "lon": (["trajectory"], lon.astype(lonlatdepth_dtype)),
-                "lat": (["trajectory"], lat.astype(lonlatdepth_dtype)),
-                "depth": (["trajectory"], depth.astype(lonlatdepth_dtype)),
-                "time": (["trajectory"], time),
-                "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(trajectory_ids))),
-                "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
-                "state": (["trajectory"], np.zeros((len(trajectory_ids)), dtype=np.int32)),
-                "lon_nextloop": (["trajectory"], lon.astype(lonlatdepth_dtype)),
-                "lat_nextloop": (["trajectory"], lat.astype(lonlatdepth_dtype)),
-                "depth_nextloop": (["trajectory"], depth.astype(lonlatdepth_dtype)),
-                "time_nextloop": (["trajectory"], time),
-            },
-            coords={
-                "trajectory": ("trajectory", trajectory_ids),
-            },
-            attrs={
-                "ngrid": len(fieldset.gridset),
-                "ptype": pclass.getPType(),
-            },
-        )
+        self._data = {
+            "lon": lon.astype(lonlatdepth_dtype),
+            "lat": lat.astype(lonlatdepth_dtype),
+            "depth": depth.astype(lonlatdepth_dtype),
+            "time": time,
+            "dt": np.timedelta64(1, "ns") * np.ones(len(trajectory_ids)),
+            # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
+            "state": np.zeros((len(trajectory_ids)), dtype=np.int32),
+            "lon_nextloop": lon.astype(lonlatdepth_dtype),
+            "lat_nextloop": lat.astype(lonlatdepth_dtype),
+            "depth_nextloop": depth.astype(lonlatdepth_dtype),
+            "time_nextloop": time,
+            "trajectory": trajectory_ids,
+        }
+        self.ptype = pclass.getPType()
         # add extra fields from the custom Particle class
         for v in pclass.__dict__.values():
             if isinstance(v, Variable):
@@ -164,7 +157,7 @@ class ParticleSet:
                     initial = v.initial(self).values
                 else:
                     initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
-                self._data[v.name] = (["trajectory"], initial)
+                self._data[v.name] = initial
 
         # update initial values provided on ParticleSet creation
         for kwvar, kwval in kwargs.items():
@@ -591,19 +584,19 @@ class ParticleSet:
         if isinstance(pyfunc, list):
             return Kernel.from_list(
                 self.fieldset,
-                self._data.ptype,
+                self.ptype,
                 pyfunc,
             )
         return Kernel(
             self.fieldset,
-            self._data.ptype,
+            self.ptype,
             pyfunc=pyfunc,
         )
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(self.fieldset, self._data.ptype, pyfunc=pyfunc_inter)
+        return InteractionKernel(self.fieldset, self.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
