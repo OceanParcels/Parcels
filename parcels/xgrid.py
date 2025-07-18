@@ -50,14 +50,14 @@ def _drop_field_data(ds: xr.Dataset) -> xr.Dataset:
 def _transpose_xfield_data_to_tzyx(da: xr.DataArray, xgcm_grid: xgcm.Grid) -> xr.DataArray:
     """
     Transpose a DataArray of any shape into a 4D array of order TZYX. Uses xgcm to determine
-    the axes, and inserts dummy dimensions of size 1 for any axes not present in the DataArray.
+    the axes, and inserts mock dimensions of size 1 for any axes not present in the DataArray.
     """
     ax_dims = [(get_axis_from_dim_name(xgcm_grid.axes, dim), dim) for dim in da.dims]
 
     if all(ax_dim[0] is None for ax_dim in ax_dims):
         # Assuming its a 1D constant field (hence has no axes)
         assert da.shape == (1, 1, 1, 1)
-        return da.rename({old_dim: f"dummy{axis}" for old_dim, axis in zip(da.dims, _FIELD_DATA_ORDERING, strict=True)})
+        return da.rename({old_dim: f"mock{axis}" for old_dim, axis in zip(da.dims, _FIELD_DATA_ORDERING, strict=True)})
 
     # All dimensions must be associated with an axis in the grid
     if any(ax_dim[0] is None for ax_dim in ax_dims):
@@ -67,13 +67,13 @@ def _transpose_xfield_data_to_tzyx(da: xr.DataArray, xgcm_grid: xgcm.Grid) -> xr
 
     axes_not_in_field = set(_FIELD_DATA_ORDERING) - set(ax_dim[0] for ax_dim in ax_dims)
 
-    dummy_dims_to_create = {}
+    mock_dims_to_create = {}
     for ax in axes_not_in_field:
-        dummy_dims_to_create[f"dummy{ax}"] = 1
-        ax_dims.append((ax, f"dummy{ax}"))
+        mock_dims_to_create[f"mock{ax}"] = 1
+        ax_dims.append((ax, f"mock{ax}"))
 
-    if dummy_dims_to_create:
-        da = da.expand_dims(dummy_dims_to_create, create_index_for_new_dim=False)
+    if mock_dims_to_create:
+        da = da.expand_dims(mock_dims_to_create, create_index_for_new_dim=False)
 
     ax_dims = sorted(ax_dims, key=lambda x: _FIELD_DATA_ORDERING.index(x[0]))
 
