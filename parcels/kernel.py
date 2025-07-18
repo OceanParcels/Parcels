@@ -75,7 +75,8 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
         # TODO v4: need to implement ParticleFile writing of deleted particles
         # if len(indices) > 0 and self.fieldset.particlefile is not None:
         #     self.fieldset.particlefile.write(pset, None, indices=indices)
-        pset.remove_indices(indices)
+        if len(indices) > 0:
+            pset.remove_indices(indices)
 
 
 class Kernel(BaseKernel):
