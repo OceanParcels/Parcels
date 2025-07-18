@@ -378,28 +378,7 @@ class Kernel(BaseKernel):
         dt :
             computational integration timestep
         """
-        while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            pre_dt = p.dt
+        # TODO: this is breaking change for performance checking
+        self._pyfunc(p, self._fieldset, endtime)
 
-            sign_dt = np.sign(p.dt).astype(int)
-            if sign_dt * (endtime - p.time_nextloop) <= np.timedelta64(0, "ns"):
-                return p
-
-            # TODO implement below later again
-            # try:  # Use next_dt from AdvectionRK45 if it is set
-            #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
-            #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
-            # except AttributeError:
-            if abs(endtime - p.time_nextloop) <= abs(p.dt):
-                p.dt = abs(endtime - p.time_nextloop) * sign_dt
-            res = self._pyfunc(p, self._fieldset, p.time_nextloop)
-
-            if res is None:
-                if p.state == StatusCode.Success:
-                    if sign_dt * (p.time - endtime) > np.timedelta64(0, "ns"):
-                        p.state = StatusCode.Evaluate
-            else:
-                p.state = res
-
-            p.dt = pre_dt
         return p
