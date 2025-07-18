@@ -304,6 +304,38 @@ class XGrid(BaseGrid):
 
         return axis_position_mapping
 
+    def get_axis_dim_mapping(self, dims: list[str]) -> dict[_XGRID_AXES, str]:
+        """
+        Maps xarray dimension names to their corresponding axis (X, Y, Z).
+
+        WARNING: This API is unstable and subject to change in future versions.
+
+        Parameters
+        ----------
+        dims : list[str]
+            List of xarray dimension names
+
+        Returns
+        -------
+        dict[_XGRID_AXES, str]
+            Dictionary mapping axes (X, Y, Z) to their corresponding dimension names
+
+        Examples
+        --------
+        >>> grid.get_axis_dim_mapping(['time', 'lat', 'lon'])
+        {'Y': 'lat', 'X': 'lon'}
+
+        Notes
+        -----
+        Only returns mappings for spatial axes (X, Y, Z) that are present in the grid.
+        """
+        result = {}
+        for dim in dims:
+            axis = get_axis_from_dim_name(self.xgcm_grid.axes, dim)
+            if axis in self.axes:  # Only include spatial axes (X, Y, Z)
+                result[cast(_XGRID_AXES, axis)] = dim
+        return result
+
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
     """For a given dimension name in a grid, returns the direction axis it is on."""

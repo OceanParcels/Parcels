@@ -10,11 +10,61 @@ from parcels.field import Field
 
 if TYPE_CHECKING:
     from parcels.uxgrid import _UXGRID_AXES
+    from parcels.xgrid import _XGRID_AXES
 
 __all__ = [
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
 ]
+
+
+def XTriCurviLinear(
+    field: Field,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Trilinear interpolation on a curvilinear grid."""
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+    data = field.data
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+
+    return (
+        (
+            (1 - xsi) * (1 - eta) * data.isel({axis_dim["Y"]: yi, axis_dim["X"]: xi})
+            + xsi * (1 - eta) * data.isel({axis_dim["Y"]: yi, axis_dim["X"]: xi + 1})
+            + xsi * eta * data.isel({axis_dim["Y"]: yi + 1, axis_dim["X"]: xi + 1})
+            + (1 - xsi) * eta * data.isel({axis_dim["Y"]: yi + 1, axis_dim["X"]: xi})
+        )
+        .interp(time=t, **{axis_dim["Z"]: zi + zeta})
+        .values
+    )
+
+
+def XTriRectiLinear(
+    field: Field,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Trilinear interpolation on a rectilinear grid."""
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+    kwargs = {axis_dim["X"]: xi + xsi, axis_dim["Y"]: yi + eta, axis_dim["Z"]: zi + zeta}
+    return field.data.interp(time=t, **kwargs).values
 
 
 def UXPiecewiseConstantFace(
