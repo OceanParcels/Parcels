@@ -131,6 +131,14 @@ def test_pset_update_particles_in_dataset_and_dict(fieldset, npart=10):
     assert all(pset._data["lon"] == pset._ds["lon"].data)
 
 
+def test_pset_remove_indices_in_dataset_and_dict(fieldset, npart=10):
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
+    assert len(pset._ds.lon) == len(pset._data["lon"]) == npart
+
+    pset.remove_indices([0])
+    assert len(pset._ds.lon) == len(pset._data["lon"]) == npart - 1
+
+
 @pytest.mark.parametrize("verbose_progress", [True, False])
 def test_uxstommelgyre_pset_execute(verbose_progress):
     ds = datasets_unstructured["stommel_gyre_delaunay"]
