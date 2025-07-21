@@ -161,7 +161,7 @@ class ParticleSet:
         for v in pclass.__dict__.values():
             if isinstance(v, Variable):
                 if isinstance(v.initial, attrgetter):
-                    initial = v.initial(self).values
+                    initial = v.initial(self._ds).values
                 else:
                     initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
                 self._ds[v.name] = (["trajectory"], initial)
