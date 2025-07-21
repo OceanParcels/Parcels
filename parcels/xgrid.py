@@ -212,11 +212,11 @@ class XGrid(BaseGrid):
     def search(self, z, y, x, ei=None):
         ds = self.xgcm_grid._ds
 
-        zi, zeta = _search_1d_array(ds.depth.values, z)
+        zi, zeta = _search_1d_array(ds.depth.data, z)
 
         if ds.lon.ndim == 1:
-            yi, eta = _search_1d_array(ds.lat.values, y)
-            xi, xsi = _search_1d_array(ds.lon.values, x)
+            yi, eta = _search_1d_array(ds.lat.data, y)
+            xi, xsi = _search_1d_array(ds.lon.data, x)
             return {"Z": (zi, zeta), "Y": (yi, eta), "X": (xi, xsi)}
 
         yi, xi = None, None
