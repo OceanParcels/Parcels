@@ -116,6 +116,20 @@ def test_execution_fail_python_exception(fieldset, npart=10):
     assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
 
 
+def test_pset_update_particle(fieldset, npart=10):
+    lon_start = np.linspace(0, 1, npart)
+    lat_start = np.linspace(1, 0, npart)
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
+
+    def UpdateParticle(particle, fieldset, time):  # pragma: no cover
+        particle.lon += 0.1
+        particle.lat -= 0.1
+
+    pset.execute(pset.Kernel(UpdateParticle), runtime=np.timedelta64(10, "s"), dt=np.timedelta64(1, "s"))
+    assert np.allclose(pset.lon, lon_start + 1, atol=1e-5)
+    assert np.allclose(pset.lat, lat_start - 1, atol=1e-5)
+
+
 @pytest.mark.parametrize("verbose_progress", [True, False])
 def test_uxstommelgyre_pset_execute(verbose_progress):
     ds = datasets_unstructured["stommel_gyre_delaunay"]

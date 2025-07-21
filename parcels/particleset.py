@@ -135,35 +135,49 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self._data = {
-            "lon": lon.astype(lonlatdepth_dtype),
-            "lat": lat.astype(lonlatdepth_dtype),
-            "depth": depth.astype(lonlatdepth_dtype),
-            "time": time,
-            "dt": np.timedelta64(1, "ns") * np.ones(len(trajectory_ids)),
-            # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
-            "state": np.zeros((len(trajectory_ids)), dtype=np.int32),
-            "lon_nextloop": lon.astype(lonlatdepth_dtype),
-            "lat_nextloop": lat.astype(lonlatdepth_dtype),
-            "depth_nextloop": depth.astype(lonlatdepth_dtype),
-            "time_nextloop": time,
-            "trajectory": trajectory_ids,
-        }
-        self._ptype = pclass.getPType()
+        self._ds = xr.Dataset(
+            {
+                "lon": (["trajectory"], lon.astype(lonlatdepth_dtype)),
+                "lat": (["trajectory"], lat.astype(lonlatdepth_dtype)),
+                "depth": (["trajectory"], depth.astype(lonlatdepth_dtype)),
+                "time": (["trajectory"], time),
+                "dt": (["trajectory"], np.timedelta64(1, "ns") * np.ones(len(trajectory_ids))),
+                "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
+                "state": (["trajectory"], np.zeros((len(trajectory_ids)), dtype=np.int32)),
+                "lon_nextloop": (["trajectory"], lon.astype(lonlatdepth_dtype)),
+                "lat_nextloop": (["trajectory"], lat.astype(lonlatdepth_dtype)),
+                "depth_nextloop": (["trajectory"], depth.astype(lonlatdepth_dtype)),
+                "time_nextloop": (["trajectory"], time),
+            },
+            coords={
+                "trajectory": ("trajectory", trajectory_ids),
+            },
+            attrs={
+                "ngrid": len(fieldset.gridset),
+                "ptype": pclass.getPType(),
+            },
+        )
         # add extra fields from the custom Particle class
         for v in pclass.__dict__.values():
             if isinstance(v, Variable):
                 if isinstance(v.initial, attrgetter):
-                    initial = v.initial(self)
+                    initial = v.initial(self).values
                 else:
                     initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
-                self._data[v.name] = initial
+                self._ds[v.name] = (["trajectory"], initial)
 
         # update initial values provided on ParticleSet creation
         for kwvar, kwval in kwargs.items():
             if not hasattr(pclass, kwvar):
                 raise RuntimeError(f"Particle class does not have Variable {kwvar}")
-            self._data[kwvar][:] = kwval
+            self._ds[kwvar][:] = kwval
+
+        # also keep a struct of numpy arrays for faster access (see parcels-benchmarks/pull/1)
+        self._data = {}
+        for v in self._ds.keys():
+            self._data[v] = self._ds[v].data
+        self._data["trajectory"] = self._ds["trajectory"].data
+        self._ptype = self._ds.attrs["ptype"]
 
         self._kernel = None
 
