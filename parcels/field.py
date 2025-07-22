@@ -150,7 +150,7 @@ class Field:
             data = _transpose_xfield_data_to_tzyx(data, grid.xgcm_grid)
 
         self.name = name
-        self.data = data
+        self.data_full = data
         self.grid = grid
 
         try:
@@ -189,8 +189,8 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
-        if self.data.shape[0] > 1:
-            if "time" not in self.data.coords:
+        if data.shape[0] > 1:
+            if "time" not in data.coords:
                 raise ValueError("Field data is missing a 'time' coordinate.")
 
     @property
@@ -205,27 +205,27 @@ class Field:
 
     @property
     def xdim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.xdim
         else:
             raise NotImplementedError("xdim not implemented for unstructured grids")
 
     @property
     def ydim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.ydim
         else:
             raise NotImplementedError("ydim not implemented for unstructured grids")
 
     @property
     def zdim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.zdim
         else:
-            if "nz1" in self.data.dims:
-                return self.data.sizes["nz1"]
-            elif "nz" in self.data.dims:
-                return self.data.sizes["nz"]
+            if "nz1" in self.data_full.dims:
+                return self.data_full.sizes["nz1"]
+            elif "nz" in self.data_full.dims:
+                return self.data_full.sizes["nz"]
             else:
                 return 0
 
@@ -266,17 +266,14 @@ class Field:
             if np.isnan(value):
                 # Detect Out-of-bounds sampling and raise exception
                 _raise_field_out_of_bound_error(z, y, x)
-            else:
-                return value
 
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
             e.add_note(f"Error interpolating field '{self.name}'.")
             raise e
 
         if applyConversion:
-            return self.units.to_target(value, z, y, x)
-        else:
-            return value
+            value = self.units.to_target(value, z, y, x)
+        return value
 
     def __getitem__(self, key):
         self._check_velocitysampling()
@@ -359,7 +356,6 @@ class VectorField:
             else:
                 (u, v, w) = self._vector_interp_method(self, ti, position, time, z, y, x)
 
-            # print(u,v)
             if applyConversion:
                 u = self.U.units.to_target(u, z, y, x)
                 v = self.V.units.to_target(v, z, y, x)
