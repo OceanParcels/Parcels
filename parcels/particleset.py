@@ -814,10 +814,9 @@ class ParticleSet:
         time = start_time
 
         for fld in [self.fieldset.U, self.fieldset.V]:  # TODO generalise to all fields and move to better place
-            fld._time_float = (fld.data_full.time.data - fld.time_interval.left)/ np.timedelta64(1, "s")
+            fld._time_float = (fld.data_full.time.data - fld.time_interval.left) / np.timedelta64(1, "s")
 
         while sign_dt * (time - end_time) < 0:
-
             for fld in [self.fieldset.U, self.fieldset.V]:  # TODO generalise to all fields
                 ti = np.argmin(fld._time_float <= self._data["time_nextloop"][0]) - 1  # TODO also implement dt < 0
                 if not hasattr(fld, "data") or fld.data_full.time.data[ti] != fld.data.time.data[0]:

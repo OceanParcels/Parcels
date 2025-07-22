@@ -15,7 +15,6 @@ from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
     _raise_field_sampling_error,
-    _raise_time_extrapolation_error,
 )
 
 from .basegrid import GridType
