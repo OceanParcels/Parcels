@@ -38,35 +38,8 @@ def _search_time_index(field: Field, time: datetime):
     Note that we normalize to either the first or the last index
     if the sampled value is outside the time value range.
     """
-    if field.time_interval is None:
-        return 0, 0
-
-    if time not in field.time_interval:
-        _raise_time_extrapolation_error(time, field=None)
-
-    time_index = field.data.time.data <= time
-
-    if time_index.all():
-        # If given time > last known field time, use
-        # the last field frame without interpolation
-        ti = len(field.data.time.data) - 1
-    elif np.logical_not(time_index).all():
-        # If given time < any time in the field, use
-        # the first field frame without interpolation
-        ti = 0
-    else:
-        ti = int(time_index.argmin() - 1) if time_index.any() else 0
-
-    if len(field.data.time.data) == 1:
-        tau = 0
-    elif ti == len(field.data.time.data) - 1:
-        tau = 1
-    else:
-        tau = (
-            (time - field.data.time.data[ti]) / (field.data.time.data[ti + 1] - field.data.time.data[ti])
-            if field.data.time.data[ti] != field.data.time.data[ti + 1]
-            else 0
-        )
+    ti = np.argmin(field._time_float <= time) - 1
+    tau = (time - field._time_float[ti]) / (field._time_float[ti + 1] - field._time_float[ti])
     return tau, ti
 
 
