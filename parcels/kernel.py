@@ -75,7 +75,8 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
         # TODO v4: need to implement ParticleFile writing of deleted particles
         # if len(indices) > 0 and self.fieldset.particlefile is not None:
         #     self.fieldset.particlefile.write(pset, None, indices=indices)
-        pset.remove_indices(indices)
+        if len(indices) > 0:
+            pset.remove_indices(indices)
 
 
 class Kernel(BaseKernel):
@@ -378,24 +379,25 @@ class Kernel(BaseKernel):
         dt :
             computational integration timestep
         """
+        sign_dt = 1 if p.dt >= 0 else -1
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            pre_dt = p.dt
-
-            sign_dt = np.sign(p.dt)
-            if sign_dt * p.time_nextloop >= sign_dt * endtime:
+            if sign_dt * (endtime - p.time_nextloop) <= 0:
                 return p
 
-            try:  # Use next_dt from AdvectionRK45 if it is set
-                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
-                    p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
-            except KeyError:
-                if abs(endtime - p.time_nextloop) < abs(p.dt) - 1e-6:
-                    p.dt = abs(endtime - p.time_nextloop) * sign_dt
+            pre_dt = p.dt
+            # TODO implement below later again
+            # try:  # Use next_dt from AdvectionRK45 if it is set
+            #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
+            #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
+            # except AttributeError:
+            if sign_dt * (endtime - p.time_nextloop) <= p.dt:
+                p.dt = sign_dt * (endtime - p.time_nextloop)
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
-                if sign_dt * p.time < sign_dt * endtime and p.state == StatusCode.Success:
-                    p.state = StatusCode.Evaluate
+                if p.state == StatusCode.Success:
+                    if sign_dt * (p.time - endtime) > 0:
+                        p.state = StatusCode.Evaluate
             else:
                 p.state = res
 

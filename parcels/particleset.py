@@ -137,36 +137,29 @@ class ParticleSet:
                     lon.size == kwargs[kwvar].size
                 ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
 
-        self._data = xr.Dataset(
-            {
-                "lon": (["trajectory"], lon.astype(lonlatdepth_dtype)),
-                "lat": (["trajectory"], lat.astype(lonlatdepth_dtype)),
-                "depth": (["trajectory"], depth.astype(lonlatdepth_dtype)),
-                "time": (["trajectory"], time),
-                "dt": (["trajectory"], np.ones(len(trajectory_ids), dtype=np.float64)),
-                "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
-                "state": (["trajectory"], np.zeros((len(trajectory_ids)), dtype=np.int32)),
-                "lon_nextloop": (["trajectory"], lon.astype(lonlatdepth_dtype)),
-                "lat_nextloop": (["trajectory"], lat.astype(lonlatdepth_dtype)),
-                "depth_nextloop": (["trajectory"], depth.astype(lonlatdepth_dtype)),
-                "time_nextloop": (["trajectory"], time),
-            },
-            coords={
-                "trajectory": ("trajectory", trajectory_ids),
-            },
-            attrs={
-                "ngrid": len(fieldset.gridset),
-                "ptype": pclass.getPType(),
-            },
-        )
+        self._data = {
+            "lon": lon.astype(lonlatdepth_dtype),
+            "lat": lat.astype(lonlatdepth_dtype),
+            "depth": depth.astype(lonlatdepth_dtype),
+            "time": time,
+            "dt": np.ones(len(trajectory_ids), dtype=np.float64),
+            # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
+            "state": np.zeros((len(trajectory_ids)), dtype=np.int32),
+            "lon_nextloop": lon.astype(lonlatdepth_dtype),
+            "lat_nextloop": lat.astype(lonlatdepth_dtype),
+            "depth_nextloop": depth.astype(lonlatdepth_dtype),
+            "time_nextloop": time,
+            "trajectory": trajectory_ids,
+        }
+        self._ptype = pclass.getPType()
         # add extra fields from the custom Particle class
         for v in pclass.__dict__.values():
             if isinstance(v, Variable):
                 if isinstance(v.initial, attrgetter):
-                    initial = v.initial(self).values
+                    initial = v.initial(self)
                 else:
                     initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
-                self._data[v.name] = (["trajectory"], initial)
+                self._data[v.name] = initial
 
         # update initial values provided on ParticleSet creation
         for kwvar, kwval in kwargs.items():
@@ -240,13 +233,28 @@ class ParticleSet:
             The current ParticleSet
 
         """
+        assert (
+            particles is not None
+        ), f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        assert type(particles) is type(self)
+
+        if len(particles) == 0:
+            return
+
+        if len(self) == 0:
+            self._data = particles._data
+            return
+
         if isinstance(particles, type(self)):
             if len(self._data["trajectory"]) > 0:
-                offset = self._data["trajectory"].values.max() + 1
+                offset = self._data["trajectory"].max() + 1
             else:
                 offset = 0
-            particles._data["trajectory"] = particles._data["trajectory"].values + offset
-        self._data = xr.concat([self._data, particles._data], dim="trajectory")
+            particles._data["trajectory"] = particles._data["trajectory"] + offset
+
+        for d in self._data:
+            self._data[d] = np.concatenate((self._data[d], particles._data[d]))
+
         # Adding particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         return self
@@ -272,7 +280,8 @@ class ParticleSet:
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`."""
-        self._data = self._data.drop_sel(trajectory=indices)
+        for d in self._data:
+            self._data[d] = np.delete(self._data[d], indices, axis=0)
 
     def _active_particles_mask(self, time, dt):
         active_indices = (time - self._data["time"]) / dt >= 0
@@ -593,19 +602,19 @@ class ParticleSet:
         if isinstance(pyfunc, list):
             return Kernel.from_list(
                 self.fieldset,
-                self._data.ptype,
+                self._ptype,
                 pyfunc,
             )
         return Kernel(
             self.fieldset,
-            self._data.ptype,
+            self._ptype,
             pyfunc=pyfunc,
         )
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:
             return None
-        return InteractionKernel(self.fieldset, self._data.ptype, pyfunc=pyfunc_inter)
+        return InteractionKernel(self.fieldset, self._ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
@@ -752,9 +761,9 @@ class ParticleSet:
         else:
             if not np.isnan(self._data["time_nextloop"]).any():
                 if sign_dt > 0:
-                    start_time = self._data["time_nextloop"].min().values
+                    start_time = self._data["time_nextloop"].min()
                 else:
-                    start_time = self._data["time_nextloop"].max().values
+                    start_time = self._data["time_nextloop"].max()
             else:
                 if sign_dt > 0:
                     start_time = self.fieldset.time_interval.left
@@ -805,9 +814,9 @@ class ParticleSet:
         time = start_time
         while sign_dt * (time - end_time) < 0:
             if sign_dt > 0:
-                next_time = min(time + dt, end_time)
+                next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
             else:
-                next_time = max(time + dt, end_time)
+                next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
@@ -821,7 +830,7 @@ class ParticleSet:
                         next_output += outputdt
 
             if verbose_progress:
-                pbar.update(dt)
+                pbar.update(next_time - time)
 
             time = next_time
 

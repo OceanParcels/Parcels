@@ -13,7 +13,6 @@ from parcels import (
     ParticleSet,
     ParticleSetWarning,
     Variable,
-    xgcm,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.xgrid import XGrid
@@ -23,7 +22,7 @@ from tests.common_kernels import DoNothing
 @pytest.fixture
 def fieldset() -> FieldSet:
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
     V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
     return FieldSet([U, V])
@@ -198,17 +197,17 @@ def test_pset_add_explicit(fieldset):
     assert len(pset) == npart
     assert np.allclose([p.lon for p in pset], lon, atol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, atol=1e-12)
-    assert np.allclose(np.diff(pset._data.trajectory), np.ones(pset._data.trajectory.size - 1), atol=1e-12)
+    assert np.allclose(np.diff(pset._data["trajectory"]), np.ones(pset._data["trajectory"].size - 1), atol=1e-12)
 
 
 def test_pset_add_implicit(fieldset):
     pset = ParticleSet(fieldset, lon=np.zeros(3), lat=np.ones(3), pclass=Particle)
     pset += ParticleSet(fieldset, lon=np.ones(4), lat=np.zeros(4), pclass=Particle)
     assert len(pset) == 7
-    assert np.allclose(np.diff(pset._data.trajectory), np.ones(6), atol=1e-12)
+    assert np.allclose(np.diff(pset._data["trajectory"]), np.ones(6), atol=1e-12)
 
 
-def test_pset_add_implicit(fieldset, npart=10):
+def test_pset_add_implicit_in_loop(fieldset, npart=10):
     pset = ParticleSet(fieldset, lon=[], lat=[])
     for _ in range(npart):
         pset += ParticleSet(pclass=Particle, lon=0.1, lat=0.1, fieldset=fieldset)

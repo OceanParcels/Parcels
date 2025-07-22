@@ -1,3 +1,4 @@
+import itertools
 from collections import namedtuple
 
 import numpy as np
@@ -5,11 +6,11 @@ import pytest
 import xarray as xr
 from numpy.testing import assert_allclose
 
-from parcels import xgcm
 from parcels._datasets.structured.generic import X, Y, Z, datasets
-from parcels.xgrid import XGrid, _search_1d_array
+from parcels.xgrid import XGrid, _search_1d_array, _transpose_xfield_data_to_tzyx
+from tests import utils
 
-GridTestCase = namedtuple("GridTestCase", ["Grid", "attr", "expected"])
+GridTestCase = namedtuple("GridTestCase", ["ds", "attr", "expected"])
 
 test_cases = [
     GridTestCase(datasets["ds_2d_left"], "lon", datasets["ds_2d_left"].XG.values),
@@ -34,25 +35,39 @@ def assert_equal(actual, expected):
 
 @pytest.mark.parametrize("ds, attr, expected", test_cases)
 def test_xgrid_properties_ground_truth(ds, attr, expected):
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    grid = XGrid.from_dataset(ds)
     actual = getattr(grid, attr)
     assert_equal(actual, expected)
 
 
 @pytest.mark.parametrize("ds", [pytest.param(ds, id=key) for key, ds in datasets.items()])
-def test_xgrid_init_on_generic_datasets(ds):
-    XGrid(xgcm.Grid(ds, periodic=False))
+def test_xgrid_from_dataset_on_generic_datasets(ds):
+    XGrid.from_dataset(ds)
 
 
 @pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
 def test_xgrid_axes(ds):
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    grid = XGrid.from_dataset(ds)
     assert grid.axes == ["Z", "Y", "X"]
 
 
 @pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
+def test_transpose_xfield_data_to_tzyx(ds):
+    da = ds["data_g"]
+    grid = XGrid.from_dataset(ds)
+
+    all_combinations = (itertools.combinations(da.dims, n) for n in range(len(da.dims)))
+    all_combinations = itertools.chain(*all_combinations)
+    for subset_dims in all_combinations:
+        isel = {dim: 0 for dim in subset_dims}
+        da_subset = da.isel(isel, drop=True)
+        da_test = _transpose_xfield_data_to_tzyx(da_subset, grid.xgcm_grid)
+        utils.assert_valid_field_data(da_test, grid)
+
+
+@pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
 def test_xgrid_get_axis_dim(ds):
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    grid = XGrid.from_dataset(ds)
     assert grid.get_axis_dim("Z") == Z - 1
     assert grid.get_axis_dim("Y") == Y - 1
     assert grid.get_axis_dim("X") == X - 1
@@ -72,7 +87,7 @@ def test_invalid_lon_lat():
         ValueError,
         match=".*is defined on the center of the grid, but must be defined on the F points\.",
     ):
-        XGrid(xgcm.Grid(ds, periodic=False))
+        XGrid.from_dataset(ds)
 
     ds = datasets["ds_2d_left"].copy()
     ds["lon"], _ = xr.broadcast(ds["YG"], ds["XG"])
@@ -80,7 +95,7 @@ def test_invalid_lon_lat():
         ValueError,
         match=".*have different dimensionalities\.",
     ):
-        XGrid(xgcm.Grid(ds, periodic=False))
+        XGrid.from_dataset(ds)
 
     ds = datasets["ds_2d_left"].copy()
     ds["lon"], ds["lat"] = xr.broadcast(ds["YG"], ds["XG"])
@@ -90,7 +105,7 @@ def test_invalid_lon_lat():
         ValueError,
         match=".*must be defined on the X and Y axes and transposed to have dimensions in order of Y, X\.",
     ):
-        XGrid(xgcm.Grid(ds, periodic=False))
+        XGrid.from_dataset(ds)
 
 
 @pytest.mark.parametrize(
@@ -101,7 +116,7 @@ def test_invalid_lon_lat():
     ],
 )  # for key, ds in datasets.items()])
 def test_xgrid_search_cpoints(ds):
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    grid = XGrid.from_dataset(ds)
     lat_array, lon_array = get_2d_fpoint_mesh(grid)
     lat_array, lon_array = corner_to_cell_center_points(lat_array, lon_array)
 
@@ -148,10 +163,10 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
 
 
 @pytest.mark.parametrize(
-    "grid, da_name, expected",
+    "ds, da_name, expected",
     [
         pytest.param(
-            XGrid(xgcm.Grid(datasets["ds_2d_left"], periodic=False)),
+            datasets["ds_2d_left"],
             "U (C grid)",
             {
                 "XG": (np.int64(0), np.float64(0.0)),
@@ -161,7 +176,7 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
             id="MITgcm indexing style U (C grid)",
         ),
         pytest.param(
-            XGrid(xgcm.Grid(datasets["ds_2d_left"], periodic=False)),
+            datasets["ds_2d_left"],
             "V (C grid)",
             {
                 "XC": (np.int64(-1), np.float64(0.5)),
@@ -171,7 +186,7 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
             id="MITgcm indexing style V (C grid)",
         ),
         pytest.param(
-            XGrid(xgcm.Grid(datasets["ds_2d_right"], periodic=False)),
+            datasets["ds_2d_right"],
             "U (C grid)",
             {
                 "XG": (np.int64(0), np.float64(0.0)),
@@ -181,7 +196,7 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
             id="NEMO indexing style U (C grid)",
         ),
         pytest.param(
-            XGrid(xgcm.Grid(datasets["ds_2d_right"], periodic=False)),
+            datasets["ds_2d_right"],
             "V (C grid)",
             {
                 "XC": (np.int64(0), np.float64(0.5)),
@@ -192,10 +207,11 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
         ),
     ],
 )
-def test_xgrid_localize_zero_position(grid, da_name, expected):
+def test_xgrid_localize_zero_position(ds, da_name, expected):
     """Test localize function using left and right datasets."""
+    grid = XGrid.from_dataset(ds)
+    da = ds[da_name]
     position = grid.search(0, 0, 0)
-    da = grid.xgcm_grid._ds[da_name]
 
     local_position = grid.localize(position, da.dims)
     assert local_position == expected, f"Expected {expected}, got {local_position}"

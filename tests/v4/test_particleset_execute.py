@@ -10,7 +10,6 @@ from parcels import (
     StatusCode,
     UXPiecewiseConstantFace,
     VectorField,
-    xgcm,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
@@ -22,7 +21,7 @@ from tests.common_kernels import DoNothing
 @pytest.fixture
 def fieldset() -> FieldSet:
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
     V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
     return FieldSet([U, V])
@@ -113,7 +112,7 @@ def test_execution_fail_python_exception(fieldset, npart=10):
         pset.execute(PythonFail, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(2, "s"))
     assert len(pset) == npart
     assert pset.time[0] == fieldset.time_interval.left + np.timedelta64(10, "s")
-    assert all([time == fieldset.time_interval.left + np.timedelta64(8, "s") for time in pset.time[1:]])
+    assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])

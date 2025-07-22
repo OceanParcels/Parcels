@@ -6,7 +6,6 @@ from parcels import (
     Field,
     FieldSet,
     ParticleSet,
-    xgcm,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.xgrid import XGrid
@@ -16,7 +15,7 @@ from tests.common_kernels import MoveEast, MoveNorth
 @pytest.fixture
 def fieldset() -> FieldSet:
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
     V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
     return FieldSet([U, V])
@@ -43,7 +42,7 @@ def test_unknown_var_in_kernel(fieldset):
     def ErrorKernel(particle, fieldset, time):  # pragma: no cover
         particle.unknown_varname += 0.2
 
-    with pytest.raises(KeyError, match="No variable named 'unknown_varname'"):
+    with pytest.raises(KeyError, match="'unknown_varname'"):
         pset.execute(ErrorKernel, runtime=np.timedelta64(2, "s"))
 
 

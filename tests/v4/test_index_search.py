@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from parcels import xgcm
 from parcels._datasets.structured.generic import datasets
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.field import Field
@@ -13,7 +12,7 @@ from parcels.xgrid import (
 @pytest.fixture
 def field_cone():
     ds = datasets["2d_left_unrolled_cone"]
-    grid = XGrid(xgcm.Grid(ds, periodic=False))
+    grid = XGrid.from_dataset(ds)
     field = Field(
         name="test_field",
         data=ds["data_g"],
