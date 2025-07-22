@@ -42,7 +42,7 @@ def test_unknown_var_in_kernel(fieldset):
     def ErrorKernel(particle, fieldset, time):  # pragma: no cover
         particle.unknown_varname += 0.2
 
-    with pytest.raises(KeyError, match="No variable named 'unknown_varname'"):
+    with pytest.raises(KeyError, match="'unknown_varname'"):
         pset.execute(ErrorKernel, runtime=np.timedelta64(2, "s"))
 
 
