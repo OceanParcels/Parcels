@@ -147,7 +147,7 @@ class Field:
         _assert_compatible_combination(data, grid)
 
         self.name = name
-        self.data = data
+        self.data_full = data
         self.grid = grid
 
         try:
@@ -186,7 +186,7 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
-        if "time" not in self.data.dims:
+        if "time" not in data.dims:
             raise ValueError("Field is missing a 'time' dimension. ")
 
     @property
@@ -201,27 +201,27 @@ class Field:
 
     @property
     def xdim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.xdim
         else:
             raise NotImplementedError("xdim not implemented for unstructured grids")
 
     @property
     def ydim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.ydim
         else:
             raise NotImplementedError("ydim not implemented for unstructured grids")
 
     @property
     def zdim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.zdim
         else:
-            if "nz1" in self.data.dims:
-                return self.data.sizes["nz1"]
-            elif "nz" in self.data.dims:
-                return self.data.sizes["nz"]
+            if "nz1" in self.data_full.dims:
+                return self.data_full.sizes["nz1"]
+            elif "nz" in self.data_full.dims:
+                return self.data_full.sizes["nz"]
             else:
                 return 0
 

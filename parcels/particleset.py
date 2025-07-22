@@ -805,10 +805,16 @@ class ParticleSet:
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
+
+            for fld in [self.fieldset.U, self.fieldset.V]:  # TODO generalise to all fields
+                ti = np.argmin(fld.data_full.time.data <= self._data["time_nextloop"][0]) - 1  # TODO also implement dt < 0
+                if not hasattr(fld, "data") or fld.data_full.time.data[ti] != fld.data.time.data[0]:
+                    fld.data = fld.data_full.isel({"time": slice(ti, ti + 2)}).load()
+
             if sign_dt > 0:
-                next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
+                next_time = min(time + dt, end_time)
             else:
-                next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
+                next_time = max(time - dt, end_time)
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
