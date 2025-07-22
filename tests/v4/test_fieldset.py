@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels import xgcm
 from parcels._datasets.structured.circulation_models import (
     datasets as datasets_circulation_models,  # noqa: F401
 )  # just making sure the import works. Will eventually be used in tests
@@ -14,6 +13,7 @@ from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
 from parcels.fieldset import CalendarError, FieldSet, _datetime_to_msg
 from parcels.xgrid import XGrid
+from tests import utils
 
 ds = datasets_structured["ds_2d_left"]
 
@@ -21,7 +21,7 @@ ds = datasets_structured["ds_2d_left"]
 @pytest.fixture
 def fieldset() -> FieldSet:
     """Fixture to create a FieldSet object for testing."""
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
     V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
     UV = VectorField("UV", U, V)
@@ -55,7 +55,7 @@ def test_fieldset_add_constant_field(fieldset):
 
 
 def test_fieldset_add_field(fieldset):
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     field = Field("test_field", ds["U (A grid)"], grid, mesh_type="flat")
     fieldset.add_field(field)
     assert fieldset.test_field == field
@@ -68,7 +68,7 @@ def test_fieldset_add_field_wrong_type(fieldset):
 
 
 def test_fieldset_add_field_already_exists(fieldset):
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     field = Field("test_field", ds["U (A grid)"], grid, mesh_type="flat")
     fieldset.add_field(field, "test_field")
     with pytest.raises(ValueError, match="FieldSet already has a Field with name 'test_field'"):
@@ -85,16 +85,32 @@ def test_fieldset_gridset(fieldset):
     assert len(fieldset.gridset) == 2
 
 
+@pytest.mark.parametrize("ds", [pytest.param(ds, id=k) for k, ds in datasets_structured.items()])
+def test_fieldset_from_structured_generic_datasets(ds):
+    grid = XGrid.from_dataset(ds)
+    fields = []
+    for var in ds.data_vars:
+        fields.append(Field(var, ds[var], grid, mesh_type="flat"))
+
+    fieldset = FieldSet(fields)
+
+    assert len(fieldset.fields) == len(ds.data_vars)
+    for field in fieldset.fields.values():
+        utils.assert_valid_field_data(field.data, field.grid)
+
+    assert len(fieldset.gridset) == 1
+
+
 def test_fieldset_gridset_multiple_grids(): ...
 
 
 def test_fieldset_time_interval():
-    grid1 = XGrid(xgcm.Grid(ds))
+    grid1 = XGrid.from_dataset(ds)
     field1 = Field("field1", ds["U (A grid)"], grid1, mesh_type="flat")
 
     ds2 = ds.copy()
-    ds2["time"] = ds2["time"] + np.timedelta64(timedelta(days=1))
-    grid2 = XGrid(xgcm.Grid(ds2))
+    ds2["time"] = (ds2["time"].dims, ds2["time"].data + np.timedelta64(timedelta(days=1)), ds2["time"].attrs)
+    grid2 = XGrid.from_dataset(ds2)
     field2 = Field("field2", ds2["U (A grid)"], grid2, mesh_type="flat")
 
     fieldset = FieldSet([field1, field2])
@@ -114,16 +130,24 @@ def test_fieldset_time_interval_constant_fields():
 
 def test_fieldset_init_incompatible_calendars():
     ds1 = ds.copy()
-    ds1["time"] = xr.date_range("2000", "2001", T_structured, calendar="365_day", use_cftime=True)
+    ds1["time"] = (
+        ds1["time"].dims,
+        xr.date_range("2000", "2001", T_structured, calendar="365_day", use_cftime=True),
+        ds1["time"].attrs,
+    )
 
-    grid = XGrid(xgcm.Grid(ds1))
+    grid = XGrid.from_dataset(ds1)
     U = Field("U", ds1["U (A grid)"], grid, mesh_type="flat")
     V = Field("V", ds1["V (A grid)"], grid, mesh_type="flat")
     UV = VectorField("UV", U, V)
 
     ds2 = ds.copy()
-    ds2["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
-    grid2 = XGrid(xgcm.Grid(ds2))
+    ds2["time"] = (
+        ds2["time"].dims,
+        xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True),
+        ds2["time"].attrs,
+    )
+    grid2 = XGrid.from_dataset(ds2)
     incompatible_calendar = Field("test", ds2["data_g"], grid2, mesh_type="flat")
 
     with pytest.raises(CalendarError, match="Expected field '.*' to have calendar compatible with datetime object"):
@@ -132,16 +156,24 @@ def test_fieldset_init_incompatible_calendars():
 
 def test_fieldset_add_field_incompatible_calendars(fieldset):
     ds_test = ds.copy()
-    ds_test["time"] = xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True)
-    grid = XGrid(xgcm.Grid(ds_test))
+    ds_test["time"] = (
+        ds_test["time"].dims,
+        xr.date_range("2000", "2001", T_structured, calendar="360_day", use_cftime=True),
+        ds_test["time"].attrs,
+    )
+    grid = XGrid.from_dataset(ds_test)
     field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
 
     with pytest.raises(CalendarError, match="Expected field '.*' to have calendar compatible with datetime object"):
         fieldset.add_field(field, "test_field")
 
     ds_test = ds.copy()
-    ds_test["time"] = np.linspace(0, 100, T_structured, dtype="timedelta64[s]")
-    grid = XGrid(xgcm.Grid(ds_test))
+    ds_test["time"] = (
+        ds_test["time"].dims,
+        np.linspace(0, 100, T_structured, dtype="timedelta64[s]"),
+        ds_test["time"].attrs,
+    )
+    grid = XGrid.from_dataset(ds_test)
     field = Field("test_field", ds_test["data_g"], grid, mesh_type="flat")
 
     with pytest.raises(CalendarError, match="Expected field '.*' to have calendar compatible with datetime object"):

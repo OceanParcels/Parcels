@@ -1,12 +1,19 @@
 """General helper functions and utilies for test suite."""
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import xarray as xr
 
 import parcels
 from parcels import FieldSet
+from parcels.xgrid import _FIELD_DATA_ORDERING, get_axis_from_dim_name
+
+if TYPE_CHECKING:
+    from parcels.xgrid import XGrid
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TEST_ROOT = PROJECT_ROOT / "tests"
@@ -116,3 +123,13 @@ def create_fieldset_zeros_simple(xdim=40, ydim=100, withtime=False):
 
 def assert_empty_folder(path: Path):
     assert [p.name for p in path.iterdir()] == []
+
+
+def assert_valid_field_data(data: xr.DataArray, grid: XGrid):
+    assert len(data.shape) == 4, f"Field data should have 4 dimensions (time, depth, lat, lon), got dims {data.dims}"
+
+    for ax_expected, dim in zip(_FIELD_DATA_ORDERING, data.dims, strict=True):
+        ax_actual = get_axis_from_dim_name(grid.xgcm_grid.axes, dim)
+        if ax_actual is None:
+            continue  # None is ok
+        assert ax_actual == ax_expected, f"Expected axis {ax_expected} for dimension '{dim}', got {ax_actual}"

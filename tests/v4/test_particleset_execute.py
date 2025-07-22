@@ -10,7 +10,6 @@ from parcels import (
     StatusCode,
     UXPiecewiseConstantFace,
     VectorField,
-    xgcm,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
@@ -22,7 +21,7 @@ from tests.common_kernels import DoNothing
 @pytest.fixture
 def fieldset() -> FieldSet:
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid(xgcm.Grid(ds))
+    grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
     V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
     return FieldSet([U, V])
