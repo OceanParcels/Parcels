@@ -67,6 +67,8 @@ def _search_time_index(field: Field, time: datetime):
             if field.data.time.data[ti] != field.data.time.data[ti + 1]
             else 0
         )
+    if tau < 0 or tau > 1:  # TODO only for debugging; test can go?
+        raise ValueError(f"Time {time} is out of bounds for field time data {field.data.time.data}.")
     return tau, ti
 
 

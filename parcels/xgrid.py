@@ -399,6 +399,8 @@ def _search_1d_array(
         return 0, 0.0
     i = np.argmin(arr <= x) - 1
     bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
+    if bcoord < 0 or bcoord > 1:  # TODO only for debugging; test can go?
+        raise ValueError(f"Position {x} is out of bounds for array {arr}.")
     return i, bcoord
 
 
