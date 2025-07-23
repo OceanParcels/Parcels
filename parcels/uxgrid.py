@@ -4,6 +4,7 @@ from typing import Literal
 
 import numpy as np
 import uxarray as ux
+from uxarray.grid.coordinates import _lonlat_rad_to_xyz
 from uxarray.grid.neighbors import _barycentric_coordinates
 
 from parcels.field import FieldOutOfBoundError  # Adjust import as necessary
@@ -67,13 +68,16 @@ class UxGrid(BaseGrid):
         elif axis == "FACE":
             return self.uxgrid.n_face
 
-    def search(self, z, y, x, ei=None):
-        tol = 1e-6
-
+    def search(self, z, y, x, ei=None, tol=1e-6):
         def try_face(fid):
-            bcoords, err = self._get_barycentric_coordinates(y, x, fid)
+            bcoords, err = self._get_barycentric_coordinates_latlon(y, x, fid)
             if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
                 return bcoords
+            else:
+                bcoords, err = self._get_barycentric_coordinates_cartesian(y, x, fid)
+                if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
+                    return bcoords
+
             return None
 
         zi, zeta = _search_1d_array(self.z.values, z)
@@ -102,9 +106,10 @@ class UxGrid(BaseGrid):
 
         return {"Z": (zi, zeta), "FACE": (fi, bcoords)}
 
-    def _get_barycentric_coordinates(self, y, x, fi):
+    def _get_barycentric_coordinates_latlon(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
         # Check if particle is in the same face, otherwise search again.
+
         n_nodes = self.uxgrid.n_nodes_per_face[fi].to_numpy()
         node_ids = self.uxgrid.face_node_connectivity[fi, 0:n_nodes]
         nodes = np.column_stack(
@@ -118,3 +123,98 @@ class UxGrid(BaseGrid):
         bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
         err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
         return bcoord, err
+
+    def _get_barycentric_coordinates_cartesian(self, y, x, fi):
+        n_nodes = self.uxgrid.n_nodes_per_face[fi].to_numpy()
+        node_ids = self.uxgrid.face_node_connectivity[fi, 0:n_nodes]
+
+        coord = np.deg2rad([x, y])
+        x, y, z = _lonlat_rad_to_xyz(coord[0], coord[1])
+        cart_coord = np.array([x, y, z]).T
+        # Second attempt to find barycentric coordinates using cartesian coordinates
+        nodes = np.stack(
+            (
+                self._source_grid.node_x[node_ids].values(),
+                self._source_grid.node_y[node_ids].values(),
+                self._source_grid.node_z[node_ids].values(),
+            ),
+            axis=-1,
+        )
+
+        bcoord = np.asarray(_barycentric_coordinates_cartesian(nodes, cart_coord))
+        proj_uv = np.dot(bcoord, nodes)
+        err = np.linalg.norm(proj_uv - coord)
+        face_center = np.stack(
+            (
+                self._source_grid.face_x[fi].values(),
+                self._source_grid.face_y[fi].values(),
+                self._source_grid.face_z[fi].values(),
+            ),
+            axis=-1,
+        )
+        # Compute and remove the local projection error
+        err -= np.abs(_local_projection_error(nodes, face_center))
+        return bcoord, err
+
+
+def _barycentric_coordinates_cartesian(nodes, point, min_area=1e-8):
+    """
+    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
+    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
+    barycentric coordinates, which is only valid for convex polygons.
+
+    Parameters
+    ----------
+        nodes : numpy.ndarray
+            Cartesian coordinates (x,y,z) of each corner node of a face
+        point : numpy.ndarray
+            Cartesian coordinates (x,y,z) of the point
+
+    Returns
+    -------
+    numpy.ndarray
+        Barycentric coordinates corresponding to each vertex.
+
+    """
+    n = len(nodes)
+    sum_wi = 0
+    w = []
+
+    for i in range(0, n):
+        vim1 = nodes[i - 1]
+        vi = nodes[i]
+        vi1 = nodes[(i + 1) % n]
+        a0 = _triangle_area_cartesian(vim1, vi, vi1)
+        a1 = max(_triangle_area_cartesian(point, vim1, vi), min_area)
+        a2 = max(_triangle_area_cartesian(point, vi, vi1), min_area)
+        sum_wi += a0 / (a1 * a2)
+        w.append(a0 / (a1 * a2))
+
+    barycentric_coords = [w_i / sum_wi for w_i in w]
+
+    return barycentric_coords
+
+
+def _local_projection_error(nodes, point):
+    """
+    Computes the size of the local projection error that arises from
+    assuming planar faces. Effectively, a planar face on a spherical
+    manifold is local linearization of the spherical coordinate
+    transformation. Since query points and nodes are converted to
+    cartesian coordinates using the full spherical coordinate transformation,
+    the local projection error will likely be non-zero but related to the discretiztaion.
+    """
+    a = nodes[1] - nodes[0]
+    b = nodes[2] - nodes[0]
+    normal = np.cross(a, b)
+    normal /= np.linalg.norm(normal)
+    d = point - nodes[0]
+    return abs(np.dot(d, normal))
+
+
+def _triangle_area_cartesian(A, B, C):
+    """Compute the area of a triangle given by three points."""
+    d1 = B - A
+    d2 = C - A
+    d3 = np.cross(d1, d2)
+    return 0.5 * np.linalg.norm(d3)
