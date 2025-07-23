@@ -242,6 +242,19 @@ class Field:
                 stacklevel=2,
             )
 
+    def _load_timesteps(self, time):
+        """Load the appropriate timesteps of a field."""
+        ti = np.argmin(self.data_full.time.data <= time) - 1  # TODO also implement dt < 0
+        if not hasattr(self, "data"):
+            self.data = self.data_full.isel({"time": slice(ti, ti + 2)}).load()
+        elif self.data_full.time.data[ti] == self.data.time.data[1]:
+            self.data = xr.concat([self.data[1, :], self.data_full.isel({"time": ti + 1}).load()], dim="time")
+        elif self.data_full.time.data[ti] != self.data.time.data[0]:
+            self.data = self.data_full.isel({"time": slice(ti, ti + 2)}).load()
+        assert (
+            len(self.data.time) == 2
+        ), f"Field {self.name} has not been loaded correctly. Expected 2 timesteps, but got {len(self.data.time)}."
+
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
