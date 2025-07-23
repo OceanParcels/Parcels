@@ -39,6 +39,8 @@ def _search_time_index(field: Field, time: datetime):
     """
     ti = np.argmin(field._time_float <= time) - 1
     tau = (time - field._time_float[ti]) / (field._time_float[ti + 1] - field._time_float[ti])
+    if tau < 0 or tau > 1:  # TODO only for debugging; test can go?
+        raise ValueError(f"Time {time} is out of bounds for field time data {field.data.time.data}.")
     return tau, ti
 
 
