@@ -15,6 +15,7 @@ from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
+from tests import utils
 from tests.common_kernels import DoNothing
 
 
@@ -154,6 +155,8 @@ def test_uxstommelgyre_pset_execute():
         dt=np.timedelta64(60, "s"),
         pyfunc=AdvectionEE,
     )
+    assert utils.hash_float_array([p.lon for p in pset]) == 1165396086
+    assert utils.hash_float_array([p.lat for p in pset]) == 1142124776
 
 
 @pytest.mark.xfail(reason="Output file not implemented yet")
