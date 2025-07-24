@@ -266,17 +266,14 @@ class Field:
             if np.isnan(value):
                 # Detect Out-of-bounds sampling and raise exception
                 _raise_field_out_of_bound_error(z, y, x)
-            else:
-                return value
 
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
             e.add_note(f"Error interpolating field '{self.name}'.")
             raise e
 
         if applyConversion:
-            return self.units.to_target(value, z, y, x)
-        else:
-            return value
+            value = self.units.to_target(value, z, y, x)
+        return value
 
     def __getitem__(self, key):
         self._check_velocitysampling()
@@ -359,7 +356,6 @@ class VectorField:
             else:
                 (u, v, w) = self._vector_interp_method(self, ti, position, time, z, y, x)
 
-            # print(u,v)
             if applyConversion:
                 u = self.U.units.to_target(u, z, y, x)
                 v = self.V.units.to_target(v, z, y, x)
