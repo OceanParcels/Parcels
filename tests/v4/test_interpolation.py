@@ -2,10 +2,7 @@ import numpy as np
 import pytest
 
 from parcels._datasets.structured.generic import datasets
-from parcels.application_kernels import AdvectionRK4
-from parcels.field import Field, VectorField
-from parcels.fieldset import FieldSet
-from parcels.particleset import ParticleSet
+from parcels.field import Field
 from parcels.xgrid import _XGRID_AXES, XGrid
 
 
@@ -41,19 +38,15 @@ def BiRectiLinear(  # TODO move to interpolation file
 
 
 @pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
-def test_advection_zonal(mesh_type, npart=10):
-    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
+def test_interpolation_mesh_type(mesh_type, npart=10):
     ds = datasets[f"pure_zonal_flow_{mesh_type}"]
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=BiRectiLinear)
     V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=BiRectiLinear)
-    UV = VectorField("UV", U, V)
-    fieldset2D = FieldSet([U, V, UV])
 
-    pset2D = ParticleSet(fieldset2D, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
-    pset2D.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
-
-    if mesh_type == "spherical":
-        assert (np.diff(pset2D.lon) > 1.0e-4).all()
-    else:
-        assert (np.diff(pset2D.lon) < 1.0e-4).all()
+    assert np.isclose(
+        U[U.time_interval.left, 0, 30, 0],
+        1.0 if mesh_type == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(30))),
+        atol=1e-5,
+    )
+    assert V[V.time_interval.left, 0, 0, 0] == 0.0
