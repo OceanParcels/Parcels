@@ -805,10 +805,13 @@ class ParticleSet:
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
+            # Load the appropriate timesteps of the fieldset
+            self.fieldset._load_timesteps(self._data["time_nextloop"][0])
+
             if sign_dt > 0:
-                next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
+                next_time = min(time + dt, end_time)
             else:
-                next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
+                next_time = max(time - dt, end_time)
             res = self._kernel.execute(self, endtime=next_time, dt=dt)
             if res == StatusCode.StopAllExecution:
                 return StatusCode.StopAllExecution
