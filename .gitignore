@@ -1,19 +1,13 @@
 build/*
 docs/_build/*
 docs/_downloads
-lib/
-bin/
-parcels_examples
 
-*.so
 *.log
 *.nc
 *.nc4
 !*testfields*.nc
 out-*
-*.c
 *.pyc
-*.dSYM/*
 **/*.zarr/*
 .DS_store
 
