@@ -72,6 +72,13 @@ def test_advection_zonal(mesh_type, npart=10):
     pset2D = ParticleSet(fieldset2D, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
+    assert np.isclose(
+        fieldset2D.U[pset2D[0]],
+        1.0 if mesh_type == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(pset2D.lat[0]))),
+        atol=1e-5,
+    )
+    assert fieldset2D.V[pset2D[0]] == 0.0
+
     if mesh_type == "spherical":
         assert (np.diff(pset2D.lon) > 1.0e-4).all()
     else:
