@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -133,3 +134,16 @@ def assert_valid_field_data(data: xr.DataArray, grid: XGrid):
         if ax_actual is None:
             continue  # None is ok
         assert ax_actual == ax_expected, f"Expected axis {ax_expected} for dimension '{dim}', got {ax_actual}"
+
+
+def hash_float_array(arr):
+    # Adapted from https://cs.stackexchange.com/a/37965
+    h = 1
+    for f in arr:
+        # Mimic Float.floatToIntBits: converts float to 4-byte binary, then interprets as int
+        float_as_int = struct.unpack("!i", struct.pack("!f", f))[0]
+        h = 31 * h + float_as_int
+
+    # Mimic Java's HashMap hash transformation
+    h ^= (h >> 20) ^ (h >> 12)
+    return h ^ (h >> 7) ^ (h >> 4)
