@@ -41,7 +41,7 @@ def BiRectiLinear(  # TODO move to interpolation file
         + xsi * eta * data[1, 0, 1, 1]
         + (1 - xsi) * eta * data[1, 0, 1, 0]
     )
-    return (val_t0 * (1 - tau) + val_t1 * tau).values
+    return val_t0 * (1 - tau) + val_t1 * tau
 
 
 @pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
