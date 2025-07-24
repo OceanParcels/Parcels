@@ -16,8 +16,7 @@ from parcels.application_kernels.advection import (
     AdvectionRK4_3D_CROCO,
     AdvectionRK45,
 )
-from parcels.field import VectorField
-from parcels.grid import GridType
+from parcels.basegrid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
     TimeExtrapolationError,
@@ -71,11 +70,13 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
 
     def remove_deleted(self, pset):
         """Utility to remove all particles that signalled deletion."""
-        bool_indices = pset.particledata.state == StatusCode.Delete
+        bool_indices = pset._data["state"] == StatusCode.Delete
         indices = np.where(bool_indices)[0]
-        if len(indices) > 0 and self.fieldset.particlefile is not None:
-            self.fieldset.particlefile.write(pset, None, indices=indices)
-        pset.remove_indices(indices)
+        # TODO v4: need to implement ParticleFile writing of deleted particles
+        # if len(indices) > 0 and self.fieldset.particlefile is not None:
+        #     self.fieldset.particlefile.write(pset, None, indices=indices)
+        if len(indices) > 0:
+            pset.remove_indices(indices)
 
 
 class Kernel(BaseKernel):
@@ -184,6 +185,8 @@ class Kernel(BaseKernel):
     def add_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
         def Setcoords(particle, fieldset, time):  # pragma: no cover
+            import numpy as np  # noqa
+
             particle_dlon = 0  # noqa
             particle_dlat = 0  # noqa
             particle_ddepth = 0  # noqa
@@ -304,20 +307,14 @@ class Kernel(BaseKernel):
 
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
-        pset.particledata.state[:] = StatusCode.Evaluate
+        pset._data["state"][:] = StatusCode.Evaluate
 
-        if abs(dt) < 1e-6:
+        if abs(dt) < np.timedelta64(1000, "ns"):  # TODO still needed?
             warnings.warn(
                 "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
                 RuntimeWarning,
                 stacklevel=2,
             )
-
-        if pset.fieldset is not None:
-            for f in self.fieldset.get_fields():
-                if isinstance(f, VectorField):
-                    continue
-                f.data = np.array(f.data)
 
         if not self._positionupdate_kernels_added:
             self.add_positionupdate_kernels()
@@ -335,9 +332,8 @@ class Kernel(BaseKernel):
         n_error = pset._num_error_particles
 
         while n_error > 0:
-            error_pset = pset._error_particles
-            # Check for StatusCodes
-            for p in error_pset:
+            for i in pset._error_particles:
+                p = pset[i]
                 if p.state == StatusCode.StopExecution:
                     return
                 if p.state == StatusCode.StopAllExecution:
@@ -383,24 +379,25 @@ class Kernel(BaseKernel):
         dt :
             computational integration timestep
         """
+        sign_dt = 1 if p.dt >= 0 else -1
         while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            pre_dt = p.dt
-
-            sign_dt = np.sign(p.dt)
-            if sign_dt * p.time_nextloop >= sign_dt * endtime:
+            if sign_dt * (endtime - p.time_nextloop) <= 0:
                 return p
 
-            try:  # Use next_dt from AdvectionRK45 if it is set
-                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
-                    p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
-            except KeyError:
-                if abs(endtime - p.time_nextloop) < abs(p.dt) - 1e-6:
-                    p.dt = abs(endtime - p.time_nextloop) * sign_dt
+            pre_dt = p.dt
+            # TODO implement below later again
+            # try:  # Use next_dt from AdvectionRK45 if it is set
+            #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
+            #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
+            # except AttributeError:
+            if sign_dt * (endtime - p.time_nextloop) <= p.dt:
+                p.dt = sign_dt * (endtime - p.time_nextloop)
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
-                if sign_dt * p.time < sign_dt * endtime and p.state == StatusCode.Success:
-                    p.state = StatusCode.Evaluate
+                if p.state == StatusCode.Success:
+                    if sign_dt * (p.time - endtime) > 0:
+                        p.state = StatusCode.Evaluate
             else:
                 p.state = res
 

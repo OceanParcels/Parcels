@@ -120,7 +120,7 @@ class InteractionKernel(BaseKernel):
         InteractionKernel.
         """
         if self.fieldset is not None:
-            for f in self.fieldset.get_fields():
+            for f in self.fieldset.fields.values():
                 if isinstance(f, VectorField):
                     continue
                 f.data = np.array(f.data)

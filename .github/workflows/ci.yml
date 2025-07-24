@@ -23,13 +23,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, ubuntu, windows]
-        python-version: ["3.13"]
+        os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
+        python-version: ["3.12"]
         include:
           - os: ubuntu
             python-version: "3.11"
-          - os: ubuntu
-            python-version: "3.12"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,13 +38,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Unit test
         run: |
-          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html tests
+          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        if: matrix.python-version == '3.13'
         with:
           flags: unit-tests
       - name: Upload test results
@@ -56,13 +53,15 @@ jobs:
           name: Unittest report ${{ matrix.os }}-${{ matrix.python-version }}
           path: ${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html
   integration-test:
+    # TODO v4: Re-enable the workflow once development has stabilized and we want to run integration tests again
+    if: false
     name: "py${{ matrix.python-version }} | ${{ matrix.os }} | integration tests"
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, ubuntu, windows]
-        python-version: ["3.13"]
+        os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
+        python-version: ["3.12"]
         include:
           - os: ubuntu
             python-version: "3.11"
@@ -109,6 +108,8 @@ jobs:
           pattern: "* report *"
   typechecking:
     name: mypy
+    # TODO v4: Enable typechecking again
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

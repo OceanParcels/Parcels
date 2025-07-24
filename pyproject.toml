@@ -8,7 +8,7 @@ description = "Framework for Lagrangian tracking of virtual ocean particles in t
 readme = "README.md"
 dynamic = ["version"]
 authors = [{name = "oceanparcels.org team"}]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 license = {file = "LICENSE.md"}
 classifiers = [
   "License :: OSI Approved :: MIT License",
@@ -31,6 +31,7 @@ dependencies = [
   "pytest",
   "scipy",
   "xarray",
+  "uxarray",
   "pooch",
 ]
 
@@ -68,6 +69,7 @@ pymbolic = "*"
 scipy = ">=0.16.0"
 tqdm = "*"
 xarray = ">=0.10.8"
+uxarray = ">=2025.3.0"
 cftime = ">=1.3.1"
 dask = ">=2.0"
 scikit-learn = "*"
@@ -79,6 +81,7 @@ trajan = "*"
 # Testing
 nbval = "*"
 pytest = "*"
+hypothesis = "*"
 pytest-html = "*"
 coverage = "*"
 
@@ -93,7 +96,7 @@ pre_commit = "*"
 
 # Docs
 ipython = "*"
-numpydoc = "*"
+numpydoc = "!=1.9.0"
 nbsphinx = "*"
 sphinx = "*"
 pandoc = "*"
@@ -118,7 +121,8 @@ local_scheme = "no-local-version"
 [tool.pytest.ini_options]
 addopts = ["--strict-config", "--strict-markers"]
 xfail_strict = true
-testpaths = ["tests", "docs/examples"]
+# testpaths = ["tests", "docs/examples"] # TODO v4: Re-enable once `tests/v4` separation is gone
+testpaths = ["tests/v4"]
 python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 minversion = "7"
 markers = [ # can be skipped by doing `pytest -m "not slow"` etc.
@@ -149,6 +153,7 @@ select = [
     "G", # logging-format
     "RUF", # ruff
     "ISC001", # single-line-implicit-string-concatenation
+    "TID", # flake8-tidy-imports
 ]
 
 ignore = [

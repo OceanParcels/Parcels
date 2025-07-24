@@ -10,7 +10,8 @@ import zarr
 
 import parcels
 from parcels._compat import MPI
-from parcels.tools._helpers import default_repr, timedelta_to_float
+from parcels._reprs import default_repr
+from parcels.tools._helpers import timedelta_to_float
 from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
@@ -53,7 +54,7 @@ class ParticleFile:
         self._particleset = particleset
         self._parcels_mesh = "spherical"
         if self.particleset.fieldset is not None:
-            self._parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
+            self._parcels_mesh = self.particleset.fieldset.gridset[0].mesh
         self.lonlatdepth_dtype = self.particleset.particledata.lonlatdepth_dtype
         self._maxids = 0
         self._pids_written = {}
@@ -149,10 +150,6 @@ class ParticleFile:
     def vars_to_write(self):
         return self._vars_to_write
 
-    @property
-    def time_origin(self):
-        return self.particleset.time_origin
-
     def _create_variables_attribute_dict(self):
         """Creates the dictionary with variable attributes.
 
@@ -172,9 +169,8 @@ class ParticleFile:
             "lat": {"long_name": "", "standard_name": "latitude", "units": "degrees_north", "axis": "Y"},
         }
 
-        if self.time_origin.calendar is not None:
-            attrs["time"]["units"] = "seconds since " + str(self.time_origin)
-            attrs["time"]["calendar"] = _set_calendar(self.time_origin.calendar)
+        attrs["time"]["units"] = "seconds since "  # TODO fix units
+        attrs["time"]["calendar"] = "None"  # TODO fix calendar
 
         for vname in self.vars_to_write:
             if vname not in ["time", "lat", "lon", "depth", "id"]:

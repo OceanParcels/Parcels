@@ -1,11 +1,22 @@
+from __future__ import annotations
+
+import functools
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
+
 import numpy as np
-import uxarray as ux
 import xarray as xr
 
+from parcels import xgcm
+from parcels._core.utils.time import get_datetime_type_calendar
+from parcels._core.utils.time import is_compatible as datetime_is_compatible
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
-from parcels.tools._helpers import fieldset_repr
+from parcels.xgrid import XGrid
 
+if TYPE_CHECKING:
+    from parcels._typing import TimeLike
+    from parcels.basegrid import BaseGrid
 __all__ = ["FieldSet"]
 
 
@@ -39,76 +50,37 @@ class FieldSet:
 
     """
 
-    def __init__(self, datasets: list[xr.Dataset | ux.UxDataset]):
-        self.datasets = datasets
+    def __init__(self, fields: list[Field | VectorField]):
+        for field in fields:
+            if not isinstance(field, (Field, VectorField)):
+                raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {field}")
+        assert_compatible_calendars(fields)
 
-        self._completed: bool = False
-        self._fieldnames = []
-        time_origin = None
-        # Create pointers to each (Ux)DataArray
-        for ds in datasets:
-            for field in ds.data_vars:
-                if type(ds[field]) is ux.UxDataArray:
-                    self.add_field(Field(field, ds[field], grid=ds[field].uxgrid), field)
-                else:
-                    self.add_field(Field(field, ds[field]), field)
-                self._fieldnames.append(field)
+        self.fields = {f.name: f for f in fields}
+        self.constants: dict[str, float] = {}
 
-            if "time" in ds.coords:
-                if time_origin is None:
-                    time_origin = ds.time.min().data
-                else:
-                    time_origin = min(time_origin, ds.time.min().data)
-            else:
-                time_origin = 0.0
-
-        self.time_origin = time_origin
-        self._add_UVfield()
-
-    def __repr__(self):
-        return fieldset_repr(self)
-
-    def dimrange(self, dim):
-        """Returns maximum value of a dimension (lon, lat, depth or time)
-        on 'left' side and minimum value on 'right' side for all grids
-        in a gridset. Useful for finding e.g. longitude range that
-        overlaps on all grids in a gridset.
-        """
-        maxleft, minright = (-np.inf, np.inf)
-        dim2ds = {
-            "depth": ["nz1", "nz"],
-            "lat": ["node_lat", "face_lat", "edge_lat"],
-            "lon": ["node_lon", "face_lon", "edge_lon"],
-            "time": ["time"],
-        }
-        for ds in self.datasets:
-            for field in ds.data_vars:
-                for d in dim2ds[dim]:  # check all possible dimensions
-                    if d in ds[field].dims:
-                        if dim == "depth":
-                            maxleft = max(maxleft, ds[field][d].min().data)
-                            minright = min(minright, ds[field][d].max().data)
-                        else:
-                            maxleft = max(maxleft, ds[field][d].data[0])
-                            minright = min(minright, ds[field][d].data[-1])
-        maxleft = 0 if maxleft == -np.inf else maxleft  # if all len(dim) == 1
-        minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
-
-        return maxleft, minright
-
-    # @property
-    # def particlefile(self):
-    #     return self._particlefile
-
-    @staticmethod
-    def checkvaliddimensionsdict(dims):
-        for d in dims:
-            if d not in ["lon", "lat", "depth", "time"]:
-                raise NameError(f"{d} is not a valid key in the dimensions dictionary")
+    def __getattr__(self, name):
+        """Get the field by name. If the field is not found, check if it's a constant."""
+        if name in self.fields:
+            return self.fields[name]
+        elif name in self.constants:
+            return self.constants[name]
+        else:
+            raise AttributeError(f"FieldSet has no attribute '{name}'")
 
     @property
-    def gridset_size(self):
-        return len(self._fieldnames)
+    def time_interval(self):
+        """Returns the valid executable time interval of the FieldSet,
+        which is the intersection of the time intervals of all fields
+        in the FieldSet.
+        """
+        time_intervals = (f.time_interval for f in self.fields.values())
+
+        # Filter out Nones from constant Fields
+        time_intervals = [t for t in time_intervals if t is not None]
+        if len(time_intervals) == 0:  # All fields are constant fields
+            return None
+        return functools.reduce(lambda x, y: x.intersection(y), time_intervals)
 
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
@@ -129,18 +101,16 @@ class FieldSet:
         * `Unit converters <../examples/tutorial_unitconverters.ipynb>`__ (Default value = None)
 
         """
-        if self._completed:
-            raise RuntimeError(
-                "FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?"
-            )
+        if not isinstance(field, (Field, VectorField)):
+            raise ValueError(f"Expected `field` to be a Field or VectorField object. Got {type(field)}")
+        assert_compatible_calendars((*self.fields.values(), field))
+
         name = field.name if name is None else name
 
-        if hasattr(self, name):  # check if Field with same name already exists when adding new Field
-            raise RuntimeError(f"FieldSet already has a Field with name '{name}'")
-        else:
-            setattr(self, name, field)
-            self._gridset_size += 1
-            self._fieldnames.append(name)
+        if name in self.fields:
+            raise ValueError(f"FieldSet already has a Field with name '{name}'")
+
+        self.fields[name] = field
 
     def add_constant_field(self, name: str, value, mesh: Mesh = "flat"):
         """Wrapper function to add a Field that is constant in space,
@@ -160,141 +130,18 @@ class FieldSet:
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
-        time = 0.0
-        values = np.full((1, 1, 1, 1), value)
-        data = xr.DataArray(
-            data=values,
-            name=name,
-            dims="null",
-            coords=[time, [0], [0], [0]],
-            attrs=dict(description="null", units="null", location="node", mesh="constant", mesh_type=mesh),
+        da = xr.DataArray(
+            data=np.full((1, 1, 1, 1), value),
         )
+        grid = XGrid(xgcm.Grid(da))
         self.add_field(
             Field(
                 name,
-                data,
+                da,
+                grid,
                 interp_method=None,  # TODO : Need to define an interpolation method for constants
-                allow_time_extrapolation=True,
             )
         )
-
-    def add_vector_field(self, vfield):
-        """Add a :class:`parcels.field.VectorField` object to the FieldSet.
-
-        Parameters
-        ----------
-        vfield : parcels.VectorField
-            class:`parcels.FieldSet.VectorField` object to be added
-        """
-        setattr(self, vfield.name, vfield)
-        for v in vfield.__dict__.values():
-            if isinstance(v, Field) and (v not in self.get_fields()):
-                self.add_field(v)
-
-    def get_fields(self) -> list[Field | VectorField]:
-        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
-        objects associated with this FieldSet.
-        """
-        fields = []
-        for v in self.__dict__.values():
-            if type(v) in [Field, VectorField]:
-                if v not in fields:
-                    fields.append(v)
-        return fields
-
-    def _add_UVfield(self):
-        if not hasattr(self, "UV") and hasattr(self, "U") and hasattr(self, "V"):
-            self.add_vector_field(VectorField("UV", self.U, self.V))
-        if not hasattr(self, "UVW") and hasattr(self, "W"):
-            self.add_vector_field(VectorField("UVW", self.U, self.V, self.W))
-
-    def _check_complete(self):
-        assert self.U, 'FieldSet does not have a Field named "U"'
-        assert self.V, 'FieldSet does not have a Field named "V"'
-        for attr, value in vars(self).items():
-            if type(value) is Field:
-                assert value.name == attr, f"Field {value.name}.name ({attr}) is not consistent"
-
-        self._add_UVfield()
-
-        self._completed = True
-
-    # @classmethod
-    # def from_nemo(
-    #     cls,
-    #     filenames,
-    #     variables,
-    #     dimensions,
-    #     mesh: Mesh = "spherical",
-    #     allow_time_extrapolation: bool | None = None,
-    #     tracer_interp_method: InterpMethodOption = "cgrid_tracer",
-    #     **kwargs,
-    # ):
-
-    # @classmethod
-    # def from_mitgcm(
-    #     cls,
-    #     filenames,
-    #     variables,
-    #     dimensions,
-    #     mesh: Mesh = "spherical",
-    #     allow_time_extrapolation: bool | None = None,
-    #     tracer_interp_method: InterpMethodOption = "cgrid_tracer",
-    #     **kwargs,
-    # ):
-
-    # @classmethod
-    # def from_croco(
-    #     cls,
-    #     filenames,
-    #     variables,
-    #     dimensions,
-    #     hc: float | None = None,
-    #     mesh="spherical",
-    #     allow_time_extrapolation=None,
-    #     tracer_interp_method="cgrid_tracer",
-    #     **kwargs,
-    # ):
-
-    # @classmethod
-    # def from_c_grid_dataset(
-    #     cls,
-    #     filenames,
-    #     variables,
-    #     dimensions,
-    #     mesh: Mesh = "spherical",
-    #     allow_time_extrapolation: bool | None = None,
-    #     tracer_interp_method: InterpMethodOption = "cgrid_tracer",
-    #     gridindexingtype: GridIndexingType = "nemo",
-    #     **kwargs,
-    # ):
-
-    # @classmethod
-    # def from_mom5(
-    #     cls,
-    #     filenames,
-    #     variables,
-    #     dimensions,
-    #     mesh: Mesh = "spherical",
-    #     allow_time_extrapolation: bool | None = None,
-    #     tracer_interp_method: InterpMethodOption = "bgrid_tracer",
-    #     **kwargs,
-    # ):
-
-    # @classmethod
-    # def from_a_grid_dataset(cls, filenames, variables, dimensions, **kwargs):
-
-    # @classmethod
-    # def from_b_grid_dataset(
-    #     cls,
-    #     filenames,
-    #     variables,
-    #     dimensions,
-    #     mesh: Mesh = "spherical",
-    #     allow_time_extrapolation: bool | None = None,
-    #     tracer_interp_method: InterpMethodOption = "bgrid_tracer",
-    #     **kwargs,
-    # ):
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are
@@ -315,31 +162,48 @@ class FieldSet:
         `Diffusion <../examples/tutorial_diffusion.ipynb>`__
         `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
-        setattr(self, name, value)
+        if name in self.constants:
+            raise ValueError(f"FieldSet already has a constant with name '{name}'")
 
-    # def computeTimeChunk(self, time=0.0, dt=1):
-    #     """Load a chunk of three data time steps into the FieldSet.
-    #     This is used when FieldSet uses data imported from netcdf,
-    #     with default option deferred_load. The loaded time steps are at or immediatly before time
-    #     and the two time steps immediately following time if dt is positive (and inversely for negative dt)
+        self.constants[name] = np.float32(value)
 
-    #     Parameters
-    #     ----------
-    #     time :
-    #         Time around which the FieldSet data are to be loaded.
-    #         Time is provided as a double, relatively to Fieldset.time_origin.
-    #         Default is 0.
-    #     dt :
-    #         time step of the integration scheme, needed to set the direction of time chunk loading.
-    #         Default is 1.
-    #     """
-    #     nextTime = np.inf if dt > 0 else -np.inf
+    @property
+    def gridset(self) -> list[BaseGrid]:
+        grids = []
+        for field in self.fields.values():
+            if field.grid not in grids:
+                grids.append(field.grid)
+        return grids
 
-    #     if abs(nextTime) == np.inf or np.isnan(nextTime):  # Second happens when dt=0
-    #         return nextTime
-    #     else:
-    #         nSteps = int((nextTime - time) / dt)
-    #         if nSteps == 0:
-    #             return nextTime
-    #         else:
-    #             return time + nSteps * dt
+
+class CalendarError(Exception):  # TODO: Move to a parcels errors module
+    """Exception raised when the calendar of a field is not compatible with the rest of the Fields. The user should ensure that they only add fields to a FieldSet that have compatible CFtime calendars."""
+
+
+def assert_compatible_calendars(fields: Iterable[Field | VectorField]):
+    time_intervals = [f.time_interval for f in fields if f.time_interval is not None]
+
+    if len(time_intervals) == 0:  # All time intervals are none
+        return
+
+    reference_datetime_object = time_intervals[0].left
+
+    for field in fields:
+        if field.time_interval is None:
+            continue
+
+        if not datetime_is_compatible(reference_datetime_object, field.time_interval.left):
+            msg = _format_calendar_error_message(field, reference_datetime_object)
+            raise CalendarError(msg)
+
+
+def _datetime_to_msg(example_datetime: TimeLike) -> str:
+    datetime_type, calendar = get_datetime_type_calendar(example_datetime)
+    msg = str(datetime_type)
+    if calendar is not None:
+        msg += f" with cftime calendar {calendar}'"
+    return msg
+
+
+def _format_calendar_error_message(field: Field, reference_datetime: TimeLike) -> str:
+    return f"Expected field {field.name!r} to have calendar compatible with datetime object {_datetime_to_msg(reference_datetime)}. Got field with calendar {_datetime_to_msg(field.time_interval.left)}. Have you considered using xarray to update the time dimension of the dataset to have a compatible calendar?"

@@ -27,6 +27,7 @@ parcels.egg-info/*
 dist/parcels*.egg
 parcels/_version_setup.py
 .pytest_cache
+.hypothesis
 .coverage
 
 # pixi environments

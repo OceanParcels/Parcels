@@ -1,11 +1,7 @@
-import uuid
-
 import numpy as np
 import pytest
 
-import parcels
 from parcels import (
-    AdvectionRK4,
     FieldOutOfBoundError,
     FieldSet,
     Particle,
@@ -14,18 +10,6 @@ from parcels import (
 )
 from tests.common_kernels import DeleteParticle, DoNothing, MoveEast, MoveNorth
 from tests.utils import create_fieldset_unit_mesh
-
-
-@pytest.fixture()
-def parcels_cache(monkeypatch, tmp_path_factory):
-    """Dedicated folder parcels used to store cached Kernel C code/libraries and log files."""
-    tmp_path = tmp_path_factory.mktemp(f"c-code-{uuid.uuid4()}")
-
-    def fake_get_cache_dir():
-        return tmp_path
-
-    monkeypatch.setattr(parcels.kernel, "get_cache_dir", fake_get_cache_dir)
-    yield tmp_path
 
 
 @pytest.fixture
@@ -110,23 +94,6 @@ def test_execution_runtime(fieldset_unit_mesh, start, end, substeps, dt):
     for _ in range(substeps):
         pset.execute(DoNothing, runtime=t_step, dt=dt)
     assert np.allclose(pset.time_nextloop, end)
-
-
-def test_execution_fail_python_exception(fieldset_unit_mesh):
-    npart = 10
-
-    def PythonFail(particle, fieldset, time):  # pragma: no cover
-        if particle.time >= 10.0:
-            raise RuntimeError("Enough is enough!")
-        else:
-            pass
-
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
-    with pytest.raises(RuntimeError):
-        pset.execute(PythonFail, endtime=20.0, dt=2.0)
-    assert len(pset) == npart
-    assert np.isclose(pset.time[0], 10)
-    assert np.allclose(pset.time[1:], 0.0)
 
 
 def test_execution_fail_out_of_bounds(fieldset_unit_mesh):
@@ -227,66 +194,6 @@ def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh):
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute([Kernel1, Kernel2], endtime=2.0, dt=1.0)
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
-
-
-def test_multi_kernel_reuse_varnames(fieldset_unit_mesh):
-    # Testing for merging of two Kernels with the same variable declared
-    # Should throw a warning, but go ahead regardless
-    def MoveEast1(particle, fieldset, time):  # pragma: no cover
-        add_lon = 0.2
-        particle_dlon += add_lon  # noqa
-
-    def MoveEast2(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += add_lon  # noqa
-
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
-    pset.execute(pset.Kernel(MoveEast1) + pset.Kernel(MoveEast2), endtime=2.0, dt=1.0)
-    assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
-
-
-def test_combined_kernel_from_list(fieldset_unit_mesh):
-    """
-    Test pset.Kernel(List[function])
-
-    Tests that a Kernel can be created from a list functions, or a list of
-    mixed functions and kernel objects.
-    """
-
-    def MoveEast(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += 0.1  # noqa
-
-    def MoveNorth(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
-
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
-    kernels_single = pset.Kernel([AdvectionRK4])
-    kernels_functions = pset.Kernel([AdvectionRK4, MoveEast, MoveNorth])
-
-    # Check if the kernels were combined correctly
-    assert kernels_single.funcname == "AdvectionRK4"
-    assert kernels_functions.funcname == "AdvectionRK4MoveEastMoveNorth"
-
-
-def test_combined_kernel_from_list_error_checking(fieldset_unit_mesh):
-    """
-    Test pset.Kernel(List[function])
-
-    Tests that various error cases raise appropriate messages.
-    """
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
-
-    # Test that list has to be non-empty
-    with pytest.raises(ValueError):
-        pset.Kernel([])
-
-    # Test that list has to be all functions
-    with pytest.raises(ValueError):
-        pset.Kernel([AdvectionRK4, "something else"])
-
-    # Can't mix kernel objects and functions in list
-    with pytest.raises(ValueError):
-        kernels_mixed = pset.Kernel([pset.Kernel(AdvectionRK4), MoveEast, MoveNorth])
-        assert kernels_mixed.funcname == "AdvectionRK4MoveEastMoveNorth"
 
 
 def test_update_kernel_in_script(fieldset_unit_mesh):

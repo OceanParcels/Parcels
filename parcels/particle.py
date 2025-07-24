@@ -1,7 +1,7 @@
-from operator import attrgetter
 from typing import Literal
 
 import numpy as np
+import xarray as xr
 
 from parcels.tools.statuscodes import StatusCode
 
@@ -110,118 +110,52 @@ class Particle:
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    lon = Variable("lon", dtype=np.float32)
-    lon_nextloop = Variable("lon_nextloop", dtype=np.float32, to_write=False)
-    lat = Variable("lat", dtype=np.float32)
-    lat_nextloop = Variable("lat_nextloop", dtype=np.float32, to_write=False)
-    depth = Variable("depth", dtype=np.float32)
-    depth_nextloop = Variable("depth_nextloop", dtype=np.float32, to_write=False)
-    time = Variable("time", dtype=np.float64)
-    time_nextloop = Variable("time_nextloop", dtype=np.float64, to_write=False)
-    id = Variable("id", dtype=np.int64, to_write="once")
-    obs_written = Variable("obs_written", dtype=np.int32, initial=0, to_write=False)
-    dt = Variable("dt", dtype=np.float64, to_write=False)
-    state = Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False)
+    def __init__(self, data: xr.Dataset, index: int):
+        self._data = data
+        self._index = index
 
-    lastID = 0  # class-level variable keeping track of last Particle ID used
+    def __getattr__(self, name):
+        return self._data[name][self._index]
 
-    def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0.0, time=0.0, cptr=None):
-        # Enforce default values through Variable descriptor
-        type(self).lon.initial = lon
-        type(self).lon_nextloop.initial = lon
-        type(self).lat.initial = lat
-        type(self).lat_nextloop.initial = lat
-        type(self).depth.initial = depth
-        type(self).depth_nextloop.initial = depth
-        type(self).time.initial = time
-        type(self).time_nextloop.initial = time
-        type(self).id.initial = pid
-        type(self).lastID = max(type(self).lastID, pid)
-        type(self).obs_written.initial = 0
-        type(self).dt.initial = None
+    def __setattr__(self, name, value):
+        if name in ["_data", "_index"]:
+            object.__setattr__(self, name, value)
+        else:
+            self._data[name][self._index] = value
 
-        ptype = self.getPType()
-        # Explicit initialisation of all particle variables
-        for v in ptype.variables:
-            if isinstance(v.initial, attrgetter):
-                initial = v.initial(self)
-            else:
-                initial = v.initial
-            setattr(self, v.name, v.dtype(initial))
-
-    def __repr__(self):
-        time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else f"{self.time:f}"
-        p_string = f"P[{self.id}](lon={self.lon:f}, lat={self.lat:f}, depth={self.depth:f}, "
-        for var in vars(type(self)):
-            if var in ["lon_nextloop", "lat_nextloop", "depth_nextloop", "time_nextloop"]:
-                continue
-            if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
-                p_string += f"{var}={getattr(self, var):f}, "
-        return p_string + f"time={time_string})"
+    def delete(self):
+        """Signal the particle for deletion."""
+        self.state = StatusCode.Delete
 
     @classmethod
-    def add_variable(cls, var, *args, **kwargs):
+    def add_variable(cls, variable: Variable | list[Variable]):
         """Add a new variable to the Particle class
 
         Parameters
         ----------
-        var : str, Variable or list of Variables
-            Variable object to be added. Can be the name of the Variable,
-            a Variable object, or a list of Variable objects
+        variable : Variable or list[Variable]
+            Variable or list of Variables to be added to the Particle class.
+            If a list is provided, all variables will be added to the class.
         """
-        if isinstance(var, list):
-            return cls.add_variables(var)
-        if not isinstance(var, Variable):
-            if len(args) > 0 and "dtype" not in kwargs:
-                kwargs["dtype"] = args[0]
-            if len(args) > 1 and "initial" not in kwargs:
-                kwargs["initial"] = args[1]
-            if len(args) > 2 and "to_write" not in kwargs:
-                kwargs["to_write"] = args[2]
-            dtype = kwargs.pop("dtype", np.float32)
-            initial = kwargs.pop("initial", 0)
-            to_write = kwargs.pop("to_write", True)
-            var = Variable(var, dtype=dtype, initial=initial, to_write=to_write)
 
         class NewParticle(cls):
             pass
 
-        setattr(NewParticle, var.name, var)
-        return NewParticle
-
-    @classmethod
-    def add_variables(cls, variables):
-        """Add multiple new variables to the Particle class
-
-        Parameters
-        ----------
-        variables : list of Variable
-            Variable objects to be added. Has to be a list of Variable objects
-        """
-        NewParticle = cls
-        for var in variables:
-            NewParticle = NewParticle.add_variable(var)
+        if isinstance(variable, Variable):
+            setattr(NewParticle, variable.name, variable)
+        elif isinstance(variable, list):
+            for var in variable:
+                if not isinstance(var, Variable):
+                    raise TypeError(f"Expected Variable, got {type(var)}")
+                setattr(NewParticle, var.name, var)
         return NewParticle
 
     @classmethod
     def getPType(cls):
         return ParticleType(cls)
 
-    @classmethod
-    def set_lonlatdepth_dtype(cls, dtype):
-        cls.lon.dtype = dtype
-        cls.lat.dtype = dtype
-        cls.depth.dtype = dtype
-        cls.lon_nextloop.dtype = dtype
-        cls.lat_nextloop.dtype = dtype
-        cls.depth_nextloop.dtype = dtype
 
-    @classmethod
-    def setLastID(cls, offset):  # TODO v4: check if we can implement this in another way
-        Particle.lastID = offset
-
-
-InteractionParticle = Particle.add_variables(
+InteractionParticle = Particle.add_variable(
     [Variable("vert_dist", dtype=np.float32), Variable("horiz_dist", dtype=np.float32)]
 )
 
