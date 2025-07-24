@@ -115,8 +115,7 @@ def test_execution_fail_python_exception(fieldset, npart=10):
     assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
 
 
-@pytest.mark.parametrize("verbose_progress", [True, False])
-def test_uxstommelgyre_pset_execute(verbose_progress):
+def test_uxstommelgyre_pset_execute():
     ds = datasets_unstructured["stommel_gyre_delaunay"]
     grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"])
     U = Field(
@@ -154,7 +153,6 @@ def test_uxstommelgyre_pset_execute(verbose_progress):
         runtime=np.timedelta64(10, "m"),
         dt=np.timedelta64(60, "s"),
         pyfunc=AdvectionEE,
-        verbose_progress=verbose_progress,
     )
 
 
