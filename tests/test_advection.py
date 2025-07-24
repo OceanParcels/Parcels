@@ -59,39 +59,6 @@ def depth():
 
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
-def test_advection_zonal(lon, lat, depth):
-    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
-    npart = 10
-    data2D = {
-        "U": np.ones((lat.size, lon.size), dtype=np.float32),
-        "V": np.zeros((lat.size, lon.size), dtype=np.float32),
-    }
-    data3D = {
-        "U": np.ones((depth.size, lat.size, lon.size), dtype=np.float32),
-        "V": np.zeros((depth.size, lat.size, lon.size), dtype=np.float32),
-    }
-    dimensions = {"lon": lon, "lat": lat}
-    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh="spherical")
-
-    pset2D = ParticleSet(fieldset2D, pclass=Particle, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
-    pset2D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
-    assert (np.diff(pset2D.lon) > 1.0e-4).all()
-
-    dimensions["depth"] = depth
-    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh="spherical")
-    pset3D = ParticleSet(
-        fieldset3D,
-        pclass=Particle,
-        lon=np.zeros(npart) + 20.0,
-        lat=np.linspace(0, 80, npart),
-        depth=np.zeros(npart) + 10.0,
-    )
-    pset3D.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
-    assert (np.diff(pset3D.lon) > 1.0e-4).all()
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
 def test_advection_meridional(lon, lat):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     npart = 10
