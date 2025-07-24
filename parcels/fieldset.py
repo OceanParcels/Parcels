@@ -139,7 +139,6 @@ class FieldSet:
         """
         da = xr.DataArray(
             data=np.full((1, 1, 1, 1), value),
-            dims=["time", "ZG", "YG", "XG"],
         )
         grid = XGrid(xgcm.Grid(da))
         self.add_field(

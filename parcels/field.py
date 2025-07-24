@@ -29,7 +29,7 @@ from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
 )
 from parcels.uxgrid import UxGrid
-from parcels.xgrid import XGrid
+from parcels.xgrid import XGrid, _transpose_xfield_data_to_tzyx
 
 from ._index_search import _search_time_index
 
@@ -146,6 +146,9 @@ class Field:
 
         _assert_compatible_combination(data, grid)
 
+        if isinstance(grid, XGrid):
+            data = _transpose_xfield_data_to_tzyx(data, grid.xgcm_grid)
+
         self.name = name
         self.data_full = data
         self.grid = grid
@@ -186,8 +189,9 @@ class Field:
         else:
             raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
-        if "time" not in data.dims:
-            raise ValueError("Field is missing a 'time' dimension. ")
+        if self.data.shape[0] > 1:
+            if "time" not in data.coords:
+                raise ValueError("Field data is missing a 'time' coordinate.")
 
     @property
     def units(self):
@@ -448,7 +452,7 @@ def _assert_compatible_combination(data: xr.DataArray | ux.UxDataArray, grid: ux
 
 
 def _get_time_interval(data: xr.DataArray | ux.UxDataArray) -> TimeInterval | None:
-    if len(data.time) == 1:
+    if data.shape[0] == 1:
         return None
 
     return TimeInterval(data.time.values[0], data.time.values[-1])
