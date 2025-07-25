@@ -441,66 +441,6 @@ def truth_moving(x_0, y_0, t):
     return lon, lat
 
 
-def create_fieldset_moving(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
-    """Generate a FieldSet encapsulating the flow field of a moving eddy.
-
-    Reference: N. Fabbroni, 2009, "Numerical simulations of passive
-    tracers dispersion in the sea"
-    """
-    time = np.arange(0.0, maxtime.total_seconds() + 1e-5, 60.0, dtype=np.float64)
-    dimensions = {
-        "lon": np.linspace(0, 25000, xdim, dtype=np.float32),
-        "lat": np.linspace(0, 25000, ydim, dtype=np.float32),
-        "time": time,
-    }
-    data = {
-        "U": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time)),
-        "V": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)),
-    }
-    return FieldSet.from_data(data, dimensions, mesh="flat")
-
-
-@pytest.fixture
-def fieldset_moving():
-    return create_fieldset_moving()
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize(
-    "method, rtol, diffField",
-    [
-        ("EE", 1e-2, False),
-        ("AdvDiffEM", 1e-2, True),
-        ("AdvDiffM1", 1e-2, True),
-        ("RK4", 1e-5, False),
-        ("RK45", 1e-5, False),
-    ],
-)
-def test_moving_eddy(fieldset_moving, method, rtol, diffField):
-    npart = 1
-    fieldset = fieldset_moving
-    if diffField:
-        fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
-        fieldset.add_field(Field("Kh_meridional", np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
-        fieldset.add_constant("dres", 0.1)
-    lon = np.linspace(12000, 21000, npart)
-    lat = np.linspace(12500, 12500, npart)
-    dt = timedelta(minutes=3).total_seconds()
-    endtime = timedelta(hours=6).total_seconds()
-
-    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
-
-    pclass = RK45Particles if method == "RK45" else Particle
-    pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
-    pset.execute(kernel[method], dt=dt, endtime=endtime)
-
-    exp_lon = [truth_moving(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time, strict=True)]
-    exp_lat = [truth_moving(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time, strict=True)]
-    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat, exp_lat, rtol=rtol)
-
-
 def truth_decaying(x_0, y_0, t):
     lat = y_0 - (
         (u_0 - u_g) * f / (f**2 + gamma**2) * (1 - np.exp(-gamma * t) * (np.cos(f * t) + gamma / f * np.sin(f * t)))

@@ -134,12 +134,11 @@ def _unrolled_cone_curvilinear_grid():
     )
 
 
-def pure_zonal_flow(mesh_type="spherical"):
-    dims = (7, 2, 30, 4)  # time, depth, lat, lon
+def simple_UV_dataset(dims=(360, 2, 30, 4), mesh_type="spherical"):
     max_lon = 180.0 if mesh_type == "spherical" else 1e6
 
     return xr.Dataset(
-        {"U": (["time", "depth", "YG", "XG"], np.ones(dims)), "V": (["time", "depth", "YG", "XG"], np.zeros(dims))},
+        {"U": (["time", "depth", "YG", "XG"], np.zeros(dims)), "V": (["time", "depth", "YG", "XG"], np.zeros(dims))},
         coords={
             "time": (["time"], xr.date_range("2000", "2001", dims[0]), {"axis": "T"}),
             "depth": (["depth"], np.linspace(0, 1, dims[1]), {"axis": "Z"}),
@@ -151,6 +150,12 @@ def pure_zonal_flow(mesh_type="spherical"):
             "lon": (["XG"], np.linspace(-max_lon, max_lon, dims[3]), {"axis": "X", "c_grid_axis_shift": -0.5}),
         },
     )
+
+
+def _pure_zonal_flow(mesh_type="spherical"):
+    ds = simple_UV_dataset(mesh_type=mesh_type)
+    ds["U"].data[:] = 1.0
+    return ds
 
 
 datasets = {
@@ -240,6 +245,6 @@ datasets = {
         },
     ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
-    "pure_zonal_flow_spherical": pure_zonal_flow(mesh_type="spherical"),
-    "pure_zonal_flow_flat": pure_zonal_flow(mesh_type="flat"),
+    "pure_zonal_flow_spherical": _pure_zonal_flow(mesh_type="spherical"),
+    "pure_zonal_flow_flat": _pure_zonal_flow(mesh_type="flat"),
 }
