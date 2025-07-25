@@ -109,7 +109,7 @@ class ParticleSet:
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
         if time is None or len(time) == 0:
-            time = np.datetime64("NaT", "ns")  # do not set a time yet (because sign_dt not known)
+            time = type(fieldset.time_interval.left)("NaT", "ns")  # do not set a time yet (because sign_dt not known)
         elif type(time[0]) in [np.datetime64, np.timedelta64]:
             pass  # already in the right format
         else:
@@ -843,7 +843,9 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
 
 
 def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: TimeInterval):
-    if np.any(release_times):
+    if any(not np.isnat(t) for t in release_times):
+        if isinstance(time.left, np.datetime64) and isinstance(release_times[0], np.timedelta64):
+            release_times = np.array([t + time.left for t in release_times])
         if np.any(release_times < time.left):
             warnings.warn(
                 "Some particles are set to be released outside the FieldSet's executable time domain.",
