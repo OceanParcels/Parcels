@@ -156,7 +156,7 @@ class ParticleSet:
                 if isinstance(v.initial, attrgetter):
                     initial = v.initial(self)
                 else:
-                    initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
+                    initial = [np.array(v.initial, dtype=v.dtype)] * len(trajectory_ids)
                 self._data[v.name] = initial
 
         # update initial values provided on ParticleSet creation

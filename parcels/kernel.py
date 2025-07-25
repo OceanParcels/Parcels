@@ -384,13 +384,12 @@ class Kernel(BaseKernel):
                 return p
 
             pre_dt = p.dt
-            # TODO implement below later again
-            # try:  # Use next_dt from AdvectionRK45 if it is set
-            #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
-            #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
-            # except AttributeError:
-            if sign_dt * (endtime - p.time_nextloop) <= p.dt:
-                p.dt = sign_dt * (endtime - p.time_nextloop)
+            try:  # Use next_dt from AdvectionRK45 if it is set
+                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - np.timedelta64(1000, "ns"):
+                    p.next_dt = sign_dt * (endtime - p.time_nextloop)
+            except KeyError:
+                if sign_dt * (endtime - p.time_nextloop) <= p.dt:
+                    p.dt = sign_dt * (endtime - p.time_nextloop)
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
