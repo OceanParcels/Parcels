@@ -13,7 +13,6 @@ from parcels import (
     AdvectionRK4,
     AdvectionRK4_3D,
     AdvectionRK45,
-    Field,
     FieldSet,
     Particle,
     ParticleSet,
@@ -272,119 +271,6 @@ def test_length1dimensions(u, v, w):
     assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
     if w:
         assert ((np.array([p.depth - y0 for p in pset]) - 4 * w) < 1e-6).all()
-
-
-def truth_stationary(x_0, y_0, t):
-    lat = y_0 - u_0 / f * (1 - math.cos(f * t))
-    lon = x_0 + u_0 / f * math.sin(f * t)
-    return lon, lat
-
-
-def create_fieldset_stationary(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
-    """Generate a FieldSet encapsulating the flow field of a stationary eddy.
-
-    Reference: N. Fabbroni, 2009, "Numerical simulations of passive
-    tracers dispersion in the sea"
-    """
-    time = np.arange(0.0, maxtime.total_seconds() + 1e-5, 60.0, dtype=np.float64)
-    dimensions = {
-        "lon": np.linspace(0, 25000, xdim, dtype=np.float32),
-        "lat": np.linspace(0, 25000, ydim, dtype=np.float32),
-        "time": time,
-    }
-    data = {
-        "U": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time)),
-        "V": np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)),
-    }
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-    # setting some constants for AdvectionRK45 kernel
-    fieldset.RK45_min_dt = 1e-3
-    fieldset.RK45_max_dt = 1e2
-    fieldset.RK45_tol = 1e-5
-    return fieldset
-
-
-@pytest.fixture
-def fieldset_stationary():
-    return create_fieldset_stationary()
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize(
-    "method, rtol, diffField",
-    [
-        ("EE", 1e-2, False),
-        ("AdvDiffEM", 1e-2, True),
-        ("AdvDiffM1", 1e-2, True),
-        ("RK4", 1e-5, False),
-        ("RK45", 1e-5, False),
-    ],
-)
-def test_stationary_eddy(fieldset_stationary, method, rtol, diffField):
-    npart = 1
-    fieldset = fieldset_stationary
-    if diffField:
-        fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
-        fieldset.add_field(Field("Kh_meridional", np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
-        fieldset.add_constant("dres", 0.1)
-    lon = np.linspace(12000, 21000, npart)
-    lat = np.linspace(12500, 12500, npart)
-    dt = timedelta(minutes=3).total_seconds()
-    endtime = timedelta(hours=6).total_seconds()
-
-    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
-
-    pclass = RK45Particles if method == "RK45" else Particle
-    pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
-    pset.execute(kernel[method], dt=dt, endtime=endtime)
-
-    exp_lon = [truth_stationary(x, y, pset[0].time)[0] for x, y in zip(lon, lat, strict=True)]
-    exp_lat = [truth_stationary(x, y, pset[0].time)[1] for x, y in zip(lon, lat, strict=True)]
-    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat, exp_lat, rtol=rtol)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-def test_stationary_eddy_vertical():
-    npart = 1
-    lon = np.linspace(12000, 21000, npart)
-    lat = np.linspace(10000, 20000, npart)
-    depth = np.linspace(12500, 12500, npart)
-    endtime = timedelta(hours=6).total_seconds()
-    dt = timedelta(minutes=3).total_seconds()
-
-    xdim = ydim = 100
-    lon_data = np.linspace(0, 25000, xdim, dtype=np.float32)
-    lat_data = np.linspace(0, 25000, ydim, dtype=np.float32)
-    time_data = np.arange(0.0, 6 * 3600 + 1e-5, 60.0, dtype=np.float64)
-    fld1 = np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time_data))
-    fld2 = np.transpose(np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time_data))
-    fldzero = np.transpose(np.zeros((xdim, ydim, 1), dtype=np.float32) * time_data)
-
-    dimensions = {"lon": lon_data, "lat": lat_data, "time": time_data}
-    data = {"U": fld1, "V": fldzero, "W": fld2}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=lon, lat=lat, depth=depth)
-    pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
-    exp_lon = [truth_stationary(x, z, pset[0].time)[0] for x, z in zip(lon, depth, strict=True)]
-    exp_depth = [truth_stationary(x, z, pset[0].time)[1] for x, z in zip(lon, depth, strict=True)]
-    assert np.allclose(pset.lon, exp_lon, rtol=1e-5)
-    assert np.allclose(pset.lat, lat, rtol=1e-5)
-    assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
-
-    data = {"U": fldzero, "V": fld2, "W": fld1}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=lon, lat=lat, depth=depth)
-    pset.execute(AdvectionRK4_3D, dt=dt, endtime=endtime)
-    exp_depth = [truth_stationary(z, y, pset[0].time)[0] for z, y in zip(depth, lat, strict=True)]
-    exp_lat = [truth_stationary(z, y, pset[0].time)[1] for z, y in zip(depth, lat, strict=True)]
-    assert np.allclose(pset.lon, lon, rtol=1e-5)
-    assert np.allclose(pset.lat, exp_lat, rtol=1e-5)
-    assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
 
 
 @pytest.mark.v4alpha

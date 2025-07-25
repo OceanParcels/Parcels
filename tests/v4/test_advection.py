@@ -116,20 +116,6 @@ def test_horizontal_advection_in_3D_flow(npart=10):
 @pytest.mark.parametrize("direction", ["up", "down"])
 @pytest.mark.parametrize("wErrorThroughSurface", [True, False])
 def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
-    # xdim = ydim = zdim = 2
-    # dimensions = {
-    #     "lon": np.linspace(0.0, 1, xdim, dtype=np.float32),
-    #     "lat": np.linspace(0.0, 1, ydim, dtype=np.float32),
-    #     "depth": np.linspace(0.0, 1, zdim, dtype=np.float32),
-    # }
-    # wfac = -1.0 if direction == "up" else 1.0
-    # data = {
-    #     "U": 0.01 * np.ones((xdim, ydim, zdim), dtype=np.float32),
-    #     "V": np.zeros((xdim, ydim, zdim), dtype=np.float32),
-    #     "W": wfac * np.ones((xdim, ydim, zdim), dtype=np.float32),
-    # }
-    # fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-
     ds = simple_UV_dataset(mesh_type="flat")
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=TriLinear)
@@ -177,7 +163,7 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
         # ("AdvDiffEM", 1e-2),
         # ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
-        # ('RK4_3D', 1e-5),
+        ("RK4_3D", 1e-5),
         # ("RK45", 1e-5),
     ],
 )
@@ -193,7 +179,7 @@ def test_moving_eddy(method, rtol):
 
     dt = np.timedelta64(3, "m")
     time = np.arange(np.timedelta64(0, "s"), np.timedelta64(7, "h"), np.timedelta64(1, "m"))
-    ds = simple_UV_dataset(dims=(len(time), 2, 2, 2), mesh_type="flat")
+    ds = simple_UV_dataset(dims=(len(time), 2, 2, 2), mesh_type="flat", maxdepth=25000)
     grid = XGrid.from_dataset(ds)
     for t in range(len(time)):
         ds["U"].data[t, :, :, :] = u_g + (u_0 - u_g) * np.cos(f * (time[t] / np.timedelta64(1, "s")))
@@ -203,15 +189,27 @@ def test_moving_eddy(method, rtol):
     ds = ds.assign_coords(time=time)
     U = Field("U", ds["U"], grid, interp_method=BiLinear)
     V = Field("V", ds["V"], grid, interp_method=BiLinear)
-    UV = VectorField("UV", U, V)
-    fieldset = FieldSet([U, V, UV])
+    if method == "RK4_3D":
+        # Using W to test 3D advection (assuming same velocity as V)
+        W = Field("W", ds["V"], grid, interp_method=TriLinear)
+        UVW = VectorField("UVW", U, V, W)
+        fieldset = FieldSet([U, V, W, UVW])
+        start_depth = start_lat
+    else:
+        UV = VectorField("UV", U, V)
+        fieldset = FieldSet([U, V, UV])
+        start_depth = 0
 
     RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt))
 
     pclass = RK45Particles if method == "RK45" else Particle
-    pset = ParticleSet(fieldset, pclass=pclass, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset = ParticleSet(
+        fieldset, pclass=pclass, lon=start_lon, lat=start_lat, depth=start_depth, time=np.timedelta64(0, "s")
+    )
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(6, "h"))
 
     exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
     assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    if method == "RK4_3D":
+        assert np.allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
