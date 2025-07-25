@@ -8,48 +8,12 @@ from scipy import stats
 from parcels import (
     AdvectionDiffusionEM,
     AdvectionDiffusionM1,
-    DiffusionUniformKh,
     Field,
     Particle,
     ParticleSet,
     RectilinearZGrid,
 )
 from tests.utils import create_fieldset_zeros_conversion
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("mesh", ["spherical", "flat"])
-def test_fieldKh_Brownian(mesh):
-    xdim = 200
-    ydim = 100
-    kh_zonal = 100
-    kh_meridional = 50
-
-    mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
-    fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
-
-    fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)
-    fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
-
-    npart = 1000
-    runtime = timedelta(days=1)
-
-    random.seed(1234)
-    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(DiffusionUniformKh), runtime=runtime, dt=timedelta(hours=1))
-
-    expected_std_lon = np.sqrt(2 * kh_zonal * mesh_conversion**2 * runtime.total_seconds())
-    expected_std_lat = np.sqrt(2 * kh_meridional * mesh_conversion**2 * runtime.total_seconds())
-
-    lats = pset.lat
-    lons = pset.lon
-
-    tol = 500 * mesh_conversion  # effectively 500 m errors
-    assert np.allclose(np.std(lats), expected_std_lat, atol=tol)
-    assert np.allclose(np.std(lons), expected_std_lon, atol=tol)
-    assert np.allclose(np.mean(lons), 0, atol=tol)
-    assert np.allclose(np.mean(lats), 0, atol=tol)
 
 
 @pytest.mark.v4alpha

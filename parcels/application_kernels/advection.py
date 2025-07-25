@@ -113,7 +113,7 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     Time-step dt is halved if error is larger than fieldset.RK45_tol,
     and doubled if error is smaller than 1/10th of tolerance.
     """
-    dt = min(particle.next_dt, fieldset.RK45_max_dt) / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = min(particle.next_dt / np.timedelta64(1, "s"), fieldset.RK45_max_dt)  # noqa TODO improve API for converting dt to seconds
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
     A = [
         [1.0 / 4.0, 0.0, 0.0, 0.0, 0.0],

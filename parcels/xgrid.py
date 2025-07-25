@@ -9,6 +9,7 @@ import xarray as xr
 from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
+from parcels.tools.statuscodes import FieldOutOfBoundError, FieldOutOfBoundSurfaceError
 
 _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"
@@ -271,6 +272,15 @@ class XGrid(BaseGrid):
         ds = self.xgcm_grid._ds
 
         zi, zeta = _search_1d_array(ds.depth.values, z)
+        if zi == -1:
+            if zeta < 0:
+                raise FieldOutOfBoundError(
+                    f"Depth {z} is out of bounds for the grid with depth values {ds.depth.values}."
+                )
+            elif zeta > 1:
+                raise FieldOutOfBoundSurfaceError(
+                    f"Depth {z} is out of the surface for the grid with depth values {ds.depth.values}."
+                )
 
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
