@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 import pytest
 import xarray as xr
@@ -124,21 +122,6 @@ def test_advection_2DCROCO():
     pset.execute([AdvectionRK4], runtime=runtime, dt=100)
     assert np.allclose(pset.depth, Z.flatten(), atol=1e-3)
     assert np.allclose(pset.lon_nextloop, [x + runtime for x in X], atol=1e-3)
-
-
-def create_periodic_fieldset(xdim, ydim, uvel, vvel):
-    dimensions = {
-        "lon": np.linspace(0.0, 1.0, xdim + 1, dtype=np.float32)[1:],  # don't include both 0 and 1, for periodic b.c.
-        "lat": np.linspace(0.0, 1.0, ydim + 1, dtype=np.float32)[1:],
-    }
-
-    data = {"U": uvel * np.ones((ydim, xdim), dtype=np.float32), "V": vvel * np.ones((ydim, xdim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh="spherical")
-
-
-def periodicBC(particle, fieldset, time):  # pragma: no cover
-    particle.lon = math.fmod(particle.lon, 1)
-    particle.lat = math.fmod(particle.lat, 1)
 
 
 @pytest.mark.v4alpha
