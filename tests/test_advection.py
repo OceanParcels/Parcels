@@ -17,7 +17,6 @@ from parcels import (
     FieldSet,
     Particle,
     ParticleSet,
-    StatusCode,
     Variable,
 )
 from tests.utils import TEST_DATA
@@ -70,53 +69,6 @@ def test_advection_meridional(lon, lat):
     delta_lat = np.diff(pset.lat)
     pset.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.0e-4)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("direction", ["up", "down"])
-@pytest.mark.parametrize("wErrorThroughSurface", [True, False])
-def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
-    xdim = ydim = zdim = 2
-    dimensions = {
-        "lon": np.linspace(0.0, 1, xdim, dtype=np.float32),
-        "lat": np.linspace(0.0, 1, ydim, dtype=np.float32),
-        "depth": np.linspace(0.0, 1, zdim, dtype=np.float32),
-    }
-    wfac = -1.0 if direction == "up" else 1.0
-    data = {
-        "U": 0.01 * np.ones((xdim, ydim, zdim), dtype=np.float32),
-        "V": np.zeros((xdim, ydim, zdim), dtype=np.float32),
-        "W": wfac * np.ones((xdim, ydim, zdim), dtype=np.float32),
-    }
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-
-    def DeleteParticle(particle, fieldset, time):  # pragma: no cover
-        if particle.state == StatusCode.ErrorOutOfBounds or particle.state == StatusCode.ErrorThroughSurface:
-            particle.delete()
-
-    def SubmergeParticle(particle, fieldset, time):  # pragma: no cover
-        if particle.state == StatusCode.ErrorThroughSurface:
-            (u, v) = fieldset.UV[particle]
-            particle_dlon = u * particle.dt  # noqa
-            particle_dlat = v * particle.dt  # noqa
-            particle_ddepth = 0.0  # noqa
-            particle.depth = 0
-            particle.state = StatusCode.Evaluate
-
-    kernels = [AdvectionRK4_3D]
-    if wErrorThroughSurface:
-        kernels.append(SubmergeParticle)
-    kernels.append(DeleteParticle)
-
-    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=0.5, lat=0.5, depth=0.9)
-    pset.execute(kernels, runtime=11.0, dt=1)
-
-    if direction == "up" and wErrorThroughSurface:
-        assert np.allclose(pset.lon[0], 0.6)
-        assert np.allclose(pset.depth[0], 0)
-    else:
-        assert len(pset) == 0
 
 
 @pytest.mark.v4alpha
@@ -433,97 +385,6 @@ def test_stationary_eddy_vertical():
     assert np.allclose(pset.lon, lon, rtol=1e-5)
     assert np.allclose(pset.lat, exp_lat, rtol=1e-5)
     assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
-
-
-def truth_moving(x_0, y_0, t):
-    lat = y_0 - (u_0 - u_g) / f * (1 - math.cos(f * t))
-    lon = x_0 + u_g * t + (u_0 - u_g) / f * math.sin(f * t)
-    return lon, lat
-
-
-def truth_decaying(x_0, y_0, t):
-    lat = y_0 - (
-        (u_0 - u_g) * f / (f**2 + gamma**2) * (1 - np.exp(-gamma * t) * (np.cos(f * t) + gamma / f * np.sin(f * t)))
-    )
-    lon = x_0 + (
-        u_g / gamma_g * (1 - np.exp(-gamma_g * t))
-        + (u_0 - u_g)
-        * f
-        / (f**2 + gamma**2)
-        * (gamma / f + np.exp(-gamma * t) * (math.sin(f * t) - gamma / f * math.cos(f * t)))
-    )
-    return lon, lat
-
-
-def create_fieldset_decaying(xdim=100, ydim=100, maxtime=timedelta(hours=6)):
-    """Generate a FieldSet encapsulating the flow field of a decaying eddy.
-
-    Reference: N. Fabbroni, 2009, "Numerical simulations of passive
-    tracers dispersion in the sea"
-    """
-    time = np.arange(0.0, maxtime.total_seconds() + 1e-5, 60.0, dtype=np.float64)
-    dimensions = {
-        "lon": np.linspace(0, 25000, xdim, dtype=np.float32),
-        "lat": np.linspace(0, 25000, ydim, dtype=np.float32),
-        "time": time,
-    }
-    data = {
-        "U": np.transpose(
-            np.ones((xdim, ydim, 1), dtype=np.float32) * u_g * np.exp(-gamma_g * time)
-            + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time)
-        ),
-        "V": np.transpose(
-            np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.exp(-gamma * time) * np.sin(f * time)
-        ),
-    }
-    return FieldSet.from_data(data, dimensions, mesh="flat")
-
-
-@pytest.fixture
-def fieldset_decaying():
-    return create_fieldset_decaying()
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize(
-    "method, rtol, diffField",
-    [
-        ("EE", 1e-2, False),
-        ("AdvDiffEM", 1e-2, True),
-        ("AdvDiffM1", 1e-2, True),
-        ("RK4", 1e-5, False),
-        ("RK45", 1e-5, False),
-        ("AA", 1e-3, False),
-    ],
-)
-def test_decaying_eddy(fieldset_decaying, method, rtol, diffField):
-    npart = 1
-    fieldset = fieldset_decaying
-    if method == "AA":
-        # needed for AnalyticalAdvection to work, but comes at expense of accuracy
-        fieldset.U.interp_method = "cgrid_velocity"
-        fieldset.V.interp_method = "cgrid_velocity"
-
-    if diffField:
-        fieldset.add_field(Field("Kh_zonal", np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
-        fieldset.add_field(Field("Kh_meridional", np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
-        fieldset.add_constant("dres", 0.1)
-    lon = np.linspace(12000, 21000, npart)
-    lat = np.linspace(12500, 12500, npart)
-    dt = timedelta(minutes=3).total_seconds()
-    endtime = timedelta(hours=6).total_seconds()
-
-    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
-
-    pclass = RK45Particles if method == "RK45" else Particle
-    pset = ParticleSet(fieldset, pclass=pclass, lon=lon, lat=lat)
-    pset.execute(kernel[method], dt=dt, endtime=endtime)
-
-    exp_lon = [truth_decaying(x, y, t)[0] for x, y, t in zip(lon, lat, pset.time, strict=True)]
-    exp_lat = [truth_decaying(x, y, t)[1] for x, y, t in zip(lon, lat, pset.time, strict=True)]
-    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
 
 @pytest.mark.v4alpha

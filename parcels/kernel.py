@@ -12,8 +12,6 @@ import numpy as np
 
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
-    AdvectionRK4_3D,
-    AdvectionRK4_3D_CROCO,
     AdvectionRK45,
 )
 from parcels.basegrid import GridType
@@ -124,9 +122,10 @@ class Kernel(BaseKernel):
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
 
-        if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
-            pyfunc = AdvectionRK4_3D_CROCO
-            self.funcname = "AdvectionRK4_3D_CROCO"
+        # # TODO will be implemented when we support CROCO again
+        # if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
+        #     pyfunc = AdvectionRK4_3D_CROCO
+        #     self.funcname = "AdvectionRK4_3D_CROCO"
 
         if funcvars is not None:  # TODO v4: check if needed from here onwards
             self.funcvars = funcvars

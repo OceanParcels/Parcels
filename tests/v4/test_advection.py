@@ -2,11 +2,12 @@ import numpy as np
 import pytest
 
 from parcels._datasets.structured.generic import datasets, simple_UV_dataset
-from parcels.application_kernels import AdvectionEE, AdvectionRK4
+from parcels.application_kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
 from parcels.particleset import ParticleSet
+from parcels.tools.statuscodes import StatusCode
 from parcels.xgrid import _XGRID_AXES, XGrid
 
 
@@ -66,6 +67,7 @@ def TriLinear(  # TODO move to interpolation file
 kernel = {
     "EE": AdvectionEE,
     "RK4": AdvectionRK4,
+    "RK4_3D": AdvectionRK4_3D,
     # "RK45": AdvectionRK45,
     # "AA": AdvectionAnalytical,
     # "AdvDiffEM": AdvectionDiffusionEM,
@@ -92,7 +94,7 @@ def test_advection_zonal(mesh_type, npart=10):
         assert (np.diff(pset2D.lon) < 1.0e-4).all()
 
 
-def test_advection_3D(npart=10):
+def test_horizontal_advection_in_3D_flow(npart=10):
     """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
     ds = datasets["pure_zonal_flow_flat"]
     grid = XGrid.from_dataset(ds)
@@ -109,6 +111,63 @@ def test_advection_3D(npart=10):
     assert np.allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
 
 
+@pytest.mark.parametrize("direction", ["up", "down"])
+@pytest.mark.parametrize("wErrorThroughSurface", [True, False])
+def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
+    # xdim = ydim = zdim = 2
+    # dimensions = {
+    #     "lon": np.linspace(0.0, 1, xdim, dtype=np.float32),
+    #     "lat": np.linspace(0.0, 1, ydim, dtype=np.float32),
+    #     "depth": np.linspace(0.0, 1, zdim, dtype=np.float32),
+    # }
+    # wfac = -1.0 if direction == "up" else 1.0
+    # data = {
+    #     "U": 0.01 * np.ones((xdim, ydim, zdim), dtype=np.float32),
+    #     "V": np.zeros((xdim, ydim, zdim), dtype=np.float32),
+    #     "W": wfac * np.ones((xdim, ydim, zdim), dtype=np.float32),
+    # }
+    # fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+
+    ds = datasets["pure_zonal_flow_flat"]
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=TriLinear)
+    U.data[:] = 0.01  # Set U to 0 at the surface
+    V = Field("V", ds["V"], grid, interp_method=TriLinear)
+    W = Field("W", ds["V"], grid, interp_method=TriLinear)  # Use V as W for testing
+    W.data[:] = -1.0 if direction == "up" else 1.0
+    UVW = VectorField("UVW", U, V, W)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, W, UVW, UV])
+
+    def DeleteParticle(particle, fieldset, time):  # pragma: no cover
+        if particle.state == StatusCode.ErrorOutOfBounds or particle.state == StatusCode.ErrorThroughSurface:
+            particle.delete()
+
+    def SubmergeParticle(particle, fieldset, time):  # pragma: no cover
+        if particle.state == StatusCode.ErrorThroughSurface:
+            dt = particle.dt / np.timedelta64(1, "s")
+            (u, v) = fieldset.UV[particle]
+            particle_dlon = u * dt  # noqa
+            particle_dlat = v * dt  # noqa
+            particle_ddepth = 0.0  # noqa
+            particle.depth = 0
+            particle.state = StatusCode.Evaluate
+
+    kernels = [AdvectionRK4_3D]
+    if wErrorThroughSurface:
+        kernels.append(SubmergeParticle)
+    kernels.append(DeleteParticle)
+
+    pset = ParticleSet(fieldset=fieldset, lon=0.5, lat=0.5, depth=0.9)
+    pset.execute(kernels, runtime=np.timedelta64(11, "s"), dt=np.timedelta64(1, "s"))
+
+    if direction == "up" and wErrorThroughSurface:
+        assert np.allclose(pset.lon[0], 0.6)
+        assert np.allclose(pset.depth[0], 0)
+    else:
+        assert len(pset) == 0
+
+
 @pytest.mark.parametrize(
     "method, rtol",
     [
@@ -116,6 +175,7 @@ def test_advection_3D(npart=10):
         # ("AdvDiffEM", 1e-2),
         # ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
+        # ('RK4_3D', 1e-5),
         # ("RK45", 1e-5),
     ],
 )
