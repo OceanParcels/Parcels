@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from parcels._datasets.structured.generic import datasets
+from parcels._datasets.structured.generic import simple_UV_dataset
 from parcels.field import Field, VectorField
 from parcels.xgrid import _XGRID_AXES, XGrid
 
@@ -39,7 +39,8 @@ def BiRectiLinear(  # TODO move to interpolation file
 
 @pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
 def test_interpolation_mesh_type(mesh_type, npart=10):
-    ds = datasets[f"pure_zonal_flow_{mesh_type}"]
+    ds = simple_UV_dataset(mesh_type=mesh_type)
+    ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=BiRectiLinear)
     V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=BiRectiLinear)

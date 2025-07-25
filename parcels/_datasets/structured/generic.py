@@ -152,12 +152,6 @@ def simple_UV_dataset(dims=(360, 2, 30, 4), mesh_type="spherical"):
     )
 
 
-def _pure_zonal_flow(mesh_type="spherical"):
-    ds = simple_UV_dataset(mesh_type=mesh_type)
-    ds["U"].data[:] = 1.0
-    return ds
-
-
 datasets = {
     "2d_left_rotated": _rotated_curvilinear_grid(),
     "ds_2d_left": xr.Dataset(  # MITgcm indexing style
@@ -245,6 +239,4 @@ datasets = {
         },
     ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
-    "pure_zonal_flow_spherical": _pure_zonal_flow(mesh_type="spherical"),
-    "pure_zonal_flow_flat": _pure_zonal_flow(mesh_type="flat"),
 }

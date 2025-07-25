@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from parcels._datasets.structured.generic import datasets, simple_UV_dataset
+from parcels._datasets.structured.generic import simple_UV_dataset
 from parcels.application_kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
@@ -78,7 +78,8 @@ kernel = {
 @pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
 def test_advection_zonal(mesh_type, npart=10):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
-    ds = datasets[f"pure_zonal_flow_{mesh_type}"]
+    ds = simple_UV_dataset(mesh_type=mesh_type)
+    ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=BiLinear)
     V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=BiLinear)
@@ -96,7 +97,8 @@ def test_advection_zonal(mesh_type, npart=10):
 
 def test_horizontal_advection_in_3D_flow(npart=10):
     """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
-    ds = datasets["pure_zonal_flow_flat"]
+    ds = simple_UV_dataset(mesh_type="flat")
+    ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=TriLinear)
     U.data[:, 0, :, :] = 0.0  # Set U to 0 at the surface
@@ -128,7 +130,7 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     # }
     # fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
 
-    ds = datasets["pure_zonal_flow_flat"]
+    ds = simple_UV_dataset(mesh_type="flat")
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=TriLinear)
     U.data[:] = 0.01  # Set U to 0 at the surface
