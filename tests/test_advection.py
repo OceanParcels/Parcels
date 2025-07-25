@@ -1,5 +1,4 @@
 import math
-from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -29,13 +28,6 @@ kernel = {
     "AdvDiffM1": AdvectionDiffusionM1,
 }
 
-# Some constants
-f = 1.0e-4
-u_0 = 0.3
-u_g = 0.04
-gamma = 1 / (86400.0 * 2.89)
-gamma_g = 1 / (86400.0 * 28.9)
-
 
 @pytest.fixture
 def lon():
@@ -53,43 +45,6 @@ def lat():
 def depth():
     zdim = 2
     return np.linspace(0, 30, zdim, dtype=np.float32)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-def test_advection_meridional(lon, lat):
-    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
-    npart = 10
-    data = {"U": np.zeros((lat.size, lon.size), dtype=np.float32), "V": np.ones((lat.size, lon.size), dtype=np.float32)}
-    dimensions = {"lon": lon, "lat": lat}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="spherical")
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
-    delta_lat = np.diff(pset.lat)
-    pset.execute(AdvectionRK4, runtime=timedelta(hours=2), dt=timedelta(seconds=30))
-    assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.0e-4)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("rk45_tol", [10, 100])
-def test_advection_RK45(lon, lat, rk45_tol):
-    npart = 10
-    data2D = {
-        "U": np.ones((lat.size, lon.size), dtype=np.float32),
-        "V": np.zeros((lat.size, lon.size), dtype=np.float32),
-    }
-    dimensions = {"lon": lon, "lat": lat}
-    fieldset = FieldSet.from_data(data2D, dimensions, mesh="spherical")
-    fieldset.add_constant("RK45_tol", rk45_tol)
-
-    dt = timedelta(seconds=30).total_seconds()
-    RK45Particles = Particle.add_variable("next_dt", dtype=np.float32, initial=dt)
-    pset = ParticleSet(fieldset, pclass=RK45Particles, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
-    pset.execute(AdvectionRK45, runtime=timedelta(hours=2), dt=dt)
-    assert (np.diff(pset.lon) > 1.0e-4).all()
-    assert np.isclose(fieldset.RK45_tol, rk45_tol / (1852 * 60))
-    print(fieldset.RK45_tol)
 
 
 @pytest.mark.v4alpha
@@ -184,36 +139,6 @@ def create_periodic_fieldset(xdim, ydim, uvel, vvel):
 def periodicBC(particle, fieldset, time):  # pragma: no cover
     particle.lon = math.fmod(particle.lon, 1)
     particle.lat = math.fmod(particle.lat, 1)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo.")
-def test_advection_periodic_meridional():
-    xdim, ydim = 100, 100
-    fieldset = create_periodic_fieldset(xdim, ydim, uvel=0.0, vvel=1.0)
-    fieldset.add_periodic_halo(meridional=True)
-    assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
-    assert abs(pset.lat[0] - 0.15) < 0.1
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo.")
-def test_advection_periodic_zonal_meridional():
-    xdim, ydim = 100, 100
-    fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=1.0)
-    fieldset.add_periodic_halo(zonal=True, meridional=True)
-    assert len(fieldset.U.lat) == ydim + 10  # default halo size is 5 grid points
-    assert len(fieldset.U.lon) == xdim + 10  # default halo size is 5 grid points
-    assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1] - fieldset.U.lat[0], rtol=0.001)
-    assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1] - fieldset.U.lon[0], rtol=0.001)
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.4], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
-    assert abs(pset.lon[0] - 0.05) < 0.1
-    assert abs(pset.lat[0] - 0.15) < 0.1
 
 
 @pytest.mark.v4alpha
