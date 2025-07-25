@@ -188,19 +188,6 @@ def periodicBC(particle, fieldset, time):  # pragma: no cover
 
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo.")
-def test_advection_periodic_zonal():
-    xdim, ydim, halosize = 100, 100, 3
-    fieldset = create_periodic_fieldset(xdim, ydim, uvel=1.0, vvel=0.0)
-    fieldset.add_periodic_halo(zonal=True, halosize=halosize)
-    assert len(fieldset.U.lon) == xdim + 2 * halosize
-
-    pset = ParticleSet(fieldset, pclass=Particle, lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=timedelta(hours=20), dt=timedelta(seconds=30))
-    assert abs(pset.lon[0] - 0.15) < 0.1
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="Calls fieldset.add_periodic_halo(). In v4, interpolation should work without adding halo.")
 def test_advection_periodic_meridional():
     xdim, ydim = 100, 100
     fieldset = create_periodic_fieldset(xdim, ydim, uvel=0.0, vvel=1.0)

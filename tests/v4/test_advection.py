@@ -37,6 +37,39 @@ def BiLinear(  # TODO move to interpolation file
     )
 
 
+def BiLinearPeriodic(  # TODO move to interpolation file
+    field: Field,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Bilinear interpolation on a regular grid with periodic boundary conditions in horizontal directions."""
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+
+    if xi < 0:
+        xi = 0
+        xsi = (x - field.grid.lon[xi]) / (field.grid.lon[xi + 1] - field.grid.lon[xi])
+    if yi < 0:
+        yi = 0
+        eta = (y - field.grid.lat[yi]) / (field.grid.lat[yi + 1] - field.grid.lat[yi])
+
+    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
+    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
+
+    return (
+        (1 - xsi) * (1 - eta) * data[0, 0]
+        + xsi * (1 - eta) * data[0, 1]
+        + xsi * eta * data[1, 1]
+        + (1 - xsi) * eta * data[1, 0]
+    )
+
+
 def TriLinear(  # TODO move to interpolation file
     field: Field,
     ti: int,
@@ -84,15 +117,40 @@ def test_advection_zonal(mesh_type, npart=10):
     U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=BiLinear)
     V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=BiLinear)
     UV = VectorField("UV", U, V)
-    fieldset2D = FieldSet([U, V, UV])
+    fieldset = FieldSet([U, V, UV])
 
-    pset2D = ParticleSet(fieldset2D, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
-    pset2D.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
+    pset = ParticleSet(fieldset, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
+    pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     if mesh_type == "spherical":
-        assert (np.diff(pset2D.lon) > 1.0e-4).all()
+        assert (np.diff(pset.lon) > 1.0e-4).all()
     else:
-        assert (np.diff(pset2D.lon) < 1.0e-4).all()
+        assert (np.diff(pset.lon) < 1.0e-4).all()
+
+
+def periodicBC(particle, fieldset, time):
+    particle.total_dlon += particle_dlon  # noqa
+    particle.lon = np.fmod(particle.lon, fieldset.U.grid.lon[-1])
+    particle.lat = np.fmod(particle.lat, fieldset.U.grid.lat[-1])
+
+
+def test_advection_zonal_periodic():
+    ds = simple_UV_dataset(dims=(2, 2, 2, 2), mesh_type="flat")
+    ds["U"].data[:] = 0.1
+    ds["lon"].data = np.array([0, 2])
+    ds["lat"].data = np.array([0, 2])
+
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=BiLinearPeriodic)
+    V = Field("V", ds["V"], grid, interp_method=BiLinearPeriodic)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    PeriodicParticle = Particle.add_variable(Variable("total_dlon", initial=0))
+    pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=[0.5], lat=[0.5])
+    pset.execute([AdvectionEE, periodicBC], runtime=np.timedelta64(40, "s"), dt=np.timedelta64(1, "s"))
+    assert np.isclose(pset.total_dlon[0], 4, atol=1e-5)
+    assert np.isclose(pset.lon_nextloop[0], 0.5, atol=1e-5)
 
 
 def test_horizontal_advection_in_3D_flow(npart=10):
