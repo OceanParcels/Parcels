@@ -19,25 +19,20 @@ def BiLinear(  # TODO move to interpolation file
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
 ):
-    """Bilinear interpolation on a rectilinear grid."""
+    """Bilinear interpolation on a regular grid."""
     xi, xsi = position["X"]
     yi, eta = position["Y"]
+    zi, zeta = position["Z"]
 
-    data = field.data.data[:, :, yi : yi + 2, xi : xi + 2]
-    val_t0 = (
-        (1 - xsi) * (1 - eta) * data[0, 0, 0, 0]
-        + xsi * (1 - eta) * data[0, 0, 0, 1]
-        + xsi * eta * data[0, 0, 1, 1]
-        + (1 - xsi) * eta * data[0, 0, 1, 0]
-    )
+    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
+    data = (1 - tau) * data[0, :, :] + tau * data[1, :, :]
 
-    val_t1 = (
-        (1 - xsi) * (1 - eta) * data[1, 0, 0, 0]
-        + xsi * (1 - eta) * data[1, 0, 0, 1]
-        + xsi * eta * data[1, 0, 1, 1]
-        + (1 - xsi) * eta * data[1, 0, 1, 0]
+    return (
+        (1 - xsi) * (1 - eta) * data[0, 0]
+        + xsi * (1 - eta) * data[0, 1]
+        + xsi * eta * data[1, 1]
+        + (1 - xsi) * eta * data[1, 0]
     )
-    return val_t0 * (1 - tau) + val_t1 * tau
 
 
 def TriLinear(  # TODO move to interpolation file
@@ -50,28 +45,21 @@ def TriLinear(  # TODO move to interpolation file
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
 ):
-    """Trilinear interpolation on a rectilinear grid."""
+    """Trilinear interpolation on a regular grid."""
     xi, xsi = position["X"]
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
 
     data = field.data.data[:, zi : zi + 2, yi : yi + 2, xi : xi + 2]
-    data = (1 - zeta) * data[:, 0, :, :] + zeta * data[:, 1, :, :]
+    data = (1 - tau) * data[0, :, :, :] + tau * data[1, :, :, :]
+    data = (1 - zeta) * data[0, :, :] + zeta * data[1, :, :]
 
-    val_t0 = (
-        (1 - xsi) * (1 - eta) * data[0, 0, 0]
-        + xsi * (1 - eta) * data[0, 0, 1]
-        + xsi * eta * data[0, 1, 1]
-        + (1 - xsi) * eta * data[0, 1, 0]
+    return (
+        (1 - xsi) * (1 - eta) * data[0, 0]
+        + xsi * (1 - eta) * data[0, 1]
+        + xsi * eta * data[1, 1]
+        + (1 - xsi) * eta * data[1, 0]
     )
-
-    val_t1 = (
-        (1 - xsi) * (1 - eta) * data[1, 0, 0]
-        + xsi * (1 - eta) * data[1, 0, 1]
-        + xsi * eta * data[1, 1, 1]
-        + (1 - xsi) * eta * data[1, 1, 0]
-    )
-    return val_t0 * (1 - tau) + val_t1 * tau
 
 
 @pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
