@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from parcels._datasets.structured.generic import datasets
-from parcels.field import Field
+from parcels.field import Field, VectorField
 from parcels.xgrid import _XGRID_AXES, XGrid
 
 
@@ -43,10 +43,17 @@ def test_interpolation_mesh_type(mesh_type, npart=10):
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=BiRectiLinear)
     V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=BiRectiLinear)
+    UV = VectorField("UV", U, V)
 
-    assert np.isclose(
-        U[U.time_interval.left, 0, 30, 0],
-        1.0 if mesh_type == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(30))),
-        atol=1e-5,
-    )
-    assert V[V.time_interval.left, 0, 0, 0] == 0.0
+    lat = 30.0
+    time = U.time_interval.left
+    u_expected = 1.0 if mesh_type == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(lat)))
+
+    assert np.isclose(U[time, 0, lat, 0], u_expected, atol=1e-7)
+    assert V[time, 0, lat, 0] == 0.0
+
+    u, v = UV[time, 0, lat, 0]
+    assert np.isclose(u, u_expected, atol=1e-7)
+    assert v == 0.0
+
+    assert U.eval(time, 0, lat, 0, applyConversion=False) == 1
