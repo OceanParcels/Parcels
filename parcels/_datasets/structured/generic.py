@@ -135,14 +135,14 @@ def _unrolled_cone_curvilinear_grid():
 
 
 def pure_zonal_flow(mesh_type="spherical"):
-    dims = (7, 5, 30, 4)  # time, depth, lat, lon
+    dims = (7, 2, 30, 4)  # time, depth, lat, lon
     max_lon = 180.0 if mesh_type == "spherical" else 1e6
 
     return xr.Dataset(
         {"U": (["time", "depth", "YG", "XG"], np.ones(dims)), "V": (["time", "depth", "YG", "XG"], np.zeros(dims))},
         coords={
             "time": (["time"], xr.date_range("2000", "2001", dims[0]), {"axis": "T"}),
-            "depth": (["depth"], np.linspace(0, 10, dims[1]), {"axis": "Z"}),
+            "depth": (["depth"], np.linspace(0, 1, dims[1]), {"axis": "Z"}),
             "YC": (["YC"], np.arange(dims[2]) + 0.5, {"axis": "Y"}),
             "YG": (["YG"], np.arange(dims[2]), {"axis": "Y", "c_grid_axis_shift": -0.5}),
             "XC": (["XC"], np.arange(dims[3]) + 0.5, {"axis": "X"}),

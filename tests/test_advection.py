@@ -74,29 +74,6 @@ def test_advection_meridional(lon, lat):
 
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
-def test_advection_3D():
-    """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
-    xdim = ydim = zdim = 2
-    npart = 11
-    dimensions = {
-        "lon": np.linspace(0.0, 1e4, xdim, dtype=np.float32),
-        "lat": np.linspace(0.0, 1e4, ydim, dtype=np.float32),
-        "depth": np.linspace(0.0, 1.0, zdim, dtype=np.float32),
-    }
-    data = {"U": np.ones((zdim, ydim, xdim), dtype=np.float32), "V": np.zeros((zdim, ydim, xdim), dtype=np.float32)}
-    data["U"][0, :, :] = 0.0
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-
-    pset = ParticleSet(
-        fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart) + 1e2, depth=np.linspace(0, 1, npart)
-    )
-    time = timedelta(hours=2).total_seconds()
-    pset.execute(AdvectionRK4, runtime=time, dt=timedelta(seconds=30))
-    assert np.allclose(pset.depth * pset.time, pset.lon, atol=1.0e-1)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
 @pytest.mark.parametrize("direction", ["up", "down"])
 @pytest.mark.parametrize("wErrorThroughSurface", [True, False])
 def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
