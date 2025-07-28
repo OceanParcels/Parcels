@@ -64,9 +64,9 @@ class Grid:
         if not lat.dtype == np.float32:
             lat = lat.astype(np.float32)
         if not time.dtype == np.float64:
-            assert isinstance(
-                time[0], (np.integer, np.floating, float, int)
-            ), "Time vector must be an array of int or floats"
+            assert isinstance(time[0], (np.integer, np.floating, float, int)), (
+                "Time vector must be an array of int or floats"
+            )
             time = time.astype(np.float64)
 
         self._lon = lon
@@ -627,22 +627,22 @@ class RectilinearSGrid(RectilinearGrid):
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
-            assert (
-                self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0
-            ), "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
-            assert (
-                self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0
-            ), "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
-            assert (
-                self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0
-            ), "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, (
+                "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            )
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, (
+                "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            )
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, (
+                "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            )
         else:
-            assert (
-                self.xdim == self.depth.shape[-1]
-            ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
-            assert (
-                self.ydim == self.depth.shape[-2]
-            ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
+            assert self.xdim == self.depth.shape[-1], (
+                "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
+            )
+            assert self.ydim == self.depth.shape[-2], (
+                "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
+            )
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
         if self._lat_flipped:
@@ -799,22 +799,22 @@ class CurvilinearSGrid(CurvilinearGrid):
         self._z4d = 1 if len(self.depth.shape) == 4 else 0
         if self._z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
-            assert (
-                self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0
-            ), "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
-            assert (
-                self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0
-            ), "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
-            assert (
-                self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0
-            ), "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, (
+                "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            )
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, (
+                "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            )
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, (
+                "depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]"
+            )
         else:
-            assert (
-                self.xdim == self.depth.shape[-1]
-            ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
-            assert (
-                self.ydim == self.depth.shape[-2]
-            ), "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
+            assert self.xdim == self.depth.shape[-1], (
+                "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
+            )
+            assert self.ydim == self.depth.shape[-2], (
+                "depth dimension has the wrong format. It should be [zdim, ydim, xdim]"
+            )
         if not self.depth.dtype == np.float32:
             self._depth = self.depth.astype(np.float32)
 
