@@ -47,11 +47,11 @@ def test_pset_stop_simulation(fieldset):
     pset = ParticleSet(fieldset, lon=0, lat=0, pclass=Particle)
 
     def Delete(particle, fieldset, time):  # pragma: no cover
-        if time >= fieldset.time_interval.left + np.timedelta64(4, "s"):
+        if time >= 4:
             return StatusCode.StopExecution
 
     pset.execute(Delete, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
-    assert pset[0].time == fieldset.time_interval.left + np.timedelta64(4, "s")
+    assert pset[0].time == 4
 
 
 @pytest.mark.parametrize("with_delete", [True, False])
@@ -78,11 +78,11 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
 )
 def test_execution_endtime(fieldset, starttime, endtime, dt):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
-    endtime = fieldset.time_interval.left + np.timedelta64(endtime, "s")
+    endtime_date = fieldset.time_interval.left + np.timedelta64(endtime, "s")
     dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
-    pset.execute(DoNothing, endtime=endtime, dt=dt)
-    assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
+    pset.execute(DoNothing, endtime=endtime_date, dt=dt)
+    assert abs(pset.time_nextloop - endtime) < 1e-3
 
 
 @pytest.mark.parametrize(
@@ -90,20 +90,20 @@ def test_execution_endtime(fieldset, starttime, endtime, dt):
     [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
 )
 def test_execution_runtime(fieldset, starttime, runtime, dt):
-    starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
-    runtime = np.timedelta64(runtime, "s")
+    starttime_date = fieldset.time_interval.left + np.timedelta64(starttime, "s")
+    runtime_date = np.timedelta64(runtime, "s")
     sign_dt = 1 if dt is None else np.sign(dt)
     dt = np.timedelta64(dt, "s")
-    pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
-    pset.execute(DoNothing, runtime=runtime, dt=dt)
-    assert abs(pset.time_nextloop - starttime - runtime * sign_dt) < np.timedelta64(1, "ms")
+    pset = ParticleSet(fieldset, time=starttime_date, lon=0, lat=0)
+    pset.execute(DoNothing, runtime=runtime_date, dt=dt)
+    assert abs(pset.time_nextloop - starttime - runtime * sign_dt) < 1e-3
 
 
 def test_execution_fail_python_exception(fieldset, npart=10):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
     def PythonFail(particle, fieldset, time):  # pragma: no cover
-        if particle.time >= fieldset.time_interval.left + np.timedelta64(10, "s"):
+        if particle.time >= 10:
             raise RuntimeError("Enough is enough!")
         else:
             pass
@@ -111,8 +111,8 @@ def test_execution_fail_python_exception(fieldset, npart=10):
     with pytest.raises(RuntimeError):
         pset.execute(PythonFail, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(2, "s"))
     assert len(pset) == npart
-    assert pset.time[0] == fieldset.time_interval.left + np.timedelta64(10, "s")
-    assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
+    assert pset.time[0] == 10
+    assert all([time == 0 for time in pset.time[1:]])
 
 
 @pytest.mark.parametrize("verbose_progress", [True, False])

@@ -109,9 +109,11 @@ class ParticleSet:
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
         if time is None or len(time) == 0:
-            time = np.datetime64("NaT", "ns")  # do not set a time yet (because sign_dt not known)
-        elif type(time[0]) in [np.datetime64, np.timedelta64]:
-            pass  # already in the right format
+            time = np.array([np.nan])  # do not set a time yet (because sign_dt not known)
+        elif type(time[0]) is np.datetime64:
+            time = (time - self.fieldset.time_interval.left) / np.timedelta64(1, "s")
+        elif type(time[0]) is np.timedelta64:
+            time = time / np.timedelta64(1, "s")
         else:
             raise TypeError("particle time must be a datetime, timedelta, or date object")
         time = np.repeat(time, lon.size) if time.size == 1 else time
@@ -140,7 +142,7 @@ class ParticleSet:
             "lat": lat.astype(lonlatdepth_dtype),
             "depth": depth.astype(lonlatdepth_dtype),
             "time": time,
-            "dt": np.timedelta64(1, "ns") * np.ones(len(trajectory_ids)),
+            "dt": np.ones(len(trajectory_ids), dtype=np.float64),
             # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
             "state": np.zeros((len(trajectory_ids)), dtype=np.int32),
             "lon_nextloop": lon.astype(lonlatdepth_dtype),
@@ -736,34 +738,39 @@ class ParticleSet:
         if (dt is not None) and (not isinstance(dt, np.timedelta64)):
             raise TypeError("dt must be a np.timedelta64 object")
         if dt is None or np.isnat(dt):
-            dt = np.timedelta64(1, "s")
+            dt = 1
+        else:
+            dt /= np.timedelta64(1, "s")
+
         self._data["dt"][:] = dt
         sign_dt = np.sign(dt).astype(int)
         if sign_dt not in [-1, 1]:
             raise ValueError("dt must be a positive or negative np.timedelta64 object")
 
         if self.fieldset.time_interval is None:
-            start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
+            start_time = 0  # For the execution loop, we need a start time as a timedelta object
             if runtime is None:
                 raise TypeError("The runtime must be provided when the time_interval is not defined for a fieldset.")
 
             else:
                 if isinstance(runtime, np.timedelta64):
-                    end_time = runtime
+                    end_time = runtime / np.timedelta64(1, "s")
                 else:
                     raise TypeError("The runtime must be a np.timedelta64 object")
 
         else:
-            if not np.isnat(self._data["time_nextloop"]).any():
+            if not np.isnan(self._data["time_nextloop"]).any():
                 if sign_dt > 0:
                     start_time = self._data["time_nextloop"].min()
                 else:
                     start_time = self._data["time_nextloop"].max()
             else:
                 if sign_dt > 0:
-                    start_time = self.fieldset.time_interval.left
+                    start_time = 0.0
                 else:
-                    start_time = self.fieldset.time_interval.right
+                    start_time = (
+                        self.fieldset.time_interval.right - self.fieldset.time_interval.left
+                    ) / np.timedelta64(1, "s")
 
             if runtime is None:
                 if endtime is None:
@@ -784,11 +791,16 @@ class ParticleSet:
                         end_time = max(endtime, self.fieldset.time_interval.left)
                 else:
                     raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
+                end_time = (end_time - self.fieldset.time_interval.left) / np.timedelta64(1, "s")
             else:
+                if isinstance(runtime, np.timedelta64):
+                    runtime = runtime / np.timedelta64(1, "s")
+                elif isinstance(runtime, (int, float)):
+                    raise TypeError("The runtime must be a np.timedelta64 object")
                 end_time = start_time + runtime * sign_dt
 
         # Set the time of the particles if it hadn't been set on initialisation
-        if np.isnat(self._data["time"]).any():
+        if np.isnan(self._data["time"]).any():
             self._data["time"][:] = start_time
             self._data["time_nextloop"][:] = start_time
 
@@ -799,7 +811,7 @@ class ParticleSet:
             logger.info(f"Output files are stored in {output_file.fname}.")
 
         if verbose_progress:
-            pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
+            pbar = tqdm(total=(end_time - start_time), file=sys.stdout)
 
         next_output = outputdt if output_file else None
 
@@ -822,7 +834,7 @@ class ParticleSet:
                         next_output += outputdt
 
             if verbose_progress:
-                pbar.update((next_time - time) / np.timedelta64(1, "s"))
+                pbar.update(next_time - time)
 
             time = next_time
 
@@ -844,13 +856,13 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
 
 def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: TimeInterval):
     if np.any(release_times):
-        if np.any(release_times < time.left):
+        if np.any(release_times < 0):
             warnings.warn(
                 "Some particles are set to be released outside the FieldSet's executable time domain.",
                 ParticleSetWarning,
                 stacklevel=2,
             )
-        if np.any(release_times > time.right):
+        if np.any(release_times > (time.right - time.left) / np.timedelta64(1, "s")):
             warnings.warn(
                 "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
                 ParticleSetWarning,
