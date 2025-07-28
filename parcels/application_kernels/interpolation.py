@@ -72,12 +72,22 @@ def XBiLinearPeriodic(
     data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
     data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
 
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
+    xsi = 0 if not np.isfinite(xsi) else xsi
+    eta = 0 if not np.isfinite(eta) else eta
+
+    if xsi > 0 and eta > 0:
+        return (
+            (1 - xsi) * (1 - eta) * data[0, 0]
+            + xsi * (1 - eta) * data[0, 1]
+            + xsi * eta * data[1, 1]
+            + (1 - xsi) * eta * data[1, 0]
+        )
+    elif xsi > 0 and eta == 0:
+        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
+    elif xsi == 0 and eta > 0:
+        return (1 - eta) * data[0, 0] + eta * data[1, 0]
+    else:
+        return data[0, 0]
 
 
 def XTriLinear(
@@ -97,14 +107,27 @@ def XTriLinear(
 
     data = field.data.data[:, zi : zi + 2, yi : yi + 2, xi : xi + 2]
     data = (1 - tau) * data[ti, :, :, :] + tau * data[ti + 1, :, :, :]
-    data = (1 - zeta) * data[zi, :, :] + zeta * data[zi + 1, :, :]
+    if zeta > 0:
+        data = (1 - zeta) * data[0, :, :] + zeta * data[1, :, :]
+    else:
+        data = data[0, :, :]
 
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
+    xsi = 0 if not np.isfinite(xsi) else xsi
+    eta = 0 if not np.isfinite(eta) else eta
+
+    if xsi > 0 and eta > 0:
+        return (
+            (1 - xsi) * (1 - eta) * data[0, 0]
+            + xsi * (1 - eta) * data[0, 1]
+            + xsi * eta * data[1, 1]
+            + (1 - xsi) * eta * data[1, 0]
+        )
+    elif xsi > 0 and eta == 0:
+        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
+    elif xsi == 0 and eta > 0:
+        return (1 - eta) * data[0, 0] + eta * data[1, 0]
+    else:
+        return data[0, 0]
 
 
 def UXPiecewiseConstantFace(

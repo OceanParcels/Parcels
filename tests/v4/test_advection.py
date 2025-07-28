@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import xarray as xr
 
 from parcels._datasets.structured.generic import simple_UV_dataset
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
@@ -127,6 +128,63 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
         assert np.allclose(pset.depth[0], 0)
     else:
         assert len(pset) == 0
+
+
+@pytest.mark.parametrize("u", [-0.3, np.array(0.2)])
+@pytest.mark.parametrize("v", [0.2, np.array(1)])
+@pytest.mark.parametrize("w", [None, -0.2, np.array(0.7)])
+def test_length1dimensions(u, v, w):
+    (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (np.array([0]), 1)
+    (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (np.array([-4]), 1)
+    (depth, zdim) = (
+        (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (np.array([3]), 1)
+    )
+
+    tdim = 2  # TODO make this also work for length-1 time dimensions
+    dims = (tdim, zdim, ydim, xdim)
+    U = u * np.ones(dims, dtype=np.float32)
+    V = v * np.ones(dims, dtype=np.float32)
+    if w is not None:
+        W = w * np.ones(dims, dtype=np.float32)
+
+    ds = xr.Dataset(
+        {
+            "U": (["time", "depth", "YG", "XG"], U),
+            "V": (["time", "depth", "YG", "XG"], V),
+        },
+        coords={
+            "time": (["time"], [np.timedelta64(0, "s"), np.timedelta64(10, "s")], {"axis": "T"}),
+            "depth": (["depth"], depth, {"axis": "Z"}),
+            "YC": (["YC"], np.arange(ydim) + 0.5, {"axis": "Y"}),
+            "YG": (["YG"], np.arange(ydim), {"axis": "Y", "c_grid_axis_shift": -0.5}),
+            "XC": (["XC"], np.arange(xdim) + 0.5, {"axis": "X"}),
+            "XG": (["XG"], np.arange(xdim), {"axis": "X", "c_grid_axis_shift": -0.5}),
+            "lat": (["YG"], lat, {"axis": "Y", "c_grid_axis_shift": 0.5}),
+            "lon": (["XG"], lon, {"axis": "X", "c_grid_axis_shift": -0.5}),
+        },
+    )
+    if w:
+        ds["W"] = (["time", "depth", "YG", "XG"], W)
+
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XTriLinear)
+    V = Field("V", ds["V"], grid, interp_method=XTriLinear)
+    fields = [U, V, VectorField("UV", U, V)]
+    if w:
+        W = Field("W", ds["W"], grid, interp_method=XTriLinear)
+        fields.append(VectorField("UVW", U, V, W))
+    fieldset = FieldSet(fields)
+
+    x0, y0, z0 = 2, 8, -4
+    pset = ParticleSet(fieldset, lon=x0, lat=y0, depth=z0)
+    kernel = AdvectionRK4 if w is None else AdvectionRK4_3D
+    pset.execute(kernel, runtime=np.timedelta64(5, "s"), dt=np.timedelta64(1, "s"))
+
+    assert len(pset.lon) == len([p.lon for p in pset])
+    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
+    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
+    if w:
+        assert ((np.array([p.depth - z0 for p in pset]) - 4 * w) < 1e-6).all()
 
 
 @pytest.mark.parametrize(

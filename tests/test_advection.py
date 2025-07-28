@@ -126,50 +126,6 @@ def test_advection_2DCROCO():
 
 @pytest.mark.v4alpha
 @pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("u", [-0.3, np.array(0.2)])
-@pytest.mark.parametrize("v", [0.2, np.array(1)])
-@pytest.mark.parametrize("w", [None, -0.2, np.array(0.7)])
-def test_length1dimensions(u, v, w):
-    (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
-    (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
-    (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
-    dimensions = {"lon": lon, "lat": lat, "depth": depth}
-
-    dims = []
-    if zdim > 1:
-        dims.append(zdim)
-    if ydim > 1:
-        dims.append(ydim)
-    if xdim > 1:
-        dims.append(xdim)
-    if len(dims) > 0:
-        U = u * np.ones(dims, dtype=np.float32)
-        V = v * np.ones(dims, dtype=np.float32)
-        if w is not None:
-            W = w * np.ones(dims, dtype=np.float32)
-    else:
-        U, V, W = u, v, w
-
-    data = {"U": U, "V": V}
-    if w is not None:
-        data["W"] = W
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
-
-    x0, y0, z0 = 2, 8, -4
-    pset = ParticleSet(fieldset, pclass=Particle, lon=x0, lat=y0, depth=z0)
-    pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
-    kernel = pset.Kernel(pfunc)
-    pset.execute(kernel, runtime=5, dt=1)
-
-    assert len(pset.lon) == len([p.lon for p in pset])
-    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
-    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
-    if w:
-        assert ((np.array([p.depth - y0 for p in pset]) - 4 * w) < 1e-6).all()
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
 def test_analyticalAgrid():
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)

@@ -463,6 +463,8 @@ def _search_1d_array(
     float
         Barycentric coordinate.
     """
+    if len(arr) < 2:
+        return 0, 0.0
     i = np.argmin(arr <= x) - 1
     bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
     return i, bcoord
