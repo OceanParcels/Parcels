@@ -125,6 +125,10 @@ class Kernel:
         return self._ptype
 
     @property
+    def _pyfuncs(self):
+        return [self._pyfunc]
+
+    @property
     def pyfunc(self):
         return self._pyfunc
 
@@ -351,7 +355,11 @@ class Kernel:
             except KeyError:
                 if sign_dt * (endtime - p.time_nextloop) <= p.dt:
                     p.dt = sign_dt * (endtime - p.time_nextloop)
-            res = self._pyfunc(p, self._fieldset, p.time_nextloop)
+            res = None
+            for f in self._pyfuncs:
+                res_tmp = f(p, self._fieldset, p.time_nextloop)
+                if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
+                    res = res_tmp
 
             if res is None:
                 if p.state == StatusCode.Success:
