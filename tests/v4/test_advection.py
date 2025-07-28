@@ -103,7 +103,7 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
 
     def DeleteParticle(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorOutOfBounds or particle.state == StatusCode.ErrorThroughSurface:
-            particle.delete()
+            particle.state = StatusCode.Delete
 
     def SubmergeParticle(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorThroughSurface:

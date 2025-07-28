@@ -11,6 +11,7 @@ from parcels.particle import Particle, Variable
 from parcels.particleset import ParticleSet
 from parcels.xgrid import XGrid
 from tests.utils import TEST_DATA
+from parcels.tools.statuscodes import StatusCode
 
 
 @pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
@@ -89,7 +90,7 @@ def test_interp_regression_v3(interp_name):
 
     def DeleteParticle(particle, fieldset, time):
         if particle.state >= 50:
-            particle.delete()
+            particle.state = StatusCode.Delete
 
     outfile = pset.ParticleFile(f"test_interpolation_v4_{interp_name}", outputdt=np.timedelta64(1, "s"))
     pset.execute(
