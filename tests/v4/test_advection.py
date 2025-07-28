@@ -3,99 +3,13 @@ import pytest
 
 from parcels._datasets.structured.generic import simple_UV_dataset
 from parcels.application_kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
+from parcels.application_kernels.interpolation import XBiLinear, XBiLinearPeriodic, XTriLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
-from parcels.xgrid import _XGRID_AXES, XGrid
-
-
-def BiLinear(  # TODO move to interpolation file
-    field: Field,
-    ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-):
-    """Bilinear interpolation on a regular grid."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, zeta = position["Z"]
-
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
-
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
-
-
-def BiLinearPeriodic(  # TODO move to interpolation file
-    field: Field,
-    ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-):
-    """Bilinear interpolation on a regular grid with periodic boundary conditions in horizontal directions."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, zeta = position["Z"]
-
-    if xi < 0:
-        xi = 0
-        xsi = (x - field.grid.lon[xi]) / (field.grid.lon[xi + 1] - field.grid.lon[xi])
-    if yi < 0:
-        yi = 0
-        eta = (y - field.grid.lat[yi]) / (field.grid.lat[yi + 1] - field.grid.lat[yi])
-
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
-
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
-
-
-def TriLinear(  # TODO move to interpolation file
-    field: Field,
-    ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-):
-    """Trilinear interpolation on a regular grid."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, zeta = position["Z"]
-
-    data = field.data.data[:, zi : zi + 2, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :, :] + tau * data[ti + 1, :, :, :]
-    data = (1 - zeta) * data[zi, :, :] + zeta * data[zi + 1, :, :]
-
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
-
+from parcels.xgrid import XGrid
 
 kernel = {
     "EE": AdvectionEE,
@@ -114,8 +28,8 @@ def test_advection_zonal(mesh_type, npart=10):
     ds = simple_UV_dataset(mesh_type=mesh_type)
     ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=BiLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=BiLinear)
+    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
@@ -141,8 +55,8 @@ def test_advection_zonal_periodic():
     ds["lat"].data = np.array([0, 2])
 
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=BiLinearPeriodic)
-    V = Field("V", ds["V"], grid, interp_method=BiLinearPeriodic)
+    U = Field("U", ds["U"], grid, interp_method=XBiLinearPeriodic)
+    V = Field("V", ds["V"], grid, interp_method=XBiLinearPeriodic)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
@@ -158,9 +72,9 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     ds = simple_UV_dataset(mesh_type="flat")
     ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=TriLinear)
+    U = Field("U", ds["U"], grid, interp_method=XTriLinear)
     U.data[:, 0, :, :] = 0.0  # Set U to 0 at the surface
-    V = Field("V", ds["V"], grid, interp_method=TriLinear)
+    V = Field("V", ds["V"], grid, interp_method=XTriLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
@@ -176,10 +90,10 @@ def test_horizontal_advection_in_3D_flow(npart=10):
 def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     ds = simple_UV_dataset(mesh_type="flat")
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=TriLinear)
+    U = Field("U", ds["U"], grid, interp_method=XTriLinear)
     U.data[:] = 0.01  # Set U to 0 at the surface
-    V = Field("V", ds["V"], grid, interp_method=TriLinear)
-    W = Field("W", ds["V"], grid, interp_method=TriLinear)  # Use V as W for testing
+    V = Field("V", ds["V"], grid, interp_method=XTriLinear)
+    W = Field("W", ds["V"], grid, interp_method=XTriLinear)  # Use V as W for testing
     W.data[:] = -1.0 if direction == "up" else 1.0
     UVW = VectorField("UVW", U, V, W)
     UV = VectorField("UV", U, V)
@@ -245,11 +159,11 @@ def test_moving_eddy(method, rtol):
     ds["lon"].data = np.array([0, 25000])
     ds["lat"].data = np.array([0, 25000])
     ds = ds.assign_coords(time=time)
-    U = Field("U", ds["U"], grid, interp_method=BiLinear)
-    V = Field("V", ds["V"], grid, interp_method=BiLinear)
+    U = Field("U", ds["U"], grid, interp_method=XBiLinear)
+    V = Field("V", ds["V"], grid, interp_method=XBiLinear)
     if method == "RK4_3D":
         # Using W to test 3D advection (assuming same velocity as V)
-        W = Field("W", ds["V"], grid, interp_method=TriLinear)
+        W = Field("W", ds["V"], grid, interp_method=XTriLinear)
         UVW = VectorField("UVW", U, V, W)
         fieldset = FieldSet([U, V, W, UVW])
         start_depth = start_lat
