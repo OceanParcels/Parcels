@@ -59,8 +59,6 @@ class Kernel:
         funcvars=None,
     ):
         self._fieldset = fieldset
-        self.field_args = None
-        self.const_args = None
         self._ptype = ptype
 
         # Derive meta information from pyfunc, if not given
