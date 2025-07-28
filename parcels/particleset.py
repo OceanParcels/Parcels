@@ -12,7 +12,6 @@ from parcels._core.utils.time import TimeInterval
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
-from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
 from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
@@ -612,6 +611,8 @@ class ParticleSet:
         )
 
     def InteractionKernel(self, pyfunc_inter):
+        from parcels.interaction.interactionkernel import InteractionKernel
+
         if pyfunc_inter is None:
             return None
         return InteractionKernel(self.fieldset, self._ptype, pyfunc=pyfunc_inter)
