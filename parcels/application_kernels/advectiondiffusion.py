@@ -24,9 +24,10 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
+    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
 
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
@@ -42,8 +43,8 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle_dlon += u * particle.dt + 0.5 * dKdx * (dWx**2 + particle.dt) + bx * dWx  # noqa
-    particle_dlat += v * particle.dt + 0.5 * dKdy * (dWy**2 + particle.dt) + by * dWy  # noqa
+    particle_dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx  # noqa
+    particle_dlat += v * dt + 0.5 * dKdy * (dWy**2 + dt) + by * dWy  # noqa
 
 
 def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
@@ -59,9 +60,10 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
+    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
 
     u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
@@ -78,8 +80,8 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle_dlon += ax * particle.dt + bx * dWx  # noqa
-    particle_dlat += ay * particle.dt + by * dWy  # noqa
+    particle_dlon += ax * dt + bx * dWx  # noqa
+    particle_dlat += ay * dt + by * dWy  # noqa
 
 
 def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover

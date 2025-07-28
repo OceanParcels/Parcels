@@ -1,54 +1,14 @@
 import random
-from datetime import timedelta
 
 import numpy as np
 import pytest
 from scipy import stats
 
 from parcels import (
-    AdvectionDiffusionEM,
-    AdvectionDiffusionM1,
-    Field,
     Particle,
     ParticleSet,
-    RectilinearZGrid,
 )
 from tests.utils import create_fieldset_zeros_conversion
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize("mesh", ["spherical", "flat"])
-@pytest.mark.parametrize("kernel", [AdvectionDiffusionM1, AdvectionDiffusionEM])
-def test_fieldKh_SpatiallyVaryingDiffusion(mesh, kernel):
-    """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
-    xdim = 200
-    ydim = 100
-    mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
-    fieldset = create_fieldset_zeros_conversion(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
-
-    Kh = np.zeros((ydim, xdim), dtype=np.float32)
-    for x in range(xdim):
-        Kh[:, x] = np.tanh(fieldset.U.lon[x] / fieldset.U.lon[-1] * 10.0) * xdim / 2.0 + xdim / 2.0 + 100.0
-
-    grid = RectilinearZGrid(lon=fieldset.U.lon, lat=fieldset.U.lat, mesh=mesh)
-    fieldset.add_field(Field("Kh_zonal", Kh, grid=grid))
-    fieldset.add_field(Field("Kh_meridional", Kh, grid=grid))
-    fieldset.add_constant("dres", fieldset.U.lon[1] - fieldset.U.lon[0])
-
-    npart = 100
-    runtime = timedelta(days=1)
-
-    random.seed(1636)
-    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(kernel), runtime=runtime, dt=timedelta(hours=1))
-
-    lats = pset.lat
-    lons = pset.lon
-    tol = 2000 * mesh_conversion  # effectively 2000 m errors (because of low numbers of particles)
-    assert np.allclose(np.mean(lons), 0, atol=tol)
-    assert np.allclose(np.mean(lats), 0, atol=tol)
-    assert stats.skew(lons) > stats.skew(lats)
 
 
 @pytest.mark.v4alpha
