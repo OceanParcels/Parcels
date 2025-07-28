@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from parcels._datasets.structured.generic import simple_UV_dataset
-from parcels.application_kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
+from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
+from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
 from parcels.application_kernels.interpolation import XBiLinear, XBiLinearPeriodic, XTriLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
@@ -17,8 +18,8 @@ kernel = {
     "RK4_3D": AdvectionRK4_3D,
     "RK45": AdvectionRK45,
     # "AA": AdvectionAnalytical,
-    # "AdvDiffEM": AdvectionDiffusionEM,
-    # "AdvDiffM1": AdvectionDiffusionM1,
+    "AdvDiffEM": AdvectionDiffusionEM,
+    "AdvDiffM1": AdvectionDiffusionM1,
 }
 
 
@@ -132,8 +133,8 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     "method, rtol",
     [
         ("EE", 1e-2),
-        # ("AdvDiffEM", 1e-2),
-        # ("AdvDiffM1", 1e-2),
+        ("AdvDiffEM", 1e-2),
+        ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
         ("RK45", 1e-5),
@@ -176,6 +177,12 @@ def test_moving_eddy(method, rtol):
         # Use RK45Particles to set next_dt
         RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype=np.timedelta64))
         fieldset.add_constant("RK45_tol", 1e-6)
+    elif method in ["AdvDiffEM", "AdvDiffM1"]:
+        # Add zero diffusivity field for diffusion kernels
+        ds["Kh"] = (["time", "depth", "YG", "XG"], np.full((len(time), 2, 2, 2), 0))
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_zonal")
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_meridional")
+        fieldset.add_constant("dres", 0.1)
 
     pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(
