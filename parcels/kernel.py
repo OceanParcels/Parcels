@@ -1,4 +1,3 @@
-import abc
 import ast
 import functools
 import inspect
@@ -24,60 +23,10 @@ from parcels.tools.statuscodes import (
 )
 from parcels.tools.warnings import KernelWarning
 
-__all__ = ["BaseKernel", "Kernel"]
+__all__ = ["Kernel"]
 
 
-class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel class (gave a "B024 `BaseKernel` is an abstract base class, but it has no abstract methods or properties" error)
-    """Superclass for 'normal' and Interactive Kernels"""
-
-    def __init__(
-        self,
-        fieldset,
-        ptype,
-        pyfunc=None,
-        funcname=None,
-        funccode=None,
-        py_ast=None,
-        funcvars=None,
-    ):
-        self._fieldset = fieldset
-        self.field_args = None
-        self.const_args = None
-        self._ptype = ptype
-
-        # Derive meta information from pyfunc, if not given
-        self._pyfunc = None
-        self.funcname = funcname or pyfunc.__name__
-        self.name = f"{ptype.name}{self.funcname}"
-        self.funcvars = funcvars
-        self.funccode = funccode
-        self.py_ast = py_ast  # TODO v4: check if this is needed
-        self._positionupdate_kernels_added = False
-
-    @property
-    def ptype(self):
-        return self._ptype
-
-    @property
-    def pyfunc(self):
-        return self._pyfunc
-
-    @property
-    def fieldset(self):
-        return self._fieldset
-
-    def remove_deleted(self, pset):
-        """Utility to remove all particles that signalled deletion."""
-        bool_indices = pset._data["state"] == StatusCode.Delete
-        indices = np.where(bool_indices)[0]
-        # TODO v4: need to implement ParticleFile writing of deleted particles
-        # if len(indices) > 0 and self.fieldset.particlefile is not None:
-        #     self.fieldset.particlefile.write(pset, None, indices=indices)
-        if len(indices) > 0:
-            pset.remove_indices(indices)
-
-
-class Kernel(BaseKernel):
+class Kernel:
     """Kernel object that encapsulates auto-generated code.
 
     Parameters
@@ -109,15 +58,19 @@ class Kernel(BaseKernel):
         py_ast=None,
         funcvars=None,
     ):
-        super().__init__(
-            fieldset=fieldset,
-            ptype=ptype,
-            pyfunc=pyfunc,
-            funcname=funcname,
-            funccode=funccode,
-            py_ast=py_ast,
-            funcvars=funcvars,
-        )
+        self._fieldset = fieldset
+        self.field_args = None
+        self.const_args = None
+        self._ptype = ptype
+
+        # Derive meta information from pyfunc, if not given
+        self._pyfunc = None
+        self.funcname = funcname or pyfunc.__name__
+        self.name = f"{ptype.name}{self.funcname}"
+        self.funcvars = funcvars
+        self.funccode = funccode
+        self.py_ast = py_ast  # TODO v4: check if this is needed
+        self._positionupdate_kernels_added = False
 
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
@@ -180,6 +133,16 @@ class Kernel(BaseKernel):
     @property
     def fieldset(self):
         return self._fieldset
+
+    def remove_deleted(self, pset):
+        """Utility to remove all particles that signalled deletion."""
+        bool_indices = pset._data["state"] == StatusCode.Delete
+        indices = np.where(bool_indices)[0]
+        # TODO v4: need to implement ParticleFile writing of deleted particles
+        # if len(indices) > 0 and self.fieldset.particlefile is not None:
+        #     self.fieldset.particlefile.write(pset, None, indices=indices)
+        if len(indices) > 0:
+            pset.remove_indices(indices)
 
     def add_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes

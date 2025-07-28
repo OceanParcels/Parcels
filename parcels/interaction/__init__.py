@@ -1,1 +1,1 @@
-from .interactionkernel import InteractionKernel  # noqa
+# from .interactionkernel import InteractionKernel
