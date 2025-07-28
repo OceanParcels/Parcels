@@ -34,7 +34,7 @@ def test_pset_remove_particle_in_kernel(fieldset):
 
     def DeleteKernel(particle, fieldset, time):  # pragma: no cover
         if particle.lon >= 0.4 and particle.lon <= 0.6:
-            particle.delete()
+            particle.state = StatusCode.Delete
 
     pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
     indices = [i for i in range(npart) if not (40 <= i < 60)]
