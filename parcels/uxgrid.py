@@ -74,8 +74,8 @@ class UxGrid(BaseGrid):
             if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
                 return bcoords
             else:
-                bcoords, err = self._get_barycentric_coordinates_cartesian(y, x, fid)
-                if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
+                bcoords = self._get_barycentric_coordinates_cartesian(y, x, fid)
+                if (bcoords >= 0).all() and (bcoords <= 1).all():
                     return bcoords
 
             return None
@@ -134,27 +134,16 @@ class UxGrid(BaseGrid):
         # Second attempt to find barycentric coordinates using cartesian coordinates
         nodes = np.stack(
             (
-                self._source_grid.node_x[node_ids].values(),
-                self._source_grid.node_y[node_ids].values(),
-                self._source_grid.node_z[node_ids].values(),
+                self.uxgrid.node_x[node_ids].values,
+                self.uxgrid.node_y[node_ids].values,
+                self.uxgrid.node_z[node_ids].values,
             ),
             axis=-1,
         )
 
         bcoord = np.asarray(_barycentric_coordinates_cartesian(nodes, cart_coord))
-        proj_uv = np.dot(bcoord, nodes)
-        err = np.linalg.norm(proj_uv - coord)
-        face_center = np.stack(
-            (
-                self._source_grid.face_x[fi].values(),
-                self._source_grid.face_y[fi].values(),
-                self._source_grid.face_z[fi].values(),
-            ),
-            axis=-1,
-        )
-        # Compute and remove the local projection error
-        err -= np.abs(_local_projection_error(nodes, face_center))
-        return bcoord, err
+
+        return bcoord
 
 
 def _barycentric_coordinates_cartesian(nodes, point, min_area=1e-8):
@@ -193,23 +182,6 @@ def _barycentric_coordinates_cartesian(nodes, point, min_area=1e-8):
     barycentric_coords = [w_i / sum_wi for w_i in w]
 
     return barycentric_coords
-
-
-def _local_projection_error(nodes, point):
-    """
-    Computes the size of the local projection error that arises from
-    assuming planar faces. Effectively, a planar face on a spherical
-    manifold is local linearization of the spherical coordinate
-    transformation. Since query points and nodes are converted to
-    cartesian coordinates using the full spherical coordinate transformation,
-    the local projection error will likely be non-zero but related to the discretiztaion.
-    """
-    a = nodes[1] - nodes[0]
-    b = nodes[2] - nodes[0]
-    normal = np.cross(a, b)
-    normal /= np.linalg.norm(normal)
-    d = point - nodes[0]
-    return abs(np.dot(d, normal))
 
 
 def _triangle_area_cartesian(A, B, C):
