@@ -3,8 +3,7 @@ import pytest
 import xarray as xr
 
 import parcels._interpolation as interpolation
-from parcels import AdvectionRK4_3D, FieldSet, Particle, ParticleSet
-from tests.utils import TEST_DATA, create_fieldset_zeros_3d
+from tests.utils import create_fieldset_zeros_3d
 
 
 @pytest.fixture
@@ -109,50 +108,3 @@ def test_full_depth_provided_to_interpolators():
         return 0
 
     fieldset.U[0.5, 0.5, 0.5, 0.5]
-
-
-@pytest.mark.v4remove
-@pytest.mark.xfail(reason="GH1946")
-@pytest.mark.parametrize(
-    "interp_method",
-    [
-        "linear",
-        "freeslip",
-        "nearest",
-        "cgrid_velocity",
-    ],
-)
-def test_interp_regression_v3(interp_method):
-    """Test that the v4 versions of the interpolation are the same as the v3 versions."""
-    variables = {"U": "U", "V": "V", "W": "W"}
-    dimensions = {"time": "time", "lon": "lon", "lat": "lat", "depth": "depth"}
-    ds = xr.open_dataset(str(TEST_DATA / f"test_interpolation_data_random_{interp_method}.nc"))
-    fieldset = FieldSet.from_xarray_dataset(
-        ds,
-        variables,
-        dimensions,
-        mesh="flat",
-    )
-
-    for field in [fieldset.U, fieldset.V, fieldset.W]:  # Set a land point (for testing freeslip)
-        field.interp_method = interp_method
-
-    x, y, z = np.meshgrid(np.linspace(0, 1, 7), np.linspace(0, 1, 13), np.linspace(0, 1, 5))
-
-    TestP = Particle.add_variable("pid", dtype=np.int32, initial=0)
-    pset = ParticleSet(fieldset, pclass=TestP, lon=x, lat=y, depth=z, pid=np.arange(x.size))
-
-    def DeleteParticle(particle, fieldset, time):
-        if particle.state >= 50:
-            particle.delete()
-
-    outfile = pset.ParticleFile(f"test_interpolation_v4_{interp_method}", outputdt=1)
-    pset.execute([AdvectionRK4_3D, DeleteParticle], runtime=4, dt=1, output_file=outfile)
-
-    ds_v3 = xr.open_zarr(str(TEST_DATA / f"test_interpolation_jit_{interp_method}.zarr"))
-    ds_v4 = xr.open_zarr(f"test_interpolation_v4_{interp_method}.zarr")
-
-    tol = 1e-6
-    np.testing.assert_allclose(ds_v3.lon, ds_v4.lon, atol=tol)
-    np.testing.assert_allclose(ds_v3.lat, ds_v4.lat, atol=tol)
-    np.testing.assert_allclose(ds_v3.z, ds_v4.z, atol=tol)

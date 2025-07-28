@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from parcels.field import Field
+from parcels.tools.statuscodes import (
+    FieldOutOfBoundError,
+)
 
 if TYPE_CHECKING:
     from parcels.uxgrid import _UXGRID_AXES
@@ -104,6 +107,9 @@ def XTriLinear(
     xi, xsi = position["X"]
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
+
+    if zi < 0 or xi < 0 or yi < 0:
+        raise FieldOutOfBoundError
 
     data = field.data.data[:, zi : zi + 2, yi : yi + 2, xi : xi + 2]
     data = (1 - tau) * data[ti, :, :, :] + tau * data[ti + 1, :, :, :]
