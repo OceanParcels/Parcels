@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import ast
-import inspect
 import math  # noqa: F401
 import random  # noqa: F401
-import textwrap
 import types
 import warnings
 from typing import TYPE_CHECKING
@@ -321,32 +318,3 @@ class Kernel:
 
             p.dt = pre_dt
         return p
-
-
-def _compile_function_object_using_user_context(py_ast: ast.FunctionDef) -> Callable:
-    # Extract user context by inspecting the call stack
-    assert isinstance(py_ast, ast.FunctionDef), "py_ast should be an instance of ast.FunctionDef"
-    stack = inspect.stack()
-    try:
-        user_ctx = stack[-1][0].f_globals
-        user_ctx["math"] = globals()["math"]
-        user_ctx["random"] = globals()["random"]
-        user_ctx["StatusCode"] = globals()["StatusCode"]
-    except:
-        warnings.warn(
-            "Could not access user context when merging kernels",
-            KernelWarning,
-            stacklevel=2,
-        )
-        user_ctx = globals()
-    finally:
-        del stack  # Remove cyclic references
-    # Generate Python function from AST
-    py_mod = ast.parse("")
-    py_mod.body = [py_ast]
-    exec(compile(py_mod, "<ast>", "exec"), user_ctx)
-    return user_ctx[py_ast.name]
-
-
-def _get_ast_from_function(pyfunc: Callable):
-    return ast.parse(textwrap.dedent(inspect.getsource(pyfunc.__code__))).body[0]
