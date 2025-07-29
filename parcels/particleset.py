@@ -127,9 +127,9 @@ class ParticleSet:
         for kwvar in kwargs:
             if kwvar not in ["partition_function"]:
                 kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
-                assert (
-                    lon.size == kwargs[kwvar].size
-                ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+                assert lon.size == kwargs[kwvar].size, (
+                    f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+                )
 
         self._data = {
             "lon": lon.astype(lonlatdepth_dtype),
@@ -152,7 +152,7 @@ class ParticleSet:
                 if isinstance(v.initial, attrgetter):
                     initial = v.initial(self)
                 else:
-                    initial = v.initial * np.ones(len(trajectory_ids), dtype=v.dtype)
+                    initial = [np.array(v.initial, dtype=v.dtype)] * len(trajectory_ids)
                 self._data[v.name] = initial
 
         # update initial values provided on ParticleSet creation
@@ -227,9 +227,9 @@ class ParticleSet:
             The current ParticleSet
 
         """
-        assert (
-            particles is not None
-        ), f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        assert particles is not None, (
+            f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        )
         assert type(particles) is type(self)
 
         if len(particles) == 0:
@@ -864,16 +864,20 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
 
 
 def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: TimeInterval):
-    if np.any(release_times):
-        if np.any(release_times < 0):
-            warnings.warn(
-                "Some particles are set to be released outside the FieldSet's executable time domain.",
-                ParticleSetWarning,
-                stacklevel=2,
-            )
-        if np.any(release_times > (time.right - time.left) / np.timedelta64(1, "s")):
-            warnings.warn(
-                "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
-                ParticleSetWarning,
-                stacklevel=2,
-            )
+    if np.isnan(release_times).all():
+        return
+
+    if isinstance(time.left, np.datetime64) and isinstance(release_times[0], np.timedelta64):
+        release_times = np.array([t + time.left for t in release_times])
+    if np.any(release_times < time.left):
+        warnings.warn(
+            "Some particles are set to be released outside the FieldSet's executable time domain.",
+            ParticleSetWarning,
+            stacklevel=2,
+        )
+    if np.any(release_times > time.right):
+        warnings.warn(
+            "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
+            ParticleSetWarning,
+            stacklevel=2,
+        )
