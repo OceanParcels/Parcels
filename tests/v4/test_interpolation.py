@@ -9,9 +9,9 @@ from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
 from parcels.particleset import ParticleSet
+from parcels.tools.statuscodes import StatusCode
 from parcels.xgrid import XGrid
 from tests.utils import TEST_DATA
-from parcels.tools.statuscodes import StatusCode
 
 
 @pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
