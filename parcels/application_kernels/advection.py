@@ -98,7 +98,7 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
 def AdvectionEE(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using Explicit Euler (aka Euler Forward) integration."""
     dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
-    (u1, v1) = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon, particle]
+    (u1, v1) = fieldset.UV[particle]
     particle_dlon += u1 * dt  # noqa
     particle_dlat += v1 * dt  # noqa
 

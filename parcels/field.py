@@ -373,7 +373,7 @@ class VectorField:
 
     def __getitem__(self, key):
         try:
-            if isinstance(key, Particle):  # TODO make this support a ParticleSet (now leads to circular import error)
+            if hasattr(key, "time"):
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
