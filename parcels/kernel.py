@@ -378,7 +378,7 @@ class Kernel(BaseKernel):
         """
         sign_dt = 1 if pset.dt[0] >= 0 else -1
         while pset[0].state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            if sign_dt * (endtime - pset.time_nextloop) <= 0:
+            if all(sign_dt * (endtime - pset.time_nextloop) <= 0):
                 return pset
 
             pre_dt = pset.dt
