@@ -63,8 +63,8 @@ def _search_time_index(field: Field, time: datetime):
         tau = 1
     else:
         tau = (
-            (time - field.data.time[ti]).dt.total_seconds()
-            / (field.data.time[ti + 1] - field.data.time[ti]).dt.total_seconds()
+            (time - field.data.time[ti]).dt.total_seconds().values
+            / (field.data.time[ti + 1] - field.data.time[ti]).dt.total_seconds().values
             if field.data.time[ti] != field.data.time[ti + 1]
             else 0
         )

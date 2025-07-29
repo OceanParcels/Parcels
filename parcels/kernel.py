@@ -12,8 +12,6 @@ import numpy as np
 
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
-    AdvectionRK4_3D,
-    AdvectionRK4_3D_CROCO,
     AdvectionRK45,
 )
 from parcels.basegrid import GridType
@@ -124,9 +122,10 @@ class Kernel(BaseKernel):
         # Derive meta information from pyfunc, if not given
         self.check_fieldsets_in_kernels(pyfunc)
 
-        if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
-            pyfunc = AdvectionRK4_3D_CROCO
-            self.funcname = "AdvectionRK4_3D_CROCO"
+        # # TODO will be implemented when we support CROCO again
+        # if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
+        #     pyfunc = AdvectionRK4_3D_CROCO
+        #     self.funcname = "AdvectionRK4_3D_CROCO"
 
         if funcvars is not None:  # TODO v4: check if needed from here onwards
             self.funcvars = funcvars
@@ -385,13 +384,12 @@ class Kernel(BaseKernel):
                 return p
 
             pre_dt = p.dt
-            # TODO implement below later again
-            # try:  # Use next_dt from AdvectionRK45 if it is set
-            #     if abs(endtime - p.time_nextloop) < abs(p.next_dt) - 1e-6:
-            #         p.next_dt = abs(endtime - p.time_nextloop) * sign_dt
-            # except AttributeError:
-            if sign_dt * (endtime - p.time_nextloop) <= p.dt:
-                p.dt = sign_dt * (endtime - p.time_nextloop)
+            try:  # Use next_dt from AdvectionRK45 if it is set
+                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - np.timedelta64(1000, "ns"):
+                    p.next_dt = sign_dt * (endtime - p.time_nextloop)
+            except KeyError:
+                if sign_dt * (endtime - p.time_nextloop) <= p.dt:
+                    p.dt = sign_dt * (endtime - p.time_nextloop)
             res = self._pyfunc(p, self._fieldset, p.time_nextloop)
 
             if res is None:
