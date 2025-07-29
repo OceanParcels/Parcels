@@ -85,9 +85,6 @@ class Kernel:
         else:
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
-        self.funccode = (  # Remove parcels. prefix (see #1608)
-            self.funccode.replace("parcels.StatusCode", "StatusCode")
-        )
 
         # Parse AST if it is not provided explicitly
         self.py_ast = (
