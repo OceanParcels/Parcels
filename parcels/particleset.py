@@ -9,6 +9,7 @@ from scipy.spatial import KDTree
 from tqdm import tqdm
 
 from parcels._core.utils.time import TimeInterval
+from parcels._core.utils.time import is_compatible as time_is_compatible
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
@@ -108,7 +109,7 @@ class ParticleSet:
             depth = convert_to_flat_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
-        time = _get_times_from_interval_start(time, self.fieldset.time_interval)
+        time = _get_release_times_from_interval_start(time, self.fieldset.time_interval)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
@@ -835,16 +836,16 @@ class ParticleSet:
             pbar.close()
 
 
-def _get_times_from_interval_start(time: np.ndarray, time_interval: TimeInterval | None) -> np.ndarray:
+def _get_release_times_from_interval_start(time: np.ndarray | None, time_interval: TimeInterval | None) -> np.ndarray:
     if time is None or len(time) == 0:
         return np.array([np.nan])  # do not set a time yet (because sign_dt not known)
 
     if time_interval is None:
         return (time - np.min(time)) / np.timedelta64(1, "s")
 
-    if type(time[0]) is not type(time_interval.left):
+    if time_is_compatible(time[0], time_interval.left):
         raise TypeError(
-            f"Time must be of the same type as the fieldset's time interval. Got {type(time[0])}, but time interval is defined using {type(time_interval.left)}."
+            f"Release times must be of a compatible type with the fieldset's time interval. Got {time[0]=!r}, but time interval is {time_interval=!r}."
         )
 
     return (time - time_interval.left) / np.timedelta64(1, "s")

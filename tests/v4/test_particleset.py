@@ -127,6 +127,22 @@ def test_pset_create_outside_time(fieldset):
         ParticleSet(fieldset, pclass=Particle, lon=[0] * len(time), lat=[0] * len(time), time=time)
 
 
+def test_pset_invalid_release_times(fieldset):
+    # define release times to be floats, and make sure that execution errors out informatively
+    ...
+
+
+def test_pset_incompatible_release_times(fieldset):
+    # define release times to be incompatible with the fieldset time interval, and make sure that execution errors out informatively
+    ...
+
+
+def test_get_release_times_from_interval_start(): ...  # test inputs and returns
+
+
+def test_get_release_times_from_interval_start_time_interval_none(): ...
+
+
 @pytest.mark.parametrize(
     "dt, expectation",
     [
