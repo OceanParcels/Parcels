@@ -728,13 +728,10 @@ class ParticleSet:
         if len(self) == 0:
             return
 
-        # check if pyfunc has changed since last generation. If so, regenerate
-        if self._kernel is None or (self._kernel.pyfunc is not pyfunc and self._kernel is not pyfunc):
-            # Generate and store Kernel
-            if isinstance(pyfunc, Kernel):
-                self._kernel = pyfunc
-            else:
-                self._kernel = self.Kernel(pyfunc)
+        if not isinstance(pyfunc, Kernel):
+            pyfunc = self.Kernel(pyfunc)
+
+        self._kernel = pyfunc
 
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
