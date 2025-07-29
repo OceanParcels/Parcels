@@ -319,10 +319,9 @@ class Kernel(BaseKernel):
             self.add_positionupdate_kernels()
             self._positionupdate_kernels_added = True
 
-        for p in pset:
-            self.evaluate_particle(p, endtime)
-            if p.state == StatusCode.StopAllExecution:
-                return StatusCode.StopAllExecution
+        self.evaluate_pset(pset, endtime)
+        if any(pset.state == StatusCode.StopAllExecution):
+            return StatusCode.StopAllExecution
 
         # Remove all particles that signalled deletion
         self.remove_deleted(pset)
@@ -361,43 +360,42 @@ class Kernel(BaseKernel):
             self.remove_deleted(pset)  # Generalizable version!
 
             # Re-execute Kernels to retry particles with StatusCode.Repeat
-            for p in pset:
-                self.evaluate_particle(p, endtime)
+            self.evaluate_pset(pset, endtime)
 
             n_error = pset._num_error_particles
 
-    def evaluate_particle(self, p, endtime):
-        """Execute the kernel evaluation of for an individual particle.
+    def evaluate_pset(self, pset, endtime):
+        """Execute the kernel evaluation of for the entire particle set.
 
         Parameters
         ----------
-        p :
-            object of (sub-)type Particle
+        pset :
+            object of (sub-)type ParticleSet
         endtime :
             endtime of this overall kernel evaluation step
         dt :
             computational integration timestep
         """
-        sign_dt = 1 if p.dt >= 0 else -1
-        while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            if sign_dt * (endtime - p.time_nextloop) <= 0:
-                return p
+        sign_dt = 1 if pset.dt[0] >= 0 else -1
+        while pset[0].state in [StatusCode.Evaluate, StatusCode.Repeat]:
+            if sign_dt * (endtime - pset.time_nextloop) <= 0:
+                return pset
 
-            pre_dt = p.dt
+            pre_dt = pset.dt
             try:  # Use next_dt from AdvectionRK45 if it is set
-                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - np.timedelta64(1000, "ns"):
-                    p.next_dt = sign_dt * (endtime - p.time_nextloop)
+                if abs(endtime - pset.time_nextloop[0]) < abs(pset.next_dt[0]) - np.timedelta64(1000, "ns"):
+                    pset.next_dt[0] = sign_dt * (endtime - pset.time_nextloop[0])
             except KeyError:
-                if sign_dt * (endtime - p.time_nextloop) <= p.dt:
-                    p.dt = sign_dt * (endtime - p.time_nextloop)
-            res = self._pyfunc(p, self._fieldset, p.time_nextloop)
+                if sign_dt * (endtime - pset.time_nextloop[0]) <= pset.dt[0]:
+                    pset.dt[0] = sign_dt * (endtime - pset.time_nextloop[0])
 
+            res = self._pyfunc(pset, self._fieldset, pset.time_nextloop[0])
             if res is None:
-                if p.state == StatusCode.Success:
-                    if sign_dt * (p.time - endtime) > 0:
-                        p.state = StatusCode.Evaluate
+                if pset.state[0] == StatusCode.Success:
+                    if sign_dt * (pset.time[0] - endtime) > 0:
+                        pset.state[0] = StatusCode.Evaluate
             else:
-                p.state = res
+                pset.state[0] = res
 
-            p.dt = pre_dt
-        return p
+            pset.dt = pre_dt
+        return pset
