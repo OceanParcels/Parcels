@@ -109,7 +109,7 @@ def test_pset_custominit_on_pclass(fieldset, pset_override):
 @pytest.mark.parametrize(
     "time, expectation",
     [
-        (np.timedelta64(0, "s"), does_not_raise()),
+        (np.timedelta64(0, "s"), pytest.raises(TypeError)),
         (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
         (0.0, pytest.raises(TypeError)),
         (timedelta(seconds=0), pytest.raises(TypeError)),
@@ -125,6 +125,22 @@ def test_pset_create_outside_time(fieldset):
     time = xr.date_range("1999", "2001", 20)
     with pytest.warns(ParticleSetWarning, match="Some particles are set to be released*"):
         ParticleSet(fieldset, pclass=Particle, lon=[0] * len(time), lat=[0] * len(time), time=time)
+
+
+def test_pset_invalid_release_times(fieldset):
+    # define release times to be floats, and make sure that execution errors out informatively
+    ...
+
+
+def test_pset_incompatible_release_times(fieldset):
+    # define release times to be incompatible with the fieldset time interval, and make sure that execution errors out informatively
+    ...
+
+
+def test_get_release_times_from_interval_start(): ...  # test inputs and returns
+
+
+def test_get_release_times_from_interval_start_time_interval_none(): ...
 
 
 @pytest.mark.parametrize(
@@ -148,7 +164,7 @@ def test_pset_starttime_not_multiple_dt(fieldset):
     pset = ParticleSet(fieldset, lon=[0] * len(times), lat=[0] * len(times), pclass=Particle, time=datetimes)
 
     def Addlon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += particle.dt / np.timedelta64(1, "s")  # noqa
+        particle_dlon += particle.dt  # noqa
 
     pset.execute(Addlon, dt=np.timedelta64(2, "s"), runtime=np.timedelta64(8, "s"), verbose_progress=False)
     assert np.allclose([p.lon_nextloop for p in pset], [8 - t for t in times])
