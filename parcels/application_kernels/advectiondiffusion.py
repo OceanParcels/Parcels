@@ -43,8 +43,8 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle_dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx  # noqa
-    particle_dlat += v * dt + 0.5 * dKdy * (dWy**2 + dt) + by * dWy  # noqa
+    particle.dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx
+    particle.dlat += v * dt + 0.5 * dKdy * (dWy**2 + dt) + by * dWy
 
 
 def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
@@ -80,8 +80,8 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle_dlon += ax * dt + bx * dWx  # noqa
-    particle_dlat += ay * dt + by * dWy  # noqa
+    particle.dlon += ax * dt + bx * dWx
+    particle.dlat += ay * dt + by * dWy
 
 
 def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
@@ -110,5 +110,5 @@ def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
     bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
     by = math.sqrt(2 * fieldset.Kh_meridional[particle])
 
-    particle_dlon += bx * dWx  # noqa
-    particle_dlat += by * dWy  # noqa
+    particle.dlon += bx * dWx
+    particle.dlat += by * dWy

@@ -260,8 +260,8 @@ def test_add_second_vector_field():
 
     def SampleUV2(particle, fieldset, time):  # pragma: no cover
         u, v = fieldset.UV2[time, particle.depth, particle.lat, particle.lon]
-        particle_dlon += u * particle.dt  # noqa
-        particle_dlat += v * particle.dt  # noqa
+        particle.dlon += u * particle.dt
+        particle.dlat += v * particle.dt
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=0.5, lat=0.5)
     pset.execute(AdvectionRK4 + pset.Kernel(SampleUV2), dt=1, runtime=2)

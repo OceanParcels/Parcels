@@ -849,9 +849,9 @@ def test_nestedfields():
 
     def Recover(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorOutOfBounds:
-            particle_dlon = 0  # noqa
-            particle_dlat = 0  # noqa
-            particle_ddepth = 0  # noqa
+            particle.dlon = 0
+            particle.dlat = 0
+            particle.ddepth = 0
             particle.lon = 0
             particle.lat = 0
             particle.p = 999

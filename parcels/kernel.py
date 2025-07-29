@@ -151,18 +151,18 @@ class Kernel:
         def Setcoords(particle, fieldset, time):  # pragma: no cover
             import numpy as np  # noqa
 
-            particle_dlon = 0  # noqa
-            particle_dlat = 0  # noqa
-            particle_ddepth = 0  # noqa
+            particle.dlon = 0
+            particle.dlat = 0
+            particle.ddepth = 0
             particle.lon = particle.lon_nextloop
             particle.lat = particle.lat_nextloop
             particle.depth = particle.depth_nextloop
             particle.time = particle.time_nextloop
 
         def Updatecoords(particle, fieldset, time):  # pragma: no cover
-            particle.lon_nextloop = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
-            particle.lat_nextloop = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
-            particle.depth_nextloop = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
+            particle.lon_nextloop = particle.lon + particle.dlon  # type: ignore[name-defined]
+            particle.lat_nextloop = particle.lat + particle.dlat  # type: ignore[name-defined]
+            particle.depth_nextloop = particle.depth + particle.ddepth  # type: ignore[name-defined]
             particle.time_nextloop = particle.time + particle.dt
 
         self._pyfunc = (Setcoords + self + Updatecoords)._pyfunc
