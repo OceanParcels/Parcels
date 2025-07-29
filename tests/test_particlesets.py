@@ -140,7 +140,7 @@ def test_pset_repeated_release(fieldset):
     assert np.allclose([p.time for p in pset], time)
 
     def IncrLon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += 1.0  # noqa
+        particle.dlon += 1.0
 
     pset.execute(IncrLon, dt=1.0, runtime=npart + 1)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
@@ -180,7 +180,7 @@ def test_pset_add_execute(fieldset):
     npart = 10
 
     def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
+        particle.dlat += 0.1
 
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=Particle)
     for _ in range(npart):

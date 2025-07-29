@@ -45,7 +45,7 @@ def test_advection_zonal(mesh_type, npart=10):
 
 
 def periodicBC(particle, fieldset, time):
-    particle.total_dlon += particle_dlon  # noqa
+    particle.total_dlon += particle.dlon
     particle.lon = np.fmod(particle.lon, fieldset.U.grid.lon[-1])
     particle.lat = np.fmod(particle.lat, fieldset.U.grid.lat[-1])
 
@@ -109,9 +109,9 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
         if particle.state == StatusCode.ErrorThroughSurface:
             dt = particle.dt / np.timedelta64(1, "s")
             (u, v) = fieldset.UV[particle]
-            particle_dlon = u * dt  # noqa
-            particle_dlat = v * dt  # noqa
-            particle_ddepth = 0.0  # noqa
+            particle.dlon = u * dt
+            particle.dlat = v * dt
+            particle.ddepth = 0.0
             particle.depth = 0
             particle.state = StatusCode.Evaluate
 

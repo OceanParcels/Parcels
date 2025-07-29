@@ -60,7 +60,7 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
 
     def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
+        particle.dlat += 0.1
 
     k_add = pset.Kernel(AddLat)
     for _ in range(n + 1):

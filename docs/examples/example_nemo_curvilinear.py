@@ -43,7 +43,7 @@ def run_nemo_curvilinear(outfile, advtype="RK4"):
 
     def periodicBC(particle, fieldSet, time):  # pragma: no cover
         if particle.lon > 180:
-            particle_dlon -= 360  # noqa
+            particle.dlon -= 360
 
     pset = parcels.ParticleSet.from_list(fieldset, parcels.Particle, lon=lonp, lat=latp)
     pfile = parcels.ParticleFile(outfile, pset, outputdt=timedelta(days=1))

@@ -27,7 +27,7 @@ def test_execution_order(kernel_type):
         particle.lon += 0.2
 
     def MoveLon_Update_dlon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += 0.2  # noqa
+        particle.dlon += 0.2
 
     def SampleP(particle, fieldset, time):  # pragma: no cover
         particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
@@ -101,7 +101,7 @@ def test_execution_fail_out_of_bounds(fieldset_unit_mesh):
 
     def MoveRight(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
-        particle_dlon += 0.1  # noqa
+        particle.dlon += 0.1
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
     with pytest.raises(FieldOutOfBoundError):
@@ -115,11 +115,11 @@ def test_execution_recover_out_of_bounds(fieldset_unit_mesh):
 
     def MoveRight(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
-        particle_dlon += 0.1  # noqa
+        particle.dlon += 0.1
 
     def MoveLeft(particle, fieldset, time):  # pragma: no cover
         if particle.state == StatusCode.ErrorOutOfBounds:
-            particle_dlon -= 1.0  # noqa
+            particle.dlon -= 1.0
             particle.state = StatusCode.Success
 
     lon = np.linspace(0.05, 0.95, npart)
@@ -146,9 +146,9 @@ def test_execution_check_all_errors(fieldset_unit_mesh):
 
 def test_execution_check_stopallexecution(fieldset_unit_mesh):
     def addoneLon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += 1  # noqa
+        particle.dlon += 1
 
-        if particle.lon + particle_dlon >= 10:
+        if particle.lon + particle.dlon >= 10:
             particle.state = StatusCode.StopAllExecution
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0, 1], lat=[0, 0])
@@ -164,7 +164,7 @@ def test_execution_delete_out_of_bounds(fieldset_unit_mesh):
 
     def MoveRight(particle, fieldset, time):  # pragma: no cover
         tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
-        particle_dlon += 0.1  # noqa
+        particle.dlon += 0.1
 
     lon = np.linspace(0.05, 0.95, npart)
     lat = np.linspace(1, 0, npart)
@@ -185,11 +185,11 @@ def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh):
     # Should throw a warning, but go ahead regardless
     def Kernel1(particle, fieldset, time):  # pragma: no cover
         add_lon = 0.1
-        particle_dlon += add_lon  # noqa
+        particle.dlon += add_lon
 
     def Kernel2(particle, fieldset, time):  # pragma: no cover
         add_lon = -0.3
-        particle_dlon += add_lon  # noqa
+        particle.dlon += add_lon
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute([Kernel1, Kernel2], endtime=2.0, dt=1.0)
@@ -201,11 +201,11 @@ def test_update_kernel_in_script(fieldset_unit_mesh):
     # Should throw a warning, but go ahead regardless
     def MoveEast(particle, fieldset, time):  # pragma: no cover
         add_lon = 0.1
-        particle_dlon += add_lon  # noqa
+        particle.dlon += add_lon
 
     def MoveWest(particle, fieldset, time):  # pragma: no cover
         add_lon = -0.3
-        particle_dlon += add_lon  # noqa
+        particle.dlon += add_lon
 
     pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(MoveEast), endtime=1.0, dt=1.0)
