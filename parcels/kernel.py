@@ -43,7 +43,7 @@ class Kernel:
     Notes
     -----
     A Kernel is either created from a <function ...> object
-    or the necessary information (funcname, funccode, funcvars) is provided.
+    or the necessary information (funcname, funccode, ...) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
     """
@@ -56,7 +56,6 @@ class Kernel:
         funcname=None,
         funccode=None,
         py_ast=None,
-        funcvars=None,
     ):
         self._fieldset = fieldset
         self._ptype = ptype
@@ -65,7 +64,6 @@ class Kernel:
         self._pyfunc = None
         self.funcname = funcname or pyfunc.__name__
         self.name = f"{ptype.name}{self.funcname}"
-        self.funcvars = funcvars
         self.funccode = funccode
         self.py_ast = py_ast  # TODO v4: check if this is needed
         self._positionupdate_kernels_added = False
@@ -77,10 +75,6 @@ class Kernel:
         # if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
         #     pyfunc = AdvectionRK4_3D_CROCO
         #     self.funcname = "AdvectionRK4_3D_CROCO"
-
-        self.funcvars = funcvars
-        if pyfunc is not None:
-            self.funcvars = list(pyfunc.__code__.co_varnames)
 
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
 
@@ -200,7 +194,6 @@ class Kernel:
             funcname=funcname,
             funccode=self.funccode + kernel.funccode,
             py_ast=func_ast,
-            funcvars=self.funcvars + kernel.funcvars,
         )
 
     def __add__(self, kernel):
