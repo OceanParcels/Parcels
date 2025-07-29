@@ -9,7 +9,7 @@ import numpy as np
 import xarray as xr
 
 import parcels
-from parcels._datasets.structured.generic import simple_UV_dataset
+from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels.application_kernels.interpolation import XBiLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet

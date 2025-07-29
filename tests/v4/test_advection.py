@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels._datasets.structured.generic import simple_UV_dataset
+from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
 from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
 from parcels.application_kernels.interpolation import XBiLinear, XBiLinearPeriodic, XTriLinear
