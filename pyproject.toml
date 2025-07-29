@@ -169,6 +169,7 @@ ignore = [
     "RUF015",
     # Use `X | Y` in `isinstance` (see https://github.com/home-assistant/core/issues/123850)
     "UP038",
+    "RUF046", # Value being cast to `int` is already an integer
 
     # TODO: ignore for now (requires more work). Remove ignore once fixed
     # Missing docstring in public module
