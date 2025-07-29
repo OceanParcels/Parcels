@@ -27,7 +27,6 @@ class InteractionKernel(BaseKernel):
         ptype,
         pyfunc=None,
         funcname=None,
-        funccode=None,
         py_ast=None,
     ):
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
@@ -51,7 +50,6 @@ class InteractionKernel(BaseKernel):
             ptype=ptype,
             pyfunc=pyfunc,
             funcname=funcname,
-            funccode=funccode,
             py_ast=py_ast,
         )
 
