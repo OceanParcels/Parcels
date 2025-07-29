@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import functools
 import inspect
@@ -6,6 +8,7 @@ import random  # noqa: F401
 import textwrap
 import types
 import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -22,6 +25,9 @@ from parcels.tools.statuscodes import (
     _raise_field_sampling_error,
 )
 from parcels.tools.warnings import KernelWarning
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = ["Kernel"]
 
@@ -43,7 +49,7 @@ class Kernel:
     Notes
     -----
     A Kernel is either created from a <function ...> object
-    or the necessary information (funcname, funccode, ...) is provided.
+    or the necessary information (funcname, ..., ...) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
     """
@@ -54,7 +60,6 @@ class Kernel:
         ptype,
         pyfunc=None,
         funcname=None,
-        funccode=None,
         py_ast=None,
     ):
         self._fieldset = fieldset
@@ -64,7 +69,6 @@ class Kernel:
         self._pyfunc = None
         self.funcname = funcname or pyfunc.__name__
         self.name = f"{ptype.name}{self.funcname}"
-        self.funccode = funccode
         self.py_ast = py_ast  # TODO v4: check if this is needed
         self._positionupdate_kernels_added = False
 
@@ -76,12 +80,8 @@ class Kernel:
         #     pyfunc = AdvectionRK4_3D_CROCO
         #     self.funcname = "AdvectionRK4_3D_CROCO"
 
-        if funccode is None:
-            funccode = inspect.getsource(pyfunc.__code__)
-        self.funccode = textwrap.dedent(funccode)
-
         if py_ast is None:
-            py_ast = ast.parse(textwrap.dedent(self.funccode)).body[0]
+            py_ast = _get_ast_from_function(pyfunc)
         self.py_ast = py_ast
 
         if pyfunc is None:
@@ -193,7 +193,6 @@ class Kernel:
             self.ptype,
             pyfunc=None,
             funcname=funcname,
-            funccode=self.funccode + kernel.funccode,
             py_ast=func_ast,
         )
 
@@ -363,3 +362,7 @@ def _compile_function_object_using_user_context(py_ast, funcname):
     py_mod.body = [py_ast]
     exec(compile(py_mod, "<ast>", "exec"), user_ctx)
     return user_ctx[funcname]
+
+
+def _get_ast_from_function(pyfunc: Callable):
+    return ast.parse(textwrap.dedent(inspect.getsource(pyfunc.__code__))).body[0]
