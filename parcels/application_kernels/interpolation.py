@@ -39,19 +39,26 @@ def XBiLinear(
     xi, xsi = position["X"]
     yi, eta = position["Y"]
     zi, _ = position["Z"]
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
 
-    if tau > 0:
-        data = (1 - tau) * field.data[ti, zi, :, :] + tau * field.data[ti + 1, zi, :, :]
-    else:
-        data = field.data[ti, zi, :, :]
+    data = field.data
+    val = np.zeros_like(tau)
 
-    xi = xr.DataArray(xi, dims="points")
-    yi = xr.DataArray(yi, dims="points")
-    F00 = data.isel(XG=xi, YG=yi).values.flatten()
-    F10 = data.isel(XG=xi + 1, YG=yi).values.flatten()
-    F01 = data.isel(XG=xi, YG=yi + 1).values.flatten()
-    F11 = data.isel(XG=xi + 1, YG=yi + 1).values.flatten()
-    return (1 - xsi) * (1 - eta) * F00 + xsi * (1 - eta) * F10 + (1 - xsi) * eta * F01 + xsi * eta * F11
+    timeslices = [ti, ti + 1] if tau[0] > 0 else [ti]
+    for tii in timeslices:
+        tau_factor = (1 - tau) if ti[0] == tii[0] else tau  # TODO also for varying time
+        xi = xr.DataArray(xi, dims="points")
+        yi = xr.DataArray(yi, dims="points")
+        zi = xr.DataArray(zi, dims="points")
+        tii = xr.DataArray(tii, dims="points")
+        F00 = data.isel({axis_dim["X"]: xi, axis_dim["Y"]: yi, axis_dim["Z"]: zi, "time": tii}).values.flatten()
+        F10 = data.isel({axis_dim["X"]: xi + 1, axis_dim["Y"]: yi, axis_dim["Z"]: zi, "time": tii}).values.flatten()
+        F01 = data.isel({axis_dim["X"]: xi, axis_dim["Y"]: yi + 1, axis_dim["Z"]: zi, "time": tii}).values.flatten()
+        F11 = data.isel({axis_dim["X"]: xi + 1, axis_dim["Y"]: yi + 1, axis_dim["Z"]: zi, "time": tii}).values.flatten()
+        val += (
+            (1 - xsi) * (1 - eta) * F00 + xsi * (1 - eta) * F10 + (1 - xsi) * eta * F01 + xsi * eta * F11
+        ) * tau_factor
+    return val
 
 
 def XBiLinearPeriodic(

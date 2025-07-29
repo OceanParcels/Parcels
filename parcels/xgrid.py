@@ -9,7 +9,6 @@ import xarray as xr
 from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.basegrid import BaseGrid
-from parcels.tools.statuscodes import FieldOutOfBoundError, FieldOutOfBoundSurfaceError
 
 _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"
@@ -272,15 +271,15 @@ class XGrid(BaseGrid):
         ds = self.xgcm_grid._ds
 
         zi, zeta = _search_1d_array(ds.depth.values, z)
-        if zi == -1:
-            if zeta < 0:
-                raise FieldOutOfBoundError(
-                    f"Depth {z} is out of bounds for the grid with depth values {ds.depth.values}."
-                )
-            elif zeta > 1:
-                raise FieldOutOfBoundSurfaceError(
-                    f"Depth {z} is out of the surface for the grid with depth values {ds.depth.values}."
-                )
+        # if any(zi == -1):  # TODO throw error only for those particles where zi == -1
+        #     if any(zeta < 0):
+        #         raise FieldOutOfBoundError(
+        #             f"Depth {z} is out of bounds for the grid with depth values {ds.depth.values}."
+        #         )
+        #     elif any(zeta > 1):
+        #         raise FieldOutOfBoundSurfaceError(
+        #             f"Depth {z} is out of the surface for the grid with depth values {ds.depth.values}."
+        #         )
 
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
@@ -313,6 +312,38 @@ class XGrid(BaseGrid):
             axis_position_mapping[axis] = edge_positions[0]
 
         return axis_position_mapping
+
+    def get_axis_dim_mapping(self, dims: list[str]) -> dict[_XGRID_AXES, str]:
+        """
+        Maps xarray dimension names to their corresponding axis (X, Y, Z).
+
+        WARNING: This API is unstable and subject to change in future versions.
+
+        Parameters
+        ----------
+        dims : list[str]
+            List of xarray dimension names
+
+        Returns
+        -------
+        dict[_XGRID_AXES, str]
+            Dictionary mapping axes (X, Y, Z) to their corresponding dimension names
+
+        Examples
+        --------
+        >>> grid.get_axis_dim_mapping(['time', 'lat', 'lon'])
+        {'Y': 'lat', 'X': 'lon'}
+
+        Notes
+        -----
+        Only returns mappings for spatial axes (X, Y, Z) that are present in the grid.
+        """
+        result = {}
+        for dim in dims:
+            axis = get_axis_from_dim_name(self.xgcm_grid.axes, dim)
+            if axis in self.axes:  # Only include spatial axes (X, Y, Z)
+                result[cast(_XGRID_AXES, axis)] = dim
+        return result
 
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:
@@ -465,7 +496,7 @@ def _search_1d_array(
     """
     # TODO v4: We probably rework this to deal with 0D arrays before this point (as we already know field dimensionality)
     if len(arr) < 2:
-        return 0, 0.0
+        return np.zeros(shape=x.shape, dtype=np.int32), np.zeros_like(x)
     i = np.searchsorted(arr, x, side="right") - 1
     bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
     return i, bcoord
