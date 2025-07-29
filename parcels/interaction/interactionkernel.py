@@ -74,9 +74,9 @@ class InteractionKernel(BaseKernel):
 
         numkernelargs = self.check_kernel_signature_on_version()
 
-        assert numkernelargs[0] == 5 and numkernelargs.count(numkernelargs[0]) == len(
-            numkernelargs
-        ), "Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator"
+        assert numkernelargs[0] == 5 and numkernelargs.count(numkernelargs[0]) == len(numkernelargs), (
+            "Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator"
+        )
 
     def check_fieldsets_in_kernels(self, pyfunc):
         # Currently, the implemented interaction kernels do not impose
