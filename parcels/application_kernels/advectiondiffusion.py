@@ -6,6 +6,8 @@ See `this tutorial <../examples/tutorial_diffusion.ipynb>`__ for a detailed expl
 import math
 import random
 
+import numpy as np
+
 __all__ = ["AdvectionDiffusionEM", "AdvectionDiffusionM1", "DiffusionUniformKh"]
 
 
@@ -24,7 +26,7 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
     dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
     dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
@@ -60,7 +62,7 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
     dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
     dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
@@ -102,7 +104,7 @@ def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
     dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
     dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))

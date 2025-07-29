@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ast
-import functools
 import inspect
 import math  # noqa: F401
 import random  # noqa: F401
@@ -54,9 +53,15 @@ class Kernel:
         self,
         fieldset,
         ptype,
-        pyfunc=None,
-        py_ast=None,
+        pyfuncs: list[types.FunctionType],
     ):
+        for f in pyfuncs:
+            if not isinstance(f, types.FunctionType):
+                raise TypeError(f"Argument pyfunc should be a function or list of functions. Got {type(f)}")
+
+        if len(pyfuncs) == 0:
+            raise ValueError("List of `pyfuncs` should have at least one function.")
+
         self._fieldset = fieldset
         self._ptype = ptype
 
@@ -64,19 +69,15 @@ class Kernel:
         self._positionupdate_kernels_added = False
 
         # Derive meta information from pyfunc, if not given
-        self.check_fieldsets_in_kernels(pyfunc)
+
+        for f in pyfuncs:
+            self.check_fieldsets_in_kernels(f)
 
         # # TODO will be implemented when we support CROCO again
         # if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
         #     pyfunc = AdvectionRK4_3D_CROCO
 
-        if py_ast is None:
-            py_ast = _get_ast_from_function(pyfunc)
-        self.py_ast = py_ast
-
-        if pyfunc is None:
-            pyfunc = _compile_function_object_using_user_context(self.py_ast)
-        self._pyfunc = pyfunc
+        self._pyfuncs: list[Callable] = pyfuncs
 
     @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
     def funcname(self):
@@ -92,14 +93,6 @@ class Kernel:
     @property
     def ptype(self):
         return self._ptype
-
-    @property
-    def _pyfuncs(self):
-        return [self._pyfunc]
-
-    @property
-    def pyfunc(self):
-        return self._pyfunc
 
     @property
     def fieldset(self):
@@ -134,7 +127,7 @@ class Kernel:
             particle.depth_nextloop = particle.depth + particle.ddepth  # type: ignore[name-defined]
             particle.time_nextloop = particle.time + particle.dt
 
-        self._pyfunc = (Setcoords + self + Updatecoords)._pyfunc
+        self._pyfuncs = (Setcoords + self + Updatecoords)._pyfuncs
 
     def check_fieldsets_in_kernels(self, pyfunc):  # TODO v4: this can go into another method? assert_is_compatible()?
         """
@@ -175,37 +168,31 @@ class Kernel:
                     )
                     self.fieldset.add_constant("RK45_max_dt", 60 * 60 * 24)
 
-    def merge(self, kernel, kclass):
-        funcname = self.funcname + kernel.funcname
-        func_ast = None
-        if self.py_ast is not None:
-            func_ast = ast.FunctionDef(
-                name=funcname,
-                args=self.py_ast.args,
-                body=self.py_ast.body + kernel.py_ast.body,
-                decorator_list=[],
-                lineno=1,
-                col_offset=0,
-            )
-        return kclass(
+    def merge(self, kernel):
+        if not isinstance(kernel, type(self)):
+            raise TypeError(f"Cannot merge {type(kernel)} with {type(self)}. Both should be of type {type(self)}.")
+
+        assert self.fieldset == kernel.fieldset, "Cannot merge kernels with different fieldsets"
+        assert self.ptype == kernel.ptype, "Cannot merge kernels with different particle types"
+
+        return type(self)(
             self.fieldset,
             self.ptype,
-            pyfunc=None,
-            py_ast=func_ast,
+            pyfuncs=self._pyfuncs + kernel._pyfuncs,
         )
 
     def __add__(self, kernel):
-        if not isinstance(kernel, type(self)):
-            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, type(self))
+        if isinstance(kernel, types.FunctionType):
+            kernel = type(self)(self.fieldset, self.ptype, pyfuncs=[kernel])
+        return self.merge(kernel)
 
     def __radd__(self, kernel):
-        if not isinstance(kernel, type(self)):
-            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, type(self))
+        if isinstance(kernel, types.FunctionType):
+            kernel = type(self)(self.fieldset, self.ptype, pyfuncs=[kernel])
+        return kernel.merge(self)
 
     @classmethod
-    def from_list(cls, fieldset, ptype, pyfunc_list, *args, **kwargs):
+    def from_list(cls, fieldset, ptype, pyfunc_list):
         """Create a combined kernel from a list of functions.
 
         Takes a list of functions, converts them to kernels, and joins them
@@ -225,15 +212,11 @@ class Kernel:
             Additional keyword arguments passed to first kernel during construction.
         """
         if not isinstance(pyfunc_list, list):
-            raise TypeError(f"Argument function_list should be a list of functions. Got {type(pyfunc_list)}")
-        if len(pyfunc_list) == 0:
-            raise ValueError("Argument function_list should have at least one function.")
+            raise TypeError(f"Argument `pyfunc_list` should be a list of functions. Got {type(pyfunc_list)}")
         if not all([isinstance(f, types.FunctionType) for f in pyfunc_list]):
-            raise ValueError("Argument function_lst should be a list of functions.")
+            raise ValueError("Argument `pyfunc_list` should be a list of functions.")
 
-        pyfunc_list = pyfunc_list.copy()
-        pyfunc_list[0] = cls(fieldset, ptype, pyfunc_list[0], *args, **kwargs)
-        return functools.reduce(lambda x, y: x + y, pyfunc_list)
+        return cls(fieldset, ptype, pyfunc_list)
 
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
