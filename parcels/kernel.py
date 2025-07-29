@@ -309,6 +309,8 @@ class Kernel:
                 res_tmp = f(p, self._fieldset, p.time_nextloop)
                 if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
                     res = res_tmp
+                if res == StatusCode.StopExecution:
+                    break
 
             if res is None:
                 if p.state == StatusCode.Success:
