@@ -26,9 +26,7 @@ from tests.utils import create_fieldset_unit_mesh
 def expr_kernel(name, pset, expr):
     pycode = (f"def {name}(particle, fieldset, time):\n"
               f"    particle.p = {expr}")  # fmt: skip
-    return Kernel(
-        pset.fieldset, pset.particledata.ptype, pyfunc=None, funccode=pycode, funcname=name, funcvars=["particle"]
-    )
+    return Kernel(pset.fieldset, pset.particledata.ptype, pyfunc=None, funccode=pycode, funcname=name)
 
 
 @pytest.fixture

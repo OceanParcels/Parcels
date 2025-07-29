@@ -29,7 +29,6 @@ class InteractionKernel(BaseKernel):
         funcname=None,
         funccode=None,
         py_ast=None,
-        funcvars=None,
     ):
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
             raise NotImplementedError(
@@ -54,7 +53,6 @@ class InteractionKernel(BaseKernel):
             funcname=funcname,
             funccode=funccode,
             py_ast=py_ast,
-            funcvars=funcvars,
         )
 
         if pyfunc is not None:
