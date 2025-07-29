@@ -845,18 +845,20 @@ def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_tim
 
 
 def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray, time: TimeInterval):
-    if any(not np.isnat(t) for t in release_times):
-        if isinstance(time.left, np.datetime64) and isinstance(release_times[0], np.timedelta64):
-            release_times = np.array([t + time.left for t in release_times])
-        if np.any(release_times < time.left):
-            warnings.warn(
-                "Some particles are set to be released outside the FieldSet's executable time domain.",
-                ParticleSetWarning,
-                stacklevel=2,
-            )
-        if np.any(release_times > time.right):
-            warnings.warn(
-                "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
-                ParticleSetWarning,
-                stacklevel=2,
-            )
+    if np.isnat(release_times).all():
+        return
+
+    if isinstance(time.left, np.datetime64) and isinstance(release_times[0], np.timedelta64):
+        release_times = np.array([t + time.left for t in release_times])
+    if np.any(release_times < time.left):
+        warnings.warn(
+            "Some particles are set to be released outside the FieldSet's executable time domain.",
+            ParticleSetWarning,
+            stacklevel=2,
+        )
+    if np.any(release_times > time.right):
+        warnings.warn(
+            "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
+            ParticleSetWarning,
+            stacklevel=2,
+        )
