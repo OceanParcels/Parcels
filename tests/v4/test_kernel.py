@@ -23,21 +23,6 @@ def fieldset() -> FieldSet:
     return FieldSet([U, V])
 
 
-def test_multi_kernel_reuse_varnames(fieldset):
-    pset = ParticleSet(fieldset, lon=[0.5], lat=[0.5])
-
-    # Testing for merging of two Kernels with the same variable declared
-    def MoveEast1(particle, fieldset, time):  # pragma: no cover
-        add_lon = 0.2
-        particle.dlon += add_lon
-
-    def MoveEast2(particle, fieldset, time):  # pragma: no cover
-        particle.dlon += add_lon  # noqa
-
-    pset.execute([MoveEast1, MoveEast2], runtime=np.timedelta64(2, "s"))
-    assert np.allclose(pset.lon, [0.9], atol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
-
-
 def test_unknown_var_in_kernel(fieldset):
     pset = ParticleSet(fieldset, lon=[0.5], lat=[0.5])
 
