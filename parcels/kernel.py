@@ -43,15 +43,11 @@ class Kernel:
         PType object for the kernel particle
     pyfunc :
         (aggregated) Kernel function
-    funcname : str
-        function name
 
     Notes
     -----
     A Kernel is either created from a <function ...> object
-    or the necessary information (funcname, ..., ...) is provided.
-    The py_ast argument may be derived from the code string, but for
-    concatenation, the merged AST plus the new header definition is required.
+    or an ast.FunctionDef object.
     """
 
     def __init__(
@@ -59,17 +55,12 @@ class Kernel:
         fieldset,
         ptype,
         pyfunc=None,
-        funcname=None,
         py_ast=None,
     ):
         self._fieldset = fieldset
         self._ptype = ptype
 
         # Derive meta information from pyfunc, if not given
-        self._pyfunc = None
-        self.funcname = funcname or pyfunc.__name__
-        self.name = f"{ptype.name}{self.funcname}"
-        self.py_ast = py_ast  # TODO v4: check if this is needed
         self._positionupdate_kernels_added = False
 
         # Derive meta information from pyfunc, if not given
@@ -78,17 +69,25 @@ class Kernel:
         # # TODO will be implemented when we support CROCO again
         # if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
         #     pyfunc = AdvectionRK4_3D_CROCO
-        #     self.funcname = "AdvectionRK4_3D_CROCO"
 
         if py_ast is None:
             py_ast = _get_ast_from_function(pyfunc)
         self.py_ast = py_ast
 
         if pyfunc is None:
-            pyfunc = _compile_function_object_using_user_context(self.py_ast, self.funcname)
+            pyfunc = _compile_function_object_using_user_context(self.py_ast)
         self._pyfunc = pyfunc
 
-        self.name = f"{ptype.name}{self.funcname}"
+    @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
+    def funcname(self):
+        ret = ""
+        for f in self._pyfuncs:
+            ret += f.__name__
+        return ret
+
+    @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
+    def name(self):
+        return f"{self._ptype.name}{self.funcname}"
 
     @property
     def ptype(self):
@@ -192,7 +191,6 @@ class Kernel:
             self.fieldset,
             self.ptype,
             pyfunc=None,
-            funcname=funcname,
             py_ast=func_ast,
         )
 
@@ -340,8 +338,9 @@ class Kernel:
         return p
 
 
-def _compile_function_object_using_user_context(py_ast, funcname):
+def _compile_function_object_using_user_context(py_ast: ast.FunctionDef) -> Callable:
     # Extract user context by inspecting the call stack
+    assert isinstance(py_ast, ast.FunctionDef), "py_ast should be an instance of ast.FunctionDef"
     stack = inspect.stack()
     try:
         user_ctx = stack[-1][0].f_globals
@@ -361,7 +360,7 @@ def _compile_function_object_using_user_context(py_ast, funcname):
     py_mod = ast.parse("")
     py_mod.body = [py_ast]
     exec(compile(py_mod, "<ast>", "exec"), user_ctx)
-    return user_ctx[funcname]
+    return user_ctx[py_ast.name]
 
 
 def _get_ast_from_function(pyfunc: Callable):
