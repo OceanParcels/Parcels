@@ -133,7 +133,7 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
 @pytest.mark.parametrize("u", [-0.3, np.array(0.2)])
 @pytest.mark.parametrize("v", [0.2, np.array(1)])
 @pytest.mark.parametrize("w", [None, -0.2, np.array(0.7)])
-def test_length1dimensions(u, v, w): # TODO: Refactor this test to be more readable (and isolate test setup)
+def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more readable (and isolate test setup)
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (np.array([0]), 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (np.array([-4]), 1)
     (depth, zdim) = (
@@ -198,7 +198,7 @@ def test_length1dimensions(u, v, w): # TODO: Refactor this test to be more reada
         ("RK45", 1e-5),
     ],
 )
-def test_moving_eddy(method, rtol): # TODO: Refactor this test to be more readable
+def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more readable
     f, u_0, u_g = 1.0e-4, 0.3, 0.04  # Some constants
     start_lon, start_lat = 12000, 12500
 
