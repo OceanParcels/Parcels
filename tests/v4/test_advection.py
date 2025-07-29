@@ -198,7 +198,7 @@ def test_length1dimensions(u, v, w):
         ("RK45", 1e-5),
     ],
 )
-def test_moving_eddy(method, rtol):
+def test_moving_eddy(method, rtol): # TODO: Refactor this test to be more readable
     f, u_0, u_g = 1.0e-4, 0.3, 0.04  # Some constants
     start_lon, start_lat = 12000, 12500
 
