@@ -108,14 +108,7 @@ class ParticleSet:
             depth = convert_to_flat_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
-        if time is None or len(time) == 0:
-            time = np.array([np.nan])  # do not set a time yet (because sign_dt not known)
-        elif type(time[0]) is np.datetime64:
-            time = (time - self.fieldset.time_interval.left) / np.timedelta64(1, "s")
-        elif type(time[0]) is np.timedelta64:
-            time = time / np.timedelta64(1, "s")
-        else:
-            raise TypeError("particle time must be a datetime, timedelta, or date object")
+        time = _get_times_from_interval_start(time, self.fieldset.time_interval)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
         assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
@@ -735,12 +728,12 @@ class ParticleSet:
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
-        if (dt is not None) and (not isinstance(dt, np.timedelta64)):
+        if dt is None:
+            dt = np.timedelta64(1, "s")
+        if not isinstance(dt, np.timedelta64):
             raise TypeError("dt must be a np.timedelta64 object")
-        if dt is None or np.isnat(dt):
-            dt = 1
-        else:
-            dt /= np.timedelta64(1, "s")
+
+        dt /= np.timedelta64(1, "s")
 
         self._data["dt"][:] = dt
         sign_dt = np.sign(dt).astype(int)
@@ -840,6 +833,21 @@ class ParticleSet:
 
         if verbose_progress:
             pbar.close()
+
+
+def _get_times_from_interval_start(time: np.ndarray, time_interval: TimeInterval | None) -> np.ndarray:
+    if time is None or len(time) == 0:
+        return np.array([np.nan])  # do not set a time yet (because sign_dt not known)
+
+    if time_interval is None:
+        return (time - np.min(time)) / np.timedelta64(1, "s")
+
+    if type(time[0]) is not type(time_interval.left):
+        raise TypeError(
+            f"Time must be of the same type as the fieldset's time interval. Got {type(time[0])}, but time interval is defined using {type(time_interval.left)}."
+        )
+
+    return (time - time_interval.left) / np.timedelta64(1, "s")
 
 
 def _warn_outputdt_release_desync(outputdt: float, starttime: float, release_times: Iterable[float]):

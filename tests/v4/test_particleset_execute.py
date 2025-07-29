@@ -74,7 +74,7 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
 
 @pytest.mark.parametrize(
     "starttime, endtime, dt",
-    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
+    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, 1)],
 )
 def test_execution_endtime(fieldset, starttime, endtime, dt):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
@@ -87,7 +87,7 @@ def test_execution_endtime(fieldset, starttime, endtime, dt):
 
 @pytest.mark.parametrize(
     "starttime, runtime, dt",
-    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
+    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, 1)],
 )
 def test_execution_runtime(fieldset, starttime, runtime, dt):
     starttime_date = fieldset.time_interval.left + np.timedelta64(starttime, "s")

@@ -109,7 +109,7 @@ def test_pset_custominit_on_pclass(fieldset, pset_override):
 @pytest.mark.parametrize(
     "time, expectation",
     [
-        (np.timedelta64(0, "s"), does_not_raise()),
+        (np.timedelta64(0, "s"), pytest.raises(TypeError)),
         (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
         (0.0, pytest.raises(TypeError)),
         (timedelta(seconds=0), pytest.raises(TypeError)),
