@@ -94,27 +94,7 @@ class Kernel:
             py_ast or ast.parse(textwrap.dedent(self.funccode)).body[0]
         )  # Dedent allows for in-lined kernel definitions
         if pyfunc is None:
-            # Extract user context by inspecting the call stack
-            stack = inspect.stack()
-            try:
-                user_ctx = stack[-1][0].f_globals
-                user_ctx["math"] = globals()["math"]
-                user_ctx["random"] = globals()["random"]
-                user_ctx["StatusCode"] = globals()["StatusCode"]
-            except:
-                warnings.warn(
-                    "Could not access user context when merging kernels",
-                    KernelWarning,
-                    stacklevel=2,
-                )
-                user_ctx = globals()
-            finally:
-                del stack  # Remove cyclic references
-            # Generate Python function from AST
-            py_mod = ast.parse("")
-            py_mod.body = [self.py_ast]
-            exec(compile(py_mod, "<ast>", "exec"), user_ctx)
-            self._pyfunc = user_ctx[self.funcname]
+            self._pyfunc = _compile_function_object_using_user_context(self.py_ast, self.funcname)
         else:
             self._pyfunc = pyfunc
 
@@ -370,3 +350,27 @@ class Kernel:
 
             p.dt = pre_dt
         return p
+
+
+def _compile_function_object_using_user_context(py_ast, funcname):
+    # Extract user context by inspecting the call stack
+    stack = inspect.stack()
+    try:
+        user_ctx = stack[-1][0].f_globals
+        user_ctx["math"] = globals()["math"]
+        user_ctx["random"] = globals()["random"]
+        user_ctx["StatusCode"] = globals()["StatusCode"]
+    except:
+        warnings.warn(
+            "Could not access user context when merging kernels",
+            KernelWarning,
+            stacklevel=2,
+        )
+        user_ctx = globals()
+    finally:
+        del stack  # Remove cyclic references
+    # Generate Python function from AST
+    py_mod = ast.parse("")
+    py_mod.body = [py_ast]
+    exec(compile(py_mod, "<ast>", "exec"), user_ctx)
+    return user_ctx[funcname]
