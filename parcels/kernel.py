@@ -76,16 +76,17 @@ class Kernel:
         #     pyfunc = AdvectionRK4_3D_CROCO
         #     self.funcname = "AdvectionRK4_3D_CROCO"
 
-        self.funccode = funccode or inspect.getsource(pyfunc.__code__)
+        if funccode is None:
+            funccode = inspect.getsource(pyfunc.__code__)
+        self.funccode = textwrap.dedent(funccode)
 
-        # Parse AST if it is not provided explicitly
-        self.py_ast = (
-            py_ast or ast.parse(textwrap.dedent(self.funccode)).body[0]
-        )  # Dedent allows for in-lined kernel definitions
+        if py_ast is None:
+            py_ast = ast.parse(textwrap.dedent(self.funccode)).body[0]
+        self.py_ast = py_ast
+
         if pyfunc is None:
-            self._pyfunc = _compile_function_object_using_user_context(self.py_ast, self.funcname)
-        else:
-            self._pyfunc = pyfunc
+            pyfunc = _compile_function_object_using_user_context(self.py_ast, self.funcname)
+        self._pyfunc = pyfunc
 
         self.name = f"{ptype.name}{self.funcname}"
 
