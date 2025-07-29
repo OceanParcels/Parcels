@@ -376,6 +376,8 @@ class Kernel(BaseKernel):
         dt :
             computational integration timestep
         """
+        # TODO what happens if only some particles throw an error?
+        # TODO support for dt to be different for each particle
         sign_dt = 1 if pset.dt[0] >= 0 else -1
         while pset[0].state in [StatusCode.Evaluate, StatusCode.Repeat]:
             if all(sign_dt * (endtime - pset.time_nextloop) <= 0):

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import xarray as xr
 
 from parcels.field import Field
 from parcels.tools.statuscodes import (
@@ -39,15 +40,18 @@ def XBiLinear(
     yi, eta = position["Y"]
     zi, _ = position["Z"]
 
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
+    if tau > 0:
+        data = (1 - tau) * field.data[ti, zi, :, :] + tau * field.data[ti + 1, zi, :, :]
+    else:
+        data = field.data[ti, zi, :, :]
 
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
+    xi = xr.DataArray(xi, dims="points")
+    yi = xr.DataArray(yi, dims="points")
+    F00 = data.isel(XG=xi, YG=yi).values.flatten()
+    F10 = data.isel(XG=xi + 1, YG=yi).values.flatten()
+    F01 = data.isel(XG=xi, YG=yi + 1).values.flatten()
+    F11 = data.isel(XG=xi + 1, YG=yi + 1).values.flatten()
+    return (1 - xsi) * (1 - eta) * F00 + xsi * (1 - eta) * F10 + (1 - xsi) * eta * F01 + xsi * eta * F11
 
 
 def XBiLinearPeriodic(

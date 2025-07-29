@@ -466,7 +466,7 @@ def _search_1d_array(
     # TODO v4: We probably rework this to deal with 0D arrays before this point (as we already know field dimensionality)
     if len(arr) < 2:
         return 0, 0.0
-    i = np.argmin(arr <= x) - 1
+    i = np.searchsorted(arr, x, side="right") - 1
     bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
     return i, bcoord
 
