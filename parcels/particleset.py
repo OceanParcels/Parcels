@@ -133,9 +133,9 @@ class ParticleSet:
         for kwvar in kwargs:
             if kwvar not in ["partition_function"]:
                 kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
-                assert (
-                    lon.size == kwargs[kwvar].size
-                ), f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+                assert lon.size == kwargs[kwvar].size, (
+                    f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+                )
 
         self._data = {
             "lon": lon.astype(lonlatdepth_dtype),
@@ -233,9 +233,9 @@ class ParticleSet:
             The current ParticleSet
 
         """
-        assert (
-            particles is not None
-        ), f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        assert particles is not None, (
+            f"Trying to add another {type(self)} to this one, but the other one is None - invalid operation."
+        )
         assert type(particles) is type(self)
 
         if len(particles) == 0:
