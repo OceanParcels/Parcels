@@ -610,7 +610,7 @@ class ParticleSet:
         return Kernel(
             self.fieldset,
             self._ptype,
-            pyfunc=pyfunc,
+            pyfuncs=[pyfunc],
         )
 
     def InteractionKernel(self, pyfunc_inter):

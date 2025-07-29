@@ -8,6 +8,8 @@ from parcels import (
     ParticleSet,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
+from parcels.kernel import Kernel
+from parcels.particle import Particle
 from parcels.xgrid import XGrid
 from tests.common_kernels import MoveEast, MoveNorth
 
@@ -46,7 +48,26 @@ def test_unknown_var_in_kernel(fieldset):
         pset.execute(ErrorKernel, runtime=np.timedelta64(2, "s"))
 
 
-def test_combined_kernel_from_list(fieldset):
+def test_kernel_init(fieldset):
+    Kernel(fieldset, ptype=Particle, pyfuncs=[AdvectionRK4])
+
+
+def test_kernel_merging(fieldset):
+    k1 = Kernel(fieldset, ptype=Particle, pyfuncs=[AdvectionRK4])
+    k2 = Kernel(fieldset, ptype=Particle, pyfuncs=[MoveEast, MoveNorth])
+
+    merged_kernel = k1 + k2
+    assert merged_kernel.funcname == "AdvectionRK4MoveEastMoveNorth"
+    assert len(merged_kernel._pyfuncs) == 3
+    assert merged_kernel._pyfuncs == [AdvectionRK4, MoveEast, MoveNorth]
+
+    merged_kernel = k2 + k1
+    assert merged_kernel.funcname == "MoveEastMoveNorthAdvectionRK4"
+    assert len(merged_kernel._pyfuncs) == 3
+    assert merged_kernel._pyfuncs == [MoveEast, MoveNorth, AdvectionRK4]
+
+
+def test_kernel_from_list(fieldset):
     """
     Test pset.Kernel(List[function])
 
@@ -62,7 +83,7 @@ def test_combined_kernel_from_list(fieldset):
     assert kernels_functions.funcname == "AdvectionRK4MoveEastMoveNorth"
 
 
-def test_combined_kernel_from_list_error_checking(fieldset):
+def test_kernel_from_list_error_checking(fieldset):
     """
     Test pset.Kernel(List[function])
 
@@ -70,15 +91,12 @@ def test_combined_kernel_from_list_error_checking(fieldset):
     """
     pset = ParticleSet(fieldset, lon=[0.5], lat=[0.5])
 
-    # Test that list has to be non-empty
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="List of `pyfuncs` should have at least one function."):
         pset.Kernel([])
 
-    # Test that list has to be all functions
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Argument `pyfunc_list` should be a list of functions."):
         pset.Kernel([AdvectionRK4, "something else"])
 
-    # Can't mix kernel objects and functions in list
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Argument `pyfunc_list` should be a list of functions."):
         kernels_mixed = pset.Kernel([pset.Kernel(AdvectionRK4), MoveEast, MoveNorth])
         assert kernels_mixed.funcname == "AdvectionRK4MoveEastMoveNorth"
