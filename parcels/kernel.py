@@ -78,12 +78,10 @@ class Kernel:
         #     pyfunc = AdvectionRK4_3D_CROCO
         #     self.funcname = "AdvectionRK4_3D_CROCO"
 
-        if funcvars is not None:  # TODO v4: check if needed from here onwards
-            self.funcvars = funcvars
-        elif hasattr(pyfunc, "__code__"):
+        self.funcvars = funcvars
+        if pyfunc is not None:
             self.funcvars = list(pyfunc.__code__.co_varnames)
-        else:
-            self.funcvars = None
+
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
 
         # Parse AST if it is not provided explicitly
