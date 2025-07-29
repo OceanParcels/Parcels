@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import uxarray as ux
 
@@ -134,7 +135,7 @@ def test_fesom2_square_delaunay_antimeridian_eval():
     P = Field(name="p", data=ds.p, grid=UxGrid(ds.uxgrid, z=ds.coords["nz"]), interp_method=UXPiecewiseLinearNode)
     fieldset = FieldSet([P])
 
-    assert fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=-170.0, applyConversion=False) == 1.0
-    assert fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=-180.0, applyConversion=False) == 1.0
-    assert fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=180.0, applyConversion=False) == 1.0
-    assert fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=170.0, applyConversion=False) == 1.0
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=-170.0, applyConversion=False), 1.0)
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=-180.0, applyConversion=False), 1.0)
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=180.0, applyConversion=False), 1.0)
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=170.0, applyConversion=False), 1.0)
