@@ -463,6 +463,7 @@ def _search_1d_array(
     float
         Barycentric coordinate.
     """
+    # TODO v4: We probably rework this to deal with 0D arrays before this point (as we already know field dimensionality)
     if len(arr) < 2:
         return 0, 0.0
     i = np.argmin(arr <= x) - 1
