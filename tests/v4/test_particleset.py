@@ -37,19 +37,6 @@ def test_pset_create_lon_lat(fieldset):
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
 
-@pytest.mark.parametrize("lonlatdepth_dtype", [np.float64, np.float32])
-def test_pset_create_line(fieldset, lonlatdepth_dtype):
-    npart = 100
-    lon = np.linspace(0, 1, npart, dtype=lonlatdepth_dtype)
-    lat = np.linspace(1, 0, npart, dtype=lonlatdepth_dtype)
-    pset = ParticleSet.from_line(
-        fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=Particle, lonlatdepth_dtype=lonlatdepth_dtype
-    )
-    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
-    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
-    assert isinstance(pset[0].lat, lonlatdepth_dtype)
-
-
 def test_create_empty_pset(fieldset):
     pset = ParticleSet(fieldset, pclass=Particle)
     assert pset.size == 0
