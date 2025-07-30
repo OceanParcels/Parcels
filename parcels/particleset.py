@@ -389,65 +389,6 @@ class ParticleSet:
         )
 
     @classmethod
-    def from_line(
-        cls,
-        fieldset,
-        pclass,
-        start,
-        finish,
-        size,
-        depth=None,
-        time=None,
-        repeatdt=None,
-        lonlatdepth_dtype=None,
-        **kwargs,
-    ):
-        """Create a particleset in the shape of a line (according to a cartesian grid).
-
-        Initialise the ParticleSet from start/finish coordinates with equidistant spacing
-        Note that this method uses simple numpy.linspace calls and does not take into account
-        great circles, so may not be a exact on a globe
-
-        Parameters
-        ----------
-        fieldset :
-            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        pclass :
-            Particle class. May be a parcels.particle.Particle as defined in parcels, or a subclass defining a custom particle.
-        start :
-            Start point (longitude, latitude) for initialisation of particles on a straight line.
-        finish :
-            End point (longitude, latitude) for initialisation of particles on a straight line.
-        size :
-            Initial size of particle set
-        depth :
-            Optional list of initial depth values for particles. Default is 0m
-        time :
-            Optional start time value for particles. Default is fieldset.U.time[0]
-        repeatdt :
-            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
-        lonlatdepth_dtype :
-            Floating precision for lon, lat, depth particle coordinates.
-            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-            and np.float64 if the interpolation method is 'cgrid_velocity'
-        """
-        lon = np.linspace(start[0], finish[0], size)
-        lat = np.linspace(start[1], finish[1], size)
-        if type(depth) in [int, float]:
-            depth = [depth] * size
-        return cls(
-            fieldset=fieldset,
-            pclass=pclass,
-            lon=lon,
-            lat=lat,
-            depth=depth,
-            time=time,
-            repeatdt=repeatdt,
-            lonlatdepth_dtype=lonlatdepth_dtype,
-            **kwargs,
-        )
-
-    @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, **kwargs):
         """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
