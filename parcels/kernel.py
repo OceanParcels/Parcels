@@ -62,10 +62,7 @@ class Kernel:
         self._fieldset = fieldset
         self._ptype = ptype
 
-        # Derive meta information from pyfunc, if not given
         self._positionupdate_kernels_added = False
-
-        # Derive meta information from pyfunc, if not given
 
         for f in pyfuncs:
             self.check_fieldsets_in_kernels(f)
@@ -119,9 +116,9 @@ class Kernel:
             particle.time = particle.time_nextloop
 
         def Updatecoords(particle, fieldset, time):  # pragma: no cover
-            particle.lon_nextloop = particle.lon + particle.dlon  # type: ignore[name-defined]
-            particle.lat_nextloop = particle.lat + particle.dlat  # type: ignore[name-defined]
-            particle.depth_nextloop = particle.depth + particle.ddepth  # type: ignore[name-defined]
+            particle.lon_nextloop = particle.lon + particle.dlon
+            particle.lat_nextloop = particle.lat + particle.dlat
+            particle.depth_nextloop = particle.depth + particle.ddepth
             particle.time_nextloop = particle.time + particle.dt
 
         self._pyfuncs = (Setcoords + self + Updatecoords)._pyfuncs

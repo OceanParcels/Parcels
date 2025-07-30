@@ -26,7 +26,7 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     # Wiener increment with zero mean and std of sqrt(dt)
     dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
     dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
