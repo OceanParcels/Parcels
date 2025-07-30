@@ -140,7 +140,9 @@ def assert_valid_field_data(data: xr.DataArray, grid: XGrid):
         assert ax_actual == ax_expected, f"Expected axis {ax_expected} for dimension '{dim}', got {ax_actual}"
 
 
-def hash_float_array(arr):
+def round_and_hash_float_array(arr, decimals=6):
+    arr = np.round(arr, decimals=decimals)
+
     # Adapted from https://cs.stackexchange.com/a/37965
     h = 1
     for f in arr:

@@ -2,6 +2,8 @@
 
 import math
 
+import numpy as np
+
 from parcels.tools.statuscodes import StatusCode
 
 __all__ = [
@@ -16,7 +18,7 @@ __all__ = [
 
 def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration."""
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * 0.5 * dt, particle.lat + v1 * 0.5 * dt)
     (u2, v2) = fieldset.UV[time + 0.5 * particle.dt, particle.depth, lat1, lon1, particle]
@@ -24,13 +26,13 @@ def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     (u3, v3) = fieldset.UV[time + 0.5 * particle.dt, particle.depth, lat2, lon2, particle]
     lon3, lat3 = (particle.lon + u3 * dt, particle.lat + v3 * dt)
     (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3, particle]
-    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6.0 * dt  # noqa
-    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * dt  # noqa
+    particle.dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6.0 * dt
+    particle.dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * dt
 
 
 def AdvectionRK4_3D(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity."""
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")
     (u1, v1, w1) = fieldset.UVW[particle]
     lon1 = particle.lon + u1 * 0.5 * dt
     lat1 = particle.lat + v1 * 0.5 * dt
@@ -44,16 +46,16 @@ def AdvectionRK4_3D(particle, fieldset, time):  # pragma: no cover
     lat3 = particle.lat + v3 * dt
     dep3 = particle.depth + w3 * dt
     (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
-    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * dt  # noqa
-    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * dt  # noqa
-    particle_ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6 * dt  # noqa
+    particle.dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * dt
+    particle.dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * dt
+    particle.ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6 * dt
 
 
 def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     sig_dep = particle.depth / fieldset.H[time, 0, particle.lat, particle.lon]
 
     (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon, particle]
@@ -84,9 +86,9 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
     sig_dep4 = sig_dep + w4 * dt
     dep4 = sig_dep4 * fieldset.H[time, 0, lat4, lon4]
 
-    particle_dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * dt  # noqa
-    particle_dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * dt  # noqa
-    particle_ddepth += (  # noqa
+    particle.dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * dt
+    particle.dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * dt
+    particle.ddepth += (
         (dep1 - particle.depth) * 2
         + 2 * (dep2 - particle.depth) * 2
         + 2 * (dep3 - particle.depth)
@@ -97,10 +99,10 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
 
 def AdvectionEE(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using Explicit Euler (aka Euler Forward) integration."""
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     (u1, v1) = fieldset.UV[particle]
-    particle_dlon += u1 * dt  # noqa
-    particle_dlat += v1 * dt  # noqa
+    particle.dlon += u1 * dt
+    particle.dlat += v1 * dt
 
 
 def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
@@ -113,7 +115,9 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     Time-step dt is halved if error is larger than fieldset.RK45_tol,
     and doubled if error is smaller than 1/10th of tolerance.
     """
-    dt = min(particle.next_dt / np.timedelta64(1, "s"), fieldset.RK45_max_dt)  # noqa TODO improve API for converting dt to seconds
+    dt = min(
+        particle.next_dt / np.timedelta64(1, "s"), fieldset.RK45_max_dt
+    )  # TODO: improve API for converting dt to seconds
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
     A = [
         [1.0 / 4.0, 0.0, 0.0, 0.0, 0.0],
@@ -156,8 +160,8 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
 
     kappa = math.sqrt(math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2))
     if (kappa <= fieldset.RK45_tol) or (math.fabs(dt) < math.fabs(fieldset.RK45_min_dt)):
-        particle_dlon += lon_4th  # noqa
-        particle_dlat += lat_4th  # noqa
+        particle.dlon += lon_4th
+        particle.dlat += lat_4th
         if (kappa <= fieldset.RK45_tol) / 10 and (math.fabs(dt * 2) <= math.fabs(fieldset.RK45_max_dt)):
             particle.next_dt *= 2
     else:
@@ -314,14 +318,14 @@ def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
     rs_x = compute_rs(xsi, B_x, delta_x, s_min)
     rs_y = compute_rs(eta, B_y, delta_y, s_min)
 
-    particle_dlon += (  # noqa
+    particle.dlon += (
         (1.0 - rs_x) * (1.0 - rs_y) * px[0]
         + rs_x * (1.0 - rs_y) * px[1]
         + rs_x * rs_y * px[2]
         + (1.0 - rs_x) * rs_y * px[3]
         - particle.lon
     )
-    particle_dlat += (  # noqa
+    particle.dlat += (
         (1.0 - rs_x) * (1.0 - rs_y) * py[0]
         + rs_x * (1.0 - rs_y) * py[1]
         + rs_x * rs_y * py[2]
@@ -331,7 +335,7 @@ def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
 
     if withW:
         rs_z = compute_rs(zeta, B_z, delta_z, s_min)
-        particle_ddepth += (1.0 - rs_z) * pz[0] + rs_z * pz[1] - particle.depth  # noqa
+        particle.ddepth += (1.0 - rs_z) * pz[0] + rs_z * pz[1] - particle.depth
 
     if particle.dt > 0:
         particle.dt = max(direction * s_min * (dxdy * dz), 1e-7).astype("timedelta64[s]")

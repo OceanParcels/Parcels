@@ -12,7 +12,6 @@ from parcels._core.utils.time import TimeInterval
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
-from parcels.interaction.interactionkernel import InteractionKernel
 from parcels.kernel import Kernel
 from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
@@ -141,6 +140,9 @@ class ParticleSet:
             "lon": lon.astype(lonlatdepth_dtype),
             "lat": lat.astype(lonlatdepth_dtype),
             "depth": depth.astype(lonlatdepth_dtype),
+            "dlon": np.zeros(lon.size, dtype=lonlatdepth_dtype),
+            "dlat": np.zeros(lon.size, dtype=lonlatdepth_dtype),
+            "ddepth": np.zeros(lon.size, dtype=lonlatdepth_dtype),
             "time": time,
             "dt": np.timedelta64(1, "ns") * np.ones(len(trajectory_ids)),
             # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
@@ -608,10 +610,12 @@ class ParticleSet:
         return Kernel(
             self.fieldset,
             self._ptype,
-            pyfunc=pyfunc,
+            pyfuncs=[pyfunc],
         )
 
     def InteractionKernel(self, pyfunc_inter):
+        from parcels.interaction.interactionkernel import InteractionKernel
+
         if pyfunc_inter is None:
             return None
         return InteractionKernel(self.fieldset, self._ptype, pyfunc=pyfunc_inter)
@@ -724,13 +728,10 @@ class ParticleSet:
         if len(self) == 0:
             return
 
-        # check if pyfunc has changed since last generation. If so, regenerate
-        if self._kernel is None or (self._kernel.pyfunc is not pyfunc and self._kernel is not pyfunc):
-            # Generate and store Kernel
-            if isinstance(pyfunc, Kernel):
-                self._kernel = pyfunc
-            else:
-                self._kernel = self.Kernel(pyfunc)
+        if not isinstance(pyfunc, Kernel):
+            pyfunc = self.Kernel(pyfunc)
+
+        self._kernel = pyfunc
 
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name

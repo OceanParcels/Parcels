@@ -15,6 +15,7 @@ from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
+from tests import utils
 from tests.common_kernels import DoNothing
 
 
@@ -33,7 +34,7 @@ def test_pset_remove_particle_in_kernel(fieldset):
 
     def DeleteKernel(particle, fieldset, time):  # pragma: no cover
         if particle.lon >= 0.4 and particle.lon <= 0.6:
-            particle.delete()
+            particle.state = StatusCode.Delete
 
     pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
     indices = [i for i in range(npart) if not (40 <= i < 60)]
@@ -59,7 +60,7 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
 
     def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle_dlat += 0.1  # noqa
+        particle.dlat += 0.1
 
     k_add = pset.Kernel(AddLat)
     for _ in range(n + 1):
@@ -115,8 +116,7 @@ def test_execution_fail_python_exception(fieldset, npart=10):
     assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
 
 
-@pytest.mark.parametrize("verbose_progress", [True, False])
-def test_uxstommelgyre_pset_execute(verbose_progress):
+def test_uxstommelgyre_pset_execute():
     ds = datasets_unstructured["stommel_gyre_delaunay"]
     grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"])
     U = Field(
@@ -154,8 +154,9 @@ def test_uxstommelgyre_pset_execute(verbose_progress):
         runtime=np.timedelta64(10, "m"),
         dt=np.timedelta64(60, "s"),
         pyfunc=AdvectionEE,
-        verbose_progress=verbose_progress,
     )
+    assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1165396086
+    assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1142124776
 
 
 @pytest.mark.xfail(reason="Output file not implemented yet")

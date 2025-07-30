@@ -3,8 +3,6 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from parcels.tools.statuscodes import StatusCode
-
 __all__ = ["InteractionParticle", "Particle", "Variable"]
 
 
@@ -122,10 +120,6 @@ class Particle:
             object.__setattr__(self, name, value)
         else:
             self._data[name][self._index] = value
-
-    def delete(self):
-        """Signal the particle for deletion."""
-        self.state = StatusCode.Delete
 
     @classmethod
     def add_variable(cls, variable: Variable | list[Variable]):

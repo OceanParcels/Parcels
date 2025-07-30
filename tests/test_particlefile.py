@@ -71,7 +71,7 @@ def test_pfile_set_towrite_False(fieldset, tmp_zarrfile):
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
 
     def Update_lon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += 0.1  # noqa
+        particle.dlon += 0.1
 
     pset.execute(Update_lon, runtime=10, output_file=pfile)
 
@@ -110,7 +110,7 @@ def test_pfile_array_remove_all_particles(fieldset, chunks_obs, tmp_zarrfile):
 
 def test_variable_write_double(fieldset, tmp_zarrfile):
     def Update_lon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += 0.1  # noqa
+        particle.dlon += 0.1
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=0.00001)
@@ -239,7 +239,7 @@ def test_pfile_chunks_repeatedrelease(fieldset, repeatdt, nump, tmp_zarrfile):
 
 def test_write_timebackward(fieldset, tmp_zarrfile):
     def Update_lon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon -= 0.1 * particle.dt  # noqa
+        particle.dlon -= 0.1 * particle.dt
 
     pset = ParticleSet(fieldset, pclass=Particle, lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
     pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1.0)
@@ -307,7 +307,7 @@ def test_reset_dt(fieldset, tmp_zarrfile):
     # for p.dt=0.02 to reach outputdt=0.05 and endtime=0.1, the steps should be [0.2, 0.2, 0.1, 0.2, 0.2, 0.1], resulting in 6 kernel executions
 
     def Update_lon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += 0.1  # noqa
+        particle.dlon += 0.1
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=0.05)
@@ -320,7 +320,7 @@ def test_correct_misaligned_outputdt_dt(fieldset, tmp_zarrfile):
     """Testing that outputdt does not need to be a multiple of dt."""
 
     def Update_lon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += particle.dt  # noqa
+        particle.dlon += particle.dt
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=3)

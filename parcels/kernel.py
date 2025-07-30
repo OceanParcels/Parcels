@@ -1,12 +1,10 @@
-import abc
-import ast
-import functools
-import inspect
+from __future__ import annotations
+
 import math  # noqa: F401
 import random  # noqa: F401
-import textwrap
 import types
 import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -24,43 +22,71 @@ from parcels.tools.statuscodes import (
 )
 from parcels.tools.warnings import KernelWarning
 
-__all__ = ["BaseKernel", "Kernel"]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+__all__ = ["Kernel"]
 
 
-class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel class (gave a "B024 `BaseKernel` is an abstract base class, but it has no abstract methods or properties" error)
-    """Superclass for 'normal' and Interactive Kernels"""
+class Kernel:
+    """Kernel object that encapsulates auto-generated code.
+
+    Parameters
+    ----------
+    fieldset : parcels.Fieldset
+        FieldSet object providing the field information (possibly None)
+    ptype :
+        PType object for the kernel particle
+    pyfunc :
+        (aggregated) Kernel function
+
+    Notes
+    -----
+    A Kernel is either created from a <function ...> object
+    or an ast.FunctionDef object.
+    """
 
     def __init__(
         self,
         fieldset,
         ptype,
-        pyfunc=None,
-        funcname=None,
-        funccode=None,
-        py_ast=None,
-        funcvars=None,
+        pyfuncs: list[types.FunctionType],
     ):
+        for f in pyfuncs:
+            if not isinstance(f, types.FunctionType):
+                raise TypeError(f"Argument pyfunc should be a function or list of functions. Got {type(f)}")
+
+        if len(pyfuncs) == 0:
+            raise ValueError("List of `pyfuncs` should have at least one function.")
+
         self._fieldset = fieldset
-        self.field_args = None
-        self.const_args = None
         self._ptype = ptype
 
-        # Derive meta information from pyfunc, if not given
-        self._pyfunc = None
-        self.funcname = funcname or pyfunc.__name__
-        self.name = f"{ptype.name}{self.funcname}"
-        self.funcvars = funcvars
-        self.funccode = funccode
-        self.py_ast = py_ast  # TODO v4: check if this is needed
         self._positionupdate_kernels_added = False
+
+        for f in pyfuncs:
+            self.check_fieldsets_in_kernels(f)
+
+        # # TODO will be implemented when we support CROCO again
+        # if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
+        #     pyfunc = AdvectionRK4_3D_CROCO
+
+        self._pyfuncs: list[Callable] = pyfuncs
+
+    @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
+    def funcname(self):
+        ret = ""
+        for f in self._pyfuncs:
+            ret += f.__name__
+        return ret
+
+    @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
+    def name(self):
+        return f"{self._ptype.name}{self.funcname}"
 
     @property
     def ptype(self):
         return self._ptype
-
-    @property
-    def pyfunc(self):
-        return self._pyfunc
 
     @property
     def fieldset(self):
@@ -76,131 +102,26 @@ class BaseKernel(abc.ABC):  # noqa # TODO v4: check if we need this BaseKernel c
         if len(indices) > 0:
             pset.remove_indices(indices)
 
-
-class Kernel(BaseKernel):
-    """Kernel object that encapsulates auto-generated code.
-
-    Parameters
-    ----------
-    fieldset : parcels.Fieldset
-        FieldSet object providing the field information (possibly None)
-    ptype :
-        PType object for the kernel particle
-    pyfunc :
-        (aggregated) Kernel function
-    funcname : str
-        function name
-
-    Notes
-    -----
-    A Kernel is either created from a <function ...> object
-    or the necessary information (funcname, funccode, funcvars) is provided.
-    The py_ast argument may be derived from the code string, but for
-    concatenation, the merged AST plus the new header definition is required.
-    """
-
-    def __init__(
-        self,
-        fieldset,
-        ptype,
-        pyfunc=None,
-        funcname=None,
-        funccode=None,
-        py_ast=None,
-        funcvars=None,
-    ):
-        super().__init__(
-            fieldset=fieldset,
-            ptype=ptype,
-            pyfunc=pyfunc,
-            funcname=funcname,
-            funccode=funccode,
-            py_ast=py_ast,
-            funcvars=funcvars,
-        )
-
-        # Derive meta information from pyfunc, if not given
-        self.check_fieldsets_in_kernels(pyfunc)
-
-        # # TODO will be implemented when we support CROCO again
-        # if (pyfunc is AdvectionRK4_3D) and fieldset.U.gridindexingtype == "croco":
-        #     pyfunc = AdvectionRK4_3D_CROCO
-        #     self.funcname = "AdvectionRK4_3D_CROCO"
-
-        if funcvars is not None:  # TODO v4: check if needed from here onwards
-            self.funcvars = funcvars
-        elif hasattr(pyfunc, "__code__"):
-            self.funcvars = list(pyfunc.__code__.co_varnames)
-        else:
-            self.funcvars = None
-        self.funccode = funccode or inspect.getsource(pyfunc.__code__)
-        self.funccode = (  # Remove parcels. prefix (see #1608)
-            self.funccode.replace("parcels.StatusCode", "StatusCode")
-        )
-
-        # Parse AST if it is not provided explicitly
-        self.py_ast = (
-            py_ast or ast.parse(textwrap.dedent(self.funccode)).body[0]
-        )  # Dedent allows for in-lined kernel definitions
-        if pyfunc is None:
-            # Extract user context by inspecting the call stack
-            stack = inspect.stack()
-            try:
-                user_ctx = stack[-1][0].f_globals
-                user_ctx["math"] = globals()["math"]
-                user_ctx["random"] = globals()["random"]
-                user_ctx["StatusCode"] = globals()["StatusCode"]
-            except:
-                warnings.warn(
-                    "Could not access user context when merging kernels",
-                    KernelWarning,
-                    stacklevel=2,
-                )
-                user_ctx = globals()
-            finally:
-                del stack  # Remove cyclic references
-            # Generate Python function from AST
-            py_mod = ast.parse("")
-            py_mod.body = [self.py_ast]
-            exec(compile(py_mod, "<ast>", "exec"), user_ctx)
-            self._pyfunc = user_ctx[self.funcname]
-        else:
-            self._pyfunc = pyfunc
-
-        self.name = f"{ptype.name}{self.funcname}"
-
-    @property
-    def ptype(self):
-        return self._ptype
-
-    @property
-    def pyfunc(self):
-        return self._pyfunc
-
-    @property
-    def fieldset(self):
-        return self._fieldset
-
     def add_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
         def Setcoords(particle, fieldset, time):  # pragma: no cover
             import numpy as np  # noqa
 
-            particle_dlon = 0  # noqa
-            particle_dlat = 0  # noqa
-            particle_ddepth = 0  # noqa
+            particle.dlon = 0
+            particle.dlat = 0
+            particle.ddepth = 0
             particle.lon = particle.lon_nextloop
             particle.lat = particle.lat_nextloop
             particle.depth = particle.depth_nextloop
             particle.time = particle.time_nextloop
 
         def Updatecoords(particle, fieldset, time):  # pragma: no cover
-            particle.lon_nextloop = particle.lon + particle_dlon  # type: ignore[name-defined] # noqa
-            particle.lat_nextloop = particle.lat + particle_dlat  # type: ignore[name-defined] # noqa
-            particle.depth_nextloop = particle.depth + particle_ddepth  # type: ignore[name-defined] # noqa
+            particle.lon_nextloop = particle.lon + particle.dlon
+            particle.lat_nextloop = particle.lat + particle.dlat
+            particle.depth_nextloop = particle.depth + particle.ddepth
             particle.time_nextloop = particle.time + particle.dt
 
-        self._pyfunc = (Setcoords + self + Updatecoords)._pyfunc
+        self._pyfuncs = (Setcoords + self + Updatecoords)._pyfuncs
 
     def check_fieldsets_in_kernels(self, pyfunc):  # TODO v4: this can go into another method? assert_is_compatible()?
         """
@@ -241,40 +162,31 @@ class Kernel(BaseKernel):
                     )
                     self.fieldset.add_constant("RK45_max_dt", 60 * 60 * 24)
 
-    def merge(self, kernel, kclass):
-        funcname = self.funcname + kernel.funcname
-        func_ast = None
-        if self.py_ast is not None:
-            func_ast = ast.FunctionDef(
-                name=funcname,
-                args=self.py_ast.args,
-                body=self.py_ast.body + kernel.py_ast.body,
-                decorator_list=[],
-                lineno=1,
-                col_offset=0,
-            )
-        return kclass(
+    def merge(self, kernel):
+        if not isinstance(kernel, type(self)):
+            raise TypeError(f"Cannot merge {type(kernel)} with {type(self)}. Both should be of type {type(self)}.")
+
+        assert self.fieldset == kernel.fieldset, "Cannot merge kernels with different fieldsets"
+        assert self.ptype == kernel.ptype, "Cannot merge kernels with different particle types"
+
+        return type(self)(
             self.fieldset,
             self.ptype,
-            pyfunc=None,
-            funcname=funcname,
-            funccode=self.funccode + kernel.funccode,
-            py_ast=func_ast,
-            funcvars=self.funcvars + kernel.funcvars,
+            pyfuncs=self._pyfuncs + kernel._pyfuncs,
         )
 
     def __add__(self, kernel):
-        if not isinstance(kernel, type(self)):
-            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, type(self))
+        if isinstance(kernel, types.FunctionType):
+            kernel = type(self)(self.fieldset, self.ptype, pyfuncs=[kernel])
+        return self.merge(kernel)
 
     def __radd__(self, kernel):
-        if not isinstance(kernel, type(self)):
-            kernel = type(self)(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, type(self))
+        if isinstance(kernel, types.FunctionType):
+            kernel = type(self)(self.fieldset, self.ptype, pyfuncs=[kernel])
+        return kernel.merge(self)
 
     @classmethod
-    def from_list(cls, fieldset, ptype, pyfunc_list, *args, **kwargs):
+    def from_list(cls, fieldset, ptype, pyfunc_list):
         """Create a combined kernel from a list of functions.
 
         Takes a list of functions, converts them to kernels, and joins them
@@ -294,15 +206,11 @@ class Kernel(BaseKernel):
             Additional keyword arguments passed to first kernel during construction.
         """
         if not isinstance(pyfunc_list, list):
-            raise TypeError(f"Argument function_list should be a list of functions. Got {type(pyfunc_list)}")
-        if len(pyfunc_list) == 0:
-            raise ValueError("Argument function_list should have at least one function.")
+            raise TypeError(f"Argument `pyfunc_list` should be a list of functions. Got {type(pyfunc_list)}")
         if not all([isinstance(f, types.FunctionType) for f in pyfunc_list]):
-            raise ValueError("Argument function_lst should be a list of functions.")
+            raise ValueError("Argument `pyfunc_list` should be a list of functions.")
 
-        pyfunc_list = pyfunc_list.copy()
-        pyfunc_list[0] = cls(fieldset, ptype, pyfunc_list[0], *args, **kwargs)
-        return functools.reduce(lambda x, y: x + y, pyfunc_list)
+        return cls(fieldset, ptype, pyfunc_list)
 
     def execute(self, pset, endtime, dt):
         """Execute this Kernel over a ParticleSet for several timesteps."""
@@ -390,8 +298,14 @@ class Kernel(BaseKernel):
             except KeyError:
                 if sign_dt * (endtime - pset.time_nextloop[0]) <= pset.dt[0]:
                     pset.dt[0] = sign_dt * (endtime - pset.time_nextloop[0])
+            res = None
+            for f in self._pyfuncs:
+                res_tmp = f(pset, self._fieldset, pset.time_nextloop[0])
+                if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
+                    res = res_tmp
+                if res == StatusCode.StopExecution:
+                    break
 
-            res = self._pyfunc(pset, self._fieldset, pset.time_nextloop[0])
             if res is None:
                 if pset.state[0] == StatusCode.Success:
                     if sign_dt * (pset.time[0] - endtime) > 0:
