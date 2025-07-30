@@ -18,7 +18,7 @@ __all__ = [
 
 def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration."""
-    dt = particle.dt / np.timedelta64(1, "s")
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * 0.5 * dt, particle.lat + v1 * 0.5 * dt)
     (u2, v2) = fieldset.UV[time + 0.5 * particle.dt, particle.depth, lat1, lon1, particle]
@@ -55,7 +55,7 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """
-    dt = particle.dt / np.timedelta64(1, "s")
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     sig_dep = particle.depth / fieldset.H[time, 0, particle.lat, particle.lon]
 
     (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon, particle]
@@ -99,7 +99,7 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
 
 def AdvectionEE(particle, fieldset, time):  # pragma: no cover
     """Advection of particles using Explicit Euler (aka Euler Forward) integration."""
-    dt = particle.dt / np.timedelta64(1, "s")
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     (u1, v1) = fieldset.UV[particle]
     particle.dlon += u1 * dt
     particle.dlat += v1 * dt
@@ -115,7 +115,9 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     Time-step dt is halved if error is larger than fieldset.RK45_tol,
     and doubled if error is smaller than 1/10th of tolerance.
     """
-    dt = min(particle.next_dt / np.timedelta64(1, "s"), fieldset.RK45_max_dt)
+    dt = min(
+        particle.next_dt / np.timedelta64(1, "s"), fieldset.RK45_max_dt
+    )  # TODO: improve API for converting dt to seconds
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
     A = [
         [1.0 / 4.0, 0.0, 0.0, 0.0, 0.0],
