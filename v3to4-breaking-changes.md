@@ -12,4 +12,4 @@ FieldSet
 ParticleSet
 
 - ParticleSet.execute() expects `numpy.datetime64`/`numpy.timedelta.64` for `runtime`, `endtime` and `dt`
-- `ParticleSet.from_field()`, `ParticleSet.from_line()` has been removed
+- `ParticleSet.from_field()`, `ParticleSet.from_line()`, `ParticleSet.from_list()` has been removed

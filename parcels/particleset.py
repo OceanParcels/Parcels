@@ -347,49 +347,7 @@ class ParticleSet:
             self._data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
 
     @classmethod
-    def from_list(
-        cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs
-    ):
-        """Initialise the ParticleSet from lists of lon and lat.
-
-        Parameters
-        ----------
-        fieldset :
-            mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        pclass :
-            Particle class. May be a parcels.particle.Particle class as defined in parcels, or a subclass defining a custom particle.
-        lon :
-            List of initial longitude values for particles
-        lat :
-            List of initial latitude values for particles
-        depth :
-            Optional list of initial depth values for particles. Default is 0m
-        time :
-            Optional list of start time values for particles. Default is fieldset.U.time[0]
-        repeatdt :
-            Optional interval (in seconds) on which to repeat the release of the ParticleSet (Default value = None)
-        lonlatdepth_dtype :
-            Floating precision for lon, lat, depth particle coordinates.
-            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-            and np.float64 if the interpolation method is 'cgrid_velocity'
-            Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
-        **kwargs :
-            Keyword arguments passed to the particleset constructor.
-        """
-        return cls(
-            fieldset=fieldset,
-            pclass=pclass,
-            lon=lon,
-            lat=lat,
-            depth=depth,
-            time=time,
-            repeatdt=repeatdt,
-            lonlatdepth_dtype=lonlatdepth_dtype,
-            **kwargs,
-        )
-
-    @classmethod
-    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, **kwargs):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, **kwargs):
         """Initialise the ParticleSet from a zarr ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
         in a zarr ParticleFile at a certain time. Particle IDs are preserved if restart=True
