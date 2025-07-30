@@ -70,26 +70,16 @@ class ParticleSet:
         lat=None,
         depth=None,
         time=None,
-        repeatdt=None,
         lonlatdepth_dtype=None,
         trajectory_ids=None,
         **kwargs,
     ):
         self._data = None
         self._repeat_starttime = None
-        self._repeatlon = None
-        self._repeatlat = None
-        self._repeatdepth = None
-        self._repeatpclass = None
-        self._repeatkwargs = None
         self._kernel = None
         self._interaction_kernel = None
 
         self.fieldset = fieldset
-
-        if repeatdt:
-            NotImplementedError("ParticleSet.repeatdt is not implemented yet in v4")
-
         lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
         time = np.empty(shape=0) if time is None else convert_to_flat_array(time)
