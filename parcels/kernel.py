@@ -293,11 +293,11 @@ class Kernel:
 
             pre_dt = pset.dt
             try:  # Use next_dt from AdvectionRK45 if it is set
-                if abs(endtime - pset.time_nextloop[0]) < abs(pset.next_dt[0]) - np.timedelta64(1000, "ns"):
-                    pset.next_dt[0] = sign_dt * (endtime - pset.time_nextloop[0])
+                if abs(endtime - pset.time_nextloop) < abs(pset.next_dt) - np.timedelta64(1000, "ns"):
+                    pset.next_dt = sign_dt * (endtime - pset.time_nextloop)
             except KeyError:
                 if sign_dt * (endtime - pset.time_nextloop[0]) <= pset.dt[0]:
-                    pset.dt[0] = sign_dt * (endtime - pset.time_nextloop[0])
+                    pset.dt = sign_dt * (endtime - pset.time_nextloop)
             res = None
             for f in self._pyfuncs:
                 res_tmp = f(pset, self._fieldset, pset.time_nextloop[0])
