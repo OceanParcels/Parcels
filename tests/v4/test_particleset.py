@@ -151,7 +151,7 @@ def test_pset_starttime_not_multiple_dt(fieldset):
         particle.dlon += particle.dt / np.timedelta64(1, "s")
 
     pset.execute(Addlon, dt=np.timedelta64(2, "s"), runtime=np.timedelta64(8, "s"), verbose_progress=False)
-    assert np.allclose([p.lon_nextloop for p in pset], [8 - t for t in times])
+    assert np.allclose(pset.lon_nextloop, [8 - t for t in times])
 
 
 @pytest.mark.parametrize(

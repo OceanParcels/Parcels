@@ -251,7 +251,7 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(6, "h"))
 
     exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
-    assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
+    assert np.allclose(pset.lat, exp_lat, rtol=rtol)
     if method == "RK4_3D":
-        assert np.allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
+        assert np.allclose(pset.depth, exp_lat, rtol=rtol)
