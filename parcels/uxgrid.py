@@ -5,7 +5,6 @@ from typing import Literal
 import numpy as np
 import uxarray as ux
 from uxarray.grid.coordinates import _lonlat_rad_to_xyz
-from uxarray.grid.neighbors import _barycentric_coordinates
 
 from parcels.field import FieldOutOfBoundError  # Adjust import as necessary
 from parcels.xgrid import _search_1d_array
@@ -96,14 +95,14 @@ class UxGrid(BaseGrid):
                     return bcoords, self.ravel_index(zi, neighbor)
 
         # Global fallback as last ditch effort
-        face_ids = self.uxgrid.get_faces_containing_point([x, y], return_counts=False)[0]
+        points = np.column_stack((x, y))
+        face_ids = self.uxgrid.get_faces_containing_point(points, return_counts=False)[0]
         fi = face_ids[0] if len(face_ids) > 0 else -1
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
         bcoords = try_face(fi)
         if bcoords is None:
             raise FieldOutOfBoundError(z, y, x)
-
         return {"Z": (zi, zeta), "FACE": (fi, bcoords)}
 
     def _get_barycentric_coordinates_latlon(self, y, x, fi):
@@ -119,9 +118,10 @@ class UxGrid(BaseGrid):
             )
         )
 
-        coord = np.deg2rad([x, y])
+        coord = np.deg2rad(np.column_stack((x, y)))
         bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
-        err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
+        proj_coord = np.matmul(np.transpose(nodes), bcoord)
+        err = np.linalg.norm(proj_coord - coord)
         return bcoord, err
 
     def _get_barycentric_coordinates_cartesian(self, y, x, fi):
@@ -144,6 +144,51 @@ class UxGrid(BaseGrid):
         bcoord = np.asarray(_barycentric_coordinates_cartesian(nodes, cart_coord))
 
         return bcoord
+
+
+def _triangle_area(A, B, C):
+    """Compute the area of a triangle given by three points."""
+    d1 = B - A
+    d2 = C - A
+    d3 = np.cross(d1, d2)
+    return 0.5 * np.linalg.norm(d3)
+
+
+def _barycentric_coordinates(nodes, point, min_area=1e-8):
+    """
+    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
+    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
+    barycentric coordinates, which is only valid for convex polygons.
+
+    Parameters
+    ----------
+        nodes : numpy.ndarray
+            Spherical coordinates (lon,lat) of each corner node of a face
+        point : numpy.ndarray
+            Spherical coordinates (lon,lat) of the point
+
+    Returns
+    -------
+    numpy.ndarray
+        Barycentric coordinates corresponding to each vertex.
+
+    """
+    n = len(nodes)
+    sum_wi = 0
+    w = []
+
+    for i in range(0, n):
+        vim1 = nodes[i - 1]
+        vi = nodes[i]
+        vi1 = nodes[(i + 1) % n]
+        a0 = _triangle_area(vim1, vi, vi1)
+        a1 = max(_triangle_area(point, vim1, vi), min_area)
+        a2 = max(_triangle_area(point, vi, vi1), min_area)
+        sum_wi += a0 / (a1 * a2)
+        w.append(a0 / (a1 * a2))
+    barycentric_coords = [w_i / sum_wi for w_i in w]
+
+    return barycentric_coords
 
 
 def _barycentric_coordinates_cartesian(nodes, point, min_area=1e-8):
@@ -173,20 +218,12 @@ def _barycentric_coordinates_cartesian(nodes, point, min_area=1e-8):
         vim1 = nodes[i - 1]
         vi = nodes[i]
         vi1 = nodes[(i + 1) % n]
-        a0 = _triangle_area_cartesian(vim1, vi, vi1)
-        a1 = max(_triangle_area_cartesian(point, vim1, vi), min_area)
-        a2 = max(_triangle_area_cartesian(point, vi, vi1), min_area)
+        a0 = _triangle_area(vim1, vi, vi1)
+        a1 = max(_triangle_area(point, vim1, vi), min_area)
+        a2 = max(_triangle_area(point, vi, vi1), min_area)
         sum_wi += a0 / (a1 * a2)
         w.append(a0 / (a1 * a2))
 
     barycentric_coords = [w_i / sum_wi for w_i in w]
 
     return barycentric_coords
-
-
-def _triangle_area_cartesian(A, B, C):
-    """Compute the area of a triangle given by three points."""
-    d1 = B - A
-    d2 = C - A
-    d3 = np.cross(d1, d2)
-    return 0.5 * np.linalg.norm(d3)

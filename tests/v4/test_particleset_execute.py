@@ -155,8 +155,8 @@ def test_uxstommelgyre_pset_execute():
         dt=np.timedelta64(60, "s"),
         pyfunc=AdvectionEE,
     )
-    assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1165396086
-    assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1142124776
+    assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1164489350
+    assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1143932648
 
 
 @pytest.mark.xfail(reason="Output file not implemented yet")
