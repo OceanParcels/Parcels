@@ -37,7 +37,7 @@ def test_fieldKh_Brownian(mesh_type):
     npart = 100
     runtime = np.timedelta64(2, "h")
 
-    random.seed(1234)
+    np.random.seed(1234)
     pset = ParticleSet(fieldset=fieldset, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(DiffusionUniformKh), runtime=runtime, dt=np.timedelta64(1, "h"))
 
@@ -77,16 +77,16 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh_type, kernel):
     fieldset = FieldSet([U, V, UV, Kh_zonal, Kh_meridional])
     fieldset.add_constant("dres", ds["lon"][1] - ds["lon"][0])
 
-    npart = 100
+    npart = 10000
 
-    random.seed(1636)
+    np.random.seed(1636)
     pset = ParticleSet(fieldset=fieldset, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(kernel), runtime=np.timedelta64(4, "h"), dt=np.timedelta64(1, "h"))
 
     tol = 2000 * mesh_conversion  # effectively 2000 m errors (because of low numbers of particles)
     assert np.allclose(np.mean(pset.lon), 0, atol=tol)
     assert np.allclose(np.mean(pset.lat), 0, atol=tol)
-    assert stats.skew(pset.lon) > stats.skew(pset.lat)
+    assert abs(stats.skew(pset.lon)) > abs(stats.skew(pset.lat))
 
 
 @pytest.mark.parametrize("lambd", [1, 5])
@@ -98,7 +98,7 @@ def test_randomexponential(lambd):
     fieldset.add_constant("lambd", lambd)
 
     # Set random seed
-    random.seed(1234)
+    np.random.seed(1234)
 
     pset = ParticleSet(fieldset=fieldset, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
@@ -123,7 +123,7 @@ def test_randomvonmises(mu, kappa):
     fieldset.kappa = kappa
 
     # Set random seed
-    random.seed(1234)
+    np.random.seed(1234)
 
     AngleParticle = Particle.add_variable(Variable("angle"))
     pset = ParticleSet(

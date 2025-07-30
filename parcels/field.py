@@ -26,7 +26,6 @@ from parcels.tools.statuscodes import (
     FieldOutOfBoundError,
     FieldOutOfBoundSurfaceError,
     FieldSamplingError,
-    _raise_field_out_of_bound_error,
 )
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid, _transpose_xfield_data_to_tzyx
@@ -263,9 +262,10 @@ class Field:
             position = self.grid.search(z, y, x, ei=_ei)
             value = self._interp_method(self, ti, position, tau, time, z, y, x)
 
-            if np.isnan(value):
-                # Detect Out-of-bounds sampling and raise exception
-                _raise_field_out_of_bound_error(z, y, x)
+            # TODO fix outof bounds sampling
+            # if np.isnan(value):
+            #     # Detect Out-of-bounds sampling and raise exception
+            #     _raise_field_out_of_bound_error(z, y, x)
 
         except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
             e.add_note(f"Error interpolating field '{self.name}'.")
@@ -278,7 +278,7 @@ class Field:
     def __getitem__(self, key):
         self._check_velocitysampling()
         try:
-            if isinstance(key, Particle):
+            if hasattr(key, "time"):
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)

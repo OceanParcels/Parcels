@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import cos, pi
+from math import pi
 
 import numpy as np
 import numpy.typing as npt
@@ -90,10 +90,10 @@ class GeographicPolarSquare(UnitConverter):
     target_unit = "degree2"
 
     def to_target(self, value, z, y, x):
-        return value / pow(1000.0 * 1.852 * 60.0 * cos(y * pi / 180), 2)
+        return value / pow(1000.0 * 1.852 * 60.0 * np.cos(y * pi / 180), 2)
 
     def to_source(self, value, z, y, x):
-        return value * pow(1000.0 * 1.852 * 60.0 * cos(y * pi / 180), 2)
+        return value * pow(1000.0 * 1.852 * 60.0 * np.cos(y * pi / 180), 2)
 
 
 unitconverters_map = {

@@ -3,8 +3,7 @@
 See `this tutorial <../examples/tutorial_diffusion.ipynb>`__ for a detailed explanation.
 """
 
-import math
-import random
+import numpy as np
 
 __all__ = ["AdvectionDiffusionEM", "AdvectionDiffusionM1", "DiffusionUniformKh"]
 
@@ -24,23 +23,23 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
+    dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
     Kxp1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
 
     u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon]
-    bx = math.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon])
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon]
     Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
 
-    by = math.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
     particle_dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx  # noqa
@@ -60,10 +59,10 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
+    dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
     u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon]
 
@@ -71,13 +70,13 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
     ax = u + dKdx
-    bx = math.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon])
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon]
     Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
     ay = v + dKdy
-    by = math.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
     particle_dlon += ax * dt + bx * dWx  # noqa
@@ -102,13 +101,15 @@ def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # noqa TODO improve API for converting dt to seconds
+    dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
+    dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
-    by = math.sqrt(2 * fieldset.Kh_meridional[particle])
+    print(particle)
+
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particle])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particle])
 
     particle_dlon += bx * dWx  # noqa
     particle_dlat += by * dWy  # noqa
