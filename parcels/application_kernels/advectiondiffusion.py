@@ -29,18 +29,18 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
     dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
 
-    Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
-    Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
+    Kxp1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon + fieldset.dres]
+    Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
 
-    u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-    bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
+    u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon]
+    bx = math.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon])
 
-    Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
-    Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
+    Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon]
+    Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
 
-    by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
+    by = math.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
     particle_dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx  # noqa
@@ -65,19 +65,19 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
     dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
 
-    u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+    u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon]
 
-    Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
-    Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
+    Kxp1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon + fieldset.dres]
+    Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
     ax = u + dKdx
-    bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
+    bx = math.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon])
 
-    Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
-    Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
+    Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon]
+    Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
     ay = v + dKdy
-    by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
+    by = math.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
     particle_dlon += ax * dt + bx * dWx  # noqa

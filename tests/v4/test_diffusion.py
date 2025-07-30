@@ -95,7 +95,7 @@ def test_randomexponential(lambd):
     npart = 1000
 
     # Rate parameter for random.expovariate
-    fieldset.lambd = lambd
+    fieldset.add_constant("lambd", lambd)
 
     # Set random seed
     random.seed(1234)
@@ -104,7 +104,7 @@ def test_randomexponential(lambd):
 
     def vertical_randomexponential(particle, fieldset, time):  # pragma: no cover
         # Kernel for random exponential variable in depth direction
-        particle.depth = random.expovariate(fieldset.lambd)
+        particle.depth = np.random.exponential(scale=1 / fieldset.lambd, size=len(particle))
 
     pset.execute(vertical_randomexponential, runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
 
@@ -131,14 +131,12 @@ def test_randomvonmises(mu, kappa):
     )
 
     def vonmises(particle, fieldset, time):  # pragma: no cover
-        particle.angle = random.vonmisesvariate(fieldset.mu, fieldset.kappa)
+        particle.angle = np.array([random.vonmisesvariate(fieldset.mu, fieldset.kappa) for _ in range(len(particle))])
 
     pset.execute(vonmises, runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
 
-    angles = np.array([p.angle for p in pset])
-
-    assert np.allclose(np.mean(angles), mu, atol=0.1)
+    assert np.allclose(np.mean(pset.angle), mu, atol=0.1)
     vonmises_mean = stats.vonmises.mean(kappa=kappa, loc=mu)
-    assert np.allclose(np.mean(angles), vonmises_mean, atol=0.1)
+    assert np.allclose(np.mean(pset.angle), vonmises_mean, atol=0.1)
     vonmises_var = stats.vonmises.var(kappa=kappa, loc=mu)
-    assert np.allclose(np.var(angles), vonmises_var, atol=0.1)
+    assert np.allclose(np.var(pset.angle), vonmises_var, atol=0.1)

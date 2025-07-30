@@ -497,9 +497,15 @@ def _search_1d_array(
     # TODO v4: We probably rework this to deal with 0D arrays before this point (as we already know field dimensionality)
     if len(arr) < 2:
         return np.zeros(shape=x.shape, dtype=np.int32), np.zeros_like(x)
-    i = np.searchsorted(arr, x, side="right") - 1
-    bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
-    return i, bcoord
+    index = np.searchsorted(arr, x, side="right") - 1
+    index_next = np.clip(index + 1, 1, len(arr) - 1)  # Ensure we don't go out of bounds
+
+    bcoord = np.where(
+        index <= len(arr) - 2,
+        (x - arr[index]) / (arr[index_next] - arr[index]),
+        np.nan,  # If at the end of the array, we return np.nan
+    )
+    return index, bcoord
 
 
 def _convert_center_pos_to_fpoint(

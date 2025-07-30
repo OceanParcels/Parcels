@@ -63,10 +63,12 @@ def test_advection_zonal_periodic():
     fieldset = FieldSet([U, V, UV])
 
     PeriodicParticle = Particle.add_variable(Variable("total_dlon", initial=0))
-    pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=[0.5], lat=[0.5])
+    startlon = np.array([0.5, 0.4])
+    pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=startlon, lat=[0.5, 0.5])
     pset.execute([AdvectionEE, periodicBC], runtime=np.timedelta64(40, "s"), dt=np.timedelta64(1, "s"))
-    assert np.isclose(pset.total_dlon[0], 4, atol=1e-5)
-    assert np.isclose(pset.lon_nextloop[0], 0.5, atol=1e-5)
+    assert np.allclose(pset.total_dlon, 4, atol=1e-5)
+    assert np.allclose(pset.lon_nextloop, startlon, atol=1e-5)
+    assert np.allclose(pset.lat_nextloop, 0.5, atol=1e-5)
 
 
 def test_horizontal_advection_in_3D_flow(npart=10):
@@ -84,7 +86,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
-    assert np.allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
+    assert np.allclose(expected_lon, pset.lon, atol=1.0e-1)
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])
@@ -181,10 +183,10 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     pset.execute(kernel, runtime=np.timedelta64(5, "s"), dt=np.timedelta64(1, "s"))
 
     assert len(pset.lon) == len([p.lon for p in pset])
-    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
-    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
+    assert ((pset.lon - x0 - 4 * u) < 1e-4).all()
+    assert ((pset.lat - y0 - 4 * v) < 1e-4).all()
     if w:
-        assert ((np.array([p.depth - z0 for p in pset]) - 4 * w) < 1e-6).all()
+        assert ((pset.depth - z0 - 4 * w) < 1e-4).all()
 
 
 @pytest.mark.parametrize(

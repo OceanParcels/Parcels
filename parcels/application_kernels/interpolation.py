@@ -8,9 +8,6 @@ import numpy as np
 import xarray as xr
 
 from parcels.field import Field
-from parcels.tools.statuscodes import (
-    FieldOutOfBoundError,
-)
 
 if TYPE_CHECKING:
     from parcels.uxgrid import _UXGRID_AXES
@@ -46,7 +43,7 @@ def XBiLinear(
 
     timeslices = [ti, ti + 1] if tau[0] > 0 else [ti]
     for tii in timeslices:
-        tau_factor = (1 - tau) if ti[0] == tii[0] else tau  # TODO also for varying time
+        tau_factor = (1 - tau) if ti[0] == tii[0] else tau  # TODO also for time that's different per particle?
         xi = xr.DataArray(xi, dims="points")
         yi = xr.DataArray(yi, dims="points")
         zi = xr.DataArray(zi, dims="points")
@@ -76,32 +73,31 @@ def XBiLinearPeriodic(
     yi, eta = position["Y"]
     zi, _ = position["Z"]
 
-    if xi < 0:
-        xi = 0
-        xsi = (x - field.grid.lon[xi]) / (field.grid.lon[xi + 1] - field.grid.lon[xi])
-    if yi < 0:
-        yi = 0
-        eta = (y - field.grid.lat[yi]) / (field.grid.lat[yi + 1] - field.grid.lat[yi])
+    xi = np.where(xi > len(field.grid.lon) - 2, 0, xi)
+    xsi = (x - field.grid.lon[xi]) / (field.grid.lon[xi + 1] - field.grid.lon[xi])
+    yi = np.where(yi > len(field.grid.lat) - 2, 0, yi)
+    eta = (y - field.grid.lat[yi]) / (field.grid.lat[yi + 1] - field.grid.lat[yi])
 
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
 
-    xsi = 0 if not np.isfinite(xsi) else xsi
-    eta = 0 if not np.isfinite(eta) else eta
+    data = field.data
+    val = np.zeros_like(tau)
 
-    if xsi > 0 and eta > 0:
-        return (
-            (1 - xsi) * (1 - eta) * data[0, 0]
-            + xsi * (1 - eta) * data[0, 1]
-            + xsi * eta * data[1, 1]
-            + (1 - xsi) * eta * data[1, 0]
-        )
-    elif xsi > 0 and eta == 0:
-        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
-    elif xsi == 0 and eta > 0:
-        return (1 - eta) * data[0, 0] + eta * data[1, 0]
-    else:
-        return data[0, 0]
+    timeslices = [ti, ti + 1] if tau[0] > 0 else [ti]
+    for tii in timeslices:
+        tau_factor = (1 - tau) if ti[0] == tii[0] else tau  # TODO also for time that's different per particle?
+        xi = xr.DataArray(xi, dims="points")
+        yi = xr.DataArray(yi, dims="points")
+        zi = xr.DataArray(zi, dims="points")
+        ti = xr.DataArray(tii, dims="points")
+        F00 = data.isel({axis_dim["X"]: xi, axis_dim["Y"]: yi, axis_dim["Z"]: zi, "time": ti}).values.flatten()
+        F10 = data.isel({axis_dim["X"]: xi + 1, axis_dim["Y"]: yi, axis_dim["Z"]: zi, "time": ti}).values.flatten()
+        F01 = data.isel({axis_dim["X"]: xi, axis_dim["Y"]: yi + 1, axis_dim["Z"]: zi, "time": ti}).values.flatten()
+        F11 = data.isel({axis_dim["X"]: xi + 1, axis_dim["Y"]: yi + 1, axis_dim["Z"]: zi, "time": ti}).values.flatten()
+        val += (
+            (1 - xsi) * (1 - eta) * F00 + xsi * (1 - eta) * F10 + (1 - xsi) * eta * F01 + xsi * eta * F11
+        ) * tau_factor
+    return val
 
 
 def XTriLinear(
@@ -119,32 +115,51 @@ def XTriLinear(
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
 
-    if zi < 0 or xi < 0 or yi < 0:
-        raise FieldOutOfBoundError
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+    data = field.data
+    val = np.zeros_like(tau)
 
-    data = field.data.data[:, zi : zi + 2, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :, :] + tau * data[ti + 1, :, :, :]
-    if zeta > 0:
-        data = (1 - zeta) * data[0, :, :] + zeta * data[1, :, :]
-    else:
-        data = data[0, :, :]
+    # Get dimension sizes to clip indices
+    x_size = data.sizes[axis_dim["X"]]
+    y_size = data.sizes[axis_dim["Y"]]
+    z_size = data.sizes[axis_dim["Z"]]
+    t_size = data.sizes["time"]
 
-    xsi = 0 if not np.isfinite(xsi) else xsi
-    eta = 0 if not np.isfinite(eta) else eta
+    timeslices = [ti, ti + 1] if tau[0] > 0 else [ti]
+    for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
+        for zii, depth_factor in zip([zi, zi + 1], [1 - zeta, zeta], strict=False):
+            # Clip indices to prevent out-of-bounds access
+            xi_clipped = np.clip(xi, 0, x_size - 1)
+            yi_clipped = np.clip(yi, 0, y_size - 1)
+            zii_clipped = np.clip(zii, 0, z_size - 1)
+            tii_clipped = np.clip(tii, 0, t_size - 1)
 
-    if xsi > 0 and eta > 0:
-        return (
-            (1 - xsi) * (1 - eta) * data[0, 0]
-            + xsi * (1 - eta) * data[0, 1]
-            + xsi * eta * data[1, 1]
-            + (1 - xsi) * eta * data[1, 0]
-        )
-    elif xsi > 0 and eta == 0:
-        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
-    elif xsi == 0 and eta > 0:
-        return (1 - eta) * data[0, 0] + eta * data[1, 0]
-    else:
-        return data[0, 0]
+            xi_da = xr.DataArray(xi_clipped, dims="points")
+            yi_da = xr.DataArray(yi_clipped, dims="points")
+            zinds = xr.DataArray(zii_clipped, dims="points")
+            tinds = xr.DataArray(tii_clipped, dims="points")
+            xi_plus1 = xr.DataArray(np.clip(xi_clipped + 1, 0, x_size - 1), dims="points")
+            yi_plus1 = xr.DataArray(np.clip(yi_clipped + 1, 0, y_size - 1), dims="points")
+
+            F00 = data.isel(
+                {axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zinds, "time": tinds}
+            ).values.flatten()
+            F10 = data.isel(
+                {axis_dim["X"]: xi_plus1, axis_dim["Y"]: yi_da, axis_dim["Z"]: zinds, "time": tinds}
+            ).values.flatten()
+            F01 = data.isel(
+                {axis_dim["X"]: xi_da, axis_dim["Y"]: yi_plus1, axis_dim["Z"]: zinds, "time": tinds}
+            ).values.flatten()
+            F11 = data.isel(
+                {axis_dim["X"]: xi_plus1, axis_dim["Y"]: yi_plus1, axis_dim["Z"]: zinds, "time": tinds}
+            ).values.flatten()
+            val += (
+                ((1 - xsi) * (1 - eta) * F00 + xsi * (1 - eta) * F10 + (1 - xsi) * eta * F01 + xsi * eta * F11)
+                * tau_factor
+                * depth_factor
+            )
+
+    return val
 
 
 def UXPiecewiseConstantFace(
