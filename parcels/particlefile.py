@@ -253,14 +253,6 @@ class ParticleFile:
         if self.create_new_zarrfile:
             if self.chunks is None:
                 self._chunks = (len(pset), 1)
-            if pset._repeatpclass is not None and self.chunks[0] < 1e4:  # type: ignore[index]
-                warnings.warn(
-                    f"ParticleFile chunks are set to {self.chunks}, but this may lead to "
-                    f"a significant slowdown in Parcels when many calls to repeatdt. "
-                    f"Consider setting a larger chunk size for your ParticleFile (e.g. chunks=(int(1e4), 1)).",
-                    FileWarning,
-                    stacklevel=2,
-                )
             if (self._maxids > len(ids)) or (self._maxids > self.chunks[0]):  # type: ignore[index]
                 arrsize = (self._maxids, self.chunks[1])  # type: ignore[index]
             else:
