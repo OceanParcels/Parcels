@@ -41,9 +41,8 @@ def XBiLinear(
     data = field.data
     val = np.zeros_like(tau)
 
-    timeslices = [ti, ti + 1] if tau[0] > 0 else [ti]
-    for tii in timeslices:
-        tau_factor = (1 - tau) if ti[0] == tii[0] else tau  # TODO also for time that's different per particle?
+    timeslices = [ti, ti + 1] if tau.any() > 0 else [ti]
+    for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
         xi = xr.DataArray(xi, dims="points")
         yi = xr.DataArray(yi, dims="points")
         zi = xr.DataArray(zi, dims="points")
@@ -83,9 +82,8 @@ def XBiLinearPeriodic(
     data = field.data
     val = np.zeros_like(tau)
 
-    timeslices = [ti, ti + 1] if tau[0] > 0 else [ti]
-    for tii in timeslices:
-        tau_factor = (1 - tau) if ti[0] == tii[0] else tau  # TODO also for time that's different per particle?
+    timeslices = [ti, ti + 1] if tau.any() > 0 else [ti]
+    for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
         xi = xr.DataArray(xi, dims="points")
         yi = xr.DataArray(yi, dims="points")
         zi = xr.DataArray(zi, dims="points")
@@ -125,7 +123,7 @@ def XTriLinear(
     z_size = data.sizes[axis_dim["Z"]]
     t_size = data.sizes["time"]
 
-    timeslices = [ti, ti + 1] if tau[0] > 0 else [ti]
+    timeslices = [ti, ti + 1] if tau.any() > 0 else [ti]
     for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
         for zii, depth_factor in zip([zi, zi + 1], [1 - zeta, zeta], strict=False):
             # Clip indices to prevent out-of-bounds access

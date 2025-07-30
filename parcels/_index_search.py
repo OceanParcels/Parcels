@@ -46,7 +46,7 @@ def _search_time_index(field: Field, time: datetime):
 
     ti = np.searchsorted(field.data.time.data, time, side="right") - 1
     tau = (time - field.data.time.data[ti]) / (field.data.time.data[ti + 1] - field.data.time.data[ti])
-    return tau, ti
+    return np.atleast_1d(tau), np.atleast_1d(ti)
 
 
 def search_indices_vertical_z(depth, gridindexingtype: GridIndexingType, z: float):

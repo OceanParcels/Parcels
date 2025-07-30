@@ -505,7 +505,7 @@ def _search_1d_array(
         (x - arr[index]) / (arr[index_next] - arr[index]),
         np.nan,  # If at the end of the array, we return np.nan
     )
-    return index, bcoord
+    return np.atleast_1d(index), np.atleast_1d(bcoord)
 
 
 def _convert_center_pos_to_fpoint(

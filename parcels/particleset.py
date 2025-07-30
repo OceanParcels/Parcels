@@ -756,11 +756,11 @@ class ParticleSet:
                     raise TypeError("The runtime must be a np.timedelta64 object")
 
         else:
-            if not np.isnat(self._data["time_nextloop"]).any():
+            if not np.isnat(self.time_nextloop).any():
                 if sign_dt > 0:
-                    start_time = self._data["time_nextloop"].min()
+                    start_time = self.time_nextloop.min()
                 else:
-                    start_time = self._data["time_nextloop"].max()
+                    start_time = self.time_nextloop.max()
             else:
                 if sign_dt > 0:
                     start_time = self.fieldset.time_interval.left

@@ -46,7 +46,7 @@ class TimeInterval:
         self.right = right
 
     def __contains__(self, item: T) -> bool:
-        return all(self.left <= item) and all(item <= self.right)
+        return (self.left <= item).all() and (item <= self.right).all()
 
     def __repr__(self) -> str:
         return f"TimeInterval(left={self.left!r}, right={self.right!r})"

@@ -69,7 +69,7 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
     if with_delete:
         assert np.allclose(pset.lat, n * 0.1, atol=1e-12)
     else:
-        assert np.allclose([p.lat - n * 0.1 for p in pset], np.zeros(npart), rtol=1e-12)
+        assert np.allclose(pset.lat, n * 0.1, rtol=1e-12)
 
 
 @pytest.mark.parametrize(
