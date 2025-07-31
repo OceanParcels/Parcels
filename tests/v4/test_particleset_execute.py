@@ -103,16 +103,14 @@ def test_execution_fail_python_exception(fieldset, npart=10):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
     def PythonFail(particle, fieldset, time):  # pragma: no cover
-        if particle.time >= fieldset.time_interval.left + np.timedelta64(10, "s"):
+        inds = np.argwhere(particle.time >= fieldset.time_interval.left + np.timedelta64(10, "s"))
+        if inds.size > 0:
             raise RuntimeError("Enough is enough!")
-        else:
-            pass
 
     with pytest.raises(RuntimeError):
         pset.execute(PythonFail, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(2, "s"))
     assert len(pset) == npart
-    assert pset.time[0] == fieldset.time_interval.left + np.timedelta64(10, "s")
-    assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
+    assert all(pset.time == fieldset.time_interval.left + np.timedelta64(10, "s"))
 
 
 def test_uxstommelgyre_pset_execute():

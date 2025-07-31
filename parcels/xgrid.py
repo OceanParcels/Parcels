@@ -21,6 +21,9 @@ _FIELD_DATA_ORDERING: Sequence[_XGCM_AXIS_DIRECTION] = "TZYX"
 
 _DEFAULT_XGCM_KWARGS = {"periodic": False}
 
+LEFT_OUT_OF_BOUNDS = -2
+RIGHT_OUT_OF_BOUNDS = -1
+
 
 def get_cell_count_along_dim(axis: xgcm.Axis) -> int:
     first_coord = list(axis.coords.items())[0]
@@ -271,15 +274,6 @@ class XGrid(BaseGrid):
         ds = self.xgcm_grid._ds
 
         zi, zeta = _search_1d_array(ds.depth.values, z)
-        # if any(zi == -1):  # TODO throw error only for those particles where zi == -1
-        #     if any(zeta < 0):
-        #         raise FieldOutOfBoundError(
-        #             f"Depth {z} is out of bounds for the grid with depth values {ds.depth.values}."
-        #         )
-        #     elif any(zeta > 1):
-        #         raise FieldOutOfBoundSurfaceError(
-        #             f"Depth {z} is out of the surface for the grid with depth values {ds.depth.values}."
-        #         )
 
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
@@ -477,7 +471,6 @@ def _search_1d_array(
     Searches for the particle location in a 1D array and returns barycentric coordinate along dimension.
 
     Assumptions:
-    - particle position x is within the bounds of the array
     - array is strictly monotonically increasing.
 
     Parameters
@@ -489,9 +482,9 @@ def _search_1d_array(
 
     Returns
     -------
-    int
-        Index of the element just before the position x in the array.
-    float
+    array of int
+        Index of the element just before the position x in the array. Note that this index is -2 if the index is left out of bounds and -1 if the index is right out of bounds.
+    array of float
         Barycentric coordinate.
     """
     # TODO v4: We probably rework this to deal with 0D arrays before this point (as we already know field dimensionality)
@@ -500,11 +493,11 @@ def _search_1d_array(
     index = np.searchsorted(arr, x, side="right") - 1
     index_next = np.clip(index + 1, 1, len(arr) - 1)  # Ensure we don't go out of bounds
 
-    bcoord = np.where(
-        index <= len(arr) - 2,
-        (x - arr[index]) / (arr[index_next] - arr[index]),
-        np.nan,  # If at the end of the array, we return np.nan
-    )
+    bcoord = (x - arr[index]) / (arr[index_next] - arr[index])
+
+    index = np.where(x < arr[0], LEFT_OUT_OF_BOUNDS, index)
+    index = np.where(x >= arr[-1], RIGHT_OUT_OF_BOUNDS, index)
+
     return np.atleast_1d(index), np.atleast_1d(bcoord)
 
 
