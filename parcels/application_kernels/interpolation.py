@@ -5,95 +5,36 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-
-from parcels.field import Field
-from parcels.tools.statuscodes import (
-    FieldOutOfBoundError,
-)
+import xarray as xr
 
 if TYPE_CHECKING:
+    from parcels.field import Field
     from parcels.uxgrid import _UXGRID_AXES
     from parcels.xgrid import _XGRID_AXES
 
 __all__ = [
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
-    "XBiLinear",
-    "XBiLinearPeriodic",
-    "XTriLinear",
+    "XLinear",
+    "ZeroInterpolator",
 ]
 
 
-def XBiLinear(
+def ZeroInterpolator(
     field: Field,
     ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    position: dict[str, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
-):
-    """Bilinear interpolation on a regular grid."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, _ = position["Z"]
-
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
-
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
+) -> np.float32 | np.float64:
+    """Template function used for the signature check of the lateral interpolation methods."""
+    return 0.0
 
 
-def XBiLinearPeriodic(
-    field: Field,
-    ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-):
-    """Bilinear interpolation on a regular grid with periodic boundary conditions in horizontal directions."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, _ = position["Z"]
-
-    if xi < 0:
-        xi = 0
-        xsi = (x - field.grid.lon[xi]) / (field.grid.lon[xi + 1] - field.grid.lon[xi])
-    if yi < 0:
-        yi = 0
-        eta = (y - field.grid.lat[yi]) / (field.grid.lat[yi + 1] - field.grid.lat[yi])
-
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
-
-    xsi = 0 if not np.isfinite(xsi) else xsi
-    eta = 0 if not np.isfinite(eta) else eta
-
-    if xsi > 0 and eta > 0:
-        return (
-            (1 - xsi) * (1 - eta) * data[0, 0]
-            + xsi * (1 - eta) * data[0, 1]
-            + xsi * eta * data[1, 1]
-            + (1 - xsi) * eta * data[1, 0]
-        )
-    elif xsi > 0 and eta == 0:
-        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
-    elif xsi == 0 and eta > 0:
-        return (1 - eta) * data[0, 0] + eta * data[1, 0]
-    else:
-        return data[0, 0]
-
-
-def XTriLinear(
+def XLinear(
     field: Field,
     ti: int,
     position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
@@ -108,32 +49,38 @@ def XTriLinear(
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
 
-    if zi < 0 or xi < 0 or yi < 0:
-        raise FieldOutOfBoundError
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+    data = field.data
+    val = np.zeros_like(tau)
 
-    data = field.data.data[:, zi : zi + 2, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :, :] + tau * data[ti + 1, :, :, :]
-    if zeta > 0:
-        data = (1 - zeta) * data[0, :, :] + zeta * data[1, :, :]
-    else:
-        data = data[0, :, :]
+    xii = np.clip(np.stack([xi, xi + 1, xi, xi + 1], axis=-1).flatten(), 0, data.shape[3] - 1)
+    yii = np.clip(np.stack([yi, yi, yi + 1, yi + 1], axis=-1).flatten(), 0, data.shape[2] - 1)
+    xi_da = xr.DataArray(xii, dims=("points"))
+    yi_da = xr.DataArray(yii, dims=("points"))
 
-    xsi = 0 if not np.isfinite(xsi) else xsi
-    eta = 0 if not np.isfinite(eta) else eta
+    timeslices = [ti, ti + 1] if tau.any() > 0 else [ti]
+    depth_slices = [zi, zi + 1] if zeta.any() > 0 else [zi]
+    for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
+        tti = np.clip(np.array([tii, tii, tii, tii]).flatten(), 0, data.shape[0] - 1)
+        ti_da = xr.DataArray(tti, dims=("points"))
+        for zii, depth_factor in zip(depth_slices, [1 - zeta, zeta], strict=False):
+            zii = np.clip(np.array([zii, zii, zii, zii]).flatten(), 0, data.shape[1] - 1)
+            zi_da = xr.DataArray(zii, dims=("points"))
 
-    if xsi > 0 and eta > 0:
-        return (
-            (1 - xsi) * (1 - eta) * data[0, 0]
-            + xsi * (1 - eta) * data[0, 1]
-            + xsi * eta * data[1, 1]
-            + (1 - xsi) * eta * data[1, 0]
-        )
-    elif xsi > 0 and eta == 0:
-        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
-    elif xsi == 0 and eta > 0:
-        return (1 - eta) * data[0, 0] + eta * data[1, 0]
-    else:
-        return data[0, 0]
+            F = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
+            F = F.data.reshape(-1, 4)
+            # TODO check if numpy can handle this more efficiently
+            # F = data.values[tti, zii, yii, xii].reshape(-1, 4)
+            interp_val = (
+                (1 - xsi) * (1 - eta) * F[:, 0]
+                + xsi * (1 - eta) * F[:, 1]
+                + (1 - xsi) * eta * F[:, 2]
+                + xsi * eta * F[:, 3]
+            )
+
+            val += interp_val * tau_factor * depth_factor
+
+    return val
 
 
 def UXPiecewiseConstantFace(

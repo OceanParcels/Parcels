@@ -7,7 +7,13 @@ import xarray as xr
 from numpy.testing import assert_allclose
 
 from parcels._datasets.structured.generic import X, Y, Z, datasets
-from parcels.xgrid import XGrid, _search_1d_array, _transpose_xfield_data_to_tzyx
+from parcels.xgrid import (
+    LEFT_OUT_OF_BOUNDS,
+    RIGHT_OUT_OF_BOUNDS,
+    XGrid,
+    _search_1d_array,
+    _transpose_xfield_data_to_tzyx,
+)
 from tests import utils
 
 GridTestCase = namedtuple("GridTestCase", ["ds", "attr", "expected"])
@@ -160,6 +166,18 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
     xi, xsi = _search_1d_array(array, x)
     assert xi == expected_xi
     assert np.isclose(xsi, expected_xsi)
+
+
+@pytest.mark.parametrize(
+    "array, x, expected_xi",
+    [
+        (np.array([1, 2, 3, 4, 5]), -0.1, LEFT_OUT_OF_BOUNDS),
+        (np.array([1, 2, 3, 4, 5]), 6.5, RIGHT_OUT_OF_BOUNDS),
+    ],
+)
+def test_search_1d_array_out_of_bounds(array, x, expected_xi):
+    xi, xsi = _search_1d_array(array, x)
+    assert xi == expected_xi
 
 
 @pytest.mark.parametrize(
