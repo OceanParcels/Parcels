@@ -6,7 +6,7 @@ import numpy as np
 import uxarray as ux
 from uxarray.grid.coordinates import _lonlat_rad_to_xyz
 
-from parcels.field import FieldOutOfBoundError  # Adjust import as necessary
+from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.xgrid import _search_1d_array
 
 from .basegrid import BaseGrid
