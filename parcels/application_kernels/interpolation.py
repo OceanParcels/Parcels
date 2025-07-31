@@ -53,46 +53,32 @@ def XLinear(
     data = field.data
     val = np.zeros_like(tau)
 
-    # Get dimension sizes to clip indices
-    x_size = data.sizes[axis_dim["X"]]
-    y_size = data.sizes[axis_dim["Y"]]
-    z_size = data.sizes[axis_dim["Z"]]
-    t_size = data.sizes["time"]
+    xii = np.clip(np.stack([xi, xi + 1, xi, xi + 1], axis=-1).flatten(), 0, data.shape[3] - 1)
+    yii = np.clip(np.stack([yi, yi, yi + 1, yi + 1], axis=-1).flatten(), 0, data.shape[2] - 1)
+    xi_da = xr.DataArray(xii, dims=("points"))
+    yi_da = xr.DataArray(yii, dims=("points"))
 
     timeslices = [ti, ti + 1] if tau.any() > 0 else [ti]
+    depth_slices = [zi, zi + 1] if zeta.any() > 0 else [zi]
     for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
-        for zii, depth_factor in zip([zi, zi + 1], [1 - zeta, zeta], strict=False):
-            # Clip indices to prevent out-of-bounds access
-            xi_clipped = np.clip(xi, 0, x_size - 1)
-            yi_clipped = np.clip(yi, 0, y_size - 1)
-            zii_clipped = np.clip(zii, 0, z_size - 1)
-            tii_clipped = np.clip(tii, 0, t_size - 1)
+        tti = np.clip(np.array([tii, tii, tii, tii]).flatten(), 0, data.shape[0] - 1)
+        ti_da = xr.DataArray(tti, dims=("points"))
+        for zii, depth_factor in zip(depth_slices, [1 - zeta, zeta], strict=False):
+            zii = np.clip(np.array([zii, zii, zii, zii]).flatten(), 0, data.shape[1] - 1)
+            zi_da = xr.DataArray(zii, dims=("points"))
 
-            xi_da = xr.DataArray(xi_clipped, dims="points")
-            yi_da = xr.DataArray(yi_clipped, dims="points")
-            zinds = xr.DataArray(zii_clipped, dims="points")
-            tinds = xr.DataArray(tii_clipped, dims="points")
-            xi_plus1 = xr.DataArray(np.clip(xi_clipped + 1, 0, x_size - 1), dims="points")
-            yi_plus1 = xr.DataArray(np.clip(yi_clipped + 1, 0, y_size - 1), dims="points")
-
-            # TODO see if this can be done with one isel call, by combining the indices
-            F00 = data.isel(
-                {axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zinds, "time": tinds}
-            ).values.flatten()
-            F10 = data.isel(
-                {axis_dim["X"]: xi_plus1, axis_dim["Y"]: yi_da, axis_dim["Z"]: zinds, "time": tinds}
-            ).values.flatten()
-            F01 = data.isel(
-                {axis_dim["X"]: xi_da, axis_dim["Y"]: yi_plus1, axis_dim["Z"]: zinds, "time": tinds}
-            ).values.flatten()
-            F11 = data.isel(
-                {axis_dim["X"]: xi_plus1, axis_dim["Y"]: yi_plus1, axis_dim["Z"]: zinds, "time": tinds}
-            ).values.flatten()
-            val += (
-                ((1 - xsi) * (1 - eta) * F00 + xsi * (1 - eta) * F10 + (1 - xsi) * eta * F01 + xsi * eta * F11)
-                * tau_factor
-                * depth_factor
+            F = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
+            F = F.data.reshape(-1, 4)
+            # TODO check if numpy can handle this more efficiently
+            # F = data.values[tti, zii, yii, xii].reshape(-1, 4)
+            interp_val = (
+                (1 - xsi) * (1 - eta) * F[:, 0]
+                + xsi * (1 - eta) * F[:, 1]
+                + (1 - xsi) * eta * F[:, 2]
+                + xsi * eta * F[:, 3]
             )
+
+            val += interp_val * tau_factor * depth_factor
 
     return val
 
