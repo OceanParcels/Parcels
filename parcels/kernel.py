@@ -284,9 +284,7 @@ class Kernel:
         dt :
             computational integration timestep
         """
-        # TODO what happens if only some particles throw an error?
-        # TODO support for dt to be different for each particle
-        sign_dt = 1 if pset.dt[0] >= 0 else -1
+        sign_dt = np.where(pset.dt >= 0, 1, -1)
         while pset[0].state in [StatusCode.Evaluate, StatusCode.Repeat]:
             if all(sign_dt * (endtime - pset.time_nextloop) <= 0):
                 return pset
@@ -296,10 +294,14 @@ class Kernel:
                 if abs(endtime - pset.time_nextloop) < abs(pset.next_dt) - np.timedelta64(1000, "ns"):
                     pset.next_dt = sign_dt * (endtime - pset.time_nextloop)
             except KeyError:
-                if sign_dt * (endtime - pset.time_nextloop[0]) <= pset.dt[0]:
-                    pset.dt = sign_dt * (endtime - pset.time_nextloop)
+                pset.dt = np.where(
+                    sign_dt * (endtime - pset.time_nextloop) <= pset.dt,
+                    sign_dt * (endtime - pset.time_nextloop),
+                    pset.dt,
+                )
             res = None
             for f in self._pyfuncs:
+                # TODO remove "time" from kernel signature in v4; because it doesn't make sense for vectorized particles
                 res_tmp = f(pset, self._fieldset, pset.time_nextloop[0])
                 if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
                     res = res_tmp
@@ -307,11 +309,13 @@ class Kernel:
                     break
 
             if res is None:
-                if pset.state[0] == StatusCode.Success:
-                    if sign_dt * (pset.time[0] - endtime) > 0:
-                        pset.state[0] = StatusCode.Evaluate
-            else:
-                pset.state[0] = res
+                pset.state = np.where(
+                    (pset.state == StatusCode.Success) & (sign_dt * (pset.time - endtime) > 0),
+                    StatusCode.Evaluate,
+                    pset.state,
+                )
+            else:  # TODO need to think how the kernel exitcode works on vectorized particleset
+                pset.state = res
 
             pset.dt = pre_dt
         return pset
