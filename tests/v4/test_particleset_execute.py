@@ -33,8 +33,7 @@ def test_pset_remove_particle_in_kernel(fieldset):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
     def DeleteKernel(particle, fieldset, time):  # pragma: no cover
-        if particle.lon >= 0.4 and particle.lon <= 0.6:
-            particle.state = StatusCode.Delete
+        particle.state = np.where((particle.lon >= 0.4) & (particle.lon <= 0.6), StatusCode.Delete, particle.state)
 
     pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
     indices = [i for i in range(npart) if not (40 <= i < 60)]
@@ -70,7 +69,7 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
     if with_delete:
         assert np.allclose(pset.lat, n * 0.1, atol=1e-12)
     else:
-        assert np.allclose(pset.lat, n * 0.1, rtol=1e-12)
+        assert np.allclose([p.lat - n * 0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
 @pytest.mark.parametrize(
@@ -155,8 +154,8 @@ def test_uxstommelgyre_pset_execute():
         dt=np.timedelta64(60, "s"),
         pyfunc=AdvectionEE,
     )
-    assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1164489350
-    assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1143932648
+    assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1165396086
+    assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1142124776
 
 
 @pytest.mark.xfail(reason="Output file not implemented yet")

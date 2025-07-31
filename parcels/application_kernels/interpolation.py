@@ -139,6 +139,7 @@ def XTriLinear(
             xi_plus1 = xr.DataArray(np.clip(xi_clipped + 1, 0, x_size - 1), dims="points")
             yi_plus1 = xr.DataArray(np.clip(yi_clipped + 1, 0, y_size - 1), dims="points")
 
+            # TODO see if this can be done with one isel call, by combining the indices
             F00 = data.isel(
                 {axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zinds, "time": tinds}
             ).values.flatten()

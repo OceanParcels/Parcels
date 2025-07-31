@@ -86,7 +86,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
-    assert np.allclose(expected_lon, pset.lon, atol=1.0e-1)
+    assert np.allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])
@@ -183,10 +183,10 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     pset.execute(kernel, runtime=np.timedelta64(5, "s"), dt=np.timedelta64(1, "s"))
 
     assert len(pset.lon) == len([p.lon for p in pset])
-    assert ((pset.lon - x0 - 4 * u) < 1e-4).all()
-    assert ((pset.lat - y0 - 4 * v) < 1e-4).all()
+    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
+    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
     if w:
-        assert ((pset.depth - z0 - 4 * w) < 1e-4).all()
+        assert ((np.array([p.depth - z0 for p in pset]) - 4 * w) < 1e-6).all()
 
 
 @pytest.mark.parametrize(
@@ -251,7 +251,7 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(6, "h"))
 
     exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
-    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat, exp_lat, rtol=rtol)
+    assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
+    assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
     if method == "RK4_3D":
-        assert np.allclose(pset.depth, exp_lat, rtol=rtol)
+        assert np.allclose(pset.depth_nextloop, exp_lat, rtol=rtol)

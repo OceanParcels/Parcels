@@ -202,6 +202,14 @@ class ParticleSet:
         """Get a single particle by index."""
         return Particle(self._data, index=index)
 
+    def __setattr__(self, name, value):
+        if name in ["_data"]:
+            object.__setattr__(self, name, value)
+        elif isinstance(self._data, dict) and name in self._data.keys():
+            self._data[name][:] = value
+        else:
+            object.__setattr__(self, name, value)
+
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
         # TODO update this when now interp methods are implemented
