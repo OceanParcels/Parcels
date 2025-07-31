@@ -7,56 +7,34 @@ from typing import TYPE_CHECKING
 import numpy as np
 import xarray as xr
 
-from parcels.field import Field
-
 if TYPE_CHECKING:
+    from parcels.field import Field
     from parcels.uxgrid import _UXGRID_AXES
     from parcels.xgrid import _XGRID_AXES
 
 __all__ = [
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
-    "XBiLinear",
-    "XTriLinear",
+    "XLinear",
+    "ZeroInterpolator",
 ]
 
 
-def XBiLinear(
+def ZeroInterpolator(
     field: Field,
     ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    position: dict[str, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
-):
-    """Bilinear interpolation on a regular grid."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, _ = position["Z"]
-    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
-
-    data = field.data
-    val = np.zeros_like(tau)
-
-    timeslices = [ti, ti + 1] if tau.any() > 0 else [ti]
-    for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
-        xi = xr.DataArray(xi, dims="points")
-        yi = xr.DataArray(yi, dims="points")
-        zi = xr.DataArray(zi, dims="points")
-        tii = xr.DataArray(tii, dims="points")
-        F00 = data.isel({axis_dim["X"]: xi, axis_dim["Y"]: yi, axis_dim["Z"]: zi, "time": tii}).values.flatten()
-        F10 = data.isel({axis_dim["X"]: xi + 1, axis_dim["Y"]: yi, axis_dim["Z"]: zi, "time": tii}).values.flatten()
-        F01 = data.isel({axis_dim["X"]: xi, axis_dim["Y"]: yi + 1, axis_dim["Z"]: zi, "time": tii}).values.flatten()
-        F11 = data.isel({axis_dim["X"]: xi + 1, axis_dim["Y"]: yi + 1, axis_dim["Z"]: zi, "time": tii}).values.flatten()
-        val += (
-            (1 - xsi) * (1 - eta) * F00 + xsi * (1 - eta) * F10 + (1 - xsi) * eta * F01 + xsi * eta * F11
-        ) * tau_factor
-    return val
+) -> np.float32 | np.float64:
+    """Template function used for the signature check of the lateral interpolation methods."""
+    return 0.0
 
 
-def XTriLinear(
+def XLinear(
     field: Field,
     ti: int,
     position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],

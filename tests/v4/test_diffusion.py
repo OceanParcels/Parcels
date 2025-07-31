@@ -6,7 +6,7 @@ from scipy import stats
 
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels.application_kernels import AdvectionDiffusionEM, AdvectionDiffusionM1, DiffusionUniformKh
-from parcels.application_kernels.interpolation import XBiLinear
+from parcels.application_kernels.interpolation import XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
@@ -25,12 +25,12 @@ def test_fieldKh_Brownian(mesh_type):
     ds["lon"].data = np.array([-1e6, 1e6])
     ds["lat"].data = np.array([-1e6, 1e6])
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
     ds["Kh_zonal"] = (["time", "depth", "YG", "XG"], np.full((2, 1, 2, 2), kh_zonal))
     ds["Kh_meridional"] = (["time", "depth", "YG", "XG"], np.full((2, 1, 2, 2), kh_meridional))
-    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, mesh_type=mesh_type, interp_method=XBiLinear)
-    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
+    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV, Kh_zonal, Kh_meridional])
 
@@ -62,8 +62,8 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh_type, kernel):
     ds["lon"].data = np.linspace(-1e6, 1e6, xdim)
     ds["lat"].data = np.linspace(-1e6, 1e6, ydim)
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
 
     Kh = np.zeros((ydim, xdim), dtype=np.float32)
     for x in range(xdim):
@@ -71,8 +71,8 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh_type, kernel):
 
     ds["Kh_zonal"] = (["time", "depth", "YG", "XG"], np.full((2, 1, ydim, xdim), Kh))
     ds["Kh_meridional"] = (["time", "depth", "YG", "XG"], np.full((2, 1, ydim, xdim), Kh))
-    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, mesh_type=mesh_type, interp_method=XBiLinear)
-    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
+    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV, Kh_zonal, Kh_meridional])
     fieldset.add_constant("dres", ds["lon"][1] - ds["lon"][0])

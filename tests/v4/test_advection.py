@@ -5,7 +5,7 @@ import xarray as xr
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
 from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
-from parcels.application_kernels.interpolation import XBiLinear, XTriLinear
+from parcels.application_kernels.interpolation import XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
@@ -30,8 +30,8 @@ def test_advection_zonal(mesh_type, npart=10):
     ds = simple_UV_dataset(mesh_type=mesh_type)
     ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
@@ -62,8 +62,8 @@ def test_advection_zonal_periodic():
     ds = xr.concat([ds, halo], dim="XG")
 
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=XBiLinear)
-    V = Field("V", ds["V"], grid, interp_method=XBiLinear)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
@@ -81,9 +81,9 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     ds = simple_UV_dataset(mesh_type="flat")
     ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=XTriLinear)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
     U.data[:, 0, :, :] = 0.0  # Set U to 0 at the surface
-    V = Field("V", ds["V"], grid, interp_method=XTriLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
@@ -99,10 +99,10 @@ def test_horizontal_advection_in_3D_flow(npart=10):
 def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     ds = simple_UV_dataset(mesh_type="flat")
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=XTriLinear)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
     U.data[:] = 0.01  # Set U to small value (to avoid horizontal out of bounds)
-    V = Field("V", ds["V"], grid, interp_method=XTriLinear)
-    W = Field("W", ds["V"], grid, interp_method=XTriLinear)  # Use V as W for testing
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    W = Field("W", ds["V"], grid, interp_method=XLinear)  # Use V as W for testing
     W.data[:] = -1.0 if direction == "up" else 1.0
     UVW = VectorField("UVW", U, V, W)
     UV = VectorField("UV", U, V)
@@ -178,11 +178,11 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
         ds["W"] = (["time", "depth", "YG", "XG"], W)
 
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=XTriLinear)
-    V = Field("V", ds["V"], grid, interp_method=XTriLinear)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     fields = [U, V, VectorField("UV", U, V)]
     if w:
-        W = Field("W", ds["W"], grid, interp_method=XTriLinear)
+        W = Field("W", ds["W"], grid, interp_method=XLinear)
         fields.append(VectorField("UVW", U, V, W))
     fieldset = FieldSet(fields)
 
@@ -229,11 +229,11 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
     ds["lon"].data = np.array([0, 25000])
     ds["lat"].data = np.array([0, 25000])
     ds = ds.assign_coords(time=time)
-    U = Field("U", ds["U"], grid, interp_method=XBiLinear)
-    V = Field("V", ds["V"], grid, interp_method=XBiLinear)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     if method == "RK4_3D":
         # Using W to test 3D advection (assuming same velocity as V)
-        W = Field("W", ds["V"], grid, interp_method=XTriLinear)
+        W = Field("W", ds["V"], grid, interp_method=XLinear)
         UVW = VectorField("UVW", U, V, W)
         fieldset = FieldSet([U, V, W, UVW])
         start_depth = start_lat
@@ -249,8 +249,8 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
     elif method in ["AdvDiffEM", "AdvDiffM1"]:
         # Add zero diffusivity field for diffusion kernels
         ds["Kh"] = (["time", "depth", "YG", "XG"], np.full((len(time), 2, 2, 2), 0))
-        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_zonal")
-        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_meridional")
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XLinear), "Kh_zonal")
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XLinear), "Kh_meridional")
         fieldset.add_constant("dres", 0.1)
 
     pclass = RK45Particles if method == "RK45" else Particle

@@ -16,6 +16,7 @@ from parcels._typing import (
     VectorType,
     assert_valid_mesh,
 )
+from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, ZeroInterpolator
 from parcels.particle import Particle
 from parcels.tools.converters import (
     UnitConverter,
@@ -49,23 +50,9 @@ def _deal_with_errors(error, key, vector_type: VectorType):
         return 0
 
 
-def ZeroInterpolator(
-    field: Field,
-    ti: int,
-    position: dict[str, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-) -> np.float32 | np.float64:
-    """Template function used for the signature check of the lateral interpolation methods."""
-    return 0.0
-
-
 _DEFAULT_INTERPOLATOR_MAPPING = {
-    XGrid: ZeroInterpolator,  # TODO v4: Update these to better defaults
-    UxGrid: ZeroInterpolator,
+    XGrid: XLinear,
+    UxGrid: UXPiecewiseLinearNode,
 }
 
 
