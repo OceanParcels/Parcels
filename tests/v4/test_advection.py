@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels._datasets.structured.generated import simple_UV_dataset
+import parcels
+from parcels._datasets.structured.generated import radial_rotation_dataset, simple_UV_dataset
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
 from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
 from parcels.application_kernels.interpolation import XBiLinear, XBiLinearPeriodic, XTriLinear
@@ -185,6 +186,28 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
     if w:
         assert ((np.array([p.depth - z0 for p in pset]) - 4 * w) < 1e-6).all()
+
+
+def test_radialrotation(npart=10):
+    ds = radial_rotation_dataset()
+    grid = XGrid.from_dataset(ds)
+    U = parcels.Field("U", ds["U"], grid, mesh_type="flat", interp_method=XBiLinear)
+    V = parcels.Field("V", ds["V"], grid, mesh_type="flat", interp_method=XBiLinear)
+    UV = parcels.VectorField("UV", U, V)
+    fieldset = parcels.FieldSet([U, V, UV])
+
+    lon = np.linspace(32, 50, npart)
+    lat = np.ones(npart) * 30
+
+    pset = parcels.ParticleSet(fieldset, lon=lon, lat=lat)
+    pset.execute(parcels.AdvectionRK4, runtime=np.timedelta64(10, "m"), dt=np.timedelta64(30, "s"))
+
+    theta = 2 * np.pi * pset.time_nextloop / np.timedelta64(24 * 3600, "s")
+    true_lon = (lon - 30.0) * np.cos(theta) + 30.0
+    true_lat = -(lon - 30.0) * np.sin(theta) + 30.0
+
+    assert np.allclose(pset.lon, true_lon, atol=5e-2)
+    assert np.allclose(pset.lat, true_lat, atol=5e-2)
 
 
 @pytest.mark.parametrize(

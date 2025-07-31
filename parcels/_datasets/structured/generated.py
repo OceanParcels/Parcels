@@ -27,8 +27,8 @@ def radial_rotation_dataset(xdim=200, ydim=200):  # Define 2D flat, square field
     x0 = 30.0  # Define the origin to be the centre of the Field.
     y0 = 30.0
 
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
+    U = np.zeros((2, 1, ydim, xdim), dtype=np.float32)
+    V = np.zeros((2, 1, ydim, xdim), dtype=np.float32)
 
     omega = 2 * np.pi / 86400.0  # Define the rotational period as 1 day.
 
@@ -41,12 +41,14 @@ def radial_rotation_dataset(xdim=200, ydim=200):  # Define 2D flat, square field
             theta = np.arctan2((lat[j] - y0), (lon[i] - x0))
             assert abs(theta) <= np.pi
 
-            U[j, i] = r * np.sin(theta) * omega
-            V[j, i] = -r * np.cos(theta) * omega
+            U[:, :, j, i] = r * np.sin(theta) * omega
+            V[:, :, j, i] = -r * np.cos(theta) * omega
 
     return xr.Dataset(
-        {"U": (["YG", "XG"], U), "V": (["YG", "XG"], V)},
+        {"U": (["time", "depth", "YG", "XG"], U), "V": (["time", "depth", "YG", "XG"], V)},
         coords={
+            "time": (["time"], [np.timedelta64(0, "s"), np.timedelta64(10, "D")], {"axis": "T"}),
+            "depth": (["depth"], np.array([0.0]), {"axis": "Z"}),
             "YC": (["YC"], np.arange(ydim) + 0.5, {"axis": "Y"}),
             "YG": (["YG"], np.arange(ydim), {"axis": "Y", "c_grid_axis_shift": -0.5}),
             "XC": (["XC"], np.arange(xdim) + 0.5, {"axis": "X"}),
