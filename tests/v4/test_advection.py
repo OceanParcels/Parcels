@@ -220,7 +220,7 @@ def test_radialrotation(npart=10):
         ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
-        pytest.param("RK45", 1e-5, marks=pytest.mark.xfail(reason="Started failing in GH2123 - not sure why")),
+        ("RK45", 1e-5),
     ],
 )
 def test_moving_eddy(method, rtol):
@@ -263,7 +263,7 @@ def test_moving_eddy(method, rtol):
         lon = x_0 + ds.u_g * t + (ds.u_0 - ds.u_g) / ds.f * np.sin(ds.f * t)
         return lon, lat
 
-    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
     assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
     if method == "RK4_3D":
