@@ -57,3 +57,39 @@ def radial_rotation_dataset(xdim=200, ydim=200):  # Define 2D flat, square field
             "lon": (["XG"], lon, {"axis": "X", "c_grid_axis_shift": -0.5}),
         },
     )
+
+
+def moving_eddy_dataset(xdim=2, ydim=2):  # TODO check if this also works with xdim=1, ydim=1
+    """Create a dataset with an eddy moving in time. Note that there is no spatial variation in the flow."""
+    f, u_0, u_g = 1.0e-4, 0.3, 0.04  # Some constants
+
+    lon = np.linspace(0, 25000, xdim, dtype=np.float32)
+    lat = np.linspace(0, 25000, ydim, dtype=np.float32)
+
+    time = np.arange(np.timedelta64(0, "s"), np.timedelta64(7, "h"), np.timedelta64(1, "m"))
+
+    U = np.zeros((len(time), 1, ydim, xdim), dtype=np.float32)
+    V = np.zeros((len(time), 1, ydim, xdim), dtype=np.float32)
+
+    for t in range(len(time)):
+        U[t, :, :, :] = u_g + (u_0 - u_g) * np.cos(f * (time[t] / np.timedelta64(1, "s")))
+        V[t, :, :, :] = -(u_0 - u_g) * np.sin(f * (time[t] / np.timedelta64(1, "s")))
+
+    return xr.Dataset(
+        {"U": (["time", "depth", "YG", "XG"], U), "V": (["time", "depth", "YG", "XG"], V)},
+        coords={
+            "time": (["time"], time, {"axis": "T"}),
+            "depth": (["depth"], np.array([0.0]), {"axis": "Z"}),
+            "YC": (["YC"], np.arange(ydim) + 0.5, {"axis": "Y"}),
+            "YG": (["YG"], np.arange(ydim), {"axis": "Y", "c_grid_axis_shift": -0.5}),
+            "XC": (["XC"], np.arange(xdim) + 0.5, {"axis": "X"}),
+            "XG": (["XG"], np.arange(xdim), {"axis": "X", "c_grid_axis_shift": -0.5}),
+            "lat": (["YG"], lat, {"axis": "Y", "c_grid_axis_shift": 0.5}),
+            "lon": (["XG"], lon, {"axis": "X", "c_grid_axis_shift": -0.5}),
+        },
+        attrs={
+            "u_0": u_0,
+            "u_g": u_g,
+            "f": f,
+        },
+    )

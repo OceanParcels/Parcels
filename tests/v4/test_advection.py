@@ -3,7 +3,7 @@ import pytest
 import xarray as xr
 
 import parcels
-from parcels._datasets.structured.generated import radial_rotation_dataset, simple_UV_dataset
+from parcels._datasets.structured.generated import moving_eddy_dataset, radial_rotation_dataset, simple_UV_dataset
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
 from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
 from parcels.application_kernels.interpolation import XBiLinear, XBiLinearPeriodic, XTriLinear
@@ -223,26 +223,9 @@ def test_radialrotation(npart=10):
         pytest.param("RK45", 1e-5, marks=pytest.mark.xfail(reason="Started failing in GH2123 - not sure why")),
     ],
 )
-def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more readable
-    f, u_0, u_g = 1.0e-4, 0.3, 0.04  # Some constants
-    start_lon, start_lat = 12000, 12500
-
-    def truth_moving(x_0, y_0, t):
-        t /= np.timedelta64(1, "s")
-        lat = y_0 - (u_0 - u_g) / f * (1 - np.cos(f * t))
-        lon = x_0 + u_g * t + (u_0 - u_g) / f * np.sin(f * t)
-        return lon, lat
-
-    dt = np.timedelta64(3, "m")
-    time = np.arange(np.timedelta64(0, "s"), np.timedelta64(7, "h"), np.timedelta64(1, "m"))
-    ds = simple_UV_dataset(dims=(len(time), 2, 2, 2), mesh_type="flat", maxdepth=25000)
+def test_moving_eddy(method, rtol):
+    ds = moving_eddy_dataset()
     grid = XGrid.from_dataset(ds)
-    for t in range(len(time)):
-        ds["U"].data[t, :, :, :] = u_g + (u_0 - u_g) * np.cos(f * (time[t] / np.timedelta64(1, "s")))
-        ds["V"].data[t, :, :, :] = -(u_0 - u_g) * np.sin(f * (time[t] / np.timedelta64(1, "s")))
-    ds["lon"].data = np.array([0, 25000])
-    ds["lat"].data = np.array([0, 25000])
-    ds = ds.assign_coords(time=time)
     U = Field("U", ds["U"], grid, interp_method=XBiLinear)
     V = Field("V", ds["V"], grid, interp_method=XBiLinear)
     if method == "RK4_3D":
@@ -250,28 +233,35 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
         W = Field("W", ds["V"], grid, interp_method=XTriLinear)
         UVW = VectorField("UVW", U, V, W)
         fieldset = FieldSet([U, V, W, UVW])
-        start_depth = start_lat
     else:
         UV = VectorField("UV", U, V)
         fieldset = FieldSet([U, V, UV])
-        start_depth = 0
+    if method in ["AdvDiffEM", "AdvDiffM1"]:
+        # Add zero diffusivity field for diffusion kernels
+        ds["Kh"] = (["time", "depth", "YG", "XG"], np.full(ds["U"].shape, 0))
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_zonal")
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_meridional")
+        fieldset.add_constant("dres", 0.1)
+
+    start_lon, start_lat, start_depth = 12000, 12500, 12500
+    dt = np.timedelta64(3, "m")
 
     if method == "RK45":
         # Use RK45Particles to set next_dt
         RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype=np.timedelta64))
         fieldset.add_constant("RK45_tol", 1e-6)
-    elif method in ["AdvDiffEM", "AdvDiffM1"]:
-        # Add zero diffusivity field for diffusion kernels
-        ds["Kh"] = (["time", "depth", "YG", "XG"], np.full((len(time), 2, 2, 2), 0))
-        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_zonal")
-        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_meridional")
-        fieldset.add_constant("dres", 0.1)
 
     pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(
         fieldset, pclass=pclass, lon=start_lon, lat=start_lat, depth=start_depth, time=np.timedelta64(0, "s")
     )
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(6, "h"))
+
+    def truth_moving(x_0, y_0, t):
+        t /= np.timedelta64(1, "s")
+        lat = y_0 - (ds.u_0 - ds.u_g) / ds.f * (1 - np.cos(ds.f * t))
+        lon = x_0 + ds.u_g * t + (ds.u_0 - ds.u_g) / ds.f * np.sin(ds.f * t)
+        return lon, lat
 
     exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
     assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
