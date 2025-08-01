@@ -196,13 +196,15 @@ def test_radialrotation(npart=10):
     UV = parcels.VectorField("UV", U, V)
     fieldset = parcels.FieldSet([U, V, UV])
 
+    dt = np.timedelta64(30, "s")
     lon = np.linspace(32, 50, npart)
     lat = np.ones(npart) * 30
+    starttime = np.arange(np.timedelta64(0, "s"), npart * dt, dt)
 
-    pset = parcels.ParticleSet(fieldset, lon=lon, lat=lat)
-    pset.execute(parcels.AdvectionRK4, runtime=np.timedelta64(10, "m"), dt=np.timedelta64(30, "s"))
+    pset = parcels.ParticleSet(fieldset, lon=lon, lat=lat, time=starttime)
+    pset.execute(parcels.AdvectionRK4, endtime=np.timedelta64(10, "m"), dt=dt)
 
-    theta = 2 * np.pi * pset.time_nextloop / np.timedelta64(24 * 3600, "s")
+    theta = 2 * np.pi * (pset.time_nextloop - starttime) / np.timedelta64(24 * 3600, "s")
     true_lon = (lon - 30.0) * np.cos(theta) + 30.0
     true_lat = -(lon - 30.0) * np.sin(theta) + 30.0
 
