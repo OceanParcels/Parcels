@@ -72,8 +72,7 @@ class SpatialHash:
         self._ny = int(np.ceil(Ly / self._dh))
 
         # Generate the mapping from the hash indices to unstructured grid elements
-        self._face_hash_table = None
-        # self._face_hash_table = self._initialize_face_hash_table()
+        self._face_hash_table = self._initialize_face_hash_table()
 
     def _hash_cell_size(self):
         """Computes the size of the hash cells from the source grid.
