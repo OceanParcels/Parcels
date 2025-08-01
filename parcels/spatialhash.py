@@ -54,10 +54,10 @@ class SpatialHash:
             self._ymax = 180.0
         else:
             # Lower left corner of the hash grid
-            lon_min = self._source_grid.lon.min
-            lat_min = self._source_grid.lat.min
-            lon_max = self._source_grid.lon.max
-            lat_max = self._source_grid.lat.max
+            lon_min = self._source_grid.lon.min()
+            lat_min = self._source_grid.lat.min()
+            lon_max = self._source_grid.lon.max()
+            lat_max = self._source_grid.lat.max()
 
             self._xmin = lon_min - self._dh
             self._ymin = lat_min - self._dh
@@ -72,6 +72,7 @@ class SpatialHash:
         self._ny = int(np.ceil(Ly / self._dh))
 
         # Generate the mapping from the hash indices to unstructured grid elements
+        self._face_hash_table = None
         self._face_hash_table = self._initialize_face_hash_table()
 
     def _hash_cell_size(self):
