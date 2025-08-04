@@ -118,11 +118,16 @@ class ParticleSet:
                 )
 
         self._data = pclass.create_particle_data(
-            lon=lon, lat=lat, depth=depth, time=time, trajectory_ids=trajectory_ids, ngrids=len(fieldset.gridset)
+            lon=lon,
+            lat=lat,
+            depth=depth,
+            time=time,
+            trajectory_ids=trajectory_ids,
+            ngrids=len(fieldset.gridset),
         )
         self._ptype = pclass
 
-        # update initial values provided on ParticleSet creation
+        # update initial values provided on ParticleSet creation # TODO: Wrap this into create_particle_data
         particle_variables = [v.name for v in pclass.variables]
         for kwvar, kwval in kwargs.items():
             if kwvar not in particle_variables:

@@ -1,4 +1,5 @@
 import operator
+from keyword import iskeyword
 from typing import Literal
 
 import numpy as np
@@ -35,6 +36,8 @@ class Variable:
     ):
         if not isinstance(name, str):
             raise TypeError(f"Variable name must be a string. Got {name=!r}")
+        _assert_valid_python_varname(name)
+
         try:
             dtype = np.dtype(dtype)
         except (TypeError, ValueError):
@@ -61,9 +64,7 @@ class Variable:
         return self._name
 
     def __repr__(self):
-        return (
-            f"Variable(name={self._name!r}, dtype={self.dtype!r}, initial={self.initial!r}, to_write={self.to_write!r})"
-        )
+        return f"Variable(name={self._name!r}, dtype={self.dtype!r}, initial={self.initial!r}, to_write={self.to_write!r}, attrs={self.attrs!r})"
 
     # def __get__(self, instance, cls):
     #     if instance is None:
@@ -169,6 +170,19 @@ class KernelParticle:
             self._data[name][self._index] = value
 
 
+def _assert_no_duplicate_variable_names(*, existing_vars: list[Variable], new_vars: list[Variable]):
+    existing_names = {var.name for var in existing_vars}
+    for var in new_vars:
+        if var.name in existing_names:
+            raise ValueError(f"Variable name already exists: {var.name}")
+
+
+def _assert_valid_python_varname(name):
+    if name.isidentifier() and not iskeyword(name):
+        return
+    raise ValueError(f"Particle variable has to be a valid Python variable name. Got {name=!r}")
+
+
 Particle = ParticleClass(
     variables=[
         Variable("lon", dtype=np.float32),
@@ -185,10 +199,3 @@ Particle = ParticleClass(
         Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False),
     ]
 )
-
-
-def _assert_no_duplicate_variable_names(*, existing_vars: list[Variable], new_vars: list[Variable]):
-    existing_names = {var.name for var in existing_vars}
-    for var in new_vars:
-        if var.name in existing_names:
-            raise ValueError(f"Variable name already exists: {var.name}")
