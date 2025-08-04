@@ -52,17 +52,26 @@ def XLinear(
     axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
     data = field.data
 
+    lenT = 2 if any(tau > 0) else 1
+    lenZ = 2 if any(zeta > 0) else 1
+
     # Time coordinates: 8 points at ti, then 8 points at ti+1
-    ti = np.concatenate([np.repeat(ti, 8), np.repeat(ti + 1, 8)])
+    if lenT == 1:
+        ti = np.repeat(ti, lenZ * 4)
+    else:
+        ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti + 1, lenZ * 4)])
 
     # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
-    zi = np.tile(np.stack([zi, zi, zi, zi, zi + 1, zi + 1, zi + 1, zi + 1], axis=1).flatten(), 2)
+    if lenZ == 1:
+        zi = np.repeat(zi, lenT * 4)
+    else:
+        zi = np.tile(np.stack([zi, zi, zi, zi, zi + 1, zi + 1, zi + 1, zi + 1], axis=1).flatten(), lenT)
 
     # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
-    yi = np.tile(np.stack([yi, yi, yi + 1, yi + 1], axis=1).flatten(), 4)
+    yi = np.tile(np.stack([yi, yi, yi + 1, yi + 1], axis=1).flatten(), (lenT) * (lenZ))
 
     # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
-    xi = np.tile(np.stack([xi, xi + 1], axis=1).flatten(), 8)
+    xi = np.tile(np.stack([xi, xi + 1], axis=1).flatten(), 2 * (lenT) * (lenZ))
 
     # Clip indices to valid ranges
     ti = np.clip(ti, 0, data.shape[0] - 1)
@@ -71,30 +80,31 @@ def XLinear(
     xi = np.clip(xi, 0, data.shape[3] - 1)
 
     # Create DataArrays for indexing
-    xi_da = xr.DataArray(xi, dims=("points"))
-    yi_da = xr.DataArray(yi, dims=("points"))
     ti_da = xr.DataArray(ti, dims=("points"))
     zi_da = xr.DataArray(zi, dims=("points"))
+    yi_da = xr.DataArray(yi, dims=("points"))
+    xi_da = xr.DataArray(xi, dims=("points"))
 
     F = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
-    F = F.data.reshape(-1, 2, 2, 4)
+    F = F.data.reshape(-1, lenT, lenZ, 4)
     # TODO check if numpy can handle this more efficiently
     # F = data.values[tti, zii, yii, xii].reshape(-1, 4)
 
-    F_t0, F_t1 = F[:, 0, :, :], F[:, 1, :, :]
-    tau_expanded = tau[:, np.newaxis, np.newaxis]
-    F_time_interp = F_t0 * (1 - tau_expanded) + F_t1 * tau_expanded
+    if lenT == 2:
+        F_t0, F_t1 = F[:, 0, :, :], F[:, 1, :, :]
+        tau_expanded = tau[:, np.newaxis, np.newaxis]
+        F = F_t0 * (1 - tau_expanded) + F_t1 * tau_expanded
+    else:
+        F = F[:, 0, :, :]
 
-    F_z0, F_z1 = F_time_interp[:, 0, :], F_time_interp[:, 1, :]
-    zeta_expanded = zeta[:, np.newaxis]
-    F_final = F_z0 * (1 - zeta_expanded) + F_z1 * zeta_expanded
+    if lenZ == 2:
+        F_z0, F_z1 = F[:, 0, :], F[:, 1, :]
+        zeta_expanded = zeta[:, np.newaxis]
+        F = F_z0 * (1 - zeta_expanded) + F_z1 * zeta_expanded
+    else:
+        F = F[:, 0, :]
 
-    return (
-        (1 - xsi) * (1 - eta) * F_final[:, 0]
-        + xsi * (1 - eta) * F_final[:, 1]
-        + (1 - xsi) * eta * F_final[:, 2]
-        + xsi * eta * F_final[:, 3]
-    )
+    return (1 - xsi) * (1 - eta) * F[:, 0] + xsi * (1 - eta) * F[:, 1] + (1 - xsi) * eta * F[:, 2] + xsi * eta * F[:, 3]
 
 
 def UXPiecewiseConstantFace(
