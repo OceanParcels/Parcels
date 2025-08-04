@@ -156,8 +156,12 @@ Particle = ParticleClass(
         Variable("lat_nextloop", dtype=np.float32, to_write=False),
         Variable("depth", dtype=np.float32),
         Variable("depth_nextloop", dtype=np.float32, to_write=False),
-        Variable("time", dtype=np.float64),
-        Variable("time_nextloop", dtype=np.float64, to_write=False),
+        Variable(
+            "time", dtype="datetime64[ns]"
+        ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
+        Variable(
+            "time_nextloop", dtype="datetime64[ns]", to_write=False
+        ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
         Variable("id", dtype=np.int64, to_write="once"),
         Variable("obs_written", dtype=np.int32, initial=0, to_write=False),
         Variable("dt", dtype="timedelta64[ns]", initial=np.timedelta64(1, "ns"), to_write=False),
