@@ -49,9 +49,9 @@ class SpatialHash:
         if global_grid:
             # Set the hash grid to be a global grid
             self._xmin = -180.0
-            self._ymin = -180.0
+            self._ymin = -90.0
             self._xmax = 180.0
-            self._ymax = 180.0
+            self._ymax = 90.0
         else:
             # Lower left corner of the hash grid
             lon_min = self._source_grid.lon.min()
@@ -85,8 +85,8 @@ class SpatialHash:
         """Computes the 2-d hash index (i,j) for the location (x,y), where x and y are given in spherical
         coordinates (in degrees)
         """
-        # Wrap longitude to [-pi, pi]
-        lon = (coords[:, 0] + np.pi) % (2 * np.pi) - np.pi
+        # Wrap longitude to [-180, 180]
+        lon = (coords[:, 0] + 180.0) % (360.0) - 180.0
         i = ((lon - self._xmin) / self._dh).astype(np.int32)
         j = ((coords[:, 1] - self._ymin) / self._dh).astype(np.int32)
         return i, j
@@ -156,12 +156,7 @@ class SpatialHash:
         Parameters
         ----------
         coords : array_like
-            coordinate pairs in degrees (lon, lat) or cartesian (x,y,z) to query. If the SpatialHash.coordinate_system is
-            "spherical", then coords should be in degrees (lon, lat). If the SpatialHash.coordinate_system is "cartesian",
-            then coords can either be in degrees (lon, lat) or cartesian (x,y,z).
-
-        in_radians : bool, optional
-            if True, queries assuming coords are inputted in radians, not degrees. Only applies to spherical coords
+            coordinate pairs in degrees (lon, lat) to query.
 
 
         Returns
@@ -169,14 +164,12 @@ class SpatialHash:
         faces : ndarray of shape (coords.shape[0]), dtype=np.int32
             Face id's in the self._source_grid where each coords element is found. When a coords element is not found, the
             corresponding array entry in faces is set to -1.
-        bcoords : ndarray of shape (coords.shape[0], self._source_grid.n_max_face_nodes), dtype=double
-            Barycentric coordinates of each coords element
         """
         num_coords = coords.shape[0]
 
         # Preallocate results
-        bcoords = np.zeros((num_coords, 4), dtype=np.double)
-        faces = np.full(num_coords, -1, dtype=np.int32)
+        # bcoords = np.zeros((num_coords, 4), dtype=np.double)
+        faces = np.full((num_coords, 2), -1, dtype=np.int32)
 
         # Get the list of candidate faces for each coordinate
         candidate_faces = [self._face_hash_table[pid] for pid in self._hash_index(coords)]
@@ -201,25 +194,29 @@ class SpatialHash:
             axis=-1,
         )
 
+        print(f"Coords: {coords}, Candidate faces: {candidate_faces}")
         for i, (coord, candidates) in enumerate(zip(coords, candidate_faces, strict=False)):
             for face_id in candidates:
                 xi, yi = self._grid_ij_for_eid(face_id)
+                print(f"Checking face {face_id} at grid position ({xi}, {yi}) for coord {coord}")
                 nodes = np.stack(
                     (
-                        xbound[xi, yi, :],
-                        ybound[xi, yi, :],
+                        xbound[yi, xi, :],
+                        ybound[yi, xi, :],
                     ),
                     axis=-1,
                 )
+                for k in range(4):
+                    print(f"Node {k}: {nodes[k]}")
 
                 bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
                 err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
                 if (bcoord >= 0).all() and err < tol:
                     faces[i, :] = [yi, xi]
-                    bcoords[i, :] = bcoord
+                    # bcoords[i, :] = bcoord
                     break
 
-        return faces, bcoords
+        return faces  # , bcoords
 
 
 def _triangle_area(A, B, C):
