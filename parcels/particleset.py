@@ -129,7 +129,7 @@ class ParticleSet:
             lat_nextloop=lat,
             depth_nextloop=depth,
             time_nextloop=time,
-            trajectory=trajectory_ids,
+            id=trajectory_ids,
         )
         self._ptype = pclass
 
@@ -188,7 +188,7 @@ class ParticleSet:
         return particleset_repr(self)
 
     def __len__(self):
-        return len(self._data["trajectory"])
+        return len(self._data["id"])
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -219,11 +219,11 @@ class ParticleSet:
             return
 
         if isinstance(particles, type(self)):
-            if len(self._data["trajectory"]) > 0:
-                offset = self._data["trajectory"].max() + 1
+            if len(self._data["id"]) > 0:
+                offset = self._data["id"].max() + 1
             else:
                 offset = 0
-            particles._data["trajectory"] = particles._data["trajectory"] + offset
+            particles._data["id"] = particles._data["id"] + offset
 
         for d in self._data:
             self._data[d] = np.concatenate((self._data[d], particles._data[d]))

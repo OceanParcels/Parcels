@@ -190,7 +190,7 @@ def create_particle_data(*, pclass: ParticleClass, nparticles, ngrids, **initial
             name_to_copy = var.initial(_attrgetter_helper)
             data[var.name] = data[name_to_copy].copy()
         else:
-            data[var.name] = _create_array_for_variable(variables[var], nparticles)
+            data[var.name] = _create_array_for_variable(var, nparticles)
     return data
 
 
