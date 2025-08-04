@@ -118,13 +118,18 @@ class ParticleSet:
                 )
 
         self._data = create_particle_data(
-            pclass,
+            pclass=pclass,
+            nparticles=lon.size,
+            ngrids=len(fieldset.gridset),
             lon=lon,
             lat=lat,
             depth=depth,
             time=time,
+            lon_nextloop=lon,
+            lat_nextloop=lat,
+            depth_nextloop=depth,
+            time_nextloop=time,
             trajectory=trajectory_ids,
-            ngrids=len(fieldset.gridset),
         )
         self._ptype = pclass
 

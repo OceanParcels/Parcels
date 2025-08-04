@@ -166,37 +166,40 @@ Particle = ParticleClass(
 )
 
 
-def create_particle_data(*, pclass, lon, lat, depth, time, trajectory, ngrids):
-    nparticles = len(trajectory)
+def create_particle_data(*, pclass: ParticleClass, nparticles, ngrids, **initial: dict[str, np.array]):
+    variables = {var.name: var for var in pclass.variables}
 
-    lonlatdepth_dtype = np.float32  # TODO v4: Update this to pull from the particle class itself
+    assert "ei" not in initial, "'ei' is for internal use, and is unique since is only non 1D array"
 
-    data = {
-        "lon": lon.astype(lonlatdepth_dtype),
-        "lat": lat.astype(lonlatdepth_dtype),
-        "depth": depth.astype(lonlatdepth_dtype),
-        "dlon": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-        "dlat": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-        "ddepth": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-        "time": time,
-        "dt": np.timedelta64(1, "ns") * np.ones(nparticles),
-        "ei": np.zeros((nparticles, ngrids), dtype=np.int32),
-        "state": np.zeros((nparticles), dtype=np.int32),
-        "lon_nextloop": lon.astype(lonlatdepth_dtype),
-        "lat_nextloop": lat.astype(lonlatdepth_dtype),
-        "depth_nextloop": depth.astype(lonlatdepth_dtype),
-        "time_nextloop": time,
-        "trajectory": trajectory,
-    }
+    for var_name in initial:
+        if var_name not in variables:
+            raise ValueError(f"Variable {var_name} is not defined in the ParticleClass.")
 
-    for var in pclass.variables:
-        if var.name in data:
-            continue
+        values = initial[var_name]
+        if values.shape != (nparticles,):
+            raise ValueError(f"Initial value for {var_name} must have shape ({nparticles},). Got {values.shape=}")
+
+        initial[var_name] = values.astype(variables[var_name].dtype)
+
+    data = {"ei": np.zeros((nparticles, ngrids), dtype=np.int32), **initial}
+
+    vars_to_create = {k: v for k, v in variables.items() if k not in data}
+
+    for var in vars_to_create.values():
         if isinstance(var.initial, operator.attrgetter):
-            attr_to_copy = var.initial(_attrgetter_helper)
-            values = data[attr_to_copy].copy()
+            name_to_copy = var.initial(_attrgetter_helper)
+            data[var.name] = data[name_to_copy].copy()
         else:
-            values = np.full(shape=(nparticles,), fill_value=var.initial, dtype=var.dtype)
-        data[var.name] = values
-
+            data[var.name] = _create_array_for_variable(variables[var], nparticles)
     return data
+
+
+def _create_array_for_variable(variable: Variable, nparticles: int):
+    assert not isinstance(variable.initial, operator.attrgetter), (
+        "This function cannot handle attrgetter initial values."
+    )
+    return np.full(
+        shape=(nparticles,),
+        fill_value=variable.initial,
+        dtype=variable.dtype,
+    )
