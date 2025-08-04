@@ -296,7 +296,7 @@ class Kernel:
             except KeyError:
                 pset.dt = np.where(
                     sign_dt * (endtime - pset.time_nextloop) <= pset.dt,
-                    sign_dt * (endtime - pset.time_nextloop),
+                    np.where(sign_dt * (endtime - pset.time_nextloop) < 0, 0, sign_dt * (endtime - pset.time_nextloop)),
                     pset.dt,
                 )
             res = None

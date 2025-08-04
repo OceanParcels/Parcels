@@ -85,6 +85,22 @@ def test_execution_endtime(fieldset, starttime, endtime, dt):
     assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
 
 
+@pytest.mark.parametrize("direction", [-1, 1])
+def test_pset_starttime_outside_execute(fieldset, direction):
+    if direction == 1:
+        endtime = fieldset.time_interval.left + np.timedelta64(8, "s")
+        start_times = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in [0, 2, 10]]
+    else:
+        endtime = fieldset.time_interval.right - np.timedelta64(8, "s")
+        start_times = [fieldset.time_interval.right - np.timedelta64(t, "s") for t in [0, 2, 10]]
+
+    pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
+
+    pset.execute(DoNothing, dt=direction * np.timedelta64(1, "s"), endtime=endtime)
+    assert pset.time_nextloop[0:1] == endtime
+    assert pset.time_nextloop[2] == start_times[2]
+
+
 @pytest.mark.parametrize(
     "starttime, runtime, dt",
     [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
