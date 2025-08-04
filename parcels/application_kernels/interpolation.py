@@ -52,8 +52,8 @@ def XLinear(
     axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
     data = field.data
 
-    lenT = 2 if any(tau > 0) else 1
-    lenZ = 2 if any(zeta > 0) else 1
+    lenT = 2 if np.any(tau > 0) else 1
+    lenZ = 2 if np.any(zeta > 0) else 1
 
     # Time coordinates: 8 points at ti, then 8 points at ti+1
     if lenT == 1:
@@ -68,10 +68,10 @@ def XLinear(
         zi = np.tile(np.stack([zi, zi, zi, zi, zi + 1, zi + 1, zi + 1, zi + 1], axis=1).flatten(), lenT)
 
     # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
-    yi = np.tile(np.stack([yi, yi, yi + 1, yi + 1], axis=1).flatten(), (lenT) * (lenZ))
+    yi = np.tile(np.repeat([yi, yi + 1], 2), (lenT) * (lenZ))
 
     # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
-    xi = np.tile(np.stack([xi, xi + 1], axis=1).flatten(), 2 * (lenT) * (lenZ))
+    xi = np.repeat([xi, xi + 1], 2 * (lenT) * (lenZ))
 
     # Clip indices to valid ranges
     ti = np.clip(ti, 0, data.shape[0] - 1)
