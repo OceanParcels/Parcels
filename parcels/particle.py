@@ -1,7 +1,9 @@
+import operator
 from typing import Literal
 
 import numpy as np
 
+from parcels._compat import _attrgetter_helper
 from parcels._reprs import _format_list_items_multiline
 from parcels.tools.statuscodes import StatusCode
 
@@ -113,6 +115,41 @@ class ParticleClass:
         _assert_no_duplicate_variable_names(existing_vars=self.variables, new_vars=variable)
 
         return ParticleClass(variables=self.variables + variable)
+
+    def create_particle_data(self, *, lon, lat, depth, time, trajectory_ids, ngrids):
+        nparticles = len(trajectory_ids)
+
+        lonlatdepth_dtype = np.float32  # TODO v4: Update this to pull from the particle class itself
+
+        data = {
+            "lon": lon.astype(lonlatdepth_dtype),
+            "lat": lat.astype(lonlatdepth_dtype),
+            "depth": depth.astype(lonlatdepth_dtype),
+            "dlon": np.zeros(lon.size, dtype=lonlatdepth_dtype),
+            "dlat": np.zeros(lon.size, dtype=lonlatdepth_dtype),
+            "ddepth": np.zeros(lon.size, dtype=lonlatdepth_dtype),
+            "time": time,
+            "dt": np.timedelta64(1, "ns") * np.ones(nparticles),
+            "ei": np.zeros((nparticles, ngrids), dtype=np.int32),
+            "state": np.zeros((nparticles), dtype=np.int32),
+            "lon_nextloop": lon.astype(lonlatdepth_dtype),
+            "lat_nextloop": lat.astype(lonlatdepth_dtype),
+            "depth_nextloop": depth.astype(lonlatdepth_dtype),
+            "time_nextloop": time,
+            "trajectory": trajectory_ids,
+        }
+
+        for var in self.variables:
+            if var.name in data:
+                continue
+            if isinstance(var.initial, operator.attrgetter):
+                attr_to_copy = var.initial(_attrgetter_helper)
+                values = data[attr_to_copy].copy()
+            else:
+                values = np.full(shape=(nparticles,), fill_value=var.initial, dtype=var.dtype)
+            data[var.name] = values
+
+        return data
 
 
 class KernelParticle:

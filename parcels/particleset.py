@@ -1,7 +1,6 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from operator import attrgetter
 
 import numpy as np
 import xarray as xr
@@ -117,40 +116,16 @@ class ParticleSet:
                 assert lon.size == kwargs[kwvar].size, (
                     f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
                 )
-        lonlatdepth_dtype = np.float64  # TODO: Remove and opt for dtype as defined in particle variable
-        self._data = {
-            "lon": lon.astype(lonlatdepth_dtype),
-            "lat": lat.astype(lonlatdepth_dtype),
-            "depth": depth.astype(lonlatdepth_dtype),
-            "dlon": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-            "dlat": np.zeros(lat.size, dtype=lonlatdepth_dtype),
-            "ddepth": np.zeros(depth.size, dtype=lonlatdepth_dtype),
-            "time": time,
-            "dt": np.timedelta64(1, "ns") * np.ones(len(trajectory_ids)),
-            # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
-            "state": np.zeros((len(trajectory_ids)), dtype=np.int32),
-            "lon_nextloop": lon.astype(lonlatdepth_dtype),
-            "lat_nextloop": lat.astype(lonlatdepth_dtype),
-            "depth_nextloop": depth.astype(lonlatdepth_dtype),
-            "time_nextloop": time,
-            "trajectory": trajectory_ids,
-        }
+
+        self._data = pclass.create_particle_data(
+            lon=lon, lat=lat, depth=depth, time=time, trajectory_ids=trajectory_ids, ngrids=len(fieldset.gridset)
+        )
         self._ptype = pclass
 
-        # add extra fields from the custom Particle class
-        for v in pclass.variables:
-            if v.name in self._data:
-                continue
-
-            if isinstance(v.initial, attrgetter):
-                initial = v.initial(self)
-            else:
-                initial = np.full(shape=(len(trajectory_ids),), fill_value=v.initial, dtype=v.dtype)
-            self._data[v.name] = initial
-
         # update initial values provided on ParticleSet creation
+        particle_variables = [v.name for v in pclass.variables]
         for kwvar, kwval in kwargs.items():
-            if not hasattr(pclass, kwvar):
+            if kwvar not in particle_variables:
                 raise RuntimeError(f"Particle class does not have Variable {kwvar}")
             self._data[kwvar][:] = kwval
 
