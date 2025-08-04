@@ -160,7 +160,7 @@ Particle = ParticleClass(
         Variable("time_nextloop", dtype=np.float64, to_write=False),
         Variable("id", dtype=np.int64, to_write="once"),
         Variable("obs_written", dtype=np.int32, initial=0, to_write=False),
-        Variable("dt", dtype="timedelta64[ns]", to_write=False),
+        Variable("dt", dtype="timedelta64[ns]", initial=np.timedelta64(1, "ns"), to_write=False),
         Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False),
     ]
 )
