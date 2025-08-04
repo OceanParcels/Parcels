@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import dask.array as dask
 import numpy as np
 import xarray as xr
 
@@ -102,7 +103,10 @@ def XLinear(
     else:
         F = F[:, 0, :]
 
-    return (1 - xsi) * (1 - eta) * F[:, 0] + xsi * (1 - eta) * F[:, 1] + (1 - xsi) * eta * F[:, 2] + xsi * eta * F[:, 3]
+    value = (
+        (1 - xsi) * (1 - eta) * F[:, 0] + xsi * (1 - eta) * F[:, 1] + (1 - xsi) * eta * F[:, 2] + xsi * eta * F[:, 3]
+    )
+    return value.compute() if isinstance(value, dask.Array) else value
 
 
 def UXPiecewiseConstantFace(
