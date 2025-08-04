@@ -51,36 +51,50 @@ def XLinear(
 
     axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
     data = field.data
-    val = np.zeros_like(tau)
 
-    xii = np.clip(np.stack([xi, xi + 1, xi, xi + 1], axis=-1).flatten(), 0, data.shape[3] - 1)
-    yii = np.clip(np.stack([yi, yi, yi + 1, yi + 1], axis=-1).flatten(), 0, data.shape[2] - 1)
-    xi_da = xr.DataArray(xii, dims=("points"))
-    yi_da = xr.DataArray(yii, dims=("points"))
+    # Time coordinates: 8 points at ti, then 8 points at ti+1
+    ti = np.concatenate([np.repeat(ti, 8), np.repeat(ti + 1, 8)])
 
-    timeslices = [ti, ti + 1] if tau.any() > 0 else [ti]
-    depth_slices = [zi, zi + 1] if zeta.any() > 0 else [zi]
-    for tii, tau_factor in zip(timeslices, [1 - tau, tau], strict=False):
-        tti = np.clip(np.array([tii, tii, tii, tii]).flatten(), 0, data.shape[0] - 1)
-        ti_da = xr.DataArray(tti, dims=("points"))
-        for zii, depth_factor in zip(depth_slices, [1 - zeta, zeta], strict=False):
-            zii = np.clip(np.array([zii, zii, zii, zii]).flatten(), 0, data.shape[1] - 1)
-            zi_da = xr.DataArray(zii, dims=("points"))
+    # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
+    zi = np.tile(np.stack([zi, zi, zi, zi, zi + 1, zi + 1, zi + 1, zi + 1], axis=1).flatten(), 2)
 
-            F = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
-            F = F.data.reshape(-1, 4)
-            # TODO check if numpy can handle this more efficiently
-            # F = data.values[tti, zii, yii, xii].reshape(-1, 4)
-            interp_val = (
-                (1 - xsi) * (1 - eta) * F[:, 0]
-                + xsi * (1 - eta) * F[:, 1]
-                + (1 - xsi) * eta * F[:, 2]
-                + xsi * eta * F[:, 3]
-            )
+    # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
+    yi = np.tile(np.stack([yi, yi, yi + 1, yi + 1], axis=1).flatten(), 4)
 
-            val += interp_val * tau_factor * depth_factor
+    # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
+    xi = np.tile(np.stack([xi, xi + 1], axis=1).flatten(), 8)
 
-    return val
+    # Clip indices to valid ranges
+    ti = np.clip(ti, 0, data.shape[0] - 1)
+    zi = np.clip(zi, 0, data.shape[1] - 1)
+    yi = np.clip(yi, 0, data.shape[2] - 1)
+    xi = np.clip(xi, 0, data.shape[3] - 1)
+
+    # Create DataArrays for indexing
+    xi_da = xr.DataArray(xi, dims=("points"))
+    yi_da = xr.DataArray(yi, dims=("points"))
+    ti_da = xr.DataArray(ti, dims=("points"))
+    zi_da = xr.DataArray(zi, dims=("points"))
+
+    F = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
+    F = F.data.reshape(-1, 2, 2, 4)
+    # TODO check if numpy can handle this more efficiently
+    # F = data.values[tti, zii, yii, xii].reshape(-1, 4)
+
+    F_t0, F_t1 = F[:, 0, :, :], F[:, 1, :, :]
+    tau_expanded = tau[:, np.newaxis, np.newaxis]
+    F_time_interp = F_t0 * (1 - tau_expanded) + F_t1 * tau_expanded
+
+    F_z0, F_z1 = F_time_interp[:, 0, :], F_time_interp[:, 1, :]
+    zeta_expanded = zeta[:, np.newaxis]
+    F_final = F_z0 * (1 - zeta_expanded) + F_z1 * zeta_expanded
+
+    return (
+        (1 - xsi) * (1 - eta) * F_final[:, 0]
+        + xsi * (1 - eta) * F_final[:, 1]
+        + (1 - xsi) * eta * F_final[:, 2]
+        + xsi * eta * F_final[:, 3]
+    )
 
 
 def UXPiecewiseConstantFace(
