@@ -71,12 +71,14 @@ def XLinear(
         zi = np.tile(np.stack([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1], axis=1).flatten(), lenT)
 
     # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
+    # TODO consider using np.repeat for better performance
     yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
-    yi = np.tile(np.repeat([yi, yi_1], 2), (lenT) * (lenZ))
+    yi = np.tile(np.stack([yi, yi, yi_1, yi_1], axis=1).flatten(), (lenT) * (lenZ))
 
     # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
+    # TODO consider using np.repeat for better performance
     xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
-    xi = np.repeat([xi, xi_1], 2 * (lenT) * (lenZ))
+    xi = np.tile(np.stack([xi, xi_1, xi, xi_1], axis=1).flatten(), (lenT) * (lenZ))
 
     # Create DataArrays for indexing
     ti_da = xr.DataArray(ti, dims=("points"))
@@ -87,7 +89,7 @@ def XLinear(
     F = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
     F = F.data.reshape(-1, lenT, lenZ, 4)
     # TODO check if numpy can handle this more efficiently
-    # F = data.values[tti, zii, yii, xii].reshape(-1, 4)
+    # F = data.values[ti, zi, yi, xi].reshape(-1, lenT, lenZ, 4)
 
     if lenT == 2:
         F_t0, F_t1 = F[:, 0, :, :], F[:, 1, :, :]
