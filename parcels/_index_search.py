@@ -275,11 +275,9 @@ def _search_indices_curvilinear_2d(
     grid: XGrid, y: float, x: float, yi_guess: int | None = None, xi_guess: int | None = None
 ):
     yi, xi = yi_guess, xi_guess
-    if yi is None:
-        yi = int(grid.ydim / 2) - 1
-
-    if xi is None:
-        xi = int(grid.xdim / 2) - 1
+    if yi is None or xi is None:
+        faces = grid.get_spatial_hash().query(np.column_stack((x, y)))
+        yi, xi = faces[0]
 
     xsi = eta = -1.0
     invA = np.array(
@@ -350,7 +348,7 @@ def _search_indices_curvilinear_2d(
 
     if not ((0 <= xsi <= 1) and (0 <= eta <= 1)):
         _raise_field_sampling_error(y, x)
-
+    print(f"Found cell at {yi}, {xi} with xsi={xsi}, eta={eta}")
     return (yi, eta, xi, xsi)
 
 
