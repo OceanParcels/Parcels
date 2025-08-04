@@ -491,9 +491,16 @@ def _search_1d_array(
     if len(arr) < 2:
         return np.zeros(shape=x.shape, dtype=np.int32), np.zeros_like(x)
     index = np.searchsorted(arr, x, side="right") - 1
-    index_next = np.clip(index + 1, 1, len(arr) - 1)  # Ensure we don't go out of bounds
+    # Use broadcasting to avoid repeated array access
+    arr_index = arr[index]
+    arr_next = arr[np.clip(index + 1, 1, len(arr) - 1)]  # Ensure we don't go out of bounds
+    bcoord = (x - arr_index) / (arr_next - arr_index)
 
-    bcoord = (x - arr[index]) / (arr[index_next] - arr[index])
+    # TODO check how we can avoid searchsorted when grid spacing is uniform
+    # dx = arr[1] - arr[0]
+    # index = ((x - arr[0]) / dx).astype(int)
+    # index = np.clip(index, 0, len(arr) - 2)
+    # bcoord = (x - arr[index]) / dx
 
     index = np.where(x < arr[0], LEFT_OUT_OF_BOUNDS, index)
     index = np.where(x >= arr[-1], RIGHT_OUT_OF_BOUNDS, index)
