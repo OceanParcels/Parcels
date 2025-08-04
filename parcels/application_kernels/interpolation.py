@@ -59,25 +59,23 @@ def XLinear(
     if lenT == 1:
         ti = np.repeat(ti, lenZ * 4)
     else:
-        ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti + 1, lenZ * 4)])
+        ti_1 = np.clip(ti + 1, 0, data.shape[0] - 1)
+        ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti_1, lenZ * 4)])
 
     # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
     if lenZ == 1:
         zi = np.repeat(zi, lenT * 4)
     else:
-        zi = np.tile(np.stack([zi, zi, zi, zi, zi + 1, zi + 1, zi + 1, zi + 1], axis=1).flatten(), lenT)
+        zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
+        zi = np.tile(np.stack([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1], axis=1).flatten(), lenT)
 
     # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
-    yi = np.tile(np.repeat([yi, yi + 1], 2), (lenT) * (lenZ))
+    yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
+    yi = np.tile(np.repeat([yi, yi_1], 2), (lenT) * (lenZ))
 
     # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
-    xi = np.repeat([xi, xi + 1], 2 * (lenT) * (lenZ))
-
-    # Clip indices to valid ranges
-    ti = np.clip(ti, 0, data.shape[0] - 1)
-    zi = np.clip(zi, 0, data.shape[1] - 1)
-    yi = np.clip(yi, 0, data.shape[2] - 1)
-    xi = np.clip(xi, 0, data.shape[3] - 1)
+    xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
+    xi = np.repeat([xi, xi_1], 2 * (lenT) * (lenZ))
 
     # Create DataArrays for indexing
     ti_da = xr.DataArray(ti, dims=("points"))
