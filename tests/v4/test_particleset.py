@@ -213,7 +213,7 @@ def test_pset_merge_inplace(fieldset, npart=100):
 def test_pset_remove_index(fieldset, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, lonlatdepth_dtype=np.float64)
+    pset = ParticleSet(fieldset, lon=lon, lat=lat)
     indices_to_remove = [0, 10, 20]
     pset.remove_indices(indices_to_remove)
     assert pset.size == 97

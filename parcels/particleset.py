@@ -70,7 +70,6 @@ class ParticleSet:
         lat=None,
         depth=None,
         time=None,
-        lonlatdepth_dtype=None,
         trajectory_ids=None,
         **kwargs,
     ):
@@ -112,27 +111,20 @@ class ParticleSet:
         if fieldset.time_interval:
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
 
-        if lonlatdepth_dtype is None:
-            lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-        assert lonlatdepth_dtype in [
-            np.float32,
-            np.float64,
-        ], "lon lat depth precision should be set to either np.float32 or np.float64"
-
         for kwvar in kwargs:
             if kwvar not in ["partition_function"]:
                 kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
                 assert lon.size == kwargs[kwvar].size, (
                     f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
                 )
-
+        lonlatdepth_dtype = np.float64  # TODO: Remove and opt for dtype as defined in particle variable
         self._data = {
             "lon": lon.astype(lonlatdepth_dtype),
             "lat": lat.astype(lonlatdepth_dtype),
             "depth": depth.astype(lonlatdepth_dtype),
             "dlon": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-            "dlat": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-            "ddepth": np.zeros(lon.size, dtype=lonlatdepth_dtype),
+            "dlat": np.zeros(lat.size, dtype=lonlatdepth_dtype),
+            "ddepth": np.zeros(depth.size, dtype=lonlatdepth_dtype),
             "time": time,
             "dt": np.timedelta64(1, "ns") * np.ones(len(trajectory_ids)),
             # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
