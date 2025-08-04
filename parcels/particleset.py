@@ -13,7 +13,7 @@ from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.kernel import Kernel
-from parcels.particle import Particle, Variable
+from parcels.particle import KernelParticle, Particle
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
@@ -135,15 +135,18 @@ class ParticleSet:
             "time_nextloop": time,
             "trajectory": trajectory_ids,
         }
-        self._ptype = pclass.getPType()
+        self._ptype = pclass
+
         # add extra fields from the custom Particle class
-        for v in pclass.__dict__.values():
-            if isinstance(v, Variable):
-                if isinstance(v.initial, attrgetter):
-                    initial = v.initial(self)
-                else:
-                    initial = [np.array(v.initial, dtype=v.dtype)] * len(trajectory_ids)
-                self._data[v.name] = initial
+        for v in pclass.variables:
+            if v.name in self._data:
+                continue
+
+            if isinstance(v.initial, attrgetter):
+                initial = v.initial(self)
+            else:
+                initial = np.full(shape=(len(trajectory_ids),), fill_value=v.initial, dtype=v.dtype)
+            self._data[v.name] = initial
 
         # update initial values provided on ParticleSet creation
         for kwvar, kwval in kwargs.items():
@@ -182,7 +185,7 @@ class ParticleSet:
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return Particle(self._data, index=index)
+        return KernelParticle(self._data, index=index)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):

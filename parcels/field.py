@@ -16,7 +16,7 @@ from parcels._typing import (
     VectorType,
     assert_valid_mesh,
 )
-from parcels.particle import Particle
+from parcels.particle import KernelParticle
 from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
@@ -37,9 +37,9 @@ __all__ = ["Field", "VectorField"]
 
 
 def _deal_with_errors(error, key, vector_type: VectorType):
-    if isinstance(key, Particle):
+    if isinstance(key, KernelParticle):
         key.state = AllParcelsErrorCodes[type(error)]
-    elif isinstance(key[-1], Particle):
+    elif isinstance(key[-1], KernelParticle):
         key[-1].state = AllParcelsErrorCodes[type(error)]
     else:
         raise RuntimeError(f"{error}. Error could not be handled because particle was not part of the Field Sampling.")
@@ -278,7 +278,7 @@ class Field:
     def __getitem__(self, key):
         self._check_velocitysampling()
         try:
-            if isinstance(key, Particle):
+            if isinstance(key, KernelParticle):
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
@@ -373,7 +373,7 @@ class VectorField:
 
     def __getitem__(self, key):
         try:
-            if isinstance(key, Particle):
+            if isinstance(key, KernelParticle):
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
