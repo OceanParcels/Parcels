@@ -271,7 +271,10 @@ class XGrid(BaseGrid):
     def search(self, z, y, x, ei=None):
         ds = self.xgcm_grid._ds
 
-        zi, zeta = _search_1d_array(ds.depth.values, z)
+        if hasattr(ds, "depth"):
+            zi, zeta = _search_1d_array(ds.depth.values, z)
+        else:
+            zi, zeta = 0, 0.0
         if zi == -1:
             if zeta < 0:
                 raise FieldOutOfBoundError(

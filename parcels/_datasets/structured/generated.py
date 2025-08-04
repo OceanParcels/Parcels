@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import xarray as xr
 
@@ -91,5 +93,61 @@ def moving_eddy_dataset(xdim=2, ydim=2):  # TODO check if this also works with x
             "u_0": u_0,
             "u_g": u_g,
             "f": f,
+        },
+    )
+
+
+def stommel_gyre_dataset(xdim=200, ydim=200, grid_type="A"):
+    """Simulate a periodic current along a western boundary, with significantly
+    larger velocities along the western edge than the rest of the region
+
+    The original test description can be found in: N. Fabbroni, 2009,
+    Numerical Simulation of Passive tracers dispersion in the sea,
+    Ph.D. dissertation, University of Bologna
+    http://amsdottorato.unibo.it/1733/1/Fabbroni_Nicoletta_Tesi.pdf
+    """
+    a = b = 10000 * 1e3
+    scalefac = 0.05  # to scale for physically meaningful velocities
+    dx, dy = a / xdim, b / ydim
+
+    # Coordinates of the test fieldset (on A-grid in deg)
+    lon = np.linspace(0, a, xdim, dtype=np.float32)
+    lat = np.linspace(0, b, ydim, dtype=np.float32)
+
+    # Define arrays U (zonal), V (meridional) and P (sea surface height)
+    U = np.zeros((lat.size, lon.size), dtype=np.float32)
+    V = np.zeros((lat.size, lon.size), dtype=np.float32)
+    P = np.zeros((lat.size, lon.size), dtype=np.float32)
+
+    beta = 2e-11
+    r = 1 / (11.6 * 86400)
+    es = r / (beta * a)
+
+    for j in range(lat.size):
+        for i in range(lon.size):
+            xi = lon[i] / a
+            yi = lat[j] / b
+            P[j, i] = (1 - math.exp(-xi / es) - xi) * math.pi * np.sin(math.pi * yi) * scalefac
+            if grid_type == "A":
+                U[j, i] = -(1 - math.exp(-xi / es) - xi) * math.pi**2 * np.cos(math.pi * yi) * scalefac
+                V[j, i] = (math.exp(-xi / es) / es - 1) * math.pi * np.sin(math.pi * yi) * scalefac
+    if grid_type == "C":
+        V[:, 1:] = (P[:, 1:] - P[:, 0:-1]) / dx * a
+        U[1:, :] = -(P[1:, :] - P[0:-1, :]) / dy * b
+        Udims = ["YC", "XG"]
+        Vdims = ["YG", "XC"]
+    else:
+        Udims = ["YG", "XG"]
+        Vdims = ["YG", "XG"]
+
+    return xr.Dataset(
+        {"U": (Udims, U), "V": (Vdims, V), "P": (["YG", "XG"], P)},
+        coords={
+            "YC": (["YC"], np.arange(ydim) + 0.5, {"axis": "Y"}),
+            "YG": (["YG"], np.arange(ydim), {"axis": "Y", "c_grid_axis_shift": -0.5}),
+            "XC": (["XC"], np.arange(xdim) + 0.5, {"axis": "X"}),
+            "XG": (["XG"], np.arange(xdim), {"axis": "X", "c_grid_axis_shift": -0.5}),
+            "lat": (["YG"], lat, {"axis": "Y", "c_grid_axis_shift": 0.5}),
+            "lon": (["XG"], lon, {"axis": "X", "c_grid_axis_shift": -0.5}),
         },
     )
