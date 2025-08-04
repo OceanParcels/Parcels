@@ -121,6 +121,7 @@ class ParticleSet:
             pclass=pclass,
             nparticles=lon.size,
             ngrids=len(fieldset.gridset),
+            time_interval=fieldset.time_interval,
             lon=lon,
             lat=lat,
             depth=depth,

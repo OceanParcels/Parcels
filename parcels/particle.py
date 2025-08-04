@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import enum
 import operator
 from keyword import iskeyword
 from typing import Literal
@@ -5,11 +8,14 @@ from typing import Literal
 import numpy as np
 
 from parcels._compat import _attrgetter_helper
+from parcels._core.utils.time import TimeInterval
 from parcels._reprs import _format_list_items_multiline
 from parcels.tools.statuscodes import StatusCode
 
 __all__ = ["KernelParticle", "Particle", "ParticleClass", "Variable"]
 _TO_WRITE_OPTIONS = [True, False, "once"]
+
+_SAME_AS_FIELDSET_TIME_INTERVAL = enum.Enum("_SAME_AS_FIELDSET_TIME_INTERVAL", "VALUE")
 
 
 class Variable:
@@ -32,7 +38,12 @@ class Variable:
     """
 
     def __init__(
-        self, name, dtype=np.float32, initial=0, to_write: bool | Literal["once"] = True, attrs: dict | None = None
+        self,
+        name,
+        dtype: np.dtype | _SAME_AS_FIELDSET_TIME_INTERVAL = np.float32,
+        initial=0,
+        to_write: bool | Literal["once"] = True,
+        attrs: dict | None = None,
     ):
         if not isinstance(name, str):
             raise TypeError(f"Variable name must be a string. Got {name=!r}")
@@ -41,7 +52,8 @@ class Variable:
         try:
             dtype = np.dtype(dtype)
         except (TypeError, ValueError):
-            raise TypeError(f"Variable dtype must be a valid numpy dtype. Got {dtype=!r}")
+            if dtype is not _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
+                raise TypeError(f"Variable dtype must be a valid numpy dtype. Got {dtype=!r}")
 
         if to_write not in _TO_WRITE_OPTIONS:
             raise ValueError(f"to_write must be one of {_TO_WRITE_OPTIONS!r}. Got {to_write=!r}")
@@ -163,12 +175,8 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
             Variable("dlat", dtype=spatial_dtype, to_write=False),
             Variable("ddepth", dtype=spatial_dtype, to_write=False),
             Variable("depth_nextloop", dtype=spatial_dtype, to_write=False),
-            Variable(
-                "time", dtype="datetime64[ns]"
-            ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
-            Variable(
-                "time_nextloop", dtype="datetime64[ns]", to_write=False
-            ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
+            Variable("time", dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE),
+            Variable("time_nextloop", dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE, to_write=False),
             Variable("id", dtype=np.int64, to_write="once"),
             Variable("obs_written", dtype=np.int32, initial=0, to_write=False),
             Variable("dt", dtype="timedelta64[ns]", initial=np.timedelta64(1, "ns"), to_write=False),
@@ -180,10 +188,21 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
 Particle = get_default_particle(np.float32)
 
 
-def create_particle_data(*, pclass: ParticleClass, nparticles, ngrids, **initial: dict[str, np.array]):
+def create_particle_data(
+    *, pclass: ParticleClass, nparticles: int, ngrids: int, time_interval: TimeInterval, **initial: dict[str, np.array]
+):
     variables = {var.name: var for var in pclass.variables}
 
     assert "ei" not in initial, "'ei' is for internal use, and is unique since is only non 1D array"
+
+    time_interval_dtype = _get_time_interval_dtype(time_interval)
+
+    dtypes = {}
+    for var in variables.values():
+        if var.dtype is _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
+            dtypes[var.name] = time_interval_dtype
+        else:
+            dtypes[var.name] = var.dtype
 
     for var_name in initial:
         if var_name not in variables:
@@ -193,7 +212,7 @@ def create_particle_data(*, pclass: ParticleClass, nparticles, ngrids, **initial
         if values.shape != (nparticles,):
             raise ValueError(f"Initial value for {var_name} must have shape ({nparticles},). Got {values.shape=}")
 
-        initial[var_name] = values.astype(variables[var_name].dtype)
+        initial[var_name] = values.astype(dtypes[var_name])
 
     data = {"ei": np.zeros((nparticles, ngrids), dtype=np.int32), **initial}
 
@@ -217,3 +236,9 @@ def _create_array_for_variable(variable: Variable, nparticles: int):
         fill_value=variable.initial,
         dtype=variable.dtype,
     )
+
+
+def _get_time_interval_dtype(time_interval: TimeInterval | None) -> np.dtype:
+    if time_interval is None:
+        return np.timedelta64(1, "ns")
+    return type(time_interval.left)
