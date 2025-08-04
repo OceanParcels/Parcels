@@ -148,26 +148,33 @@ def _assert_valid_python_varname(name):
     raise ValueError(f"Particle variable has to be a valid Python variable name. Got {name=!r}")
 
 
-Particle = ParticleClass(
-    variables=[
-        Variable("lon", dtype=np.float32),
-        Variable("lon_nextloop", dtype=np.float32, to_write=False),
-        Variable("lat", dtype=np.float32),
-        Variable("lat_nextloop", dtype=np.float32, to_write=False),
-        Variable("depth", dtype=np.float32),
-        Variable("depth_nextloop", dtype=np.float32, to_write=False),
-        Variable(
-            "time", dtype="datetime64[ns]"
-        ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
-        Variable(
-            "time_nextloop", dtype="datetime64[ns]", to_write=False
-        ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
-        Variable("id", dtype=np.int64, to_write="once"),
-        Variable("obs_written", dtype=np.int32, initial=0, to_write=False),
-        Variable("dt", dtype="timedelta64[ns]", initial=np.timedelta64(1, "ns"), to_write=False),
-        Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False),
-    ]
-)
+def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClass:
+    if spatial_dtype not in [np.float32, np.float64]:
+        raise ValueError(f"spatial_dtype must be np.float32 or np.float64. Got {spatial_dtype=!r}")
+
+    return ParticleClass(
+        variables=[
+            Variable("lon", dtype=spatial_dtype),
+            Variable("lon_nextloop", dtype=spatial_dtype, to_write=False),
+            Variable("lat", dtype=spatial_dtype),
+            Variable("lat_nextloop", dtype=spatial_dtype, to_write=False),
+            Variable("depth", dtype=spatial_dtype),
+            Variable("depth_nextloop", dtype=spatial_dtype, to_write=False),
+            Variable(
+                "time", dtype="datetime64[ns]"
+            ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
+            Variable(
+                "time_nextloop", dtype="datetime64[ns]", to_write=False
+            ),  # TODO v4: Update this time variable to be float? /inherit from the FieldSet time variable?
+            Variable("id", dtype=np.int64, to_write="once"),
+            Variable("obs_written", dtype=np.int32, initial=0, to_write=False),
+            Variable("dt", dtype="timedelta64[ns]", initial=np.timedelta64(1, "ns"), to_write=False),
+            Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False),
+        ]
+    )
+
+
+Particle = get_default_particle(np.float32)
 
 
 def create_particle_data(*, pclass: ParticleClass, nparticles, ngrids, **initial: dict[str, np.array]):
