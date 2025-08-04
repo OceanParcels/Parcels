@@ -159,6 +159,9 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
             Variable("lat", dtype=spatial_dtype),
             Variable("lat_nextloop", dtype=spatial_dtype, to_write=False),
             Variable("depth", dtype=spatial_dtype),
+            Variable("dlon", dtype=spatial_dtype, to_write=False),
+            Variable("dlat", dtype=spatial_dtype, to_write=False),
+            Variable("ddepth", dtype=spatial_dtype, to_write=False),
             Variable("depth_nextloop", dtype=spatial_dtype, to_write=False),
             Variable(
                 "time", dtype="datetime64[ns]"
