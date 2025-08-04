@@ -12,7 +12,7 @@ from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.kernel import Kernel
-from parcels.particle import KernelParticle, Particle
+from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
@@ -117,12 +117,13 @@ class ParticleSet:
                     f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
                 )
 
-        self._data = pclass.create_particle_data(
+        self._data = create_particle_data(
+            pclass,
             lon=lon,
             lat=lat,
             depth=depth,
             time=time,
-            trajectory_ids=trajectory_ids,
+            trajectory=trajectory_ids,
             ngrids=len(fieldset.gridset),
         )
         self._ptype = pclass
