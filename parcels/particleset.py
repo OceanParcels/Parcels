@@ -122,15 +122,17 @@ class ParticleSet:
             nparticles=lon.size,
             ngrids=len(fieldset.gridset),
             time_interval=fieldset.time_interval,
-            lon=lon,
-            lat=lat,
-            depth=depth,
-            time=time,
-            lon_nextloop=lon,
-            lat_nextloop=lat,
-            depth_nextloop=depth,
-            time_nextloop=time,
-            id=trajectory_ids,
+            initial=dict(
+                lon=lon,
+                lat=lat,
+                depth=depth,
+                time=time,
+                lon_nextloop=lon,
+                lat_nextloop=lat,
+                depth_nextloop=depth,
+                time_nextloop=time,
+                id=trajectory_ids,
+            ),
         )
         self._ptype = pclass
 

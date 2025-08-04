@@ -189,8 +189,16 @@ Particle = get_default_particle(np.float32)
 
 
 def create_particle_data(
-    *, pclass: ParticleClass, nparticles: int, ngrids: int, time_interval: TimeInterval, **initial: dict[str, np.array]
+    *,
+    pclass: ParticleClass,
+    nparticles: int,
+    ngrids: int,
+    time_interval: TimeInterval,
+    initial: dict[str, np.array] | None,
 ):
+    if initial is None:
+        initial = {}
+
     variables = {var.name: var for var in pclass.variables}
 
     assert "ei" not in initial, "'ei' is for internal use, and is unique since is only non 1D array"
