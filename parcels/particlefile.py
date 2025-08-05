@@ -13,8 +13,9 @@ import zarr
 from zarr.storage import DirectoryStore
 
 import parcels
+from parcels._constants import DATATYPES_TO_FILL_VALUES
 from parcels._reprs import default_repr
-from parcels.particle import ParticleClass
+from parcels.particle import _SAME_AS_FIELDSET_TIME_INTERVAL, ParticleClass
 from parcels.tools._helpers import timedelta_to_float
 
 if TYPE_CHECKING:
@@ -23,21 +24,6 @@ if TYPE_CHECKING:
     from parcels.particleset import ParticleSet
 
 __all__ = ["ParticleFile"]
-
-_DATATYPES_TO_FILL_VALUES = {
-    np.float16: np.nan,
-    np.float32: np.nan,
-    np.float64: np.nan,
-    np.bool_: np.iinfo(np.int8).max,
-    np.int8: np.iinfo(np.int8).max,
-    np.int16: np.iinfo(np.int16).max,
-    np.int32: np.iinfo(np.int32).max,
-    np.int64: np.iinfo(np.int64).max,
-    np.uint8: np.iinfo(np.uint8).max,
-    np.uint16: np.iinfo(np.uint16).max,
-    np.uint32: np.iinfo(np.uint32).max,
-    np.uint64: np.iinfo(np.uint64).max,
-}
 
 
 class ParticleFile:
@@ -125,29 +111,18 @@ class ParticleFile:
         -----
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-        attrs = {
-            "z": {"long_name": "", "standard_name": "depth", "units": "m", "positive": "down"},
-            "trajectory": {
-                "long_name": "Unique identifier for each particle",
-                "cf_role": "trajectory_id",
-                "_FillValue": _DATATYPES_TO_FILL_VALUES[np.int64],
-            },
-            "time": {"long_name": "", "standard_name": "time", "units": "seconds", "axis": "T"},
-            "lon": {"long_name": "", "standard_name": "longitude", "units": "degrees_east", "axis": "X"},
-            "lat": {"long_name": "", "standard_name": "latitude", "units": "degrees_north", "axis": "Y"},
-        }
+        attrs = {}
+
+        vars = [var for var in particle.variables if var.to_write is not False]
+        for var in vars:
+            fill_value = {}
+            if var.dtype is not _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
+                fill_value = {"_FillValue": DATATYPES_TO_FILL_VALUES[var.dtype]}
+
+            attrs[var.name] = {**var.attrs, **fill_value}
 
         attrs["time"]["units"] = "seconds since "  # TODO fix units
         attrs["time"]["calendar"] = "None"  # TODO fix calendar
-
-        for vname in self.vars_to_write:
-            if vname not in ["time", "lat", "lon", "depth", "trajectory"]:
-                attrs[vname] = {
-                    "_FillValue": _DATATYPES_TO_FILL_VALUES[self.vars_to_write[vname]],
-                    "long_name": "",
-                    "standard_name": vname,
-                    "units": "unknown",
-                }
 
         return attrs
 
@@ -162,16 +137,16 @@ class ParticleFile:
 
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
-            a = np.full((Z.shape[0], self.chunks[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
+            a = np.full((Z.shape[0], self.chunks[1]), DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
             obs = zarr.group(store=store, overwrite=False)["obs"]
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
         else:
             extra_trajs = self._maxids - Z.shape[0]
             if len(Z.shape) == 2:
-                a = np.full((extra_trajs, Z.shape[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
+                a = np.full((extra_trajs, Z.shape[1]), DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
             else:
-                a = np.full((extra_trajs,), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
+                a = np.full((extra_trajs,), DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
@@ -237,13 +212,13 @@ class ParticleFile:
                     if self._write_once(var):
                         data = np.full(
                             (arrsize[0],),
-                            _DATATYPES_TO_FILL_VALUES[vars_to_write[var]],
+                            DATATYPES_TO_FILL_VALUES[vars_to_write[var]],
                             dtype=vars_to_write[var],
                         )
                         data[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                         dims = ["trajectory"]
                     else:
-                        data = np.full(arrsize, _DATATYPES_TO_FILL_VALUES[vars_to_write[var]], dtype=vars_to_write[var])
+                        data = np.full(arrsize, DATATYPES_TO_FILL_VALUES[vars_to_write[var]], dtype=vars_to_write[var])
                         data[ids, 0] = pset.particledata.getvardata(var, indices_to_write)
                         dims = ["trajectory", "obs"]
                     ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
