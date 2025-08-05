@@ -194,7 +194,7 @@ def create_particle_data(
     nparticles: int,
     ngrids: int,
     time_interval: TimeInterval,
-    initial: dict[str, np.array] | None,
+    initial: dict[str, np.array] | None = None,
 ):
     if initial is None:
         initial = {}
@@ -231,18 +231,20 @@ def create_particle_data(
             name_to_copy = var.initial(_attrgetter_helper)
             data[var.name] = data[name_to_copy].copy()
         else:
-            data[var.name] = _create_array_for_variable(var, nparticles)
+            data[var.name] = _create_array_for_variable(var, nparticles, time_interval)
     return data
 
 
-def _create_array_for_variable(variable: Variable, nparticles: int):
+def _create_array_for_variable(variable: Variable, nparticles: int, time_interval: TimeInterval):
     assert not isinstance(variable.initial, operator.attrgetter), (
         "This function cannot handle attrgetter initial values."
     )
+    if (dtype := variable.dtype) is _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
+        dtype = type(time_interval.left)
     return np.full(
         shape=(nparticles,),
         fill_value=variable.initial,
-        dtype=variable.dtype,
+        dtype=dtype,
     )
 
 
