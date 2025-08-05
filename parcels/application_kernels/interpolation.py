@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 import dask.array as dask
 import numpy as np
-import xarray as xr
 
 if TYPE_CHECKING:
     from parcels.field import Field
@@ -50,7 +49,6 @@ def XLinear(
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
 
-    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
     data = field.data
 
     lenT = 2 if np.any(tau > 0) else 1
@@ -78,16 +76,7 @@ def XLinear(
     xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
     xi = np.repeat(np.column_stack([xi, xi_1]), 2 * (lenT) * (lenZ))
 
-    # Create DataArrays for indexing
-    ti_da = xr.DataArray(ti, dims=("points"))
-    zi_da = xr.DataArray(zi, dims=("points"))
-    yi_da = xr.DataArray(yi, dims=("points"))
-    xi_da = xr.DataArray(xi, dims=("points"))
-
-    F = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
-    F = F.data.reshape(-1, lenT, lenZ, 4)
-    # TODO check if numpy can handle this more efficiently
-    # F = data.values[ti, zi, yi, xi].reshape(-1, lenT, lenZ, 4)
+    F = data.values[ti, zi, yi, xi].reshape(-1, lenT, lenZ, 4)
 
     if lenT == 2:
         F_t0, F_t1 = F[:, 0, :, :], F[:, 1, :, :]
