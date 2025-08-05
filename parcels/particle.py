@@ -78,14 +78,6 @@ class Variable:
     def __repr__(self):
         return f"Variable(name={self._name!r}, dtype={self.dtype!r}, initial={self.initial!r}, to_write={self.to_write!r}, attrs={self.attrs!r})"
 
-    # def __get__(self, instance, cls):
-    #     if instance is None:
-    #         return self
-    #     return getattr(instance, f"_{self.name}", self.initial)
-
-    # def __set__(self, instance, value):
-    #     setattr(instance, f"_{self.name}", value)
-
 
 class ParticleClass:
     """Define a class of particles. This is used to generate the particle data which is then used in the simulation.
