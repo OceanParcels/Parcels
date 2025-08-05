@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import warnings
 from datetime import timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import xarray as xr
@@ -14,10 +14,13 @@ from zarr.storage import DirectoryStore
 
 import parcels
 from parcels._reprs import default_repr
+from parcels.particle import ParticleClass
 from parcels.tools._helpers import timedelta_to_float
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from parcels.particleset import ParticleSet
 
 __all__ = ["ParticleFile"]
 
@@ -65,29 +68,10 @@ class ParticleFile:
         self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
         self._particleset = particleset
-        self._parcels_mesh = "spherical"
-        if self.particleset.fieldset is not None:
-            self._parcels_mesh = self.particleset.fieldset.gridset[0].mesh
-        self.lonlatdepth_dtype = self.particleset.particledata.lonlatdepth_dtype
         self._maxids = 0
         self._pids_written = {}
-        self._create_new_zarrfile = create_new_zarrfile
-        self._vars_to_write = {}
-        for var in self.particleset.particledata.ptype.variables:
-            if var.to_write:
-                self.vars_to_write[var.name] = var.dtype
-        self.particleset.fieldset._particlefile = self
-
-        # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
-        particleset.particledata.setallvardata("obs_written", 0)
-
-        self.metadata = {
-            "feature_type": "trajectory",
-            "Conventions": "CF-1.6/CF-1.7",
-            "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
-            "parcels_version": parcels.__version__,
-            "parcels_mesh": self._parcels_mesh,
-        }
+        self.metadata = None
+        self.create_new_zarrfile = create_new_zarrfile
 
         if isinstance(store, zarr.storage.Store):
             self.store = store
@@ -109,9 +93,14 @@ class ParticleFile:
             f"create_new_zarrfile={self.create_new_zarrfile!r})"
         )
 
-    @property
-    def create_new_zarrfile(self):
-        return self._create_new_zarrfile
+    def set_metadata(self, parcels_mesh: Literal["spherical", "flat"]):
+        self.metadata = {
+            "feature_type": "trajectory",
+            "Conventions": "CF-1.6/CF-1.7",
+            "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
+            "parcels_version": parcels.__version__,
+            "parcels_mesh": parcels_mesh,
+        }
 
     @property
     def outputdt(self):
@@ -129,11 +118,7 @@ class ParticleFile:
     def fname(self):
         return self._fname
 
-    @property
-    def vars_to_write(self):
-        return self._vars_to_write
-
-    def _create_variables_attribute_dict(self):
+    def _create_variables_attribute_dict(self, particle: ParticleClass):
         """Creates the dictionary with variable attributes.
 
         Notes
@@ -190,7 +175,7 @@ class ParticleFile:
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
-    def write(self, pset, time: float | timedelta | np.timedelta64 | None, indices=None):
+    def write(self, pset: ParticleSet, time: float | timedelta | np.timedelta64 | None, indices=None):
         """Write all data from one time step to the zarr file,
         before the particle locations are updated.
 
@@ -202,7 +187,8 @@ class ParticleFile:
             Time at which to write ParticleSet
         """
         time = timedelta_to_float(time) if time is not None else None
-
+        pclass = pset._ptype
+        vars_to_write = _get_vars_to_write(pclass)
         if pset.particledata._ncount == 0:
             warnings.warn(
                 f"ParticleSet is empty on writing as array at time {time:g}",
@@ -245,40 +231,38 @@ class ParticleFile:
             )
             attrs = self._create_variables_attribute_dict()
             obs = np.zeros((self._maxids), dtype=np.int32)
-            for var in self.vars_to_write:
+            for var in vars_to_write:
                 varout = self._convert_varout_name(var)
                 if varout not in ["trajectory"]:  # because 'trajectory' is written as coordinate
                     if self._write_once(var):
                         data = np.full(
                             (arrsize[0],),
-                            _DATATYPES_TO_FILL_VALUES[self.vars_to_write[var]],
-                            dtype=self.vars_to_write[var],
+                            _DATATYPES_TO_FILL_VALUES[vars_to_write[var]],
+                            dtype=vars_to_write[var],
                         )
                         data[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                         dims = ["trajectory"]
                     else:
-                        data = np.full(
-                            arrsize, _DATATYPES_TO_FILL_VALUES[self.vars_to_write[var]], dtype=self.vars_to_write[var]
-                        )
+                        data = np.full(arrsize, _DATATYPES_TO_FILL_VALUES[vars_to_write[var]], dtype=vars_to_write[var])
                         data[ids, 0] = pset.particledata.getvardata(var, indices_to_write)
                         dims = ["trajectory", "obs"]
                     ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
                     ds[varout].encoding["chunks"] = self.chunks[0] if self._write_once(var) else self.chunks  # type: ignore[index]
             ds.to_zarr(store, mode="w")
-            self._create_new_zarrfile = False
+            self.create_new_zarrfile = False
         else:
             Z = zarr.group(store=store, overwrite=False)
             obs = pset.particledata.getvardata("obs_written", indices_to_write)
-            for var in self.vars_to_write:
+            for var in vars_to_write:
                 varout = self._convert_varout_name(var)
                 if self._maxids > Z[varout].shape[0]:
-                    self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=0)
+                    self._extend_zarr_dims(Z[varout], store, dtype=vars_to_write[var], axis=0)
                 if self._write_once(var):
                     if len(once_ids) > 0:
                         Z[varout].vindex[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                 else:
                     if max(obs) >= Z[varout].shape[1]:  # type: ignore[type-var]
-                        self._extend_zarr_dims(Z[varout], store, dtype=self.vars_to_write[var], axis=1)
+                        self._extend_zarr_dims(Z[varout], store, dtype=vars_to_write[var], axis=1)
                     Z[varout].vindex[ids, obs] = pset.particledata.getvardata(var, indices_to_write)
 
         pset.particledata.setvardata("obs_written", indices_to_write, obs + 1)
@@ -308,3 +292,13 @@ def _get_store_from_pathlike(path: Path | str) -> DirectoryStore:
         raise ValueError(f"ParticleFile name must end with '.zarr' extension. Got path {path!r}.")
 
     return DirectoryStore(path)
+
+
+def _get_vars_to_write(particle: ParticleClass):
+    ret = {}
+    for var in particle.variables:
+        if var.to_write is False:
+            continue
+        ret[var.name] = var.dtype
+
+    return ret
