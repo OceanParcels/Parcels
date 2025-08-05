@@ -19,8 +19,20 @@ except ModuleNotFoundError:
     pass
 
 
-# for compat with v3 of parcels. Not sure if there's a better way to do this in v4...
+# for compat with v3 of parcels when users provide `initial=attrgetter("lon")` to a Variable
+# so that particle initial state matches another variable
 class _AttrgetterHelper:
+    """
+    Example usage
+
+    >>> _attrgetter_helper = _AttrgetterHelper()
+    >>> _attrgetter_helper.some_attribute
+    'some_attribute'
+    >>> from operator import attrgetter
+    >>> attrgetter('some_attribute')(_attrgetter_helper)
+    'some_attribute'
+    """
+
     def __getattr__(self, name):
         return name
 
