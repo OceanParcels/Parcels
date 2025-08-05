@@ -71,14 +71,12 @@ def XLinear(
         zi = np.tile(np.stack([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1], axis=1).flatten(), lenT)
 
     # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
-    # TODO consider using np.repeat for better performance
     yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
-    yi = np.tile(np.stack([yi, yi, yi_1, yi_1], axis=1).flatten(), (lenT) * (lenZ))
+    yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
 
     # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
-    # TODO consider using np.repeat for better performance
     xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
-    xi = np.tile(np.stack([xi, xi_1, xi, xi_1], axis=1).flatten(), (lenT) * (lenZ))
+    xi = np.repeat(np.column_stack([xi, xi_1]), 2 * (lenT) * (lenZ))
 
     # Create DataArrays for indexing
     ti_da = xr.DataArray(ti, dims=("points"))
