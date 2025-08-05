@@ -14,7 +14,6 @@ from zarr.storage import DirectoryStore
 
 import parcels
 from parcels._constants import DATATYPES_TO_FILL_VALUES
-from parcels._reprs import default_repr
 from parcels.particle import _SAME_AS_FIELDSET_TIME_INTERVAL, ParticleClass
 from parcels.tools._helpers import timedelta_to_float
 
@@ -53,7 +52,7 @@ class ParticleFile:
     def __init__(self, store, particleset, outputdt, chunks=None, create_new_zarrfile=True):
         self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
-        self._particleset = particleset
+        self.particleset = particleset
         self._maxids = 0
         self._pids_written = {}
         self.metadata = None
@@ -73,7 +72,6 @@ class ParticleFile:
         return (
             f"{type(self).__name__}("
             f"name={self.fname!r}, "
-            f"particleset={default_repr(self.particleset)}, "
             f"outputdt={self.outputdt!r}, "
             f"chunks={self.chunks!r}, "
             f"create_new_zarrfile={self.create_new_zarrfile!r})"
@@ -95,10 +93,6 @@ class ParticleFile:
     @property
     def chunks(self):
         return self._chunks
-
-    @property
-    def particleset(self):
-        return self._particleset
 
     @property
     def fname(self):
