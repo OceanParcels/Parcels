@@ -101,8 +101,8 @@ class SpatialHash:
 
     def _grid_ij_for_eid(self, eid):
         """Returns the (i,j) grid coordinates for the given element id (eid)"""
-        j = eid // (self._source_grid.xdim - 1)
-        i = eid - j * (self._source_grid.xdim - 1)
+        j = eid // (self._source_grid.xdim)
+        i = eid - j * (self._source_grid.xdim)
         return i, j
 
     def _initialize_face_hash_table(self):
@@ -132,7 +132,8 @@ class SpatialHash:
                 axis=-1,
             )
             xi2, yi2 = self._hash_index2d(coords)
-            for eid in range(lon_bounds.shape[0]):
+            nface = (self._source_grid.xdim) * (self._source_grid.ydim)
+            for eid in range(nface):
                 for j in range(yi1[eid], yi2[eid] + 1):
                     if xi1[eid] <= xi2[eid]:
                         # Normal case, no wrap
@@ -194,11 +195,9 @@ class SpatialHash:
             axis=-1,
         )
 
-        print(f"Coords: {coords}, Candidate faces: {candidate_faces}")
         for i, (coord, candidates) in enumerate(zip(coords, candidate_faces, strict=False)):
             for face_id in candidates:
                 xi, yi = self._grid_ij_for_eid(face_id)
-                print(f"Checking face {face_id} at grid position ({xi}, {yi}) for coord {coord}")
                 nodes = np.stack(
                     (
                         xbound[yi, xi, :],
@@ -206,8 +205,6 @@ class SpatialHash:
                     ),
                     axis=-1,
                 )
-                for k in range(4):
-                    print(f"Node {k}: {nodes[k]}")
 
                 bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
                 err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
