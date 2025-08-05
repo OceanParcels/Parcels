@@ -76,24 +76,25 @@ def XLinear(
     xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
     xi = np.repeat(np.column_stack([xi, xi_1]), 2 * (lenT) * (lenZ))
 
-    F = data.values[ti, zi, yi, xi].reshape(-1, lenT, lenZ, 4)
+    corner_data = data.values[ti, zi, yi, xi].reshape(-1, lenT, lenZ, 4)
 
     if lenT == 2:
-        F_t0, F_t1 = F[:, 0, :, :], F[:, 1, :, :]
-        tau_expanded = tau[:, np.newaxis, np.newaxis]
-        F = F_t0 * (1 - tau_expanded) + F_t1 * tau_expanded
+        tau = tau[:, np.newaxis, np.newaxis]
+        corner_data = corner_data[:, 0, :, :] * (1 - tau) + corner_data[:, 1, :, :] * tau
     else:
-        F = F[:, 0, :, :]
+        corner_data = corner_data[:, 0, :, :]
 
     if lenZ == 2:
-        F_z0, F_z1 = F[:, 0, :], F[:, 1, :]
-        zeta_expanded = zeta[:, np.newaxis]
-        F = F_z0 * (1 - zeta_expanded) + F_z1 * zeta_expanded
+        zeta = zeta[:, np.newaxis]
+        corner_data = corner_data[:, 0, :] * (1 - zeta) + corner_data[:, 1, :] * zeta
     else:
-        F = F[:, 0, :]
+        corner_data = corner_data[:, 0, :]
 
     value = (
-        (1 - xsi) * (1 - eta) * F[:, 0] + xsi * (1 - eta) * F[:, 1] + (1 - xsi) * eta * F[:, 2] + xsi * eta * F[:, 3]
+        (1 - xsi) * (1 - eta) * corner_data[:, 0]
+        + xsi * (1 - eta) * corner_data[:, 1]
+        + (1 - xsi) * eta * corner_data[:, 2]
+        + xsi * eta * corner_data[:, 3]
     )
     return value.compute() if isinstance(value, dask.Array) else value
 
