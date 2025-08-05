@@ -84,7 +84,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
-    assert np.allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
+    np.testing.assert_allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])
@@ -124,8 +124,8 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     pset.execute(kernels, runtime=np.timedelta64(11, "s"), dt=np.timedelta64(1, "s"))
 
     if direction == "up" and wErrorThroughSurface:
-        assert np.allclose(pset.lon[0], 0.6)
-        assert np.allclose(pset.depth[0], 0)
+        np.testing.assert_allclose(pset.lon[0], 0.6, atol=1e-6)
+        np.testing.assert_allclose(pset.depth[0], 0, atol=1e-6)
     else:
         assert len(pset) == 0
 
@@ -249,7 +249,7 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(6, "h"))
 
     exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
-    assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    np.testing.assert_allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
     if method == "RK4_3D":
-        assert np.allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
+        np.testing.assert_allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
