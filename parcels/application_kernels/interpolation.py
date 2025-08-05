@@ -76,7 +76,7 @@ def XLinear(
 
     # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
     xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
-    xi = np.repeat(np.column_stack([xi, xi_1]), 2 * (lenT) * (lenZ))
+    xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
 
     # Create DataArrays for indexing
     ti_da = xr.DataArray(ti, dims=("points"))
