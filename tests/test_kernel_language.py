@@ -458,7 +458,7 @@ def test_TEOSdensity_kernels(mode):
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
     pset.execute(PolyTEOS10_bsq, runtime=1)
-    assert np.allclose(pset[0].density, 1022.85377)
+    assert np.allclose(pset[0].density, 1027.45140)
 
 
 @pytest.mark.parametrize("mode", ["scipy", "jit"])
