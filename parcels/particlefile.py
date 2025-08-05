@@ -20,6 +20,7 @@ from parcels.tools._helpers import timedelta_to_float
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from parcels.particle import Variable
     from parcels.particleset import ParticleSet
 
 __all__ = ["ParticleFile"]
@@ -49,10 +50,9 @@ class ParticleFile:
         ParticleFile object that can be used to write particle data to file
     """
 
-    def __init__(self, store, particleset, outputdt, chunks=None, create_new_zarrfile=True):
+    def __init__(self, store, outputdt, chunks=None, create_new_zarrfile=True):
         self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
-        self.particleset = particleset
         self._maxids = 0
         self._pids_written = {}
         self.metadata = None
@@ -98,36 +98,11 @@ class ParticleFile:
     def fname(self):
         return self._fname
 
-    def _create_variables_attribute_dict(self, particle: ParticleClass):
-        """Creates the dictionary with variable attributes.
-
-        Notes
-        -----
-        For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
-        """
-        attrs = {}
-
-        vars = [var for var in particle.variables if var.to_write is not False]
-        for var in vars:
-            fill_value = {}
-            if var.dtype is not _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
-                fill_value = {"_FillValue": DATATYPES_TO_FILL_VALUES[var.dtype]}
-
-            attrs[var.name] = {**var.attrs, **fill_value}
-
-        attrs["time"]["units"] = "seconds since "  # TODO fix units
-        attrs["time"]["calendar"] = "None"  # TODO fix calendar
-
-        return attrs
-
     def _convert_varout_name(self, var):
         if var == "depth":
             return "z"
         else:
             return var
-
-    def _write_once(self, var):
-        return self.particleset.particledata.ptype[var].to_write == "once"
 
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
@@ -198,40 +173,40 @@ class ParticleFile:
                 attrs=self.metadata,
                 coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
             )
-            attrs = self._create_variables_attribute_dict()
+            attrs = _create_variables_attribute_dict(pclass)
             obs = np.zeros((self._maxids), dtype=np.int32)
             for var in vars_to_write:
                 varout = self._convert_varout_name(var)
                 if varout not in ["trajectory"]:  # because 'trajectory' is written as coordinate
-                    if self._write_once(var):
+                    if var.to_write == "once":
                         data = np.full(
                             (arrsize[0],),
-                            DATATYPES_TO_FILL_VALUES[vars_to_write[var]],
-                            dtype=vars_to_write[var],
+                            DATATYPES_TO_FILL_VALUES[vars_to_write.dtype],
+                            dtype=var.dtype,
                         )
                         data[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                         dims = ["trajectory"]
                     else:
-                        data = np.full(arrsize, DATATYPES_TO_FILL_VALUES[vars_to_write[var]], dtype=vars_to_write[var])
+                        data = np.full(arrsize, DATATYPES_TO_FILL_VALUES[var.dtype], dtype=var.dtype)
                         data[ids, 0] = pset.particledata.getvardata(var, indices_to_write)
                         dims = ["trajectory", "obs"]
                     ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
-                    ds[varout].encoding["chunks"] = self.chunks[0] if self._write_once(var) else self.chunks  # type: ignore[index]
+                    ds[varout].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks  # type: ignore[index]
             ds.to_zarr(store, mode="w")
             self.create_new_zarrfile = False
         else:
             Z = zarr.group(store=store, overwrite=False)
             obs = pset.particledata.getvardata("obs_written", indices_to_write)
             for var in vars_to_write:
-                varout = self._convert_varout_name(var)
+                varout = self._convert_varout_name(var.name)
                 if self._maxids > Z[varout].shape[0]:
-                    self._extend_zarr_dims(Z[varout], store, dtype=vars_to_write[var], axis=0)
-                if self._write_once(var):
+                    self._extend_zarr_dims(Z[varout], store, dtype=var.dtype, axis=0)
+                if var.to_write == "once":
                     if len(once_ids) > 0:
                         Z[varout].vindex[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                 else:
                     if max(obs) >= Z[varout].shape[1]:  # type: ignore[type-var]
-                        self._extend_zarr_dims(Z[varout], store, dtype=vars_to_write[var], axis=1)
+                        self._extend_zarr_dims(Z[varout], store, dtype=var.dtype, axis=1)
                     Z[varout].vindex[ids, obs] = pset.particledata.getvardata(var, indices_to_write)
 
         pset.particledata.setvardata("obs_written", indices_to_write, obs + 1)
@@ -263,11 +238,28 @@ def _get_store_from_pathlike(path: Path | str) -> DirectoryStore:
     return DirectoryStore(path)
 
 
-def _get_vars_to_write(particle: ParticleClass):
-    ret = {}
-    for var in particle.variables:
-        if var.to_write is False:
-            continue
-        ret[var.name] = var.dtype
+def _get_vars_to_write(particle: ParticleClass) -> list[Variable]:
+    return [v for v in particle.variables if v.to_write is not False]
 
-    return ret
+
+def _create_variables_attribute_dict(particle: ParticleClass) -> dict:
+    """Creates the dictionary with variable attributes.
+
+    Notes
+    -----
+    For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
+    """
+    attrs = {}
+
+    vars = [var for var in particle.variables if var.to_write is not False]
+    for var in vars:
+        fill_value = {}
+        if var.dtype is not _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
+            fill_value = {"_FillValue": DATATYPES_TO_FILL_VALUES[var.dtype]}
+
+        attrs[var.name] = {**var.attrs, **fill_value}
+
+    attrs["time"]["units"] = "seconds since "  # TODO fix units
+    attrs["time"]["calendar"] = "None"  # TODO fix calendar
+
+    return attrs
