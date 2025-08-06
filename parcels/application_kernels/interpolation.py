@@ -85,19 +85,19 @@ def XLinear(
     xi_da = xr.DataArray(xi, dims=("points"))
 
     corner_data = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
-    corner_data = corner_data.data.reshape(-1, lenT, lenZ, 4)
+    corner_data = corner_data.data.reshape(lenT, lenZ, -1, 4)
 
     if lenT == 2:
-        tau = tau[:, np.newaxis, np.newaxis]
-        corner_data = corner_data[:, 0, :, :] * (1 - tau) + corner_data[:, 1, :, :] * tau
+        tau = tau[np.newaxis, :, np.newaxis]
+        corner_data = corner_data[0, :, :, :] * (1 - tau) + corner_data[1, :, :, :] * tau
     else:
-        corner_data = corner_data[:, 0, :, :]
+        corner_data = corner_data[0, :, :, :]
 
     if lenZ == 2:
         zeta = zeta[:, np.newaxis]
-        corner_data = corner_data[:, 0, :] * (1 - zeta) + corner_data[:, 1, :] * zeta
+        corner_data = corner_data[0, :, :] * (1 - zeta) + corner_data[1, :, :] * zeta
     else:
-        corner_data = corner_data[:, 0, :]
+        corner_data = corner_data[0, :, :]
 
     value = (
         (1 - xsi) * (1 - eta) * corner_data[:, 0]
