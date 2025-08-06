@@ -23,8 +23,6 @@ class SpatialHash:
     ----------
     grid : parcels.xgrid.XGrid
         Source grid used to construct the hash grid and hash table
-    global_grid : bool, default=False
-        If true, the hash grid is constructed using the domain [-pi,pi] x [-pi,pi]
     reconstruct : bool, default=False
         If true, reconstructs the spatial hash
 
@@ -36,7 +34,6 @@ class SpatialHash:
     def __init__(
         self,
         grid,
-        global_grid=False,
         reconstruct=False,
     ):
         # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid and curvilinear.
@@ -46,23 +43,16 @@ class SpatialHash:
         # Hash grid size
         self._dh = self._hash_cell_size()
 
-        if global_grid:
-            # Set the hash grid to be a global grid
-            self._xmin = -180.0
-            self._ymin = -90.0
-            self._xmax = 180.0
-            self._ymax = 90.0
-        else:
-            # Lower left corner of the hash grid
-            lon_min = self._source_grid.lon.min()
-            lat_min = self._source_grid.lat.min()
-            lon_max = self._source_grid.lon.max()
-            lat_max = self._source_grid.lat.max()
+        # Lower left corner of the hash grid
+        lon_min = self._source_grid.lon.min()
+        lat_min = self._source_grid.lat.min()
+        lon_max = self._source_grid.lon.max()
+        lat_max = self._source_grid.lat.max()
 
-            self._xmin = lon_min - self._dh
-            self._ymin = lat_min - self._dh
-            self._xmax = lon_max + self._dh
-            self._ymax = lat_max + self._dh
+        self._xmin = lon_min - self._dh
+        self._ymin = lat_min - self._dh
+        self._xmax = lon_max + self._dh
+        self._ymax = lat_max + self._dh
 
         # Number of x points in the hash grid; used for
         # array flattening
