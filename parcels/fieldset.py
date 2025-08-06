@@ -164,8 +164,8 @@ class FieldSet:
         """
         if name in self.constants:
             raise ValueError(f"FieldSet already has a constant with name '{name}'")
-        if isinstance(value, np.timedelta64):
-            value = value / np.timedelta64(1, "s")  # Convert to seconds
+        if not isinstance(value, (float, np.float32, int, np.int32)):
+            raise ValueError(f"FieldSet constants have to be of type float or int, got a {type(value)}")
         self.constants[name] = np.float32(value)
 
     @property
