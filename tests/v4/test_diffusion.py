@@ -75,7 +75,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh_type, kernel):
     Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, mesh_type=mesh_type, interp_method=XBiLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV, Kh_zonal, Kh_meridional])
-    fieldset.add_constant("dres", ds["lon"][1] - ds["lon"][0])
+    fieldset.add_constant("dres", float(ds["lon"][1] - ds["lon"][0]))
 
     npart = 100
 
