@@ -271,7 +271,7 @@ class XGrid(BaseGrid):
     def search(self, z, y, x, ei=None):
         ds = self.xgcm_grid._ds
 
-        if hasattr(ds, "depth"):
+        if "Z" in self.grid.axes:
             zi, zeta = _search_1d_array(ds.depth.values, z)
         else:
             zi, zeta = 0, 0.0
