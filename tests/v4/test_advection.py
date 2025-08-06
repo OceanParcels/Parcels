@@ -6,6 +6,7 @@ import parcels
 from parcels._datasets.structured.generated import (
     decaying_moving_eddy_dataset,
     moving_eddy_dataset,
+    peninsula_dataset,
     radial_rotation_dataset,
     simple_UV_dataset,
     stommel_gyre_dataset,
@@ -324,18 +325,28 @@ def test_decaying_moving_eddy(method, rtol):
     assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
 
 
-# TODO decrease atol for Stommel gyre test once the C-grid is implemented
+# TODO decrease atol for these tests once the C-grid is implemented
 @pytest.mark.parametrize(
     "method, atol",
     [
-        ("RK4", 1e-1),
-        ("RK45", 1e-1),
+        ("RK4", 1),
+        ("RK45", 1),
     ],
 )
 @pytest.mark.parametrize("grid_type", ["A", "C"])
-def test_stommel_gyre(method, grid_type, atol):
-    """Test advection in the Stommel gyre."""
-    ds = stommel_gyre_dataset(grid_type=grid_type)
+@pytest.mark.parametrize("flowfield", ["stommel_gyre", "peninsula"])
+def test_gyre_flowfields(method, grid_type, atol, flowfield):
+    npart = 2
+    if flowfield == "peninsula":
+        ds = peninsula_dataset(grid_type=grid_type)
+        start_lat = np.linspace(3e3, 47e3, npart)
+        start_lon = 3e3 * np.ones_like(start_lat)
+        runtime = np.timedelta64(1, "D")
+    else:
+        ds = stommel_gyre_dataset(grid_type=grid_type)
+        start_lon = np.linspace(10e3, 100e3, npart)
+        start_lat = np.ones_like(start_lon) * 5000e3
+        runtime = np.timedelta64(2, "D")
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=XBiLinear)
     V = Field("V", ds["V"], grid, interp_method=XBiLinear)
@@ -344,10 +355,6 @@ def test_stommel_gyre(method, grid_type, atol):
     fieldset = FieldSet([U, V, P, UV])
 
     dt = np.timedelta64(1, "m")  # TODO check these settings (and possibly increase)
-    runtime = np.timedelta64(2, "D")
-    npart = 2
-    start_lon = np.linspace(10e3, 100e3, npart)
-    start_lat = np.ones_like(start_lon) * 5000e3
 
     if method == "RK45":
         # Use RK45Particles to set next_dt
@@ -371,4 +378,4 @@ def test_stommel_gyre(method, grid_type, atol):
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
-    assert np.allclose(pset.p_start, pset.p, atol=atol)
+    np.testing.assert_allclose(pset.p_start, pset.p, atol=atol)

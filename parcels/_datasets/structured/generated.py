@@ -147,6 +147,89 @@ def decaying_moving_eddy_dataset(xdim=2, ydim=2):
     )
 
 
+def peninsula_dataset(xdim=100, ydim=50, mesh="flat", grid_type="A"):
+    """Construct a fieldset encapsulating the flow field around an idealised peninsula.
+
+    Parameters
+    ----------
+    xdim :
+        Horizontal dimension of the generated fieldset
+    ydim :
+        Vertical dimension of the generated fieldset
+    mesh : str
+        String indicating the type of mesh coordinates and
+        units used during velocity interpolation:
+
+        1. spherical: Lat and lon in degree, with a
+           correction for zonal velocity U near the poles.
+        2. flat (default): No conversion, lat/lon are assumed to be in m.
+    grid_type :
+        Option whether grid is either Arakawa A (default) or C
+
+        The original test description can be found in Fig. 2.2.3 in:
+        North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
+        recommended practices for modelling physical - biological
+        interactions during fish early life.
+        ICES Cooperative Research Report No. 295. 111 pp.
+        http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
+    """
+    domainsizeX, domainsizeY = (1.0e5, 5.0e4)
+    La = np.linspace(1e3, domainsizeX, xdim, dtype=np.float32)
+    Wa = np.linspace(1e3, domainsizeY, ydim, dtype=np.float32)
+
+    u0 = 1
+    x0 = domainsizeX / 2
+    R = 0.32 * domainsizeX / 2
+
+    # Create the fields
+    P = np.zeros((ydim, xdim), dtype=np.float32)
+    U = np.zeros_like(P)
+    V = np.zeros_like(P)
+    x, y = np.meshgrid(La, Wa, sparse=True, indexing="xy")
+    P[:, :] = u0 * R**2 * y / ((x - x0) ** 2 + y**2) - u0 * y
+
+    # Set land points to zero
+    landpoints = P >= 0.0
+    P[landpoints] = 0.0
+
+    if grid_type == "A":
+        U[:, :] = u0 - u0 * R**2 * ((x - x0) ** 2 - y**2) / (((x - x0) ** 2 + y**2) ** 2)
+        V[:, :] = -2 * u0 * R**2 * ((x - x0) * y) / (((x - x0) ** 2 + y**2) ** 2)
+        U[landpoints] = 0.0
+        V[landpoints] = 0.0
+        Udims = ["YC", "XG"]
+        Vdims = ["YG", "XC"]
+    elif grid_type == "C":
+        U = np.zeros(P.shape)
+        V = np.zeros(P.shape)
+        V[:, 1:] = (P[:, 1:] - P[:, :-1]) / (La[1] - La[0])
+        U[1:, :] = -(P[1:, :] - P[:-1, :]) / (Wa[1] - Wa[0])
+        Udims = ["YG", "XG"]
+        Vdims = ["YG", "XG"]
+    else:
+        raise RuntimeError(f"Grid_type {grid_type} is not a valid option")
+
+    # Convert from m to lat/lon for spherical meshes
+    lon = La / 1852.0 / 60.0 if mesh == "spherical" else La
+    lat = Wa / 1852.0 / 60.0 if mesh == "spherical" else Wa
+
+    return xr.Dataset(
+        {
+            "U": (Udims, U),
+            "V": (Vdims, V),
+            "P": (["YG", "XG"], P),
+        },
+        coords={
+            "YC": (["YC"], np.arange(ydim) + 0.5, {"axis": "Y"}),
+            "YG": (["YG"], np.arange(ydim), {"axis": "Y", "c_grid_axis_shift": -0.5}),
+            "XC": (["XC"], np.arange(xdim) + 0.5, {"axis": "X"}),
+            "XG": (["XG"], np.arange(xdim), {"axis": "X", "c_grid_axis_shift": -0.5}),
+            "lat": (["YG"], lat, {"axis": "Y", "c_grid_axis_shift": 0.5}),
+            "lon": (["XG"], lon, {"axis": "X", "c_grid_axis_shift": -0.5}),
+        },
+    )
+
+
 def stommel_gyre_dataset(xdim=200, ydim=200, grid_type="A"):
     """Simulate a periodic current along a western boundary, with significantly
     larger velocities along the western edge than the rest of the region
