@@ -54,19 +54,6 @@ def test_pset_with_pids(fieldset, offset, npart=100):
     assert np.allclose([p.trajectory for p in pset], trajectory_ids, atol=1e-12)
 
 
-def test_multivars_on_pset():
-    MyParticleLoop = Particle
-    vars = ["sample_var", "sample_var2"]
-    for var in vars:
-        MyParticleLoop = MyParticleLoop.add_variable(Variable(var))
-
-    MyParticleList = Particle.add_variable([Variable(var) for var in vars])
-
-    for var in vars:
-        assert hasattr(MyParticleLoop, var), f"Variable {var} not added to MyParticleLoop"
-        assert hasattr(MyParticleList, var), f"Variable {var} not added to MyParticleList"
-
-
 @pytest.mark.parametrize("aslist", [True, False])
 def test_pset_customvars_on_pset(fieldset, aslist):
     if aslist:
