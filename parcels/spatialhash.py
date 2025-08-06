@@ -147,7 +147,6 @@ class SpatialHash:
         num_coords = coords.shape[0]
 
         # Preallocate results
-        # bcoords = np.zeros((num_coords, 4), dtype=np.double)
         faces = np.full((num_coords, 2), -1, dtype=np.int32)
 
         # Get the list of candidate faces for each coordinate
@@ -188,10 +187,9 @@ class SpatialHash:
                 err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
                 if (bcoord >= 0).all() and err < tol:
                     faces[i, :] = [yi, xi]
-                    # bcoords[i, :] = bcoord
                     break
 
-        return faces  # , bcoords
+        return faces
 
 
 def _triangle_area(A, B, C):
@@ -243,6 +241,7 @@ def planar_quad_area(lon, lat):
     """Computes the area of each quadrilateral face in a curvilinear grid.
     The lon and lat arrays are assumed to be 2D arrays of points with dimensions (n_y, n_x).
     The area is computed using the Shoelace formula.
+    This method is only used during hashgrid construction to determine the size of the hash cells.
 
     Parameters
     ----------
@@ -276,6 +275,8 @@ def curvilinear_grid_facebounds(lon, lat):
     The lon and lat arrays are assumed to be 2D arrays of points with dimensions (n_y, n_x).
     The bounds are for faces whose corner node vertices are defined by lon,lat.
     Face(yi,xi) is surrounding by points (yi,xi), (yi,xi+1), (yi+1,xi+1), (yi+1,xi).
+    This method is only used during hashgrid construction to determine which curvilinear
+    faces overlap with which hash cells.
 
     Parameters
     ----------
