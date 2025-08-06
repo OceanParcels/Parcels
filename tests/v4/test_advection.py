@@ -84,7 +84,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
-    np.testing.assert_allclose(expected_lon, pset.lon, atol=1.0e-1)
+    np.testing.assert_allclose(pset.lon, expected_lon, atol=1.0e-1)
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])

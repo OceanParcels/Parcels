@@ -306,8 +306,6 @@ class ParticleFile:
 def _get_store_from_pathlike(path: Path | str) -> LocalStore:
     path = str(Path(path))  # Ensure valid path, and convert to string
     extension = os.path.splitext(path)[1]
-    if extension in [".nc", ".nc4"]:
-        raise ValueError("Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name.")
     if extension != ".zarr":
         raise ValueError(f"ParticleFile name must end with '.zarr' extension. Got path {path!r}.")
 
