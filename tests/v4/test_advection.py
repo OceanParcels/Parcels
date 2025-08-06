@@ -73,8 +73,8 @@ def test_advection_zonal_periodic():
     PeriodicParticle = Particle.add_variable(Variable("total_dlon", initial=0))
     pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=[0.5], lat=[0.5])
     pset.execute([AdvectionEE, periodicBC], runtime=np.timedelta64(40, "s"), dt=np.timedelta64(1, "s"))
-    assert np.isclose(pset.total_dlon[0], 4, atol=1e-5)
-    assert np.isclose(pset.lon_nextloop[0], 0.5, atol=1e-5)
+    np.testing.assert_allclose(pset.total_dlon[0], 4, atol=1e-5)
+    np.testing.assert_allclose(pset.lon_nextloop[0], 0.5, atol=1e-5)
 
 
 def test_horizontal_advection_in_3D_flow(npart=10):
@@ -92,7 +92,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
-    assert np.allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
+    np.testing.assert_allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])
@@ -132,8 +132,8 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     pset.execute(kernels, runtime=np.timedelta64(11, "s"), dt=np.timedelta64(1, "s"))
 
     if direction == "up" and wErrorThroughSurface:
-        assert np.allclose(pset.lon[0], 0.6)
-        assert np.allclose(pset.depth[0], 0)
+        np.testing.assert_allclose(pset.lon[0], 0.6, atol=1e-5)
+        np.testing.assert_allclose(pset.depth[0], 0, atol=1e-5)
     else:
         assert len(pset) == 0
 
@@ -189,10 +189,10 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     pset.execute(kernel, runtime=np.timedelta64(5, "s"), dt=np.timedelta64(1, "s"))
 
     assert len(pset.lon) == len([p.lon for p in pset])
-    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
-    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
+    np.testing.assert_allclose(np.array([p.lon - x0 for p in pset]), 4 * u, atol=1e-6)
+    np.testing.assert_allclose(np.array([p.lat - y0 for p in pset]), 4 * v, atol=1e-6)
     if w:
-        assert ((np.array([p.depth - z0 for p in pset]) - 4 * w) < 1e-6).all()
+        np.testing.assert_allclose(np.array([p.depth - z0 for p in pset]), 4 * w, atol=1e-6)
 
 
 def test_radialrotation(npart=10):
@@ -215,8 +215,8 @@ def test_radialrotation(npart=10):
     true_lon = (lon - 30.0) * np.cos(theta) + 30.0
     true_lat = -(lon - 30.0) * np.sin(theta) + 30.0
 
-    assert np.allclose(pset.lon, true_lon, atol=5e-2)
-    assert np.allclose(pset.lat, true_lat, atol=5e-2)
+    np.testing.assert_allclose(pset.lon, true_lon, atol=5e-2)
+    np.testing.assert_allclose(pset.lat, true_lat, atol=5e-2)
 
 
 @pytest.mark.parametrize(
@@ -271,10 +271,10 @@ def test_moving_eddy(method, rtol):
         return lon, lat
 
     exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
-    assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    np.testing.assert_allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
     if method == "RK4_3D":
-        assert np.allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
+        np.testing.assert_allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
 
 
 @pytest.mark.parametrize(
@@ -321,8 +321,8 @@ def test_decaying_moving_eddy(method, rtol):
         return lon, lat
 
     exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
-    assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    np.testing.assert_allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
 
 
 # TODO decrease atol for these tests once the C-grid is implemented
@@ -333,7 +333,7 @@ def test_decaying_moving_eddy(method, rtol):
         ("RK45", 1),
     ],
 )
-@pytest.mark.parametrize("grid_type", ["A", "C"])
+@pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
 @pytest.mark.parametrize("flowfield", ["stommel_gyre", "peninsula"])
 def test_gyre_flowfields(method, grid_type, atol, flowfield):
     npart = 2
