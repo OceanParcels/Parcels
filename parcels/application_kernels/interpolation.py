@@ -70,11 +70,11 @@ def XLinear(
         zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
         zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
 
-    # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
+    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
     yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
     yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
 
-    # X coordinates: [xi, xi+1] for each spatial point, repeated for time/depth
+    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
     xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
     xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
 
