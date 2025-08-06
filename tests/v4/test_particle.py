@@ -101,6 +101,21 @@ def test_particleclass_add_variable():
     assert p_final.variables[2].name == "varc"
 
 
+def test_particleclass_add_variable_in_loop():
+    p = ParticleClass(variables=[Variable("vara", dtype=np.float32)])
+    vars = [Variable("sample_var"), Variable("sample_var2")]
+    p_loop = p
+    for var in vars:
+        p_loop = p_loop.add_variable(var)
+
+    p_list = p.add_variable(vars)
+
+    for var1, var2 in zip(p_loop.variables, p_list.variables, strict=True):
+        assert var1.name == var2.name
+        assert var1.dtype == var2.dtype
+        assert var1.to_write == var2.to_write
+
+
 def test_particleclass_add_variable_collision():
     p_initial = ParticleClass(variables=[Variable("vara", dtype=np.float32)])
 
