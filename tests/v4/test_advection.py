@@ -4,6 +4,7 @@ import xarray as xr
 
 import parcels
 from parcels._datasets.structured.generated import (
+    decaying_moving_eddy_dataset,
     moving_eddy_dataset,
     radial_rotation_dataset,
     simple_UV_dataset,
@@ -273,6 +274,54 @@ def test_moving_eddy(method, rtol):
     assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
     if method == "RK4_3D":
         assert np.allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "method, rtol",
+    [
+        ("EE", 1e-2),
+        ("RK4", 1e-5),
+        ("RK45", 1e-5),
+    ],
+)
+def test_decaying_moving_eddy(method, rtol):
+    ds = decaying_moving_eddy_dataset()
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XBiLinear)
+    V = Field("V", ds["V"], grid, interp_method=XBiLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    start_lon, start_lat = 10000, 10000
+    dt = np.timedelta64(2, "m")
+
+    if method == "RK45":
+        # Use RK45Particles to set next_dt
+        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype=np.timedelta64))
+        fieldset.add_constant("RK45_tol", 1e-6)
+
+    pclass = RK45Particles if method == "RK45" else Particle
+
+    pset = ParticleSet(fieldset, pclass=pclass, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "D"))
+
+    def truth_moving(x_0, y_0, t):
+        t /= np.timedelta64(1, "s")
+        lon = (
+            x_0
+            + (ds.u_g / ds.gamma_g) * (1 - np.exp(-ds.gamma_g * t))
+            + ds.f
+            * ((ds.u_0 - ds.u_g) / (ds.f**2 + ds.gamma**2))
+            * ((ds.gamma / ds.f) + np.exp(-ds.gamma * t) * (np.sin(ds.f * t) - (ds.gamma / ds.f) * np.cos(ds.f * t)))
+        )
+        lat = y_0 - ((ds.u_0 - ds.u_g) / (ds.f**2 + ds.gamma**2)) * ds.f * (
+            1 - np.exp(-ds.gamma * t) * (np.cos(ds.f * t) + (ds.gamma / ds.f) * np.sin(ds.f * t))
+        )
+        return lon, lat
+
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
+    assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
+    assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
 
 
 # TODO decrease atol for Stommel gyre test once the C-grid is implemented

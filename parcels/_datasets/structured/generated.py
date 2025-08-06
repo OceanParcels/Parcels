@@ -97,6 +97,56 @@ def moving_eddy_dataset(xdim=2, ydim=2):  # TODO check if this also works with x
     )
 
 
+def decaying_moving_eddy_dataset(xdim=2, ydim=2):
+    """Simulate an ocean that accelerates subject to Coriolis force
+    and dissipative effects, upon which a geostrophic current is
+    superimposed.
+
+    The original test description can be found in: N. Fabbroni, 2009,
+    Numerical Simulation of Passive tracers dispersion in the sea,
+    Ph.D. dissertation, University of Bologna
+    http://amsdottorato.unibo.it/1733/1/Fabbroni_Nicoletta_Tesi.pdf
+    """
+    u_g = 0.04  # Geostrophic current
+    u_0 = 0.3  # Initial speed in x dirrection. v_0 = 0
+    gamma = 1.0 / (2.89 * 86400)  # Dissipitave effects due to viscousity.
+    gamma_g = 1.0 / (28.9 * 86400)
+    f = 1.0e-4  # Coriolis parameter.
+
+    time = np.arange(np.timedelta64(0, "s"), np.timedelta64(1, "D") + np.timedelta64(1, "h"), np.timedelta64(2, "m"))
+    lon = np.linspace(0, 20000, xdim, dtype=np.float32)
+    lat = np.linspace(5000, 12000, ydim, dtype=np.float32)
+
+    U = np.zeros((time.size, 1, lat.size, lon.size), dtype=np.float32)
+    V = np.zeros((time.size, 1, lat.size, lon.size), dtype=np.float32)
+
+    for t in range(time.size):
+        t_float = time[t] / np.timedelta64(1, "s")
+        U[t, :, :, :] = u_g * np.exp(-gamma_g * t_float) + (u_0 - u_g) * np.exp(-gamma * t_float) * np.cos(f * t_float)
+        V[t, :, :, :] = -(u_0 - u_g) * np.exp(-gamma * t_float) * np.sin(f * t_float)
+
+    return xr.Dataset(
+        {"U": (["time", "depth", "YG", "XG"], U), "V": (["time", "depth", "YG", "XG"], V)},
+        coords={
+            "time": (["time"], time, {"axis": "T"}),
+            "depth": (["depth"], np.array([0.0]), {"axis": "Z"}),
+            "YC": (["YC"], np.arange(ydim) + 0.5, {"axis": "Y"}),
+            "YG": (["YG"], np.arange(ydim), {"axis": "Y", "c_grid_axis_shift": -0.5}),
+            "XC": (["XC"], np.arange(xdim) + 0.5, {"axis": "X"}),
+            "XG": (["XG"], np.arange(xdim), {"axis": "X", "c_grid_axis_shift": -0.5}),
+            "lat": (["YG"], lat, {"axis": "Y", "c_grid_axis_shift": 0.5}),
+            "lon": (["XG"], lon, {"axis": "X", "c_grid_axis_shift": -0.5}),
+        },
+        attrs={
+            "u_0": u_0,
+            "u_g": u_g,
+            "f": f,
+            "gamma": gamma,
+            "gamma_g": gamma_g,
+        },
+    )
+
+
 def stommel_gyre_dataset(xdim=200, ydim=200, grid_type="A"):
     """Simulate a periodic current along a western boundary, with significantly
     larger velocities along the western edge than the rest of the region
