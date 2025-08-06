@@ -68,7 +68,7 @@ def XLinear(
         zi = np.repeat(zi, lenT * 4)
     else:
         zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
-        zi = np.tile(np.stack([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1], axis=1).flatten(), lenT)
+        zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
 
     # Y coordinates: [yi, yi, yi+1, yi+1] pattern repeated
     yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
