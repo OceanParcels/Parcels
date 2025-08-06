@@ -343,7 +343,7 @@ def test_periodic(use_xarray, time_periodic, dt_sign):
         ]
     )
 
-    pset = ParticleSet.from_list(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=[0.5], lat=[0.5], depth=[0.5])
     pset.execute(
         AdvectionRK4_3D + pset.Kernel(sampleTemp), runtime=timedelta(hours=51), dt=timedelta(hours=dt_sign * 1)
     )
