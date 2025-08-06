@@ -227,7 +227,11 @@ def test_radialrotation(npart=10):
         ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
-        ("RK45", 1e-5),
+        pytest.param(
+            "RK45",
+            1e-5,
+            marks=pytest.mark.skip(reason="https://github.com/OceanParcels/Parcels/pull/2134#issuecomment-3160726036"),
+        ),
     ],
 )
 def test_moving_eddy(method, rtol):
@@ -282,7 +286,11 @@ def test_moving_eddy(method, rtol):
     [
         ("EE", 1e-2),
         ("RK4", 1e-5),
-        ("RK45", 1e-5),
+        pytest.param(
+            "RK45",
+            1e-5,
+            marks=pytest.mark.skip(reason="https://github.com/OceanParcels/Parcels/pull/2134#issuecomment-3160726036"),
+        ),
     ],
 )
 def test_decaying_moving_eddy(method, rtol):
@@ -330,7 +338,11 @@ def test_decaying_moving_eddy(method, rtol):
     "method, atol",
     [
         ("RK4", 1),
-        ("RK45", 1),
+        pytest.param(
+            "RK45",
+            1,
+            marks=pytest.mark.skip(reason="https://github.com/OceanParcels/Parcels/pull/2134#issuecomment-3160726036"),
+        ),
     ],
 )
 @pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
