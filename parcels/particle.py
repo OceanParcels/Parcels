@@ -169,7 +169,7 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
             Variable("depth_nextloop", dtype=spatial_dtype, to_write=False),
             Variable("time", dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE),
             Variable("time_nextloop", dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE, to_write=False),
-            Variable("id", dtype=np.int64, to_write="once"),
+            Variable("trajectory", dtype=np.int64, to_write="once"),
             Variable("obs_written", dtype=np.int32, initial=0, to_write=False),
             Variable("dt", dtype="timedelta64[s]", initial=np.timedelta64(1, "s"), to_write=False),
             Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False),

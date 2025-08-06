@@ -38,9 +38,9 @@ def test_pset_remove_particle_in_kernel(fieldset):
 
     pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
     indices = [i for i in range(npart) if not (40 <= i < 60)]
-    assert [p.id for p in pset] == indices
-    assert pset[70].id == 90
-    assert pset[-1].id == npart - 1
+    assert [p.trajectory for p in pset] == indices
+    assert pset[70].trajectory == 90
+    assert pset[-1].trajectory == npart - 1
     assert pset.size == 80
 
 

@@ -156,7 +156,7 @@ class ParticleFile:
         attrs["time"]["calendar"] = "None"  # TODO fix calendar
 
         for vname in self.vars_to_write:
-            if vname not in ["time", "lat", "lon", "depth", "id"]:
+            if vname not in ["time", "lat", "lon", "depth", "trajectory"]:
                 attrs[vname] = {
                     "_FillValue": _DATATYPES_TO_FILL_VALUES[self.vars_to_write[vname]],
                     "long_name": "",
@@ -169,8 +169,6 @@ class ParticleFile:
     def _convert_varout_name(self, var):
         if var == "depth":
             return "z"
-        elif var == "id":
-            return "trajectory"
         else:
             return var
 
@@ -221,7 +219,7 @@ class ParticleFile:
         if len(indices_to_write) == 0:
             return
 
-        pids = pset.particledata.getvardata("id", indices_to_write)
+        pids = pset.particledata.getvardata("trajectory", indices_to_write)
         to_add = sorted(set(pids) - set(self._pids_written.keys()))
         for i, pid in enumerate(to_add):
             self._pids_written[pid] = self._maxids + i

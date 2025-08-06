@@ -157,7 +157,7 @@ class InteractionKernel(BaseKernel):
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 try:
-                    for mutator_func, args in mutator[p.id]:
+                    for mutator_func, args in mutator[p.trajectory]:
                         mutator_func(p, *args)
                 except KeyError:
                     pass
@@ -201,7 +201,7 @@ class InteractionKernel(BaseKernel):
                     pass
                 else:
                     warnings.warn(
-                        f"Deleting particle {p.id} because of non-recoverable error",
+                        f"Deleting particle {p.trajectory} because of non-recoverable error",
                         RuntimeWarning,
                         stacklevel=2,
                     )

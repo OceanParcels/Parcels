@@ -131,7 +131,7 @@ class ParticleSet:
                 lat_nextloop=lat,
                 depth_nextloop=depth,
                 time_nextloop=time,
-                id=trajectory_ids,
+                trajectory=trajectory_ids,
             ),
         )
         self._ptype = pclass
@@ -191,7 +191,7 @@ class ParticleSet:
         return particleset_repr(self)
 
     def __len__(self):
-        return len(self._data["id"])
+        return len(self._data["trajectory"])
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an
@@ -222,11 +222,11 @@ class ParticleSet:
             return
 
         if isinstance(particles, type(self)):
-            if len(self._data["id"]) > 0:
-                offset = self._data["id"].max() + 1
+            if len(self._data["trajectory"]) > 0:
+                offset = self._data["trajectory"].max() + 1
             else:
                 offset = 0
-            particles._data["id"] = particles._data["id"] + offset
+            particles._data["trajectory"] = particles._data["trajectory"] + offset
 
         for d in self._data:
             self._data[d] = np.concatenate((self._data[d], particles._data[d]))
@@ -294,7 +294,7 @@ class ParticleSet:
 
     def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
-        neighbor_ids = self._data["id"][neighbor_idx]
+        neighbor_ids = self._data["trajectory"][neighbor_idx]
         return neighbor_ids
 
     # TODO: This method is only tested in tutorial notebook. Add unit test?
