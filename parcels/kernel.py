@@ -227,10 +227,9 @@ class Kernel:
             self.add_positionupdate_kernels()
             self._positionupdate_kernels_added = True
 
-        for p in pset:
-            self.evaluate_particle(p, endtime)
-            if p.state == StatusCode.StopAllExecution:
-                return StatusCode.StopAllExecution
+        self.evaluate_pset(pset, endtime)
+        if any(pset.state == StatusCode.StopAllExecution):
+            return StatusCode.StopAllExecution
 
         # Remove all particles that signalled deletion
         self.remove_deleted(pset)
@@ -269,49 +268,57 @@ class Kernel:
             self.remove_deleted(pset)  # Generalizable version!
 
             # Re-execute Kernels to retry particles with StatusCode.Repeat
-            for p in pset:
-                self.evaluate_particle(p, endtime)
+            self.evaluate_pset(pset, endtime)
 
             n_error = pset._num_error_particles
 
-    def evaluate_particle(self, p, endtime):
-        """Execute the kernel evaluation of for an individual particle.
+    def evaluate_pset(self, pset, endtime):
+        """Execute the kernel evaluation of for the entire particle set.
 
         Parameters
         ----------
-        p :
-            object of (sub-)type Particle
+        pset :
+            object of (sub-)type ParticleSet
         endtime :
             endtime of this overall kernel evaluation step
         dt :
             computational integration timestep
         """
-        sign_dt = 1 if p.dt >= 0 else -1
-        while p.state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            if sign_dt * (endtime - p.time_nextloop) <= 0:
-                return p
+        sign_dt = np.where(pset.dt >= 0, 1, -1)
+        while pset[0].state in [StatusCode.Evaluate, StatusCode.Repeat]:
+            if all(sign_dt * (endtime - pset.time_nextloop) <= 0):
+                return pset
 
-            pre_dt = p.dt
+            pre_dt = pset.dt
             try:  # Use next_dt from AdvectionRK45 if it is set
-                if abs(endtime - p.time_nextloop) < abs(p.next_dt) - np.timedelta64(1000, "ns"):
-                    p.next_dt = sign_dt * (endtime - p.time_nextloop)
+                pset.next_dt = np.where(
+                    sign_dt * (endtime - pset.time_nextloop) <= pset.next_dt,
+                    np.where(sign_dt * (endtime - pset.time_nextloop) < 0, 0, sign_dt * (endtime - pset.time_nextloop)),
+                    pset.next_dt,
+                )
             except KeyError:
-                if sign_dt * (endtime - p.time_nextloop) <= p.dt:
-                    p.dt = sign_dt * (endtime - p.time_nextloop)
+                pset.dt = np.where(
+                    sign_dt * (endtime - pset.time_nextloop) <= pset.dt,
+                    np.where(sign_dt * (endtime - pset.time_nextloop) < 0, 0, sign_dt * (endtime - pset.time_nextloop)),
+                    pset.dt,
+                )
             res = None
             for f in self._pyfuncs:
-                res_tmp = f(p, self._fieldset, p.time_nextloop)
+                # TODO remove "time" from kernel signature in v4; because it doesn't make sense for vectorized particles
+                res_tmp = f(pset, self._fieldset, pset.time_nextloop[0])
                 if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
                     res = res_tmp
                 if res in [StatusCode.StopExecution, StatusCode.Repeat]:
                     break
 
             if res is None:
-                if p.state == StatusCode.Success:
-                    if sign_dt * (p.time - endtime) > 0:
-                        p.state = StatusCode.Evaluate
-            else:
-                p.state = res
+                pset.state = np.where(
+                    (pset.state == StatusCode.Success) & (sign_dt * (pset.time - endtime) > 0),
+                    StatusCode.Evaluate,
+                    pset.state,
+                )
+            else:  # TODO need to think how the kernel exitcode works on vectorized particleset
+                pset.state = res
 
-            p.dt = pre_dt
-        return p
+            pset.dt = pre_dt
+        return pset

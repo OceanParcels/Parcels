@@ -3,9 +3,6 @@
 See `this tutorial <../examples/tutorial_diffusion.ipynb>`__ for a detailed explanation.
 """
 
-import math
-import random
-
 import numpy as np
 
 __all__ = ["AdvectionDiffusionEM", "AdvectionDiffusionM1", "DiffusionUniformKh"]
@@ -28,21 +25,21 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     """
     dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
+    dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
-    Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
+    Kxp1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon + fieldset.dres, particle]
+    Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres, particle]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
 
-    u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-    bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
+    u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon, particle]
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon, particle])
 
-    Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
-    Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
+    Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon, particle]
+    Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon, particle]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
 
-    by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon, particle])
 
     # Particle positions are updated only after evaluating all terms.
     particle.dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx
@@ -64,22 +61,22 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     """
     dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
+    dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    u, v = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+    u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon, particle]
 
-    Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
-    Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
+    Kxp1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon + fieldset.dres, particle]
+    Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres, particle]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
     ax = u + dKdx
-    bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon, particle])
 
-    Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
-    Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
+    Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon, particle]
+    Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon, particle]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
     ay = v + dKdy
-    by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon, particle])
 
     # Particle positions are updated only after evaluating all terms.
     particle.dlon += ax * dt + bx * dWx
@@ -106,11 +103,13 @@ def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
     """
     dt = particle.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.normalvariate(0, math.sqrt(math.fabs(dt)))
-    dWy = random.normalvariate(0, math.sqrt(math.fabs(dt)))
+    dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
+    dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
-    by = math.sqrt(2 * fieldset.Kh_meridional[particle])
+    print(particle)
+
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particle])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particle])
 
     particle.dlon += bx * dWx
     particle.dlat += by * dWy

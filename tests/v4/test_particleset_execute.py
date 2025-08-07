@@ -33,8 +33,7 @@ def test_pset_remove_particle_in_kernel(fieldset):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
     def DeleteKernel(particle, fieldset, time):  # pragma: no cover
-        if particle.lon >= 0.4 and particle.lon <= 0.6:
-            particle.state = StatusCode.Delete
+        particle.state = np.where((particle.lon >= 0.4) & (particle.lon <= 0.6), StatusCode.Delete, particle.state)
 
     pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
     indices = [i for i in range(npart) if not (40 <= i < 60)]
@@ -44,8 +43,9 @@ def test_pset_remove_particle_in_kernel(fieldset):
     assert pset.size == 80
 
 
-def test_pset_stop_simulation(fieldset):
-    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=Particle)
+@pytest.mark.parametrize("npart", [1, 100])
+def test_pset_stop_simulation(fieldset, npart):
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart), pclass=Particle)
 
     def Delete(particle, fieldset, time):  # pragma: no cover
         if time >= fieldset.time_interval.left + np.timedelta64(4, "s"):
@@ -86,34 +86,50 @@ def test_execution_endtime(fieldset, starttime, endtime, dt):
     assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
 
 
+@pytest.mark.parametrize("direction", [-1, 1])
+def test_pset_starttime_outside_execute(fieldset, direction):
+    if direction == 1:
+        endtime = fieldset.time_interval.left + np.timedelta64(8, "s")
+        start_times = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in [0, 2, 10]]
+    else:
+        endtime = fieldset.time_interval.right - np.timedelta64(8, "s")
+        start_times = [fieldset.time_interval.right - np.timedelta64(t, "s") for t in [0, 2, 10]]
+
+    pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
+
+    pset.execute(DoNothing, dt=direction * np.timedelta64(1, "s"), endtime=endtime)
+    assert pset.time_nextloop[0:1] == endtime
+    assert pset.time_nextloop[2] == start_times[2]
+
+
 @pytest.mark.parametrize(
     "starttime, runtime, dt",
     [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
 )
-def test_execution_runtime(fieldset, starttime, runtime, dt):
+@pytest.mark.parametrize("npart", [1, 10])
+def test_execution_runtime(fieldset, starttime, runtime, dt, npart):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
     runtime = np.timedelta64(runtime, "s")
     sign_dt = 1 if dt is None else np.sign(dt)
     dt = np.timedelta64(dt, "s")
-    pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
+    pset = ParticleSet(fieldset, time=starttime, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(DoNothing, runtime=runtime, dt=dt)
-    assert abs(pset.time_nextloop - starttime - runtime * sign_dt) < np.timedelta64(1, "ms")
+    assert all([abs(p.time_nextloop - starttime - runtime * sign_dt) < np.timedelta64(1, "ms") for p in pset])
 
 
-def test_execution_fail_python_exception(fieldset, npart=10):
+@pytest.mark.parametrize("npart", [1, 100])
+def test_execution_fail_python_exception(fieldset, npart):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
     def PythonFail(particle, fieldset, time):  # pragma: no cover
-        if particle.time >= fieldset.time_interval.left + np.timedelta64(10, "s"):
+        inds = np.argwhere(particle.time >= fieldset.time_interval.left + np.timedelta64(10, "s"))
+        if inds.size > 0:
             raise RuntimeError("Enough is enough!")
-        else:
-            pass
 
     with pytest.raises(RuntimeError):
         pset.execute(PythonFail, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(2, "s"))
     assert len(pset) == npart
-    assert pset.time[0] == fieldset.time_interval.left + np.timedelta64(10, "s")
-    assert all([time == fieldset.time_interval.left + np.timedelta64(0, "s") for time in pset.time[1:]])
+    assert all(pset.time == fieldset.time_interval.left + np.timedelta64(10, "s"))
 
 
 def test_uxstommelgyre_pset_execute():

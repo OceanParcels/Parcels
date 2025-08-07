@@ -4,99 +4,38 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import dask.array as dask
 import numpy as np
-
-from parcels.field import Field
-from parcels.tools.statuscodes import (
-    FieldOutOfBoundError,
-)
+import xarray as xr
 
 if TYPE_CHECKING:
+    from parcels.field import Field
     from parcels.uxgrid import _UXGRID_AXES
     from parcels.xgrid import _XGRID_AXES
 
 __all__ = [
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
-    "XBiLinear",
-    "XBiLinearPeriodic",
-    "XTriLinear",
+    "XLinear",
+    "ZeroInterpolator",
 ]
 
 
-def XBiLinear(
+def ZeroInterpolator(
     field: Field,
     ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    position: dict[str, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
-):
-    """Bilinear interpolation on a regular grid."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, _ = position["Z"]
-
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    if tau > 0:
-        data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
-    else:
-        data = data[ti, :, :]
-
-    return (
-        (1 - xsi) * (1 - eta) * data[0, 0]
-        + xsi * (1 - eta) * data[0, 1]
-        + xsi * eta * data[1, 1]
-        + (1 - xsi) * eta * data[1, 0]
-    )
+) -> np.float32 | np.float64:
+    """Template function used for the signature check of the lateral interpolation methods."""
+    return 0.0
 
 
-def XBiLinearPeriodic(
-    field: Field,
-    ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-):
-    """Bilinear interpolation on a regular grid with periodic boundary conditions in horizontal directions."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, _ = position["Z"]
-
-    if xi < 0:
-        xi = 0
-        xsi = (x - field.grid.lon[xi]) / (field.grid.lon[xi + 1] - field.grid.lon[xi])
-    if yi < 0:
-        yi = 0
-        eta = (y - field.grid.lat[yi]) / (field.grid.lat[yi + 1] - field.grid.lat[yi])
-
-    data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
-
-    xsi = 0 if not np.isfinite(xsi) else xsi
-    eta = 0 if not np.isfinite(eta) else eta
-
-    if xsi > 0 and eta > 0:
-        return (
-            (1 - xsi) * (1 - eta) * data[0, 0]
-            + xsi * (1 - eta) * data[0, 1]
-            + xsi * eta * data[1, 1]
-            + (1 - xsi) * eta * data[1, 0]
-        )
-    elif xsi > 0 and eta == 0:
-        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
-    elif xsi == 0 and eta > 0:
-        return (1 - eta) * data[0, 0] + eta * data[1, 0]
-    else:
-        return data[0, 0]
-
-
-def XTriLinear(
+def XLinear(
     field: Field,
     ti: int,
     position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
@@ -111,32 +50,65 @@ def XTriLinear(
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
 
-    if zi < 0 or xi < 0 or yi < 0:
-        raise FieldOutOfBoundError
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+    data = field.data
 
-    data = field.data.data[:, zi : zi + 2, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :, :] + tau * data[ti + 1, :, :, :]
-    if zeta > 0:
-        data = (1 - zeta) * data[0, :, :] + zeta * data[1, :, :]
+    lenT = 2 if np.any(tau > 0) else 1
+    lenZ = 2 if np.any(zeta > 0) else 1
+
+    # Time coordinates: 8 points at ti, then 8 points at ti+1
+    if lenT == 1:
+        ti = np.repeat(ti, lenZ * 4)
     else:
-        data = data[0, :, :]
+        ti_1 = np.clip(ti + 1, 0, data.shape[0] - 1)
+        ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti_1, lenZ * 4)])
 
-    xsi = 0 if not np.isfinite(xsi) else xsi
-    eta = 0 if not np.isfinite(eta) else eta
-
-    if xsi > 0 and eta > 0:
-        return (
-            (1 - xsi) * (1 - eta) * data[0, 0]
-            + xsi * (1 - eta) * data[0, 1]
-            + xsi * eta * data[1, 1]
-            + (1 - xsi) * eta * data[1, 0]
-        )
-    elif xsi > 0 and eta == 0:
-        return (1 - xsi) * data[0, 0] + xsi * data[0, 1]
-    elif xsi == 0 and eta > 0:
-        return (1 - eta) * data[0, 0] + eta * data[1, 0]
+    # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
+    if lenZ == 1:
+        zi = np.repeat(zi, lenT * 4)
     else:
-        return data[0, 0]
+        zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
+        zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
+
+    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
+    yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
+    yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
+
+    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
+    xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
+    xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
+
+    # Create DataArrays for indexing
+    selection_dict = {
+        axis_dim["X"]: xr.DataArray(xi, dims=("points")),
+        axis_dim["Y"]: xr.DataArray(yi, dims=("points")),
+    }
+    if "Z" in axis_dim:
+        selection_dict[axis_dim["Z"]] = xr.DataArray(zi, dims=("points"))
+    if "time" in data.dims:
+        selection_dict["time"] = xr.DataArray(ti, dims=("points"))
+
+    corner_data = data.isel(selection_dict).data.reshape(lenT, lenZ, len(xsi), 4)
+
+    if lenT == 2:
+        tau = tau[np.newaxis, :, np.newaxis]
+        corner_data = corner_data[0, :, :, :] * (1 - tau) + corner_data[1, :, :, :] * tau
+    else:
+        corner_data = corner_data[0, :, :, :]
+
+    if lenZ == 2:
+        zeta = zeta[:, np.newaxis]
+        corner_data = corner_data[0, :, :] * (1 - zeta) + corner_data[1, :, :] * zeta
+    else:
+        corner_data = corner_data[0, :, :]
+
+    value = (
+        (1 - xsi) * (1 - eta) * corner_data[:, 0]
+        + xsi * (1 - eta) * corner_data[:, 1]
+        + (1 - xsi) * eta * corner_data[:, 2]
+        + xsi * eta * corner_data[:, 3]
+    )
+    return value.compute() if isinstance(value, dask.Array) else value
 
 
 def UXPiecewiseConstantFace(
