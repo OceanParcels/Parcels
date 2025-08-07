@@ -56,20 +56,20 @@ class ParticleFile:
         self.metadata = None
         self.create_new_zarrfile = create_new_zarrfile
 
-        if isinstance(store, zarr.abc.store.Store):
+        if isinstance(store, zarr.storage.Store):
             self.store = store
         else:
             self.store = _get_store_from_pathlike(store)
 
-        if store.read_only:
-            raise ValueError(f"Store {store} is read-only. Please provide a writable store.")
+        # TODO v4: Enable once updating to zarr v3
+        # if store.read_only:
+        #     raise ValueError(f"Store {store} is read-only. Please provide a writable store.")
 
         # TODO v4: Add check that if create_new_zarrfile is False, the store already exists
 
     def __repr__(self) -> str:
         return (
             f"{type(self).__name__}("
-            f"name={self.fname!r}, "
             f"outputdt={self.outputdt!r}, "
             f"chunks={self.chunks!r}, "
             f"create_new_zarrfile={self.create_new_zarrfile!r})"
@@ -91,10 +91,6 @@ class ParticleFile:
     @property
     def chunks(self):
         return self._chunks
-
-    @property
-    def fname(self):
-        return self._fname
 
     def _convert_varout_name(self, var):
         if var == "depth":
@@ -130,6 +126,10 @@ class ParticleFile:
         """
         pclass = pset._ptype
         vars_to_write = _get_vars_to_write(pclass)
+        time_interval = pset.fieldset.time_interval
+        time = timedelta_to_float(time - time_interval.left)
+        particle_data = _convert_particle_data_time_to_float_seconds(pset._data, time_interval)
+
         # if pset._data._ncount == 0:
         #     warnings.warn(
         #         f"ParticleSet is empty on writing as array at time {time:g}",
@@ -139,21 +139,21 @@ class ParticleFile:
         #     return
 
         if indices is None:
-            indices_to_write = _to_write_particles(pset._data, time)
+            indices_to_write = _to_write_particles(particle_data, time)
         else:
             indices_to_write = indices
 
         if len(indices_to_write) == 0:
             return
 
-        pids = pset._data["trajectory"][indices_to_write]
+        pids = particle_data["trajectory"][indices_to_write]
         to_add = sorted(set(pids) - set(self._pids_written.keys()))
         for i, pid in enumerate(to_add):
             self._pids_written[pid] = self._maxids + i
         ids = np.array([self._pids_written[p] for p in pids], dtype=int)
         self._maxids = len(self._pids_written)
 
-        once_ids = np.where(pset._data["obs_written"][indices_to_write] == 0)[0]
+        once_ids = np.where(particle_data["obs_written"][indices_to_write] == 0)[0]
         if len(once_ids) > 0:
             ids_once = ids[once_ids]
             indices_to_write_once = indices_to_write[once_ids]
@@ -173,40 +173,42 @@ class ParticleFile:
             attrs = _create_variables_attribute_dict(pclass)
             obs = np.zeros((self._maxids), dtype=np.int32)
             for var in vars_to_write:
-                varout = self._convert_varout_name(var)
+                dtype = _maybe_convert_time_dtype(var.dtype)
+                varout = self._convert_varout_name(var.name)
                 if varout not in ["trajectory"]:  # because 'trajectory' is written as coordinate
                     if var.to_write == "once":
                         data = np.full(
                             (arrsize[0],),
-                            DATATYPES_TO_FILL_VALUES[vars_to_write.dtype],
-                            dtype=var.dtype,
+                            DATATYPES_TO_FILL_VALUES[dtype],
+                            dtype=dtype,
                         )
-                        data[ids_once] = pset._data[var][indices_to_write_once]
+                        data[ids_once] = particle_data[var.name][indices_to_write_once]
                         dims = ["trajectory"]
                     else:
-                        data = np.full(arrsize, DATATYPES_TO_FILL_VALUES[var.dtype], dtype=var.dtype)
-                        data[ids, 0] = pset._data[var][indices_to_write]
+                        data = np.full(arrsize, DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
+                        data[ids, 0] = particle_data[var.name][indices_to_write]
                         dims = ["trajectory", "obs"]
-                    ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
+                    ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[var.name])
                     ds[varout].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks  # type: ignore[index]
             ds.to_zarr(store, mode="w")
             self.create_new_zarrfile = False
         else:
             Z = zarr.group(store=store, overwrite=False)
-            obs = pset._data["obs_written"][indices_to_write]
+            obs = particle_data["obs_written"][indices_to_write]
             for var in vars_to_write:
+                dtype = _maybe_convert_time_dtype(var.dtype)
                 varout = self._convert_varout_name(var.name)
                 if self._maxids > Z[varout].shape[0]:
-                    self._extend_zarr_dims(Z[varout], store, dtype=var.dtype, axis=0)
+                    self._extend_zarr_dims(Z[varout], store, dtype=dtype, axis=0)
                 if var.to_write == "once":
                     if len(once_ids) > 0:
-                        Z[varout].vindex[ids_once] = pset._data[var][indices_to_write_once]
+                        Z[varout].vindex[ids_once] = particle_data[var.name][indices_to_write_once]
                 else:
                     if max(obs) >= Z[varout].shape[1]:  # type: ignore[type-var]
-                        self._extend_zarr_dims(Z[varout], store, dtype=var.dtype, axis=1)
-                    Z[varout].vindex[ids, obs] = pset._data[var][indices_to_write]
+                        self._extend_zarr_dims(Z[varout], store, dtype=dtype, axis=1)
+                    Z[varout].vindex[ids, obs] = particle_data[var.name][indices_to_write]
 
-        pset._data["obs_written"][indices_to_write] = obs + 1
+        particle_data["obs_written"][indices_to_write] = obs + 1
 
     def write_latest_locations(self, pset, time):
         """Write the current (latest) particle locations to zarr file.
@@ -256,8 +258,8 @@ def _create_variables_attribute_dict(particle: ParticleClass) -> dict:
 
         attrs[var.name] = {**var.attrs, **fill_value}
 
-    attrs["time"]["units"] = "seconds since "  # TODO fix units
-    attrs["time"]["calendar"] = "None"  # TODO fix calendar
+    # attrs["time"]["units"] = "seconds since "  # TODO fix units
+    # attrs["time"]["calendar"] = "None"  # TODO fix calendar
 
     return attrs
 
@@ -280,3 +282,19 @@ def _to_write_particles(particle_data, time):
         & (np.isfinite(particle_data["trajectory"]))
         & (np.isfinite(particle_data["time"]))
     )[0]
+
+
+def _convert_particle_data_time_to_float_seconds(particle_data, time_interval):
+    #! Important that this is a shallow copy, so that updates to this propogate back to the original data
+    particle_data = particle_data.copy()
+
+    particle_data["time"] = ((particle_data["time"] - time_interval.left) / np.timedelta64(1, "s")).astype(np.float64)
+    particle_data["dt"] = (particle_data["dt"] / np.timedelta64(1, "s")).astype(np.float64)
+    return particle_data
+
+
+def _maybe_convert_time_dtype(dtype: np.dtype | _SAME_AS_FIELDSET_TIME_INTERVAL) -> np.dtype:
+    """Convert the dtype of time to float64 if it is not already."""
+    if dtype is _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
+        return np.dtype(np.float64)
+    return dtype
