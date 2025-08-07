@@ -21,16 +21,16 @@ classifiers = [
 ]
 dependencies = [
   "cftime",
-  "numpy",
+  "numpy >=1.11",
   "dask",
   "psutil",
-  "netCDF4",
-  "zarr",
+  "netCDF4 >=1.1.9",
+  "zarr >=2.11.0,!=2.18.0,<3",
   "tqdm",
   "pymbolic",
   "pytest",
-  "scipy",
-  "xarray",
+  "scipy >=0.16.0",
+  "xarray >=0.10.8",
   "uxarray",
   "pooch",
 ]
