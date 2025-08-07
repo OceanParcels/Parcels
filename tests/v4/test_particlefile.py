@@ -182,11 +182,9 @@ def test_variable_written_once(fieldset, tmp_zarrfile, npart):
     ds.close()
 
 
-@pytest.mark.parametrize("type", ["repeatdt", "timearr"])
-@pytest.mark.parametrize("repeatdt", range(1, 3))
 @pytest.mark.parametrize("dt", [-1, 1])
 @pytest.mark.parametrize("maxvar", [2, 4, 10])
-def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, repeatdt, tmp_zarrfile, dt, maxvar):
+def test_pset_repeated_release_delayed_adding_deleting(fieldset, tmp_zarrfile, dt, maxvar):
     runtime = 10
     fieldset.maxvar = maxvar
     pset = None
@@ -195,12 +193,9 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, repeatdt,
         [Variable("sample_var", initial=0.0), Variable("v_once", dtype=np.float64, initial=0.0, to_write="once")]
     )
 
-    if type == "repeatdt":
-        pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
-    elif type == "timearr":
-        pset = ParticleSet(
-            fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime))
-        )
+    pset = ParticleSet(
+        fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime))
+    )
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=abs(dt), chunks=(1, 1))
 
     def IncrLon(particle, fieldset, time):  # pragma: no cover
@@ -213,33 +208,12 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, repeatdt,
 
     ds = xr.open_zarr(tmp_zarrfile)
     samplevar = ds["sample_var"][:]
-    if type == "repeatdt":
-        assert samplevar.shape == (runtime // repeatdt, min(maxvar + 1, runtime))
-        assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
-    elif type == "timearr":
-        assert samplevar.shape == (runtime, min(maxvar + 1, runtime))
+    assert samplevar.shape == (runtime, min(maxvar + 1, runtime))
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k + 1)
     filesize = os.path.getsize(str(tmp_zarrfile))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
-    ds.close()
-
-
-@pytest.mark.parametrize("repeatdt", [1, 2])
-@pytest.mark.parametrize("nump", [1, 10])
-def test_pfile_chunks_repeatedrelease(fieldset, repeatdt, nump, tmp_zarrfile):
-    runtime = 8
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.zeros((nump, 1)), lat=np.zeros((nump, 1)), repeatdt=repeatdt)
-    chunks = (20, 10)
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1, chunks=chunks)
-
-    def DoNothing(particle, fieldset, time):  # pragma: no cover
-        pass
-
-    pset.execute(DoNothing, dt=1, runtime=runtime, output_file=pfile)
-    ds = xr.open_zarr(tmp_zarrfile)
-    assert ds["time"].shape == (int(nump * runtime / repeatdt), chunks[1])
 
 
 def test_write_timebackward(fieldset, tmp_zarrfile):
