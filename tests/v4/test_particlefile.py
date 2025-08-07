@@ -41,9 +41,15 @@ def test_pfile_array_write_zarr_memorystore(fieldset):
     """Check that writing to a Zarr MemoryStore works."""
     npart = 10
     zarr_store = MemoryStore()
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
+    pset = ParticleSet(
+        fieldset,
+        pclass=Particle,
+        lon=np.linspace(0, 1, npart),
+        lat=0.5 * np.ones(npart),
+        time=fieldset.time_interval.left,
+    )
     pfile = pset.ParticleFile(zarr_store, outputdt=1)
-    pfile.write(pset, 0)
+    pfile.write(pset, time=fieldset.time_interval.left)
 
     ds = xr.open_zarr(zarr_store)
     assert ds.sizes["trajectory"] == npart
@@ -52,9 +58,15 @@ def test_pfile_array_write_zarr_memorystore(fieldset):
 
 def test_pfile_array_remove_particles(fieldset, tmp_zarrfile):
     npart = 10
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
+    pset = ParticleSet(
+        fieldset,
+        pclass=Particle,
+        lon=np.linspace(0, 1, npart),
+        lat=0.5 * np.ones(npart),
+        time=fieldset.time_interval.left,
+    )
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
-    pfile.write(pset, 0)
+    pfile.write(pset, time=fieldset.time_interval.left)
     pset.remove_indices(3)
     for p in pset:
         p.time = 1
@@ -69,10 +81,16 @@ def test_pfile_array_remove_particles(fieldset, tmp_zarrfile):
 @pytest.mark.parametrize("chunks_obs", [1, None])
 def test_pfile_array_remove_all_particles(fieldset, chunks_obs, tmp_zarrfile):
     npart = 10
-    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart), time=0)
+    pset = ParticleSet(
+        fieldset,
+        pclass=Particle,
+        lon=np.linspace(0, 1, npart),
+        lat=0.5 * np.ones(npart),
+        time=fieldset.time_interval.left,
+    )
     chunks = (npart, chunks_obs) if chunks_obs else None
     pfile = pset.ParticleFile(tmp_zarrfile, chunks=chunks, outputdt=1)
-    pfile.write(pset, 0)
+    pfile.write(pset, time=fieldset.time_interval.left)
     for _ in range(npart):
         pset.remove_indices(-1)
     pfile.write(pset, 1)
@@ -121,9 +139,9 @@ def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
     extra_vars = [Variable(f"v_{d.__name__}", dtype=d, initial=0.0) for d in dtypes]
     MyParticle = Particle.add_variable(extra_vars)
 
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=fieldset.time_interval.left)
     pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1)
-    pfile.write(pset, 0)
+    pfile.write(pset, time=fieldset.time_interval.left)
 
     ds = xr.open_zarr(
         tmp_zarrfile, mask_and_scale=False
