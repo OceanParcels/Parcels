@@ -79,9 +79,9 @@ def test_advection_zonal_periodic():
     startlon = np.array([0.5, 0.4])
     pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=startlon, lat=[0.5, 0.5])
     pset.execute([AdvectionEE, periodicBC], runtime=np.timedelta64(40, "s"), dt=np.timedelta64(1, "s"))
-    np.testing.assertallclose(pset.total_dlon, 4, atol=1e-5)
-    np.testing.assertallclose(pset.lon_nextloop, startlon, atol=1e-5)
-    np.testing.assertallclose(pset.lat_nextloop, 0.5, atol=1e-5)
+    np.testing.assert_allclose(pset.total_dlon, 4, atol=1e-5)
+    np.testing.assert_allclose(pset.lon_nextloop, startlon, atol=1e-5)
+    np.testing.assert_allclose(pset.lat_nextloop, 0.5, atol=1e-5)
 
 
 def test_horizontal_advection_in_3D_flow(npart=10):
@@ -268,12 +268,6 @@ def test_moving_eddy(method, rtol):
         # Use RK45Particles to set next_dt
         RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype=np.timedelta64))
         fieldset.add_constant("RK45_tol", 1e-6)
-    elif method in ["AdvDiffEM", "AdvDiffM1"]:
-        # Add zero diffusivity field for diffusion kernels
-        ds["Kh"] = (["time", "depth", "YG", "XG"], np.full((len(ds["time"]), 2, 2, 2), 0))
-        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XLinear), "Kh_zonal")
-        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XLinear), "Kh_meridional")
-        fieldset.add_constant("dres", 0.1)
 
     pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(

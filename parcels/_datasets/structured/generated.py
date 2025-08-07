@@ -29,8 +29,8 @@ def radial_rotation_dataset(xdim=200, ydim=200):  # Define 2D flat, square field
     x0 = 30.0  # Define the origin to be the centre of the Field.
     y0 = 30.0
 
-    U = np.zeros((1, 1, ydim, xdim), dtype=np.float32)
-    V = np.zeros((1, 1, ydim, xdim), dtype=np.float32)
+    U = np.zeros((2, 1, ydim, xdim), dtype=np.float32)
+    V = np.zeros((2, 1, ydim, xdim), dtype=np.float32)
 
     omega = 2 * np.pi / 86400.0  # Define the rotational period as 1 day.
 

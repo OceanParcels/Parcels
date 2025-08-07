@@ -116,13 +116,15 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     and doubled if error is smaller than 1/10th of tolerance.
     """
     dt = particle.next_dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
-    if dt > fieldset.RK45_max_dt:
-        dt = fieldset.RK45_max_dt
-        particle.next_dt = fieldset.RK45_max_dt * np.timedelta64(1, "s")
-    if dt < fieldset.RK45_min_dt:
-        particle.next_dt = fieldset.RK45_min_dt * np.timedelta64(1, "s")
-        return StatusCode.Repeat
+    particle.next_dt = np.where(
+        dt > fieldset.RK45_max_dt, fieldset.RK45_max_dt * np.timedelta64(1, "s"), particle.next_dt
+    )
+    particle.next_dt = np.where(
+        dt < fieldset.RK45_min_dt, fieldset.RK45_min_dt * np.timedelta64(1, "s"), particle.next_dt
+    )
     particle.dt = particle.next_dt
+    particle.state = np.where(dt < fieldset.RK45_min_dt, StatusCode.Repeat, particle.state)
+    dt = np.where(dt > fieldset.RK45_max_dt, fieldset.RK45_max_dt, dt)
 
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
     A = [
