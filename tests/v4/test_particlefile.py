@@ -12,7 +12,6 @@ from parcels import AdvectionRK4, Field, FieldSet, Particle, ParticleSet, Variab
 from parcels._datasets.structured.generic import datasets
 from parcels.xgrid import XGrid
 from tests.common_kernels import DoNothing
-from tests.utils import create_fieldset_zeros_simple
 
 
 @pytest.fixture
@@ -315,9 +314,6 @@ def test_correct_misaligned_outputdt_dt(fieldset, tmp_zarrfile):
 def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwargs, particle_class=Particle):
     npart = 10
 
-    if fieldset is None:
-        fieldset = create_fieldset_zeros_simple()
-
     pset = ParticleSet(
         fieldset,
         pclass=particle_class,
@@ -335,32 +331,29 @@ def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwarg
     return ds
 
 
-def test_pset_execute_outputdt_forwards():
+def test_pset_execute_outputdt_forwards(fieldset):
     """Testing output data dt matches outputdt in forward time."""
     outputdt = timedelta(hours=1)
     runtime = timedelta(hours=5)
     dt = timedelta(minutes=5)
 
-    ds = setup_pset_execute(
-        fieldset=create_fieldset_zeros_simple(), outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt)
-    )
+    ds = setup_pset_execute(fieldset=fieldset, outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt))
 
     assert np.all(ds.isel(trajectory=0).time.diff(dim="obs").values == np.timedelta64(outputdt))
 
 
-def test_pset_execute_outputdt_backwards():
+def test_pset_execute_outputdt_backwards(fieldset):
     """Testing output data dt matches outputdt in backwards time."""
     outputdt = timedelta(hours=1)
     runtime = timedelta(days=2)
     dt = -timedelta(minutes=5)
 
-    ds = setup_pset_execute(
-        fieldset=create_fieldset_zeros_simple(), outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt)
-    )
+    ds = setup_pset_execute(fieldset=fieldset, outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt))
     file_outputdt = ds.isel(trajectory=0).time.diff(dim="obs").values
     assert np.all(file_outputdt == np.timedelta64(-outputdt))
 
 
+@pytest.mark.xfail(reason="TODO v4: Update dataset loading")
 def test_pset_execute_outputdt_backwards_fieldset_timevarying():
     """test_pset_execute_outputdt_backwards() still passed despite #1722 as it doesn't account for time-varying fields,
     which for some reason #1722
