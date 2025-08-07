@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import cftime
@@ -18,8 +19,6 @@ from parcels.particle import _SAME_AS_FIELDSET_TIME_INTERVAL, ParticleClass
 from parcels.tools._helpers import timedelta_to_float
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from parcels._core.utils.time import TimeInterval
     from parcels.particle import Variable
     from parcels.particleset import ParticleSet
@@ -56,7 +55,7 @@ class ParticleFile:
         self._chunks = chunks
         self._maxids = 0
         self._pids_written = {}
-        self.metadata = None
+        self.metadata = {}
         self.create_new_zarrfile = create_new_zarrfile
 
         if isinstance(store, zarr.storage.Store):
@@ -79,13 +78,15 @@ class ParticleFile:
         )
 
     def set_metadata(self, parcels_mesh: Literal["spherical", "flat"]):
-        self.metadata = {
-            "feature_type": "trajectory",
-            "Conventions": "CF-1.6/CF-1.7",
-            "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
-            "parcels_version": parcels.__version__,
-            "parcels_mesh": parcels_mesh,
-        }
+        self.metadata.update(
+            {
+                "feature_type": "trajectory",
+                "Conventions": "CF-1.6/CF-1.7",
+                "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
+                "parcels_version": parcels.__version__,
+                "parcels_mesh": parcels_mesh,
+            }
+        )
 
     @property
     def outputdt(self):
