@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
+import cftime
 import numpy as np
 import xarray as xr
 import zarr
@@ -18,6 +20,7 @@ from parcels.tools._helpers import timedelta_to_float
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from parcels._core.utils.time import TimeInterval
     from parcels.particle import Variable
     from parcels.particleset import ParticleSet
 
@@ -170,7 +173,7 @@ class ParticleFile:
                 attrs=self.metadata,
                 coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
             )
-            attrs = _create_variables_attribute_dict(pclass)
+            attrs = _create_variables_attribute_dict(pclass, time_interval)
             obs = np.zeros((self._maxids), dtype=np.int32)
             for var in vars_to_write:
                 dtype = _maybe_convert_time_dtype(var.dtype)
@@ -241,7 +244,7 @@ def _get_vars_to_write(particle: ParticleClass) -> list[Variable]:
     return [v for v in particle.variables if v.to_write is not False]
 
 
-def _create_variables_attribute_dict(particle: ParticleClass) -> dict:
+def _create_variables_attribute_dict(particle: ParticleClass, time_interval: TimeInterval) -> dict:
     """Creates the dictionary with variable attributes.
 
     Notes
@@ -258,8 +261,7 @@ def _create_variables_attribute_dict(particle: ParticleClass) -> dict:
 
         attrs[var.name] = {**var.attrs, **fill_value}
 
-    # attrs["time"]["units"] = "seconds since "  # TODO fix units
-    # attrs["time"]["calendar"] = "None"  # TODO fix calendar
+    attrs["time"].update(_get_calendar_and_units(time_interval))
 
     return attrs
 
@@ -298,3 +300,21 @@ def _maybe_convert_time_dtype(dtype: np.dtype | _SAME_AS_FIELDSET_TIME_INTERVAL)
     if dtype is _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
         return np.dtype(np.float64)
     return dtype
+
+
+def _get_calendar_and_units(time_interval: TimeInterval) -> dict[str, str]:
+    calendar = None
+    units = "seconds"
+    if isinstance(time_interval.left, (np.datetime64, datetime)):
+        calendar = "standard"
+    elif isinstance(time_interval.left, cftime.datetime):
+        calendar = time_interval.left.calendar
+
+    if calendar is not None:
+        units += f" since {time_interval.left}"
+
+    attrs = {"units": units}
+    if calendar is not None:
+        attrs["calendar"] = calendar
+
+    return attrs
