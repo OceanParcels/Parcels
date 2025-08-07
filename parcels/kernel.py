@@ -259,7 +259,7 @@ class Kernel:
                     pass
                 else:
                     warnings.warn(
-                        f"Deleting particle {p.id} because of non-recoverable error",
+                        f"Deleting particle {p.trajectory} because of non-recoverable error",
                         RuntimeWarning,
                         stacklevel=2,
                     )

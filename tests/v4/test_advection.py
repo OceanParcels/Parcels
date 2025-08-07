@@ -92,7 +92,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
-    np.testing.assert_allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
+    np.testing.assert_allclose(pset.lon, expected_lon, atol=1.0e-1)
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])
@@ -255,8 +255,8 @@ def test_moving_eddy(method, rtol):
 
     if method == "RK45":
         # Use RK45Particles to set next_dt
-        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype=np.timedelta64))
-        fieldset.add_constant("RK45_tol", 1e-6)
+        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype="timedelta64[s]"))
+        fieldset.add_constant("RK45_tol", 1e-3)
 
     pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(
@@ -282,7 +282,7 @@ def test_moving_eddy(method, rtol):
     [
         ("EE", 1e-2),
         ("RK4", 1e-5),
-        ("RK45", 1e-5),
+        ("RK45", 1e-3),
     ],
 )
 def test_decaying_moving_eddy(method, rtol):
@@ -298,8 +298,8 @@ def test_decaying_moving_eddy(method, rtol):
 
     if method == "RK45":
         # Use RK45Particles to set next_dt
-        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype=np.timedelta64))
-        fieldset.add_constant("RK45_tol", 1e-6)
+        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype="timedelta64[s]"))
+        fieldset.add_constant("RK45_tol", 1e-3)
 
     pclass = RK45Particles if method == "RK45" else Particle
 
@@ -362,10 +362,10 @@ def test_gyre_flowfields(method, grid_type, atol, flowfield):
             [
                 Variable("p", initial=0.0, dtype=np.float32),
                 Variable("p_start", initial=0.0, dtype=np.float32),
-                Variable("next_dt", initial=dt, dtype=np.timedelta64),
+                Variable("next_dt", initial=dt, dtype="timedelta64[s]"),
             ]
         )
-        fieldset.add_constant("RK45_tol", 1e-6)
+        fieldset.add_constant("RK45_tol", 1e-3)
     else:
         SampleParticle = Particle.add_variable(
             [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]

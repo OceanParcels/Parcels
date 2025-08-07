@@ -32,7 +32,7 @@ def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
     def f(p):
         p.lat_nextloop += 0.1
 
-    neighbor_id = neighbors[i_min_dist].id
+    neighbor_id = neighbors[i_min_dist].trajectory
     mutator[neighbor_id].append((f, ()))
 
     pass
@@ -172,7 +172,7 @@ def ConstantMoveInteraction(particle, fieldset, time, neighbors, mutator):
     def f(p):
         p.lat_nextloop += p.dt
 
-    mutator[particle.id].append((f, ()))
+    mutator[particle.trajectory].append((f, ()))
 
 
 @pytest.mark.parametrize("runtime, dt", [(1, 1e-2), (1, -2.123e-3), (1, -3.12452 - 3)])
