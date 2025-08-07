@@ -18,6 +18,7 @@ from parcels._typing import (
 )
 from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, ZeroInterpolator
 from parcels.particle import KernelParticle
+from parcels.particleset import ParticleSet
 from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
@@ -35,9 +36,9 @@ __all__ = ["Field", "VectorField"]
 
 
 def _deal_with_errors(error, key, vector_type: VectorType):
-    if isinstance(key, KernelParticle):
+    if isinstance(key, ParticleSet):
         key.state = AllParcelsErrorCodes[type(error)]
-    elif isinstance(key[-1], KernelParticle):
+    elif isinstance(key[-1], ParticleSet):
         key[-1].state = AllParcelsErrorCodes[type(error)]
     else:
         raise RuntimeError(f"{error}. Error could not be handled because particle was not part of the Field Sampling.")
@@ -255,7 +256,7 @@ class Field:
     def __getitem__(self, key):
         self._check_velocitysampling()
         try:
-            if isinstance(key, KernelParticle):
+            if isinstance(key, (KernelParticle, ParticleSet)):
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
@@ -347,7 +348,7 @@ class VectorField:
 
     def __getitem__(self, key):
         try:
-            if isinstance(key, KernelParticle):
+            if isinstance(key, (KernelParticle, ParticleSet)):
                 return self.eval(key.time, key.depth, key.lat, key.lon, key)
             else:
                 return self.eval(*key)

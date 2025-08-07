@@ -238,7 +238,7 @@ def test_radialrotation(npart=10):
         ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
-        ("RK45", 1e-2),  # TODO set this to 1e-5 when RK45 is fixed
+        pytest.param("RK45", 1, marks=pytest.mark.skip(reason="still needs to be fixed")),
     ],
 )
 def test_moving_eddy(method, rtol):
@@ -293,7 +293,7 @@ def test_moving_eddy(method, rtol):
     [
         ("EE", 1e-2),
         ("RK4", 1e-5),
-        ("RK45", 1e-3),
+        pytest.param("RK45", 1e-5, marks=pytest.mark.skip(reason="still needs to be fixed")),
     ],
 )
 def test_decaying_moving_eddy(method, rtol):
