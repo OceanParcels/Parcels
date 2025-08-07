@@ -119,11 +119,10 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     particle.next_dt = np.where(
         dt > fieldset.RK45_max_dt, fieldset.RK45_max_dt * np.timedelta64(1, "s"), particle.next_dt
     )
-    particle.next_dt = np.where(
-        dt < fieldset.RK45_min_dt, fieldset.RK45_min_dt * np.timedelta64(1, "s"), particle.next_dt
-    )
-    particle.dt = particle.next_dt
+    repeat_particles = dt < fieldset.RK45_min_dt
+    particle.next_dt = np.where(repeat_particles, fieldset.RK45_min_dt * np.timedelta64(1, "s"), particle.next_dt)
     particle.state = np.where(dt < fieldset.RK45_min_dt, StatusCode.Repeat, particle.state)
+    particle.dt = particle.next_dt
     dt = np.where(dt > fieldset.RK45_max_dt, fieldset.RK45_max_dt, dt)
 
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
@@ -166,14 +165,18 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     lon_5th = (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * dt
     lat_5th = (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * dt
 
-    kappa = math.sqrt(math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2))
-    if (kappa <= fieldset.RK45_tol) or (math.fabs(dt) < math.fabs(fieldset.RK45_min_dt)):
-        particle.dlon += lon_4th
-        particle.dlat += lat_4th
-        if (kappa <= fieldset.RK45_tol / 10) and (math.fabs(dt * 2) <= math.fabs(fieldset.RK45_max_dt)):
-            particle.next_dt *= 2
-    else:
-        particle.next_dt /= 2
+    kappa = np.sqrt(np.pow(lon_5th - lon_4th, 2) + np.pow(lat_5th - lat_4th, 2))
+
+    good_particles = (kappa <= fieldset.RK45_tol / 10) & (np.fabs(dt * 2) <= np.fabs(fieldset.RK45_max_dt))
+    repeat_particles = (kappa > fieldset.RK45_tol) & (np.fabs(dt) > np.fabs(fieldset.RK45_min_dt))
+
+    particle.next_dt = np.where(good_particles, particle.next_dt * 2, particle.next_dt)
+    particle.dlon += np.where(good_particles, lon_4th, 0)
+    particle.dlat += np.where(good_particles, lat_4th, 0)
+
+    particle.next_dt = np.where(repeat_particles, particle.next_dt / 2, particle.next_dt)
+    particle.state = np.where(repeat_particles, StatusCode.Repeat, particle.state)
+    if np.any(repeat_particles):
         return StatusCode.Repeat
 
 
