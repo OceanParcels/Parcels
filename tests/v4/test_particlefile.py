@@ -112,7 +112,7 @@ def test_variable_write_double(fieldset, tmp_zarrfile):
         particle.dlon += 0.1
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=0.00001)
+    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=0.00001)
     pset.execute(pset.Kernel(Update_lon), endtime=0.001, dt=0.00001, output_file=ofile)
 
     ds = xr.open_zarr(tmp_zarrfile)
@@ -140,7 +140,7 @@ def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
     MyParticle = Particle.add_variable(extra_vars)
 
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=fieldset.time_interval.left)
-    pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
     pfile.write(pset, time=fieldset.time_interval.left)
 
     ds = xr.open_zarr(
@@ -153,8 +153,9 @@ def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
 @pytest.mark.parametrize("npart", [1, 2, 5])
 def test_variable_written_once(fieldset, tmp_zarrfile, npart):
     def Update_v(particle, fieldset, time):  # pragma: no cover
+        dt = particle.dt / np.timedelta64(1, "s")
         particle.v_once += 1.0
-        particle.age += particle.dt
+        particle.age += dt
 
     MyParticle = Particle.add_variable(
         [
@@ -164,10 +165,14 @@ def test_variable_written_once(fieldset, tmp_zarrfile, npart):
     )
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
-    time = np.arange(0, npart / 10.0, 0.1, dtype=np.float64)
+    time = xr.date_range(
+        start=fieldset.time_interval.left, end=fieldset.time_interval.right - np.timedelta64(30, "D"), periods=npart
+    )
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, time=time, v_once=time)
-    ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=0.1)
-    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
+    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(4, "D"))
+    pset.execute(
+        pset.Kernel(Update_v), endtime=fieldset.time_interval.right, dt=np.timedelta64(1, "D"), output_file=ofile
+    )
 
     assert np.allclose(pset.v_once - time - pset.age * 10, 1, atol=1e-5)
     ds = xr.open_zarr(tmp_zarrfile)
@@ -215,7 +220,7 @@ def test_write_timebackward(fieldset, tmp_zarrfile):
         particle.dlon -= 0.1 * particle.dt
 
     pset = ParticleSet(fieldset, pclass=Particle, lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
-    pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1.0)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1.0)
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.0, output_file=pfile)
     ds = xr.open_zarr(tmp_zarrfile)
     trajs = ds["trajectory"][:]
@@ -252,7 +257,7 @@ def test_write_xiyi(fieldset, tmp_zarrfile):
             _ = fieldset.P[particle]  # To trigger sampling of the P field
 
     pset = ParticleSet(fieldset, pclass=XiYiParticle, lon=[0, 0.2], lat=[0.2, 1], lonlatdepth_dtype=np.float64)
-    pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=dt)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=dt)
     pset.execute([SampleP, Get_XiYi, AdvectionRK4], endtime=10 * dt, dt=dt, output_file=pfile)
 
     ds = xr.open_zarr(tmp_zarrfile)
@@ -283,7 +288,7 @@ def test_reset_dt(fieldset, tmp_zarrfile):
         particle.dlon += 0.1
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=0.05)
+    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=0.05)
     pset.execute(pset.Kernel(Update_lon), endtime=0.12, dt=0.02, output_file=ofile)
 
     assert np.allclose(pset.lon, 0.6)
@@ -296,7 +301,7 @@ def test_correct_misaligned_outputdt_dt(fieldset, tmp_zarrfile):
         particle.dlon += particle.dt
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    ofile = pset.ParticleFile(name=tmp_zarrfile, outputdt=3)
+    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=3)
     pset.execute(pset.Kernel(Update_lon), endtime=11, dt=2, output_file=ofile)
 
     ds = xr.open_zarr(tmp_zarrfile)
@@ -318,7 +323,7 @@ def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwarg
 
     with tempfile.TemporaryDirectory() as dir:
         name = f"{dir}/test.zarr"
-        output_file = pset.ParticleFile(name=name, outputdt=outputdt)
+        output_file = pset.ParticleFile(name, outputdt=outputdt)
 
         pset.execute(DoNothing, output_file=output_file, **execute_kwargs)
         ds = xr.open_zarr(name).load()
