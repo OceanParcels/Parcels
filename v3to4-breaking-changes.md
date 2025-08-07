@@ -11,6 +11,6 @@ FieldSet
 
 ParticleSet
 
-- ParticleSet init had repeatdt removed
+- ParticleSet init had `repeatdt` and `lonlatdepth_dtype` removed
 - ParticleSet.execute() expects `numpy.datetime64`/`numpy.timedelta.64` for `runtime`, `endtime` and `dt`
 - `ParticleSet.from_field()`, `ParticleSet.from_line()`, `ParticleSet.from_list()` has been removed

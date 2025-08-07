@@ -65,7 +65,7 @@ def test_pset_create_fromparticlefile(fieldset, restart, tmp_zarrfile):
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
 
     if restart:
-        assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
+        assert np.allclose([p.trajectory for p in pset], [p.trajectory for p in pset_new])
     pset_new.execute(Kernel, runtime=2, dt=1)
     assert len(pset_new) == 3 * len(pset)
     assert pset[0].p3.dtype == np.float64

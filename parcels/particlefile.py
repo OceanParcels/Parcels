@@ -1,27 +1,40 @@
 """Module controlling the writing of ParticleSets to Zarr file."""
 
+from __future__ import annotations
+
 import os
 import warnings
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
 import numpy as np
 import xarray as xr
 import zarr
+from zarr.storage import DirectoryStore
 
 import parcels
-from parcels._compat import MPI
 from parcels._reprs import default_repr
 from parcels.tools._helpers import timedelta_to_float
-from parcels.tools.warnings import FileWarning
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 __all__ = ["ParticleFile"]
 
-
-def _set_calendar(origin_calendar):
-    if origin_calendar == "np_datetime64":
-        return "standard"
-    else:
-        return origin_calendar
+_DATATYPES_TO_FILL_VALUES = {
+    np.float16: np.nan,
+    np.float32: np.nan,
+    np.float64: np.nan,
+    np.bool_: np.iinfo(np.int8).max,
+    np.int8: np.iinfo(np.int8).max,
+    np.int16: np.iinfo(np.int16).max,
+    np.int32: np.iinfo(np.int32).max,
+    np.int64: np.iinfo(np.int64).max,
+    np.uint8: np.iinfo(np.uint8).max,
+    np.uint16: np.iinfo(np.uint16).max,
+    np.uint32: np.iinfo(np.uint32).max,
+    np.uint64: np.iinfo(np.uint64).max,
+}
 
 
 class ParticleFile:
@@ -48,7 +61,7 @@ class ParticleFile:
         ParticleFile object that can be used to write particle data to file
     """
 
-    def __init__(self, name, particleset, outputdt, chunks=None, create_new_zarrfile=True):
+    def __init__(self, store, particleset, outputdt, chunks=None, create_new_zarrfile=True):
         self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
         self._particleset = particleset
@@ -63,7 +76,6 @@ class ParticleFile:
         for var in self.particleset.particledata.ptype.variables:
             if var.to_write:
                 self.vars_to_write[var.name] = var.dtype
-        self._mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
         self.particleset.fieldset._particlefile = self
 
         # Reset obs_written of each particle, in case new ParticleFile created for a ParticleSet
@@ -77,44 +89,15 @@ class ParticleFile:
             "parcels_mesh": self._parcels_mesh,
         }
 
-        # Create dictionary to translate datatypes and fill_values
-        self._fill_value_map = {
-            np.float16: np.nan,
-            np.float32: np.nan,
-            np.float64: np.nan,
-            np.bool_: np.iinfo(np.int8).max,
-            np.int8: np.iinfo(np.int8).max,
-            np.int16: np.iinfo(np.int16).max,
-            np.int32: np.iinfo(np.int32).max,
-            np.int64: np.iinfo(np.int64).max,
-            np.uint8: np.iinfo(np.uint8).max,
-            np.uint16: np.iinfo(np.uint16).max,
-            np.uint32: np.iinfo(np.uint32).max,
-            np.uint64: np.iinfo(np.uint64).max,
-        }
-        if issubclass(type(name), zarr.storage.Store):
-            # If we already got a Zarr store, we won't need any of the naming logic below.
-            # But we need to handle incompatibility with MPI mode for now:
-            if MPI and MPI.COMM_WORLD.Get_size() > 1:
-                raise ValueError("Currently, MPI mode is not compatible with directly passing a Zarr store.")
-            fname = name
+        if isinstance(store, zarr.storage.Store):
+            self.store = store
         else:
-            extension = os.path.splitext(str(name))[1]
-            if extension in [".nc", ".nc4"]:
-                raise RuntimeError(
-                    "Output in NetCDF is not supported anymore. Use .zarr extension for ParticleFile name."
-                )
-            if MPI and MPI.COMM_WORLD.Get_size() > 1:
-                fname = os.path.join(name, f"proc{self._mpi_rank:02d}.zarr")
-                if extension in [".zarr"]:
-                    warnings.warn(
-                        f"The ParticleFile name contains .zarr extension, but zarr files will be written per processor in MPI mode at {fname}",
-                        FileWarning,
-                        stacklevel=2,
-                    )
-            else:
-                fname = name if extension in [".zarr"] else f"{name}.zarr"
-        self._fname = fname
+            self.store = _get_store_from_pathlike(store)
+
+        if store.read_only:
+            raise ValueError(f"Store {store} is read-only. Please provide a writable store.")
+
+        # TODO v4: Add check that if create_new_zarrfile is False, the store already exists
 
     def __repr__(self) -> str:
         return (
@@ -162,7 +145,7 @@ class ParticleFile:
             "trajectory": {
                 "long_name": "Unique identifier for each particle",
                 "cf_role": "trajectory_id",
-                "_FillValue": self._fill_value_map[np.int64],
+                "_FillValue": _DATATYPES_TO_FILL_VALUES[np.int64],
             },
             "time": {"long_name": "", "standard_name": "time", "units": "seconds", "axis": "T"},
             "lon": {"long_name": "", "standard_name": "longitude", "units": "degrees_east", "axis": "X"},
@@ -173,9 +156,9 @@ class ParticleFile:
         attrs["time"]["calendar"] = "None"  # TODO fix calendar
 
         for vname in self.vars_to_write:
-            if vname not in ["time", "lat", "lon", "depth", "id"]:
+            if vname not in ["time", "lat", "lon", "depth", "trajectory"]:
                 attrs[vname] = {
-                    "_FillValue": self._fill_value_map[self.vars_to_write[vname]],
+                    "_FillValue": _DATATYPES_TO_FILL_VALUES[self.vars_to_write[vname]],
                     "long_name": "",
                     "standard_name": vname,
                     "units": "unknown",
@@ -186,8 +169,6 @@ class ParticleFile:
     def _convert_varout_name(self, var):
         if var == "depth":
             return "z"
-        elif var == "id":
-            return "trajectory"
         else:
             return var
 
@@ -196,16 +177,16 @@ class ParticleFile:
 
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
-            a = np.full((Z.shape[0], self.chunks[1]), self._fill_value_map[dtype], dtype=dtype)
+            a = np.full((Z.shape[0], self.chunks[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
             obs = zarr.group(store=store, overwrite=False)["obs"]
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
         else:
             extra_trajs = self._maxids - Z.shape[0]
             if len(Z.shape) == 2:
-                a = np.full((extra_trajs, Z.shape[1]), self._fill_value_map[dtype], dtype=dtype)
+                a = np.full((extra_trajs, Z.shape[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
             else:
-                a = np.full((extra_trajs,), self._fill_value_map[dtype], dtype=dtype)
+                a = np.full((extra_trajs,), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
@@ -238,7 +219,7 @@ class ParticleFile:
         if len(indices_to_write) == 0:
             return
 
-        pids = pset.particledata.getvardata("id", indices_to_write)
+        pids = pset.particledata.getvardata("trajectory", indices_to_write)
         to_add = sorted(set(pids) - set(self._pids_written.keys()))
         for i, pid in enumerate(to_add):
             self._pids_written[pid] = self._maxids + i
@@ -250,6 +231,7 @@ class ParticleFile:
             ids_once = ids[once_ids]
             indices_to_write_once = indices_to_write[once_ids]
 
+        store = self.store
         if self.create_new_zarrfile:
             if self.chunks is None:
                 self._chunks = (len(pset), 1)
@@ -269,27 +251,22 @@ class ParticleFile:
                     if self._write_once(var):
                         data = np.full(
                             (arrsize[0],),
-                            self._fill_value_map[self.vars_to_write[var]],
+                            _DATATYPES_TO_FILL_VALUES[self.vars_to_write[var]],
                             dtype=self.vars_to_write[var],
                         )
                         data[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                         dims = ["trajectory"]
                     else:
                         data = np.full(
-                            arrsize, self._fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var]
+                            arrsize, _DATATYPES_TO_FILL_VALUES[self.vars_to_write[var]], dtype=self.vars_to_write[var]
                         )
                         data[ids, 0] = pset.particledata.getvardata(var, indices_to_write)
                         dims = ["trajectory", "obs"]
                     ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[varout])
                     ds[varout].encoding["chunks"] = self.chunks[0] if self._write_once(var) else self.chunks  # type: ignore[index]
-            ds.to_zarr(self.fname, mode="w")
+            ds.to_zarr(store, mode="w")
             self._create_new_zarrfile = False
         else:
-            # Either use the store that was provided directly or create a DirectoryStore:
-            if isinstance(self.fname, zarr.storage.Store):
-                store = self.fname
-            else:
-                store = zarr.DirectoryStore(self.fname)
             Z = zarr.group(store=store, overwrite=False)
             obs = pset.particledata.getvardata("obs_written", indices_to_write)
             for var in self.vars_to_write:
@@ -322,3 +299,12 @@ class ParticleFile:
             pset.particledata.setallvardata(f"{var}", pset.particledata.getvardata(f"{var}_nextloop"))
 
         self.write(pset, time)
+
+
+def _get_store_from_pathlike(path: Path | str) -> DirectoryStore:
+    path = str(Path(path))  # Ensure valid path, and convert to string
+    extension = os.path.splitext(path)[1]
+    if extension != ".zarr":
+        raise ValueError(f"ParticleFile name must end with '.zarr' extension. Got path {path!r}.")
+
+    return DirectoryStore(path)

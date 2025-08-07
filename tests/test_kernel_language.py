@@ -230,14 +230,16 @@ def test_print(fieldset_unit_mesh, capfd):
     def kernel(particle, fieldset, time):  # pragma: no cover
         particle.p = 1e-3
         tmp = 5
-        print(f"{particle.id} {particle.p:f} {tmp:f}")
+        print(f"{particle.trajectory} {particle.p:f} {tmp:f}")
 
     pset.execute(kernel, endtime=1.0, dt=1.0, verbose_progress=False)
     out, err = capfd.readouterr()
     lst = out.split(" ")
     tol = 1e-8
     assert (
-        abs(float(lst[0]) - pset.id[0]) < tol and abs(float(lst[1]) - pset.p[0]) < tol and abs(float(lst[2]) - 5) < tol
+        abs(float(lst[0]) - pset.trajectory[0]) < tol
+        and abs(float(lst[1]) - pset.p[0]) < tol
+        and abs(float(lst[2]) - 5) < tol
     )
 
     def kernel2(particle, fieldset, time):  # pragma: no cover

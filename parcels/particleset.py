@@ -1,7 +1,6 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from operator import attrgetter
 
 import numpy as np
 import xarray as xr
@@ -13,7 +12,7 @@ from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.kernel import Kernel
-from parcels.particle import Particle, Variable
+from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
@@ -70,7 +69,6 @@ class ParticleSet:
         lat=None,
         depth=None,
         time=None,
-        lonlatdepth_dtype=None,
         trajectory_ids=None,
         **kwargs,
     ):
@@ -112,13 +110,6 @@ class ParticleSet:
         if fieldset.time_interval:
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
 
-        if lonlatdepth_dtype is None:
-            lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-        assert lonlatdepth_dtype in [
-            np.float32,
-            np.float64,
-        ], "lon lat depth precision should be set to either np.float32 or np.float64"
-
         for kwvar in kwargs:
             if kwvar not in ["partition_function"]:
                 kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
@@ -126,36 +117,29 @@ class ParticleSet:
                     f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
                 )
 
-        self._data = {
-            "lon": lon.astype(lonlatdepth_dtype),
-            "lat": lat.astype(lonlatdepth_dtype),
-            "depth": depth.astype(lonlatdepth_dtype),
-            "dlon": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-            "dlat": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-            "ddepth": np.zeros(lon.size, dtype=lonlatdepth_dtype),
-            "time": time,
-            "dt": np.timedelta64(1, "ns") * np.ones(len(trajectory_ids)),
-            # "ei": (["trajectory", "ngrid"], np.zeros((len(trajectory_ids), len(fieldset.gridset)), dtype=np.int32)),
-            "state": np.zeros((len(trajectory_ids)), dtype=np.int32),
-            "lon_nextloop": lon.astype(lonlatdepth_dtype),
-            "lat_nextloop": lat.astype(lonlatdepth_dtype),
-            "depth_nextloop": depth.astype(lonlatdepth_dtype),
-            "time_nextloop": time,
-            "trajectory": trajectory_ids,
-        }
-        self._ptype = pclass.getPType()
-        # add extra fields from the custom Particle class
-        for v in pclass.__dict__.values():
-            if isinstance(v, Variable):
-                if isinstance(v.initial, attrgetter):
-                    initial = v.initial(self)
-                else:
-                    initial = np.repeat(v.initial, len(trajectory_ids)).astype(v.dtype)
-                self._data[v.name] = initial
+        self._data = create_particle_data(
+            pclass=pclass,
+            nparticles=lon.size,
+            ngrids=len(fieldset.gridset),
+            time_interval=fieldset.time_interval,
+            initial=dict(
+                lon=lon,
+                lat=lat,
+                depth=depth,
+                time=time,
+                lon_nextloop=lon,
+                lat_nextloop=lat,
+                depth_nextloop=depth,
+                time_nextloop=time,
+                trajectory=trajectory_ids,
+            ),
+        )
+        self._ptype = pclass
 
-        # update initial values provided on ParticleSet creation
+        # update initial values provided on ParticleSet creation # TODO: Wrap this into create_particle_data
+        particle_variables = [v.name for v in pclass.variables]
         for kwvar, kwval in kwargs.items():
-            if not hasattr(pclass, kwvar):
+            if kwvar not in particle_variables:
                 raise RuntimeError(f"Particle class does not have Variable {kwvar}")
             self._data[kwvar][:] = kwval
 
@@ -190,7 +174,7 @@ class ParticleSet:
 
     def __getitem__(self, index):
         """Get a single particle by index."""
-        return Particle(self._data, index=index)
+        return KernelParticle(self._data, index=index)
 
     def __setattr__(self, name, value):
         if name in ["_data"]:
@@ -318,7 +302,7 @@ class ParticleSet:
 
     def _neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
-        neighbor_ids = self._data["id"][neighbor_idx]
+        neighbor_ids = self._data["trajectory"][neighbor_idx]
         return neighbor_ids
 
     # TODO: This method is only tested in tutorial notebook. Add unit test?
