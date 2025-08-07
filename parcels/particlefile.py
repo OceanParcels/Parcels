@@ -38,7 +38,7 @@ class ParticleFile:
     outputdt :
         Interval which dictates the update frequency of file output
         while ParticleFile is given as an argument of ParticleSet.execute()
-        It is either a timedelta object or a positive double.
+        It is a numpy timedelta object.
     chunks :
         Tuple (trajs, obs) to control the size of chunks in the zarr output.
     create_new_zarrfile : bool
@@ -51,7 +51,9 @@ class ParticleFile:
     """
 
     def __init__(self, store, outputdt, chunks=None, create_new_zarrfile=True):
-        self._outputdt = timedelta_to_float(outputdt)
+        if not isinstance(outputdt, np.timedelta64):
+            raise TypeError(f"outputdt must be a numpy.timedelta64 object, got {type(outputdt)} instead.")
+        self._outputdt = outputdt
         self._chunks = chunks
         self._maxids = 0
         self._pids_written = {}

@@ -564,7 +564,7 @@ class ParticleSet:
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
 
-        next_output = outputdt if output_file else None
+        next_output = start_time + 0 * outputdt if output_file else None
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
@@ -578,7 +578,7 @@ class ParticleSet:
 
             # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:
-                if abs(next_time - next_output) < 1e-12:
+                if next_time - next_output == 0:
                     if output_file:
                         output_file.write(self, next_output)
                     if np.isfinite(outputdt):
