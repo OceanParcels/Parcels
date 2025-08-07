@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import xarray as xr
 import zarr
-from zarr.storage import LocalStore
+from zarr.storage import DirectoryStore
 
 import parcels
 from parcels._reprs import default_repr
@@ -301,10 +301,10 @@ class ParticleFile:
         self.write(pset, time)
 
 
-def _get_store_from_pathlike(path: Path | str) -> LocalStore:
+def _get_store_from_pathlike(path: Path | str) -> DirectoryStore:
     path = str(Path(path))  # Ensure valid path, and convert to string
     extension = os.path.splitext(path)[1]
     if extension != ".zarr":
         raise ValueError(f"ParticleFile name must end with '.zarr' extension. Got path {path!r}.")
 
-    return LocalStore(path)
+    return DirectoryStore(path)
