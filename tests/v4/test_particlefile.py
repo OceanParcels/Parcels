@@ -8,21 +8,25 @@ import xarray as xr
 from zarr.storage import MemoryStore
 
 import parcels
-from parcels import (
-    AdvectionRK4,
-    Field,
-    FieldSet,
-    Particle,
-    ParticleSet,
-    Variable,
-)
+from parcels import AdvectionRK4, Field, FieldSet, Particle, ParticleSet, Variable, VectorField
+from parcels._datasets.structured.generic import datasets
+from parcels.xgrid import XGrid
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_zeros_simple
 
 
 @pytest.fixture
-def fieldset():
-    return create_fieldset_zeros_simple()
+def fieldset() -> FieldSet:  # TODO v4: Move into a `conftest.py` file and remove duplicates
+    """Fixture to create a FieldSet object for testing."""
+    ds = datasets["ds_2d_left"]
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
+    V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
+    UV = VectorField("UV", U, V)
+
+    return FieldSet(
+        [U, V, UV],
+    )
 
 
 def test_metadata(fieldset, tmp_zarrfile):
@@ -139,7 +143,7 @@ def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
     ]
 
     extra_vars = [Variable(f"v_{d.__name__}", dtype=d, initial=0.0) for d in dtypes]
-    MyParticle = Particle.add_variables(extra_vars)
+    MyParticle = Particle.add_variable(extra_vars)
 
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=0)
     pfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1)
@@ -158,7 +162,7 @@ def test_variable_written_once(fieldset, tmp_zarrfile, npart):
         particle.v_once += 1.0
         particle.age += particle.dt
 
-    MyParticle = Particle.add_variables(
+    MyParticle = Particle.add_variable(
         [
             Variable("v_once", dtype=np.float64, initial=0.0, to_write="once"),
             Variable("age", dtype=np.float32, initial=0.0),
@@ -187,7 +191,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, repeatdt,
     fieldset.maxvar = maxvar
     pset = None
 
-    MyParticle = Particle.add_variables(
+    MyParticle = Particle.add_variable(
         [Variable("sample_var", initial=0.0), Variable("v_once", dtype=np.float64, initial=0.0, to_write="once")]
     )
 
@@ -257,7 +261,7 @@ def test_write_xiyi(fieldset, tmp_zarrfile):
     fieldset.add_field(Field(name="P", data=np.zeros((3, 20)), lon=np.linspace(0, 1, 20), lat=[-2, 0, 2]))
     dt = 3600
 
-    XiYiParticle = Particle.add_variables(
+    XiYiParticle = Particle.add_variable(
         [
             Variable("pxi0", dtype=np.int32, initial=0.0),
             Variable("pxi1", dtype=np.int32, initial=0.0),
