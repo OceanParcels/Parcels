@@ -79,13 +79,16 @@ def XLinear(
     xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
 
     # Create DataArrays for indexing
-    ti_da = xr.DataArray(ti, dims=("points"))
-    zi_da = xr.DataArray(zi, dims=("points"))
-    yi_da = xr.DataArray(yi, dims=("points"))
-    xi_da = xr.DataArray(xi, dims=("points"))
+    selection_dict = {
+        axis_dim["X"]: xr.DataArray(xi, dims=("points")),
+        axis_dim["Y"]: xr.DataArray(yi, dims=("points")),
+    }
+    if "Z" in axis_dim:
+        selection_dict[axis_dim["Z"]] = xr.DataArray(zi, dims=("points"))
+    if "time" in data.dims:
+        selection_dict["time"] = xr.DataArray(ti, dims=("points"))
 
-    corner_data = data.isel({axis_dim["X"]: xi_da, axis_dim["Y"]: yi_da, axis_dim["Z"]: zi_da, "time": ti_da})
-    corner_data = corner_data.data.reshape(lenT, lenZ, -1, 4)
+    corner_data = data.isel(selection_dict).data.reshape(lenT, lenZ, len(xsi), 4)
 
     if lenT == 2:
         tau = tau[np.newaxis, :, np.newaxis]
