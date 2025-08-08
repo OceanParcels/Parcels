@@ -11,6 +11,8 @@ import parcels
 from parcels import AdvectionRK4, Field, FieldSet, Particle, ParticleSet, Variable, VectorField
 from parcels._datasets.structured.generic import datasets
 from parcels.particlefile import ParticleFile
+from parcels.particle import create_particle_data
+from parcels._core.utils.time import TimeInterval
 from parcels.xgrid import XGrid
 from tests.common_kernels import DoNothing
 
@@ -361,3 +363,7 @@ def test_particlefile_init(store):
 def test_particlefile_init_invalid(store):  # TODO: Add test for read only store
     with pytest.raises(ValueError, match="chunks must be a tuple"):
         ParticleFile(store, outputdt=np.timedelta64(1, "s"), chunks=1)
+
+
+@pytest.mark.new
+def test_particlefile_writing(store): ...

@@ -131,11 +131,16 @@ class ParticleFile:
             Time at which to write ParticleSet (same time object as fieldset)
         """
         pclass = pset._ptype
-        vars_to_write = _get_vars_to_write(pclass)
         time_interval = pset.fieldset.time_interval
+        particle_data = pset._data
         time = timedelta_to_float(time - time_interval.left)
-        particle_data = _convert_particle_data_time_to_float_seconds(pset._data, time_interval)
+        particle_data = _convert_particle_data_time_to_float_seconds(particle_data, time_interval)
 
+        self._write_particle_data(
+            particle_data=particle_data, pclass=pclass, time_interval=time_interval, time=time, indices=indices
+        )
+
+    def _write_particle_data(self, *, particle_data, pclass, time_interval, time, indices=None):
         # if pset._data._ncount == 0:
         #     warnings.warn(
         #         f"ParticleSet is empty on writing as array at time {time:g}",
@@ -144,6 +149,7 @@ class ParticleFile:
         #     )
         #     return
 
+        vars_to_write = _get_vars_to_write(pclass)
         if indices is None:
             indices_to_write = _to_write_particles(particle_data, time)
         else:
