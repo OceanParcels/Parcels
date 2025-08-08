@@ -52,6 +52,8 @@ class ParticleFile:
 
     def __init__(self, store, outputdt, chunks=None, create_new_zarrfile=True):
         self._outputdt = timedelta_to_float(outputdt)
+
+        _assert_valid_chunks_tuple(chunks)
         self._chunks = chunks
         self._maxids = 0
         self._pids_written = {}
@@ -319,3 +321,14 @@ def _get_calendar_and_units(time_interval: TimeInterval) -> dict[str, str]:
         attrs["calendar"] = calendar
 
     return attrs
+
+
+def _assert_valid_chunks_tuple(chunks):
+    e = ValueError(f"chunks must be a tuple of integers with length 2, got {chunks=!r} instead.")
+
+    if not isinstance(chunks, tuple):
+        raise e
+    if len(chunks) != 2:
+        raise e
+    if not all(isinstance(c, int) for c in chunks):
+        raise e
