@@ -263,7 +263,7 @@ def _create_array_for_variable(variable: Variable, nparticles: int, time_interva
         "This function cannot handle attrgetter initial values."
     )
     if (dtype := variable.dtype) is _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
-        dtype = type(time_interval.left)
+        dtype = _get_time_interval_dtype(time_interval)
     return np.full(
         shape=(nparticles,),
         fill_value=variable.initial,
@@ -274,4 +274,8 @@ def _create_array_for_variable(variable: Variable, nparticles: int, time_interva
 def _get_time_interval_dtype(time_interval: TimeInterval | None) -> np.dtype:
     if time_interval is None:
         return np.timedelta64(1, "ns")
-    return type(time_interval.left)
+    time = time_interval.left
+    if isinstance(time, (np.datetime64, np.timedelta64)):
+        return time.dtype
+    else:
+        return object  # cftime objects needs to be stored as object dtype
