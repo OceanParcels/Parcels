@@ -4,6 +4,7 @@ import pytest
 import xarray as xr
 import zarr
 
+from parcels.particle import Variable
 from parcels.particlefile_native import (
     bump_array_size_by_chunksize,
     initialize_zarr_dataset,
@@ -16,25 +17,37 @@ def store():
     return zarr.MemoryStore()
 
 
-def test_intialize_zarr_dataset(store):
+@pytest.mark.parametrize(
+    "variables",
+    [
+        pytest.param(
+            [
+                Variable(name="a", dtype=np.float32),
+                Variable(name="b", dtype=np.float64),
+            ],
+            id="simple",
+        ),
+        pytest.param(
+            [
+                Variable(name="temperature", dtype=np.float32, attrs={"units": "degrees_Celsius"}),
+                Variable(name="time", dtype=np.float64, attrs={"units": "seconds"}),
+            ],
+            id="with attrs",
+        ),
+    ],
+)
+def test_intialize_zarr_dataset(store, variables):
     nparticles = 10
     obs_chunksize = 5
 
-    metadata = {
-        "temperature": {},
-        "time": {},
-    }
-    dtypes = {"temperature": np.dtype(np.float32), "time": np.dtype(np.float64)}
-
     root = initialize_zarr_dataset(
-        store, n_particles=nparticles, chunks=(nparticles, obs_chunksize), metadata=metadata, dtypes=dtypes
+        store, n_particles=nparticles, chunks=(nparticles, obs_chunksize), variables=variables
     )
-    assert len(root.keys()) == 2
-    assert "temperature" in root
-    assert "time" in root
+    assert len(root.keys()) == len(variables)
 
-    for key in root:
-        arr = root[key]
+    for variable in variables:
+        arr = root[variable.name]
+        assert arr.dtype == variable.dtype
         assert arr.shape == (nparticles, obs_chunksize)
 
 
@@ -73,18 +86,24 @@ def test_bump_array_size_by_chunksize_consolidate(store, consolidate):
     bump_array_size_by_chunksize(arr, axis=1, consolidate=consolidate)
 
 
-def test_write_particle_data(store):
+@pytest.mark.parametrize(
+    "variables",
+    [
+        pytest.param(
+            [
+                Variable(name="temperature", dtype=np.float32, attrs={"units": "degrees_Celsius"}),
+                Variable(name="time", dtype=np.float64, attrs={"units": "seconds"}),
+            ],
+            id="with attrs",
+        )
+    ],
+)
+def test_write_particle_data(store, variables):
     nparticles = 10
     obs_chunksize = 5
 
-    metadata = {
-        "temperature": {},
-        "time": {},
-    }
-    dtypes = {"temperature": np.dtype(np.float32), "time": np.dtype(np.float64)}
-
     root = initialize_zarr_dataset(
-        store, n_particles=nparticles, chunks=(nparticles, obs_chunksize), metadata=metadata, dtypes=dtypes
+        store, n_particles=nparticles, chunks=(nparticles, obs_chunksize), variables=variables
     )
     particle_data = pd.DataFrame(
         {
@@ -129,27 +148,16 @@ if __name__ == "__main__":
 
     df = get_particle_data(nparticles)
 
-    metadata = {
-        "temperature": {
-            "units": "degrees_Celsius",
-            "long_name": "Temperature",
-            "description": "Environmental temperature measurements",
-            "_ARRAY_DIMENSIONS": ["trajectory", "obs"],
-        },
-        "time": {
-            "units": "seconds",
-            "long_name": "Time",
-            "description": "Time measurements",
-            "_ARRAY_DIMENSIONS": ["trajectory", "obs"],
-        },
-    }
-    dtypes = {key: df[key].dtype for key in metadata.keys()}
+    variables = [
+        Variable("temperature", np.float32, attrs={"units": "degrees_Celsius"}),
+        Variable("time", np.float64, attrs={"units": "seconds"}),
+    ]
 
     obs_chunksize = 200
 
     zarr_store = zarr.MemoryStore()
     root = initialize_zarr_dataset(
-        zarr_store, n_particles=nparticles, chunks=(nparticles, obs_chunksize), metadata=metadata, dtypes=dtypes
+        zarr_store, n_particles=nparticles, chunks=(nparticles, obs_chunksize), variables=variables
     )
 
     for _ in range(100):
