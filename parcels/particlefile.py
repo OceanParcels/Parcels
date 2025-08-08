@@ -284,11 +284,11 @@ def _to_write_particles(particle_data, time):
             )
             & np.greater_equal(
                 time + np.abs(particle_data["dt"] / 2), particle_data["time"], where=np.isfinite(particle_data["time"])
-            )
+            )  # check time - dt/2 <= particle_data["time"] <= time + dt/2
             | (
                 (np.isnan(particle_data["dt"]))
                 & np.equal(time, particle_data["time"], where=np.isfinite(particle_data["time"]))
-            )
+            )  # or dt is NaN and time matches particle_data["time"]
         )
         & (np.isfinite(particle_data["trajectory"]))
         & (np.isfinite(particle_data["time"]))
