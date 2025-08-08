@@ -10,6 +10,7 @@ from zarr.storage import MemoryStore
 import parcels
 from parcels import AdvectionRK4, Field, FieldSet, Particle, ParticleSet, Variable, VectorField
 from parcels._datasets.structured.generic import datasets
+from parcels.particlefile import ParticleFile
 from parcels.xgrid import XGrid
 from tests.common_kernels import DoNothing
 
@@ -344,3 +345,19 @@ def test_pset_execute_outputdt_backwards_fieldset_timevarying():
     ds = setup_pset_execute(outputdt=outputdt, execute_kwargs=dict(runtime=runtime, dt=dt), fieldset=fieldset)
     file_outputdt = ds.isel(trajectory=0).time.diff(dim="obs").values
     assert np.all(file_outputdt == np.timedelta64(-outputdt)), (file_outputdt, np.timedelta64(-outputdt))
+
+
+@pytest.fixture
+def store():
+    return MemoryStore()
+
+
+@pytest.mark.new
+def test_particlefile_init(store):
+    ParticleFile(store, outputdt=np.timedelta64(1, "s"), chunks=(1, 3))
+
+
+@pytest.mark.new
+def test_particlefile_init_invalid(store):  # TODO: Add test for read only store
+    with pytest.raises(ValueError, match="chunks must be a tuple"):
+        ParticleFile(store, outputdt=np.timedelta64(1, "s"), chunks=1)
