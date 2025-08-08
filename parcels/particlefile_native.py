@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import zarr
 
 from parcels._constants import DATATYPES_TO_FILL_VALUES
@@ -31,7 +30,7 @@ def initialize_zarr_dataset(store, *, n_particles: int, variables: list[Variable
     return root
 
 
-def write_particle_data(root: zarr.hierarchy.Group, particle_data: pd.DataFrame, mask: np.ndarray):
+def write_particle_data(root: zarr.hierarchy.Group, particle_data: dict[str, np.ndarray], mask: np.ndarray):
     for key in root:
         arr = root[key]
         obs_to_write = particle_data["obs_written"][mask]
@@ -48,7 +47,7 @@ def write_particle_data(root: zarr.hierarchy.Group, particle_data: pd.DataFrame,
                     raise e
                 bump_array_size_by_chunksize(arr, axis=1)
 
-    particle_data.loc[mask, "obs_written"] += 1
+    particle_data["obs_written"][mask] += 1
     return root
 
 

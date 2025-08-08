@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 import zarr
@@ -105,14 +104,12 @@ def test_write_particle_data(store, variables):
     root = initialize_zarr_dataset(
         store, n_particles=nparticles, chunks=(nparticles, obs_chunksize), variables=variables
     )
-    particle_data = pd.DataFrame(
-        {
-            "obs_written": np.zeros(nparticles, dtype=np.int32),
-            "trajectory": np.arange(nparticles, dtype=np.int32),
-            "time": np.zeros(nparticles, dtype=np.float64),
-            "temperature": np.random.uniform(15, 35, nparticles),
-        }
-    )
+    particle_data = {
+        "obs_written": np.zeros(nparticles, dtype=np.int32),
+        "trajectory": np.arange(nparticles, dtype=np.int32),
+        "time": np.zeros(nparticles, dtype=np.float64),
+        "temperature": np.random.uniform(15, 35, nparticles),
+    }
 
     for expected_obs_written in range(1, 2 * obs_chunksize + 1):
         write_particle_data(root, particle_data, np.full(nparticles, True, dtype=bool))
@@ -124,23 +121,24 @@ def test_write_particle_data(store, variables):
         np.testing.assert_equal(obs_written_time[expected_obs_written:], False)
 
 
-def get_particle_data(nparticles: int | None = None, prior: pd.DataFrame | None = None) -> pd.DataFrame:
+def get_particle_data(
+    nparticles: int | None = None, prior: dict[str, np.ndarray] | None = None
+) -> dict[str, np.ndarray]:
     if prior is None:
         assert nparticles is not None, "nparticles must be specified when no prior is provided"
-        df = pd.DataFrame(
-            {
-                "trajectory": np.arange(nparticles).astype(np.int32),
-                "obs_written": np.random.randn(nparticles).astype(np.int32),
-                "time": np.zeros(nparticles, dtype=np.float64),
-                "temperature": np.random.uniform(15, 35, nparticles),
-            }
-        )
+        data = {
+            "trajectory": np.arange(nparticles).astype(np.int32),
+            "obs_written": np.random.randn(nparticles).astype(np.int32),
+            "time": np.zeros(nparticles, dtype=np.float64),
+            "temperature": np.random.uniform(15, 35, nparticles),
+        }
+
     else:
         assert nparticles is None, "Cannot specify nparticles when prior is provided"
-        df = prior
-    df["temperature"] = df["temperature"] + np.sin(df["time"] / 5)
-    df["time"] = df["time"] + 1
-    return df
+        data = prior
+    data["temperature"] = data["temperature"] + np.sin(data["time"] / 5)
+    data["time"] = data["time"] + 1
+    return data
 
 
 if __name__ == "__main__":
