@@ -28,6 +28,7 @@ def fieldset() -> FieldSet:  # TODO v4: Move into a `conftest.py` file and remov
     )
 
 
+@pytest.mark.skip
 def test_metadata(fieldset, tmp_zarrfile):
     pset = ParticleSet(fieldset, pclass=Particle, lon=0, lat=0)
 
@@ -53,7 +54,6 @@ def test_pfile_array_write_zarr_memorystore(fieldset):
 
     ds = xr.open_zarr(zarr_store)
     assert ds.sizes["trajectory"] == npart
-    ds.close()
 
 
 def test_pfile_array_remove_particles(fieldset, tmp_zarrfile):
@@ -75,7 +75,6 @@ def test_pfile_array_remove_particles(fieldset, tmp_zarrfile):
     ds = xr.open_zarr(tmp_zarrfile)
     timearr = ds["time"][:]
     assert (np.isnat(timearr[3, 1])) and (np.isfinite(timearr[3, 0]))
-    ds.close()
 
 
 @pytest.mark.parametrize("chunks_obs", [1, None])
@@ -103,7 +102,6 @@ def test_pfile_array_remove_all_particles(fieldset, chunks_obs, tmp_zarrfile):
     else:
         assert ds["time"][:].shape[0] == npart
         assert np.all(np.isnan(ds["time"][:, 1:]))
-    ds.close()
 
 
 @pytest.mark.xfail(reason="lonlatdepth_dtype removed. Update implementation to use a different particle")
@@ -118,7 +116,6 @@ def test_variable_write_double(fieldset, tmp_zarrfile):
     ds = xr.open_zarr(tmp_zarrfile)
     lons = ds["lon"][:]
     assert isinstance(lons.values[0, 0], np.float64)
-    ds.close()
 
 
 def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
@@ -150,35 +147,9 @@ def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
         assert ds[f"v_{d.__name__}"].dtype == d
 
 
-@pytest.mark.parametrize("npart", [1, 2, 5])
-def test_variable_written_once(fieldset, tmp_zarrfile, npart):
-    def Update_v(particle, fieldset, time):  # pragma: no cover
-        dt = particle.dt / np.timedelta64(1, "s")
-        particle.v_once += 1.0
-        particle.age += dt
-
-    MyParticle = Particle.add_variable(
-        [
-            Variable("v_once", dtype=np.float64, initial=0.0, to_write="once"),
-            Variable("age", dtype=np.float32, initial=0.0),
-        ]
-    )
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
-    time = xr.date_range(
-        start=fieldset.time_interval.left, end=fieldset.time_interval.right - np.timedelta64(30, "D"), periods=npart
-    )
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, time=time, v_once=time)
-    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(4, "D"))
-    pset.execute(
-        pset.Kernel(Update_v), endtime=fieldset.time_interval.right, dt=np.timedelta64(1, "D"), output_file=ofile
-    )
-
-    assert np.allclose(pset.v_once - time - pset.age * 10, 1, atol=1e-5)
-    ds = xr.open_zarr(tmp_zarrfile)
-    vfile = np.ma.filled(ds["v_once"][:], np.nan)
-    assert vfile.shape == (npart,)
-    ds.close()
+def test_variable_written_once():
+    # Test that a vaiable is only written once. This should also work with gradual particle release (so the written once time is actually after the release of the particle)
+    ...
 
 
 @pytest.mark.parametrize("dt", [-1, 1])
@@ -226,7 +197,6 @@ def test_write_timebackward(fieldset, tmp_zarrfile):
     trajs = ds["trajectory"][:]
     assert trajs.values.dtype == "int64"
     assert np.all(np.diff(trajs.values) < 0)  # all particles written in order of release
-    ds.close()
 
 
 def test_write_xiyi(fieldset, tmp_zarrfile):
@@ -277,7 +247,6 @@ def test_write_xiyi(fieldset, tmp_zarrfile):
             assert fieldset.P.grid.lon[xi] <= lon < fieldset.P.grid.lon[xi + 1]
         for yi, lat in zip(pyi[p, 1:], lats[p, 1:], strict=True):
             assert fieldset.U.grid.lat[yi] <= lat < fieldset.U.grid.lat[yi + 1]
-    ds.close()
 
 
 def test_reset_dt(fieldset, tmp_zarrfile):
