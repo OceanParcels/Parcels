@@ -1,28 +1,31 @@
-from typing import Any
-
 import numpy as np
 import pandas as pd
 import zarr
 
 from parcels._constants import DATATYPES_TO_FILL_VALUES
+from parcels.particle import Variable
 
 
-def initialize_zarr_dataset(  # TODO: Update to work on a list of variables (access to name, dtype, and metadata) instead of metadata and dtypes
-    store, *, n_particles: int, chunks: tuple[int, int], metadata: dict[str, Any], dtypes: dict[str, np.dtype]
-):
+def initialize_zarr_dataset(store, *, n_particles: int, variables: list[Variable], chunks: tuple[int, int]):
     root = zarr.group(store=store, overwrite=True)
 
-    for key in metadata.keys():
+    for var in variables:
+        assert var.to_write is not False
         zarr_array = root.create_dataset(
-            key,
+            var.name,
             shape=(n_particles, chunks[1]),
             chunks=chunks,
-            dtype=dtypes[key],
-            fill_value=DATATYPES_TO_FILL_VALUES[dtypes[key]],
+            dtype=var.dtype,
+            fill_value=DATATYPES_TO_FILL_VALUES[var.dtype],
         )
 
-        # Add metadata attributes
-        zarr_array.attrs.update(metadata[key])
+        # Add metadata
+        zarr_array.attrs.update(
+            {
+                "_ARRAY_DIMENSIONS": ["trajectory", "obs"],
+                **var.attrs,
+            }
+        )
     zarr.consolidate_metadata(store)
 
     return root
