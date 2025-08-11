@@ -318,7 +318,6 @@ class XGrid(BaseGrid):
 
     def get_spatial_hash(
         self,
-        global_grid=False,
         reconstruct=False,
     ):
         """Get the SpatialHash data structure of this Grid that allows for
@@ -339,7 +338,7 @@ class XGrid(BaseGrid):
 
         """
         if self._spatialhash is None or reconstruct:
-            self._spatialhash = SpatialHash(self, global_grid, reconstruct)
+            self._spatialhash = SpatialHash(self, reconstruct)
 
         return self._spatialhash
 
