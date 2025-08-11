@@ -348,7 +348,6 @@ def _search_indices_curvilinear_2d(
 
     if not ((0 <= xsi <= 1) and (0 <= eta <= 1)):
         _raise_field_sampling_error(y, x)
-    print(f"Found cell at {yi}, {xi} with xsi={xsi}, eta={eta}")
     return (yi, eta, xi, xsi)
 
 
