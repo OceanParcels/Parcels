@@ -77,7 +77,7 @@ class SpatialHash:
 
     def _hash_cell_size(self):
         """Computes the size of the hash cells from the source grid.
-        The hash cell size is set to 1/2 of the square root of the curvilinear cell area
+        The hash cell size is set to 1/2 of the square root of the median cell area
         """
         return np.sqrt(np.median(_planar_quad_area(self._source_grid.lat, self._source_grid.lon))) * 0.5
 
