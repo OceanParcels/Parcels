@@ -24,7 +24,9 @@ class SpatialHash:
         grid,
         reconstruct=False,
     ):
-        # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid and curvilinear.
+        # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid
+        # Currently, this is not done due to circular import with parcels.xgrid
+
         self._source_grid = grid
         self.reconstruct = reconstruct
 
