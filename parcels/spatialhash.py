@@ -99,7 +99,7 @@ class SpatialHash:
         j, i = self._hash_index2d(coords)
         return i + self._nx * j
 
-    def _grid_ij_for_eid(self, eid):
+    def _grid_ji_for_eid(self, eid):
         """Returns the (i,j) grid coordinates for the given element id (eid)"""
         j = eid // (self._source_grid.xdim)
         i = eid - j * (self._source_grid.xdim)
@@ -176,7 +176,7 @@ class SpatialHash:
 
         for i, (coord, candidates) in enumerate(zip(coords, candidate_faces, strict=False)):
             for face_id in candidates:
-                yi, xi = self._grid_ij_for_eid(face_id)
+                yi, xi = self._grid_ji_for_eid(face_id)
                 nodes = np.stack(
                     (
                         self._ybound[yi, xi, :],
