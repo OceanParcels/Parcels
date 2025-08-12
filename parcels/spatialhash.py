@@ -82,8 +82,8 @@ class SpatialHash:
         return np.sqrt(np.median(_planar_quad_area(self._source_grid.lat, self._source_grid.lon))) * 0.5
 
     def _hash_index2d(self, coords):
-        """Computes the 2-d hash index (i,j) for the location (x,y), where x and y are given in spherical
-        coordinates (in degrees)
+        """Computes the 2-d hash index (i,j) for the location (x,y), where x and y is the same units
+        as the source grid coordinates
         """
         # Wrap longitude to [-180, 180]
         if self._source_grid.mesh == "spherical":
