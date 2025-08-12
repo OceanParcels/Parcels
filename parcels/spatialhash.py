@@ -79,7 +79,7 @@ class SpatialHash:
         """Computes the size of the hash cells from the source grid.
         The hash cell size is set to 1/2 of the square root of the curvilinear cell area
         """
-        return np.sqrt(np.median(planar_quad_area(self._source_grid.lat, self._source_grid.lon))) * 0.5
+        return np.sqrt(np.median(_planar_quad_area(self._source_grid.lat, self._source_grid.lon))) * 0.5
 
     def _hash_index2d(self, coords):
         """Computes the 2-d hash index (i,j) for the location (x,y), where x and y are given in spherical
@@ -112,7 +112,7 @@ class SpatialHash:
         if self._face_hash_table is None or self.reconstruct:
             index_to_face = [[] for i in range(self._nx * self._ny)]
             # Get the bounds of each curvilinear faces
-            lat_bounds, lon_bounds = curvilinear_grid_facebounds(
+            lat_bounds, lon_bounds = _curvilinear_grid_facebounds(
                 self._source_grid.lat,
                 self._source_grid.lon,
             )
@@ -239,7 +239,7 @@ def _barycentric_coordinates(nodes, point, min_area=1e-8):
     return barycentric_coords
 
 
-def planar_quad_area(lat, lon):
+def _planar_quad_area(lat, lon):
     """Computes the area of each quadrilateral face in a curvilinear grid.
     The lon and lat arrays are assumed to be 2D arrays of points with dimensions (n_y, n_x).
     The area is computed using the Shoelace formula.
@@ -272,7 +272,7 @@ def planar_quad_area(lat, lon):
     return area
 
 
-def curvilinear_grid_facebounds(lat, lon):
+def _curvilinear_grid_facebounds(lat, lon):
     """Computes the bounds of each curvilinear face in the grid.
     The lon and lat arrays are assumed to be 2D arrays of points with dimensions (n_y, n_x).
     The bounds are for faces whose corner node vertices are defined by lat,lon.
