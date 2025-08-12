@@ -164,7 +164,8 @@ class FieldSet:
         """
         if name in self.constants:
             raise ValueError(f"FieldSet already has a constant with name '{name}'")
-
+        if not isinstance(value, (float, np.floating, int, np.integer)):
+            raise ValueError(f"FieldSet constants have to be of type float or int, got a {type(value)}")
         self.constants[name] = np.float32(value)
 
     @property

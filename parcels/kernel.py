@@ -259,7 +259,7 @@ class Kernel:
                     pass
                 else:
                     warnings.warn(
-                        f"Deleting particle {p.id} because of non-recoverable error",
+                        f"Deleting particle {p.trajectory} because of non-recoverable error",
                         RuntimeWarning,
                         stacklevel=2,
                     )
@@ -303,7 +303,7 @@ class Kernel:
                 res_tmp = f(p, self._fieldset, p.time_nextloop)
                 if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
                     res = res_tmp
-                if res == StatusCode.StopExecution:
+                if res in [StatusCode.StopExecution, StatusCode.Repeat]:
                     break
 
             if res is None:

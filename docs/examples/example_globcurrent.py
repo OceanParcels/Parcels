@@ -196,7 +196,7 @@ def test_globcurrent_particle_independence(rundays=5):
     time0 = fieldset.U.grid.time[0]
 
     def DeleteP0(particle, fieldset, time):  # pragma: no cover
-        if particle.id == 0:
+        if particle.trajectory == 0:
             particle.delete()
 
     pset0 = parcels.ParticleSet(
@@ -244,7 +244,7 @@ def test_globcurrent_pset_fromfile(dt, pid_offset, tmpdir):
     pset.execute(parcels.AdvectionRK4, runtime=timedelta(days=1), dt=dt)
     pset_new.execute(parcels.AdvectionRK4, runtime=timedelta(days=1), dt=dt)
 
-    for var in ["lon", "lat", "depth", "time", "id"]:
+    for var in ["lon", "lat", "depth", "time", "trajectory"]:
         assert np.allclose(
             [getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new]
         )

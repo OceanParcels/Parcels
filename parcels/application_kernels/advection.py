@@ -115,9 +115,15 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     Time-step dt is halved if error is larger than fieldset.RK45_tol,
     and doubled if error is smaller than 1/10th of tolerance.
     """
-    dt = min(
-        particle.next_dt / np.timedelta64(1, "s"), fieldset.RK45_max_dt
-    )  # TODO: improve API for converting dt to seconds
+    dt = particle.next_dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
+    if dt > fieldset.RK45_max_dt:
+        dt = fieldset.RK45_max_dt
+        particle.next_dt = fieldset.RK45_max_dt * np.timedelta64(1, "s")
+    if dt < fieldset.RK45_min_dt:
+        particle.next_dt = fieldset.RK45_min_dt * np.timedelta64(1, "s")
+        return StatusCode.Repeat
+    particle.dt = particle.next_dt
+
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
     A = [
         [1.0 / 4.0, 0.0, 0.0, 0.0, 0.0],
@@ -162,7 +168,7 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     if (kappa <= fieldset.RK45_tol) or (math.fabs(dt) < math.fabs(fieldset.RK45_min_dt)):
         particle.dlon += lon_4th
         particle.dlat += lat_4th
-        if (kappa <= fieldset.RK45_tol) / 10 and (math.fabs(dt * 2) <= math.fabs(fieldset.RK45_max_dt)):
+        if (kappa <= fieldset.RK45_tol / 10) and (math.fabs(dt * 2) <= math.fabs(fieldset.RK45_max_dt)):
             particle.next_dt *= 2
     else:
         particle.next_dt /= 2

@@ -40,7 +40,10 @@ def XBiLinear(
     zi, _ = position["Z"]
 
     data = field.data.data[:, zi, yi : yi + 2, xi : xi + 2]
-    data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
+    if tau > 0:
+        data = (1 - tau) * data[ti, :, :] + tau * data[ti + 1, :, :]
+    else:
+        data = data[ti, :, :]
 
     return (
         (1 - xsi) * (1 - eta) * data[0, 0]

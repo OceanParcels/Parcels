@@ -6,7 +6,7 @@ __all__ = ["PolyTEOS10_bsq"]
 
 
 def PolyTEOS10_bsq(particle, fieldset, time):  # pragma: no cover
-    """Calculates density based on the polyTEOS10-bsq algorithm from Appendix A.2 of
+    """Calculates density based on the polyTEOS10-bsq algorithm from Appendix A.1 and A.2 of
     https://www.sciencedirect.com/science/article/pii/S1463500315000566
     requires fieldset.abs_salinity and fieldset.cons_temperature Fields in the fieldset
     and a particle.density Variable in the ParticleSet
@@ -27,10 +27,20 @@ def PolyTEOS10_bsq(particle, fieldset, time):  # pragma: no cover
     SA = fieldset.abs_salinity[time, particle.depth, particle.lat, particle.lon]
     CT = fieldset.cons_temperature[time, particle.depth, particle.lat, particle.lon]
 
-    SAu = 40 * 35.16504 / 35
-    CTu = 40
+    SAu = 40.0 * 35.16504 / 35.0
+    CTu = 40.0
     Zu = 1e4
-    deltaS = 32
+    deltaS = 32.0
+
+    zz = -Z / Zu
+    R00 = 4.6494977072e01
+    R01 = -5.2099962525e00
+    R02 = 2.2601900708e-01
+    R03 = 6.4326772569e-02
+    R04 = 1.5616995503e-02
+    R05 = -1.7243708991e-03
+    r0 = (((((R05 * zz + R04) * zz + R03) * zz + R02) * zz + R01) * zz + R00) * zz
+
     R000 = 8.0189615746e02
     R100 = 8.6672408165e02
     R200 = -1.7864682637e03
@@ -90,4 +100,6 @@ def PolyTEOS10_bsq(particle, fieldset, time):  # pragma: no cover
     rz2 = (R022 * tt + R112 * ss + R012) * tt + (R202 * ss + R102) * ss + R002
     rz1 = (((R041 * tt + R131 * ss + R031) * tt + (R221 * ss + R121) * ss + R021) * tt + ((R311 * ss + R211) * ss + R111) * ss + R011) * tt + (((R401 * ss + R301) * ss + R201) * ss + R101) * ss + R001  # fmt: skip
     rz0 = (((((R060 * tt + R150 * ss + R050) * tt + (R240 * ss + R140) * ss + R040) * tt + ((R330 * ss + R230) * ss + R130) * ss + R030) * tt + (((R420 * ss + R320) * ss + R220) * ss + R120) * ss + R020) * tt + ((((R510 * ss + R410) * ss + R310) * ss + R210) * ss + R110) * ss + R010) * tt + (((((R600 * ss + R500) * ss + R400) * ss + R300) * ss + R200) * ss + R100) * ss + R000  # fmt: skip
-    particle.density = ((rz3 * zz + rz2) * zz + rz1) * zz + rz0
+    r = ((rz3 * zz + rz2) * zz + rz1) * zz + rz0
+
+    particle.density = r0 + r

@@ -2,7 +2,15 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels._datasets.structured.generated import simple_UV_dataset
+import parcels
+from parcels._datasets.structured.generated import (
+    decaying_moving_eddy_dataset,
+    moving_eddy_dataset,
+    peninsula_dataset,
+    radial_rotation_dataset,
+    simple_UV_dataset,
+    stommel_gyre_dataset,
+)
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
 from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
 from parcels.application_kernels.interpolation import XBiLinear, XBiLinearPeriodic, XTriLinear
@@ -65,8 +73,8 @@ def test_advection_zonal_periodic():
     PeriodicParticle = Particle.add_variable(Variable("total_dlon", initial=0))
     pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=[0.5], lat=[0.5])
     pset.execute([AdvectionEE, periodicBC], runtime=np.timedelta64(40, "s"), dt=np.timedelta64(1, "s"))
-    assert np.isclose(pset.total_dlon[0], 4, atol=1e-5)
-    assert np.isclose(pset.lon_nextloop[0], 0.5, atol=1e-5)
+    np.testing.assert_allclose(pset.total_dlon[0], 4, atol=1e-5)
+    np.testing.assert_allclose(pset.lon_nextloop[0], 0.5, atol=1e-5)
 
 
 def test_horizontal_advection_in_3D_flow(npart=10):
@@ -84,7 +92,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
     expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
-    assert np.allclose(expected_lon, pset.lon_nextloop, atol=1.0e-1)
+    np.testing.assert_allclose(pset.lon, expected_lon, atol=1.0e-1)
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])
@@ -124,8 +132,8 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     pset.execute(kernels, runtime=np.timedelta64(11, "s"), dt=np.timedelta64(1, "s"))
 
     if direction == "up" and wErrorThroughSurface:
-        assert np.allclose(pset.lon[0], 0.6)
-        assert np.allclose(pset.depth[0], 0)
+        np.testing.assert_allclose(pset.lon[0], 0.6, atol=1e-5)
+        np.testing.assert_allclose(pset.depth[0], 0, atol=1e-5)
     else:
         assert len(pset) == 0
 
@@ -181,10 +189,34 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     pset.execute(kernel, runtime=np.timedelta64(5, "s"), dt=np.timedelta64(1, "s"))
 
     assert len(pset.lon) == len([p.lon for p in pset])
-    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
-    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
+    np.testing.assert_allclose(np.array([p.lon - x0 for p in pset]), 4 * u, atol=1e-6)
+    np.testing.assert_allclose(np.array([p.lat - y0 for p in pset]), 4 * v, atol=1e-6)
     if w:
-        assert ((np.array([p.depth - z0 for p in pset]) - 4 * w) < 1e-6).all()
+        np.testing.assert_allclose(np.array([p.depth - z0 for p in pset]), 4 * w, atol=1e-6)
+
+
+def test_radialrotation(npart=10):
+    ds = radial_rotation_dataset()
+    grid = XGrid.from_dataset(ds)
+    U = parcels.Field("U", ds["U"], grid, mesh_type="flat", interp_method=XBiLinear)
+    V = parcels.Field("V", ds["V"], grid, mesh_type="flat", interp_method=XBiLinear)
+    UV = parcels.VectorField("UV", U, V)
+    fieldset = parcels.FieldSet([U, V, UV])
+
+    dt = np.timedelta64(30, "s")
+    lon = np.linspace(32, 50, npart)
+    lat = np.ones(npart) * 30
+    starttime = np.arange(np.timedelta64(0, "s"), npart * dt, dt)
+
+    pset = parcels.ParticleSet(fieldset, lon=lon, lat=lat, time=starttime)
+    pset.execute(parcels.AdvectionRK4, endtime=np.timedelta64(10, "m"), dt=dt)
+
+    theta = 2 * np.pi * (pset.time_nextloop - starttime) / np.timedelta64(24 * 3600, "s")
+    true_lon = (lon - 30.0) * np.cos(theta) + 30.0
+    true_lat = -(lon - 30.0) * np.sin(theta) + 30.0
+
+    np.testing.assert_allclose(pset.lon, true_lon, atol=5e-2)
+    np.testing.assert_allclose(pset.lat, true_lat, atol=5e-2)
 
 
 @pytest.mark.parametrize(
@@ -195,29 +227,12 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
         ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
-        pytest.param("RK45", 1e-5, marks=pytest.mark.xfail(reason="Started failing in GH2123 - not sure why")),
+        ("RK45", 1e-5),
     ],
 )
-def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more readable
-    f, u_0, u_g = 1.0e-4, 0.3, 0.04  # Some constants
-    start_lon, start_lat = 12000, 12500
-
-    def truth_moving(x_0, y_0, t):
-        t /= np.timedelta64(1, "s")
-        lat = y_0 - (u_0 - u_g) / f * (1 - np.cos(f * t))
-        lon = x_0 + u_g * t + (u_0 - u_g) / f * np.sin(f * t)
-        return lon, lat
-
-    dt = np.timedelta64(3, "m")
-    time = np.arange(np.timedelta64(0, "s"), np.timedelta64(7, "h"), np.timedelta64(1, "m"))
-    ds = simple_UV_dataset(dims=(len(time), 2, 2, 2), mesh_type="flat", maxdepth=25000)
+def test_moving_eddy(method, rtol):
+    ds = moving_eddy_dataset()
     grid = XGrid.from_dataset(ds)
-    for t in range(len(time)):
-        ds["U"].data[t, :, :, :] = u_g + (u_0 - u_g) * np.cos(f * (time[t] / np.timedelta64(1, "s")))
-        ds["V"].data[t, :, :, :] = -(u_0 - u_g) * np.sin(f * (time[t] / np.timedelta64(1, "s")))
-    ds["lon"].data = np.array([0, 25000])
-    ds["lat"].data = np.array([0, 25000])
-    ds = ds.assign_coords(time=time)
     U = Field("U", ds["U"], grid, interp_method=XBiLinear)
     V = Field("V", ds["V"], grid, interp_method=XBiLinear)
     if method == "RK4_3D":
@@ -225,22 +240,23 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
         W = Field("W", ds["V"], grid, interp_method=XTriLinear)
         UVW = VectorField("UVW", U, V, W)
         fieldset = FieldSet([U, V, W, UVW])
-        start_depth = start_lat
     else:
         UV = VectorField("UV", U, V)
         fieldset = FieldSet([U, V, UV])
-        start_depth = 0
-
-    if method == "RK45":
-        # Use RK45Particles to set next_dt
-        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype=np.timedelta64))
-        fieldset.add_constant("RK45_tol", 1e-6)
-    elif method in ["AdvDiffEM", "AdvDiffM1"]:
+    if method in ["AdvDiffEM", "AdvDiffM1"]:
         # Add zero diffusivity field for diffusion kernels
-        ds["Kh"] = (["time", "depth", "YG", "XG"], np.full((len(time), 2, 2, 2), 0))
+        ds["Kh"] = (["time", "depth", "YG", "XG"], np.full(ds["U"].shape, 0))
         fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_zonal")
         fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XBiLinear), "Kh_meridional")
         fieldset.add_constant("dres", 0.1)
+
+    start_lon, start_lat, start_depth = 12000, 12500, 12500
+    dt = np.timedelta64(3, "m")
+
+    if method == "RK45":
+        # Use RK45Particles to set next_dt
+        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype="timedelta64[s]"))
+        fieldset.add_constant("RK45_tol", 1e-3)
 
     pclass = RK45Particles if method == "RK45" else Particle
     pset = ParticleSet(
@@ -248,8 +264,118 @@ def test_moving_eddy(method, rtol):  # TODO: Refactor this test to be more reada
     )
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(6, "h"))
 
-    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
-    assert np.allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
-    assert np.allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    def truth_moving(x_0, y_0, t):
+        t /= np.timedelta64(1, "s")
+        lat = y_0 - (ds.u_0 - ds.u_g) / ds.f * (1 - np.cos(ds.f * t))
+        lon = x_0 + ds.u_g * t + (ds.u_0 - ds.u_g) / ds.f * np.sin(ds.f * t)
+        return lon, lat
+
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
+    np.testing.assert_allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
     if method == "RK4_3D":
-        assert np.allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
+        np.testing.assert_allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "method, rtol",
+    [
+        ("EE", 1e-2),
+        ("RK4", 1e-5),
+        ("RK45", 1e-3),
+    ],
+)
+def test_decaying_moving_eddy(method, rtol):
+    ds = decaying_moving_eddy_dataset()
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XBiLinear)
+    V = Field("V", ds["V"], grid, interp_method=XBiLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    start_lon, start_lat = 10000, 10000
+    dt = np.timedelta64(2, "m")
+
+    if method == "RK45":
+        # Use RK45Particles to set next_dt
+        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype="timedelta64[s]"))
+        fieldset.add_constant("RK45_tol", 1e-3)
+
+    pclass = RK45Particles if method == "RK45" else Particle
+
+    pset = ParticleSet(fieldset, pclass=pclass, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "D"))
+
+    def truth_moving(x_0, y_0, t):
+        t /= np.timedelta64(1, "s")
+        lon = (
+            x_0
+            + (ds.u_g / ds.gamma_g) * (1 - np.exp(-ds.gamma_g * t))
+            + ds.f
+            * ((ds.u_0 - ds.u_g) / (ds.f**2 + ds.gamma**2))
+            * ((ds.gamma / ds.f) + np.exp(-ds.gamma * t) * (np.sin(ds.f * t) - (ds.gamma / ds.f) * np.cos(ds.f * t)))
+        )
+        lat = y_0 - ((ds.u_0 - ds.u_g) / (ds.f**2 + ds.gamma**2)) * ds.f * (
+            1 - np.exp(-ds.gamma * t) * (np.cos(ds.f * t) + (ds.gamma / ds.f) * np.sin(ds.f * t))
+        )
+        return lon, lat
+
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
+    np.testing.assert_allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+
+
+# TODO decrease atol for these tests once the C-grid is implemented
+@pytest.mark.parametrize(
+    "method, atol",
+    [
+        ("RK4", 1),
+        ("RK45", 1),
+    ],
+)
+@pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
+@pytest.mark.parametrize("flowfield", ["stommel_gyre", "peninsula"])
+def test_gyre_flowfields(method, grid_type, atol, flowfield):
+    npart = 2
+    if flowfield == "peninsula":
+        ds = peninsula_dataset(grid_type=grid_type)
+        start_lat = np.linspace(3e3, 47e3, npart)
+        start_lon = 3e3 * np.ones_like(start_lat)
+        runtime = np.timedelta64(1, "D")
+    else:
+        ds = stommel_gyre_dataset(grid_type=grid_type)
+        start_lon = np.linspace(10e3, 100e3, npart)
+        start_lat = np.ones_like(start_lon) * 5000e3
+        runtime = np.timedelta64(2, "D")
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XBiLinear)
+    V = Field("V", ds["V"], grid, interp_method=XBiLinear)
+    P = Field("P", ds["P"], grid, interp_method=XBiLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, P, UV])
+
+    dt = np.timedelta64(1, "m")  # TODO check these settings (and possibly increase)
+
+    if method == "RK45":
+        # Use RK45Particles to set next_dt
+        SampleParticle = Particle.add_variable(
+            [
+                Variable("p", initial=0.0, dtype=np.float32),
+                Variable("p_start", initial=0.0, dtype=np.float32),
+                Variable("next_dt", initial=dt, dtype="timedelta64[s]"),
+            ]
+        )
+        fieldset.add_constant("RK45_tol", 1e-3)
+    else:
+        SampleParticle = Particle.add_variable(
+            [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
+        )
+
+    def UpdateP(particle, fieldset, time):  # pragma: no cover
+        if time == 0:
+            particle.p_start = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]
+        particle.p = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]
+
+    pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
+    np.testing.assert_allclose(pset.p_start, pset.p, atol=atol)
