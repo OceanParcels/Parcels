@@ -86,7 +86,10 @@ class SpatialHash:
         coordinates (in degrees)
         """
         # Wrap longitude to [-180, 180]
-        lon = coords[:, 1]
+        if self._source_grid.mesh == "spherical":
+            lon = (coords[:, 1] + 180.0) % (360.0) - 180.0
+        else:
+            lon = coords[:, 1]
         i = ((lon - self._xmin) / self._dh).astype(np.int32)
         j = ((coords[:, 0] - self._ymin) / self._dh).astype(np.int32)
         return j, i
