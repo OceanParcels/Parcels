@@ -37,6 +37,26 @@ class SpatialHash:
         lon_max = self._source_grid.lon.max()
         lat_max = self._source_grid.lat.max()
 
+        # Get corner vertices of each face
+        self._xbound = np.stack(
+            (
+                self._source_grid.lon[:-1, :-1],
+                self._source_grid.lon[:-1, 1:],
+                self._source_grid.lon[1:, 1:],
+                self._source_grid.lon[1:, :-1],
+            ),
+            axis=-1,
+        )
+        self._ybound = np.stack(
+            (
+                self._source_grid.lat[:-1, :-1],
+                self._source_grid.lat[:-1, 1:],
+                self._source_grid.lat[1:, 1:],
+                self._source_grid.lat[1:, :-1],
+            ),
+            axis=-1,
+        )
+
         self._xmin = lon_min - self._dh
         self._ymin = lat_min - self._dh
         self._xmax = lon_max + self._dh
@@ -152,33 +172,13 @@ class SpatialHash:
         # Get the list of candidate faces for each coordinate
         candidate_faces = [self._face_hash_table[pid] for pid in self._hash_index(coords)]
 
-        # Get corner vertices of each face
-        xbound = np.stack(
-            (
-                self._source_grid.lon[:-1, :-1],
-                self._source_grid.lon[:-1, 1:],
-                self._source_grid.lon[1:, 1:],
-                self._source_grid.lon[1:, :-1],
-            ),
-            axis=-1,
-        )
-        ybound = np.stack(
-            (
-                self._source_grid.lat[:-1, :-1],
-                self._source_grid.lat[:-1, 1:],
-                self._source_grid.lat[1:, 1:],
-                self._source_grid.lat[1:, :-1],
-            ),
-            axis=-1,
-        )
-
         for i, (coord, candidates) in enumerate(zip(coords, candidate_faces, strict=False)):
             for face_id in candidates:
                 xi, yi = self._grid_ij_for_eid(face_id)
                 nodes = np.stack(
                     (
-                        xbound[yi, xi, :],
-                        ybound[yi, xi, :],
+                        self._xbound[yi, xi, :],
+                        self._ybound[yi, xi, :],
                     ),
                     axis=-1,
                 )
