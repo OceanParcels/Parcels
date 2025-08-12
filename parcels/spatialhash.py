@@ -79,31 +79,31 @@ class SpatialHash:
         """Computes the size of the hash cells from the source grid.
         The hash cell size is set to 1/2 of the square root of the curvilinear cell area
         """
-        return np.sqrt(np.median(planar_quad_area(self._source_grid.lon, self._source_grid.lat))) * 0.5
+        return np.sqrt(np.median(planar_quad_area(self._source_grid.lat, self._source_grid.lon))) * 0.5
 
     def _hash_index2d(self, coords):
         """Computes the 2-d hash index (i,j) for the location (x,y), where x and y are given in spherical
         coordinates (in degrees)
         """
         # Wrap longitude to [-180, 180]
-        lon = (coords[:, 0] + 180.0) % (360.0) - 180.0
+        lon = coords[:, 1]
         i = ((lon - self._xmin) / self._dh).astype(np.int32)
-        j = ((coords[:, 1] - self._ymin) / self._dh).astype(np.int32)
-        return i, j
+        j = ((coords[:, 0] - self._ymin) / self._dh).astype(np.int32)
+        return j, i
 
     def _hash_index(self, coords):
         """Computes the flattened hash index for the location (x,y), where x and y are given in spherical
         coordinates (in degrees). The single dimensioned hash index orders the flat index with all of the
         i-points first and then all the j-points.
         """
-        i, j = self._hash_index2d(coords)
+        j, i = self._hash_index2d(coords)
         return i + self._nx * j
 
     def _grid_ij_for_eid(self, eid):
         """Returns the (i,j) grid coordinates for the given element id (eid)"""
         j = eid // (self._source_grid.xdim)
         i = eid - j * (self._source_grid.xdim)
-        return i, j
+        return j, i
 
     def _initialize_face_hash_table(self):
         """Create a mapping that relates unstructured grid faces to hash indices by determining
@@ -112,26 +112,26 @@ class SpatialHash:
         if self._face_hash_table is None or self.reconstruct:
             index_to_face = [[] for i in range(self._nx * self._ny)]
             # Get the bounds of each curvilinear faces
-            lon_bounds, lat_bounds = curvilinear_grid_facebounds(
-                self._source_grid.lon,
+            lat_bounds, lon_bounds = curvilinear_grid_facebounds(
                 self._source_grid.lat,
+                self._source_grid.lon,
             )
             coords = np.stack(
                 (
-                    lon_bounds[:, :, 0].flatten(),
                     lat_bounds[:, :, 0].flatten(),
+                    lon_bounds[:, :, 0].flatten(),
                 ),
                 axis=-1,
             )
-            xi1, yi1 = self._hash_index2d(coords)
+            yi1, xi1 = self._hash_index2d(coords)
             coords = np.stack(
                 (
-                    lon_bounds[:, :, 1].flatten(),
                     lat_bounds[:, :, 1].flatten(),
+                    lon_bounds[:, :, 1].flatten(),
                 ),
                 axis=-1,
             )
-            xi2, yi2 = self._hash_index2d(coords)
+            yi2, xi2 = self._hash_index2d(coords)
             nface = (self._source_grid.xdim) * (self._source_grid.ydim)
             for eid in range(nface):
                 for j in range(yi1[eid], yi2[eid] + 1):
@@ -157,7 +157,7 @@ class SpatialHash:
         Parameters
         ----------
         coords : array_like
-            coordinate pairs in degrees (lon, lat) to query.
+            coordinate pairs in degrees (lat, lon) to query.
 
 
         Returns
@@ -176,11 +176,11 @@ class SpatialHash:
 
         for i, (coord, candidates) in enumerate(zip(coords, candidate_faces, strict=False)):
             for face_id in candidates:
-                xi, yi = self._grid_ij_for_eid(face_id)
+                yi, xi = self._grid_ij_for_eid(face_id)
                 nodes = np.stack(
                     (
-                        self._xbound[yi, xi, :],
                         self._ybound[yi, xi, :],
+                        self._xbound[yi, xi, :],
                     ),
                     axis=-1,
                 )
@@ -211,9 +211,9 @@ def _barycentric_coordinates(nodes, point, min_area=1e-8):
     Parameters
     ----------
         nodes : numpy.ndarray
-            Spherical coordinates (lon,lat) of each corner node of a face
+            Spherical coordinates (lat,lon) of each corner node of a face
         point : numpy.ndarray
-            Spherical coordinates (lon,lat) of the point
+            Spherical coordinates (lat,lon) of the point
 
     Returns
     -------
@@ -239,7 +239,7 @@ def _barycentric_coordinates(nodes, point, min_area=1e-8):
     return barycentric_coords
 
 
-def planar_quad_area(lon, lat):
+def planar_quad_area(lat, lon):
     """Computes the area of each quadrilateral face in a curvilinear grid.
     The lon and lat arrays are assumed to be 2D arrays of points with dimensions (n_y, n_x).
     The area is computed using the Shoelace formula.
@@ -272,10 +272,10 @@ def planar_quad_area(lon, lat):
     return area
 
 
-def curvilinear_grid_facebounds(lon, lat):
+def curvilinear_grid_facebounds(lat, lon):
     """Computes the bounds of each curvilinear face in the grid.
     The lon and lat arrays are assumed to be 2D arrays of points with dimensions (n_y, n_x).
-    The bounds are for faces whose corner node vertices are defined by lon,lat.
+    The bounds are for faces whose corner node vertices are defined by lat,lon.
     Face(yi,xi) is surrounding by points (yi,xi), (yi,xi+1), (yi+1,xi+1), (yi+1,xi).
     This method is only used during hashgrid construction to determine which curvilinear
     faces overlap with which hash cells.
@@ -304,4 +304,4 @@ def curvilinear_grid_facebounds(lon, lat):
     yf_high = yf.max(axis=-1)
     ybounds = np.stack([yf_low, yf_high], axis=-1)
 
-    return xbounds, ybounds
+    return ybounds, xbounds

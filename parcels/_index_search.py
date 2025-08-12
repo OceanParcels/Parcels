@@ -276,7 +276,7 @@ def _search_indices_curvilinear_2d(
 ):
     yi, xi = yi_guess, xi_guess
     if yi is None or xi is None:
-        faces = grid.get_spatial_hash().query(np.column_stack((x, y)))
+        faces = grid.get_spatial_hash().query(np.column_stack((y, x)))
         yi, xi = faces[0]
 
     xsi = eta = -1.0
