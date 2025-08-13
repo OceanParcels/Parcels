@@ -21,11 +21,11 @@ def AdvectionRK4(particle, fieldset, time):  # pragma: no cover
     dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * 0.5 * dt, particle.lat + v1 * 0.5 * dt)
-    (u2, v2) = fieldset.UV[time + 0.5 * particle.dt, particle.depth, lat1, lon1, particle]
+    (u2, v2) = fieldset.UV[particle.time + 0.5 * particle.dt, particle.depth, lat1, lon1, particle]
     lon2, lat2 = (particle.lon + u2 * 0.5 * dt, particle.lat + v2 * 0.5 * dt)
-    (u3, v3) = fieldset.UV[time + 0.5 * particle.dt, particle.depth, lat2, lon2, particle]
+    (u3, v3) = fieldset.UV[particle.time + 0.5 * particle.dt, particle.depth, lat2, lon2, particle]
     lon3, lat3 = (particle.lon + u3 * dt, particle.lat + v3 * dt)
-    (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3, particle]
+    (u4, v4) = fieldset.UV[particle.time + particle.dt, particle.depth, lat3, lon3, particle]
     particle.dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6.0 * dt
     particle.dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6.0 * dt
 
@@ -37,15 +37,15 @@ def AdvectionRK4_3D(particle, fieldset, time):  # pragma: no cover
     lon1 = particle.lon + u1 * 0.5 * dt
     lat1 = particle.lat + v1 * 0.5 * dt
     dep1 = particle.depth + w1 * 0.5 * dt
-    (u2, v2, w2) = fieldset.UVW[time + 0.5 * particle.dt, dep1, lat1, lon1, particle]
+    (u2, v2, w2) = fieldset.UVW[particle.time + 0.5 * particle.dt, dep1, lat1, lon1, particle]
     lon2 = particle.lon + u2 * 0.5 * dt
     lat2 = particle.lat + v2 * 0.5 * dt
     dep2 = particle.depth + w2 * 0.5 * dt
-    (u3, v3, w3) = fieldset.UVW[time + 0.5 * particle.dt, dep2, lat2, lon2, particle]
+    (u3, v3, w3) = fieldset.UVW[particle.time + 0.5 * particle.dt, dep2, lat2, lon2, particle]
     lon3 = particle.lon + u3 * dt
     lat3 = particle.lat + v3 * dt
     dep3 = particle.depth + w3 * dt
-    (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
+    (u4, v4, w4) = fieldset.UVW[particle.time + particle.dt, dep3, lat3, lon3, particle]
     particle.dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * dt
     particle.dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * dt
     particle.ddepth += (w1 + 2 * w2 + 2 * w3 + w4) / 6 * dt
@@ -56,35 +56,35 @@ def AdvectionRK4_3D_CROCO(particle, fieldset, time):  # pragma: no cover
     This kernel assumes the vertical velocity is the 'w' field from CROCO output and works on sigma-layers.
     """
     dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
-    sig_dep = particle.depth / fieldset.H[time, 0, particle.lat, particle.lon]
+    sig_dep = particle.depth / fieldset.H[particle.time, 0, particle.lat, particle.lon]
 
-    (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon, particle]
-    w1 *= sig_dep / fieldset.H[time, 0, particle.lat, particle.lon]
+    (u1, v1, w1) = fieldset.UVW[particle.time, particle.depth, particle.lat, particle.lon, particle]
+    w1 *= sig_dep / fieldset.H[particle.time, 0, particle.lat, particle.lon]
     lon1 = particle.lon + u1 * 0.5 * dt
     lat1 = particle.lat + v1 * 0.5 * dt
     sig_dep1 = sig_dep + w1 * 0.5 * dt
-    dep1 = sig_dep1 * fieldset.H[time, 0, lat1, lon1]
+    dep1 = sig_dep1 * fieldset.H[particle.time, 0, lat1, lon1]
 
-    (u2, v2, w2) = fieldset.UVW[time + 0.5 * particle.dt, dep1, lat1, lon1, particle]
-    w2 *= sig_dep1 / fieldset.H[time, 0, lat1, lon1]
+    (u2, v2, w2) = fieldset.UVW[particle.time + 0.5 * particle.dt, dep1, lat1, lon1, particle]
+    w2 *= sig_dep1 / fieldset.H[particle.time, 0, lat1, lon1]
     lon2 = particle.lon + u2 * 0.5 * dt
     lat2 = particle.lat + v2 * 0.5 * dt
     sig_dep2 = sig_dep + w2 * 0.5 * dt
-    dep2 = sig_dep2 * fieldset.H[time, 0, lat2, lon2]
+    dep2 = sig_dep2 * fieldset.H[particle.time, 0, lat2, lon2]
 
-    (u3, v3, w3) = fieldset.UVW[time + 0.5 * particle.dt, dep2, lat2, lon2, particle]
-    w3 *= sig_dep2 / fieldset.H[time, 0, lat2, lon2]
+    (u3, v3, w3) = fieldset.UVW[particle.time + 0.5 * particle.dt, dep2, lat2, lon2, particle]
+    w3 *= sig_dep2 / fieldset.H[particle.time, 0, lat2, lon2]
     lon3 = particle.lon + u3 * dt
     lat3 = particle.lat + v3 * dt
     sig_dep3 = sig_dep + w3 * dt
-    dep3 = sig_dep3 * fieldset.H[time, 0, lat3, lon3]
+    dep3 = sig_dep3 * fieldset.H[particle.time, 0, lat3, lon3]
 
-    (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
-    w4 *= sig_dep3 / fieldset.H[time, 0, lat3, lon3]
+    (u4, v4, w4) = fieldset.UVW[particle.time + particle.dt, dep3, lat3, lon3, particle]
+    w4 *= sig_dep3 / fieldset.H[particle.time, 0, lat3, lon3]
     lon4 = particle.lon + u4 * dt
     lat4 = particle.lat + v4 * dt
     sig_dep4 = sig_dep + w4 * dt
-    dep4 = sig_dep4 * fieldset.H[time, 0, lat4, lon4]
+    dep4 = sig_dep4 * fieldset.H[particle.time, 0, lat4, lon4]
 
     particle.dlon += (u1 + 2 * u2 + 2 * u3 + u4) / 6 * dt
     particle.dlat += (v1 + 2 * v2 + 2 * v3 + v4) / 6 * dt
@@ -138,27 +138,27 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
 
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * A[0][0] * dt, particle.lat + v1 * A[0][0] * dt)
-    (u2, v2) = fieldset.UV[time + c[0] * particle.dt, particle.depth, lat1, lon1, particle]
+    (u2, v2) = fieldset.UV[particle.time + c[0] * particle.dt, particle.depth, lat1, lon1, particle]
     lon2, lat2 = (
         particle.lon + (u1 * A[1][0] + u2 * A[1][1]) * dt,
         particle.lat + (v1 * A[1][0] + v2 * A[1][1]) * dt,
     )
-    (u3, v3) = fieldset.UV[time + c[1] * particle.dt, particle.depth, lat2, lon2, particle]
+    (u3, v3) = fieldset.UV[particle.time + c[1] * particle.dt, particle.depth, lat2, lon2, particle]
     lon3, lat3 = (
         particle.lon + (u1 * A[2][0] + u2 * A[2][1] + u3 * A[2][2]) * dt,
         particle.lat + (v1 * A[2][0] + v2 * A[2][1] + v3 * A[2][2]) * dt,
     )
-    (u4, v4) = fieldset.UV[time + c[2] * particle.dt, particle.depth, lat3, lon3, particle]
+    (u4, v4) = fieldset.UV[particle.time + c[2] * particle.dt, particle.depth, lat3, lon3, particle]
     lon4, lat4 = (
         particle.lon + (u1 * A[3][0] + u2 * A[3][1] + u3 * A[3][2] + u4 * A[3][3]) * dt,
         particle.lat + (v1 * A[3][0] + v2 * A[3][1] + v3 * A[3][2] + v4 * A[3][3]) * dt,
     )
-    (u5, v5) = fieldset.UV[time + c[3] * particle.dt, particle.depth, lat4, lon4, particle]
+    (u5, v5) = fieldset.UV[particle.time + c[3] * particle.dt, particle.depth, lat4, lon4, particle]
     lon5, lat5 = (
         particle.lon + (u1 * A[4][0] + u2 * A[4][1] + u3 * A[4][2] + u4 * A[4][3] + u5 * A[4][4]) * dt,
         particle.lat + (v1 * A[4][0] + v2 * A[4][1] + v3 * A[4][2] + v4 * A[4][3] + v5 * A[4][4]) * dt,
     )
-    (u6, v6) = fieldset.UV[time + c[4] * particle.dt, particle.depth, lat5, lon5, particle]
+    (u6, v6) = fieldset.UV[particle.time + c[4] * particle.dt, particle.depth, lat5, lon5, particle]
 
     lon_4th = (u1 * b4[0] + u2 * b4[1] + u3 * b4[2] + u4 * b4[3] + u5 * b4[4]) * dt
     lat_4th = (v1 * b4[0] + v2 * b4[1] + v3 * b4[2] + v4 * b4[3] + v5 * b4[4]) * dt

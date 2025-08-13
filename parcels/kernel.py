@@ -305,7 +305,7 @@ class Kernel:
             res = None
             for f in self._pyfuncs:
                 # TODO remove "time" from kernel signature in v4; because it doesn't make sense for vectorized particles
-                res_tmp = f(pset, self._fieldset, pset.time_nextloop[0])
+                res_tmp = f(pset, self._fieldset, None)
                 if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
                     res = res_tmp
                 if res in [StatusCode.StopExecution, StatusCode.Repeat]:
