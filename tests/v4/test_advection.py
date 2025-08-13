@@ -383,10 +383,9 @@ def test_gyre_flowfields(method, grid_type, atol, flowfield):
         )
 
     def UpdateP(particle, fieldset, time):  # pragma: no cover
-        if time == 0:
-            particle.p_start = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]
         particle.p = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]
+        particle.p_start = np.where(particle.time == 0, particle.p, particle.p_start)
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
-    np.testing.assert_allclose(pset.p_start, pset.p, atol=atol)
+    np.testing.assert_allclose(pset.p, pset.p_start, atol=atol)
