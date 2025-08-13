@@ -167,17 +167,19 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
 
     kappa = np.sqrt(np.pow(lon_5th - lon_4th, 2) + np.pow(lat_5th - lat_4th, 2))
 
-    good_particles = (kappa <= fieldset.RK45_tol / 10) & (np.fabs(dt * 2) <= np.fabs(fieldset.RK45_max_dt))
-    repeat_particles = (kappa > fieldset.RK45_tol) & (np.fabs(dt) > np.fabs(fieldset.RK45_min_dt))
-
-    particle.next_dt = np.where(good_particles, particle.next_dt * 2, particle.next_dt)
+    good_particles = (kappa <= fieldset.RK45_tol) | (np.fabs(dt) <= np.fabs(fieldset.RK45_min_dt))
     particle.dlon += np.where(good_particles, lon_4th, 0)
     particle.dlat += np.where(good_particles, lat_4th, 0)
 
+    increase_dt_particles = (
+        good_particles & (kappa <= fieldset.RK45_tol / 10) & (np.fabs(dt * 2) <= np.fabs(fieldset.RK45_max_dt))
+    )
+    particle.next_dt = np.where(increase_dt_particles, particle.next_dt * 2, particle.next_dt)
+    particle.state = np.where(good_particles, StatusCode.Success, particle.state)
+
+    repeat_particles = np.invert(good_particles)
     particle.next_dt = np.where(repeat_particles, particle.next_dt / 2, particle.next_dt)
     particle.state = np.where(repeat_particles, StatusCode.Repeat, particle.state)
-    if np.any(repeat_particles):
-        return StatusCode.Repeat
 
 
 def AdvectionAnalytical(particle, fieldset, time):  # pragma: no cover
