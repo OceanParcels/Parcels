@@ -156,7 +156,7 @@ def corner_to_cell_center_points(lat, lon):
 @pytest.mark.parametrize(
     "array, x, expected_xi, expected_xsi",
     [
-        (np.array([1, 2, 3, 4, 5]), 1.1, 0, 0.1),
+        (np.array([1, 2, 3, 4, 5]), (1.1, 2.1), (0, 1), (0.1, 0.1)),
         (np.array([1, 2, 3, 4, 5]), 2.1, 1, 0.1),
         (np.array([1, 2, 3, 4, 5]), 3.1, 2, 0.1),
         (np.array([1, 2, 3, 4, 5]), 4.5, 3, 0.5),
@@ -164,8 +164,8 @@ def corner_to_cell_center_points(lat, lon):
 )
 def test_search_1d_array(array, x, expected_xi, expected_xsi):
     xi, xsi = _search_1d_array(array, x)
-    assert xi == expected_xi
-    assert np.isclose(xsi, expected_xsi)
+    np.testing.assert_array_equal(xi, expected_xi)
+    np.testing.assert_allclose(xsi, expected_xsi)
 
 
 @pytest.mark.parametrize(
@@ -178,6 +178,18 @@ def test_search_1d_array(array, x, expected_xi, expected_xsi):
 def test_search_1d_array_out_of_bounds(array, x, expected_xi):
     xi, xsi = _search_1d_array(array, x)
     assert xi == expected_xi
+
+
+@pytest.mark.parametrize(
+    "array, x, expected_xi",
+    [
+        (np.array([1, 2, 3, 4, 5]), (-0.1, 2.5), (LEFT_OUT_OF_BOUNDS, 1)),
+        (np.array([1, 2, 3, 4, 5]), (6.5, 1), (RIGHT_OUT_OF_BOUNDS, 0)),
+    ],
+)
+def test_search_1d_array_some_out_of_bounds(array, x, expected_xi):
+    xi, _ = _search_1d_array(array, x)
+    np.testing.assert_array_equal(xi, expected_xi)
 
 
 @pytest.mark.parametrize(
