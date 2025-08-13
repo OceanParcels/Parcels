@@ -251,7 +251,7 @@ def _search_indices_rectilinear(
 
 def _search_indices_curvilinear_2d(
     grid: XGrid, y: float, x: float, yi_guess: int | None = None, xi_guess: int | None = None
-):
+):  # TODO fix typing instructions to make clear that y, x etc need to be ndarrays
     yi, xi = yi_guess, xi_guess
     if yi is None:
         yi = (int(grid.ydim / 2) - 1) * np.ones(len(x), dtype=int)
