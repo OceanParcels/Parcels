@@ -86,20 +86,26 @@ def test_execution_endtime(fieldset, starttime, endtime, dt):
     assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
 
 
-@pytest.mark.parametrize("direction", [-1, 1])
-def test_pset_starttime_outside_execute(fieldset, direction):
-    if direction == 1:
-        endtime = fieldset.time_interval.left + np.timedelta64(8, "s")
-        start_times = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in [0, 2, 10]]
-    else:
-        endtime = fieldset.time_interval.right - np.timedelta64(8, "s")
-        start_times = [fieldset.time_interval.right - np.timedelta64(t, "s") for t in [0, 2, 10]]
+def test_dont_run_particles_outside_starttime(fieldset):
+    # Test forward in time (note third particle is outside endtime)
+    start_times = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in [0, 2, 10]]
+    endtime = fieldset.time_interval.left + np.timedelta64(8, "s")
 
     pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
 
-    pset.execute(DoNothing, dt=direction * np.timedelta64(1, "s"), endtime=endtime)
+    pset.execute(DoNothing, dt=np.timedelta64(1, "s"), endtime=endtime)
     assert pset.time_nextloop[0:1] == endtime
-    assert pset.time_nextloop[2] == start_times[2]
+    assert pset.time_nextloop[2] == start_times[2]  # this particle has not been executed
+
+    # Test backward in time (note third particle is outside endtime)
+    start_times = [fieldset.time_interval.right - np.timedelta64(t, "s") for t in [0, 2, 10]]
+    endtime = fieldset.time_interval.right - np.timedelta64(8, "s")
+
+    pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
+
+    pset.execute(DoNothing, dt=-np.timedelta64(1, "s"), endtime=endtime)
+    assert pset.time_nextloop[0:1] == endtime
+    assert pset.time_nextloop[2] == start_times[2]  # this particle has not been executed
 
 
 @pytest.mark.parametrize(
