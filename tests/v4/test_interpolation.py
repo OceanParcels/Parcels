@@ -39,8 +39,7 @@ def test_interpolation_mesh_type(mesh_type, npart=10):
     assert U.eval(time, 0, lat, 0, applyConversion=False) == 1
 
 
-def test_default_interpolator():
-    """Test that the default interpolator is set correctly."""
+def test_default_interpolator_set_correctly():
     ds = simple_UV_dataset()
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid)
