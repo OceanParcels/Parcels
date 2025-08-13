@@ -45,8 +45,8 @@ class TimeInterval:
         self.left = left
         self.right = right
 
-    def __contains__(self, item: T) -> bool:
-        item = np.atleast_1d(item)
+    def is_all_time_in_interval(self, time):
+        item = np.atleast_1d(time)
         return (self.left <= item).all() and (item <= self.right).all()
 
     def __repr__(self) -> str:
