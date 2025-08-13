@@ -4,10 +4,9 @@ from typing import Literal
 
 import numpy as np
 import uxarray as ux
-from uxarray.grid.coordinates import _lonlat_rad_to_xyz
-from uxarray.grid.neighbors import _barycentric_coordinates
 
-from parcels.field import FieldOutOfBoundError  # Adjust import as necessary
+from parcels.field import FieldOutOfBoundError
+from parcels.spatialhash import _barycentric_coordinates
 from parcels.xgrid import _search_1d_array
 
 from .basegrid import BaseGrid
@@ -141,52 +140,20 @@ class UxGrid(BaseGrid):
             axis=-1,
         )
 
-        bcoord = np.asarray(_barycentric_coordinates_cartesian(nodes, cart_coord))
+        bcoord = np.asarray(_barycentric_coordinates(nodes, cart_coord))
 
         return bcoord
 
 
-def _barycentric_coordinates_cartesian(nodes, point, min_area=1e-8):
+def _lonlat_rad_to_xyz(
+    lon,
+    lat,
+):
+    """Converts Spherical latitude and longitude coordinates into Cartesian x,
+    y, z coordinates.
     """
-    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
-    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
-    barycentric coordinates, which is only valid for convex polygons.
+    x = np.cos(lon) * np.cos(lat)
+    y = np.sin(lon) * np.cos(lat)
+    z = np.sin(lat)
 
-    Parameters
-    ----------
-        nodes : numpy.ndarray
-            Cartesian coordinates (x,y,z) of each corner node of a face
-        point : numpy.ndarray
-            Cartesian coordinates (x,y,z) of the point
-
-    Returns
-    -------
-    numpy.ndarray
-        Barycentric coordinates corresponding to each vertex.
-
-    """
-    n = len(nodes)
-    sum_wi = 0
-    w = []
-
-    for i in range(0, n):
-        vim1 = nodes[i - 1]
-        vi = nodes[i]
-        vi1 = nodes[(i + 1) % n]
-        a0 = _triangle_area_cartesian(vim1, vi, vi1)
-        a1 = max(_triangle_area_cartesian(point, vim1, vi), min_area)
-        a2 = max(_triangle_area_cartesian(point, vi, vi1), min_area)
-        sum_wi += a0 / (a1 * a2)
-        w.append(a0 / (a1 * a2))
-
-    barycentric_coords = [w_i / sum_wi for w_i in w]
-
-    return barycentric_coords
-
-
-def _triangle_area_cartesian(A, B, C):
-    """Compute the area of a triangle given by three points."""
-    d1 = B - A
-    d2 = C - A
-    d3 = np.cross(d1, d2)
-    return 0.5 * np.linalg.norm(d3)
+    return x, y, z
