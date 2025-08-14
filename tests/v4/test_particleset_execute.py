@@ -48,8 +48,7 @@ def test_pset_stop_simulation(fieldset, npart):
     pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart), pclass=Particle)
 
     def Delete(particle, fieldset, time):  # pragma: no cover
-        if time >= fieldset.time_interval.left + np.timedelta64(4, "s"):
-            return StatusCode.StopExecution
+        particle[particle.time >= fieldset.time_interval.left + np.timedelta64(4, "s")].state = StatusCode.StopExecution
 
     pset.execute(Delete, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
     assert pset[0].time == fieldset.time_interval.left + np.timedelta64(4, "s")
@@ -91,9 +90,13 @@ def test_dont_run_particles_outside_starttime(fieldset):
     start_times = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in [0, 2, 10]]
     endtime = fieldset.time_interval.left + np.timedelta64(8, "s")
 
-    pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
+    def AddLon(particle, fieldset, time):  # pragma: no cover
+        particle.lon += 1
 
-    pset.execute(DoNothing, dt=np.timedelta64(1, "s"), endtime=endtime)
+    pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
+    pset.execute(AddLon, dt=np.timedelta64(1, "s"), endtime=endtime)
+
+    np.testing.assert_array_equal(pset.lon, [8, 6, 0])
     assert pset.time_nextloop[0:1] == endtime
     assert pset.time_nextloop[2] == start_times[2]  # this particle has not been executed
 
@@ -102,8 +105,9 @@ def test_dont_run_particles_outside_starttime(fieldset):
     endtime = fieldset.time_interval.right - np.timedelta64(8, "s")
 
     pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
+    pset.execute(AddLon, dt=-np.timedelta64(1, "s"), endtime=endtime)
 
-    pset.execute(DoNothing, dt=-np.timedelta64(1, "s"), endtime=endtime)
+    np.testing.assert_array_equal(pset.lon, [8, 6, 0])
     assert pset.time_nextloop[0:1] == endtime
     assert pset.time_nextloop[2] == start_times[2]  # this particle has not been executed
 
