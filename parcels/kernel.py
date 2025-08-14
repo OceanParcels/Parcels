@@ -213,67 +213,7 @@ class Kernel:
         return cls(fieldset, ptype, pyfunc_list)
 
     def execute(self, pset, endtime, dt):
-        """Execute this Kernel over a ParticleSet for several timesteps."""
-        pset._data["state"][:] = StatusCode.Evaluate
-
-        if abs(dt) < np.timedelta64(1000, "ns"):  # TODO still needed?
-            warnings.warn(
-                "'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-
-        if not self._positionupdate_kernels_added:
-            self.add_positionupdate_kernels()
-            self._positionupdate_kernels_added = True
-
-        self.evaluate_pset(pset, endtime)
-        if any(pset.state == StatusCode.StopAllExecution):
-            return StatusCode.StopAllExecution
-
-        # Remove all particles that signalled deletion
-        self.remove_deleted(pset)
-
-        # Identify particles that threw errors
-        n_error = pset._num_error_particles
-
-        while n_error > 0:
-            for i in pset._error_particles:
-                p = pset[i]
-                if p.state == StatusCode.StopExecution:
-                    return
-                if p.state == StatusCode.StopAllExecution:
-                    return StatusCode.StopAllExecution
-                if p.state == StatusCode.Repeat:
-                    p.state = StatusCode.Evaluate
-                elif p.state == StatusCode.ErrorTimeExtrapolation:
-                    raise TimeExtrapolationError(p.time)
-                elif p.state == StatusCode.ErrorOutOfBounds:
-                    _raise_field_out_of_bound_error(p.depth, p.lat, p.lon)
-                elif p.state == StatusCode.ErrorThroughSurface:
-                    _raise_field_out_of_bound_surface_error(p.depth, p.lat, p.lon)
-                elif p.state == StatusCode.Error:
-                    _raise_field_sampling_error(p.depth, p.lat, p.lon)
-                elif p.state == StatusCode.Delete:
-                    pass
-                else:
-                    warnings.warn(
-                        f"Deleting particle {p.trajectory} because of non-recoverable error",
-                        RuntimeWarning,
-                        stacklevel=2,
-                    )
-                    p.delete()
-
-            # Remove all particles that signalled deletion
-            self.remove_deleted(pset)  # Generalizable version!
-
-            # Re-execute Kernels to retry particles with StatusCode.Repeat
-            self.evaluate_pset(pset, endtime)
-
-            n_error = pset._num_error_particles
-
-    def evaluate_pset(self, pset, endtime):
-        """Execute the kernel evaluation of for the entire particle set.
+        """Execute this Kernel over a ParticleSet for several timesteps.
 
         Parameters
         ----------
@@ -282,43 +222,63 @@ class Kernel:
         endtime :
             endtime of this overall kernel evaluation step
         dt :
-            computational integration timestep
+            computational integration timestep from pset.execute
         """
-        sign_dt = np.where(pset.dt >= 0, 1, -1)
-        while pset[0].state in [StatusCode.Evaluate, StatusCode.Repeat]:
-            if all(sign_dt * (endtime - pset.time_nextloop) <= 0):
+        compute_time_direction = 1 if dt > 0 else -1
+
+        pset._data["state"][:] = StatusCode.Evaluate
+
+        if not self._positionupdate_kernels_added:
+            self.add_positionupdate_kernels()
+            self._positionupdate_kernels_added = True
+
+        while (len(pset) > 0) and np.any(np.isin(pset.state, [StatusCode.Evaluate, StatusCode.Repeat])):
+            time_to_endtime = compute_time_direction * (endtime - pset.time_nextloop)
+
+            if all(time_to_endtime <= 0):
                 return pset
 
-            pre_dt = pset.dt
+            pre_dt = pset.dt  # TODO check if needed
+
             try:  # Use next_dt from AdvectionRK45 if it is set
-                pset.next_dt = np.where(
-                    sign_dt * (endtime - pset.time_nextloop) <= pset.next_dt,
-                    np.where(sign_dt * (endtime - pset.time_nextloop) < 0, 0, sign_dt * (endtime - pset.time_nextloop)),
-                    pset.next_dt,
-                )
+                if compute_time_direction == 1:
+                    pset.next_dt = np.maximum(np.minimum(pset.next_dt, time_to_endtime), 0)
+                else:
+                    pset.next_dt = np.minimum(np.maximum(pset.next_dt, -time_to_endtime), 0)
             except KeyError:
-                pset.dt = np.where(
-                    sign_dt * (endtime - pset.time_nextloop) <= pset.dt,
-                    np.where(sign_dt * (endtime - pset.time_nextloop) < 0, 0, sign_dt * (endtime - pset.time_nextloop)),
-                    pset.dt,
-                )
-            res = None
+                if compute_time_direction == 1:
+                    pset.dt = np.maximum(np.minimum(pset.dt, time_to_endtime), 0)
+                else:
+                    pset.dt = np.minimum(np.maximum(pset.dt, -time_to_endtime), 0)
+
+            inds = (np.isin(pset.state, [StatusCode.Evaluate, StatusCode.Repeat])) & (pset.dt != 0)
             for f in self._pyfuncs:
                 # TODO remove "time" from kernel signature in v4; because it doesn't make sense for vectorized particles
-                res_tmp = f(pset, self._fieldset, None)
-                if res_tmp is not None:  # TODO v4: Remove once all kernels return StatusCode
-                    res = res_tmp
-                if res in [StatusCode.StopExecution, StatusCode.Repeat]:
-                    break
-
-            if res is None:
-                pset.state = np.where(
-                    (pset.state == StatusCode.Success) & (sign_dt * (pset.time - endtime) > 0),
-                    StatusCode.Evaluate,
-                    pset.state,
-                )
-            else:  # TODO need to think how the kernel exitcode works on vectorized particleset
-                pset.state = res
+                f(pset[inds], self._fieldset, None)
 
             pset.dt = pre_dt
+
+            # Reset particle state for particles that signalled success and have not reached endtime yet
+            particles_to_evaluate = (pset.state == StatusCode.Success) & (time_to_endtime > 0)
+            pset.state = np.where(particles_to_evaluate, StatusCode.Evaluate, pset.state)
+
+            # delete particles that signalled deletion
+            self.remove_deleted(pset)
+
+            # check and throw errors
+            if np.any(pset.state == StatusCode.ErrorTimeExtrapolation):
+                inds = pset.state == StatusCode.ErrorTimeExtrapolation
+                raise TimeExtrapolationError(pset[inds].time)
+
+            errors_to_check = {
+                StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
+                StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
+                StatusCode.Error: _raise_field_sampling_error,
+            }
+
+            for error_code, error_func in errors_to_check.items():
+                if np.any(pset.state == error_code):
+                    inds = pset.state == error_code
+                    error_func(pset[inds].depth, pset[inds].lat, pset[inds].lon)
+
         return pset
