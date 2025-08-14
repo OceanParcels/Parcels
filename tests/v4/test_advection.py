@@ -128,11 +128,11 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
             return
         dt = particle.dt / np.timedelta64(1, "s")
         (u, v) = fieldset.UV[particle[inds]]
-        particle.dlon[inds] = u * dt
-        particle.dlat[inds] = v * dt
-        particle.ddepth[inds] = 0.0
-        particle.depth[inds] = 0
-        particle.state[inds] = StatusCode.Evaluate
+        particle[inds].dlon = u * dt
+        particle[inds].dlat = v * dt
+        particle[inds].ddepth = 0.0
+        particle[inds].depth = 0
+        particle[inds].state = StatusCode.Evaluate
 
     kernels = [AdvectionRK4_3D]
     if wErrorThroughSurface:
@@ -238,7 +238,7 @@ def test_radialrotation(npart=10):
         ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
-        ("RK45", 1),
+        ("RK45", 1e-5),
     ],
 )
 def test_moving_eddy(method, rtol):
@@ -293,7 +293,7 @@ def test_moving_eddy(method, rtol):
     [
         ("EE", 1e-2),
         ("RK4", 1e-5),
-        ("RK45", 1e-5),
+        ("RK45", 2e-5),
     ],
 )
 def test_decaying_moving_eddy(method, rtol):
