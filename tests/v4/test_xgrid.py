@@ -131,7 +131,7 @@ def test_xgrid_search_cpoints(ds):
             axis_indices = {"Z": 0, "Y": yi, "X": xi}
 
             lat, lon = lat_array[yi, xi], lon_array[yi, xi]
-            axis_indices_bcoords = grid.search(0, lat, lon, ei=None)
+            axis_indices_bcoords = grid.search(0, np.atleast_1d(lat), np.atleast_1d(lon), ei=None)
             axis_indices_test = {k: v[0] for k, v in axis_indices_bcoords.items()}
             assert axis_indices == axis_indices_test
 
