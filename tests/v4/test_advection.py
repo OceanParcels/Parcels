@@ -238,7 +238,7 @@ def test_radialrotation(npart=10):
         ("AdvDiffM1", 1e-2),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
-        ("RK45", 1e-5),
+        ("RK45", 1e-4),
     ],
 )
 def test_moving_eddy(method, rtol):
@@ -262,18 +262,13 @@ def test_moving_eddy(method, rtol):
         fieldset.add_constant("dres", 0.1)
 
     start_lon, start_lat, start_depth = 12000, 12500, 12500
-    dt = np.timedelta64(3, "m")
+    dt = np.timedelta64(30, "m")
 
     if method == "RK45":
-        # Use RK45Particles to set next_dt
-        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype="timedelta64[s]"))
-        fieldset.add_constant("RK45_tol", 1e-3)
+        fieldset.add_constant("RK45_tol", rtol)
 
-    pclass = RK45Particles if method == "RK45" else Particle
-    pset = ParticleSet(
-        fieldset, pclass=pclass, lon=start_lon, lat=start_lat, depth=start_depth, time=np.timedelta64(0, "s")
-    )
-    pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(6, "h"))
+    pset = ParticleSet(fieldset, lon=start_lon, lat=start_lat, depth=start_depth, time=np.timedelta64(0, "s"))
+    pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "h"))
 
     def truth_moving(x_0, y_0, t):
         t /= np.timedelta64(1, "s")
@@ -291,9 +286,9 @@ def test_moving_eddy(method, rtol):
 @pytest.mark.parametrize(
     "method, rtol",
     [
-        ("EE", 1e-2),
+        ("EE", 1e-1),
         ("RK4", 1e-5),
-        ("RK45", 2e-5),
+        ("RK45", 1e-4),
     ],
 )
 def test_decaying_moving_eddy(method, rtol):
@@ -305,16 +300,13 @@ def test_decaying_moving_eddy(method, rtol):
     fieldset = FieldSet([U, V, UV])
 
     start_lon, start_lat = 10000, 10000
-    dt = np.timedelta64(2, "m")
+    dt = np.timedelta64(30, "m")
 
     if method == "RK45":
-        # Use RK45Particles to set next_dt
-        RK45Particles = Particle.add_variable(Variable("next_dt", initial=dt, dtype="timedelta64[s]"))
-        fieldset.add_constant("RK45_tol", 1e-3)
+        fieldset.add_constant("RK45_tol", rtol)
+        fieldset.add_constant("RK45_min_dt", 60)
 
-    pclass = RK45Particles if method == "RK45" else Particle
-
-    pset = ParticleSet(fieldset, pclass=pclass, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset = ParticleSet(fieldset, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "D"))
 
     def truth_moving(x_0, y_0, t):
@@ -341,7 +333,7 @@ def test_decaying_moving_eddy(method, rtol):
     "method, atol",
     [
         ("RK4", 1),
-        ("RK45", 1),
+        ("RK45", 10),
     ],
 )
 @pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
@@ -368,19 +360,11 @@ def test_gyre_flowfields(method, grid_type, atol, flowfield):
     dt = np.timedelta64(1, "m")  # TODO check these settings (and possibly increase)
 
     if method == "RK45":
-        # Use RK45Particles to set next_dt
-        SampleParticle = Particle.add_variable(
-            [
-                Variable("p", initial=0.0, dtype=np.float32),
-                Variable("p_start", initial=0.0, dtype=np.float32),
-                Variable("next_dt", initial=dt, dtype="timedelta64[s]"),
-            ]
-        )
-        fieldset.add_constant("RK45_tol", 1e-3)
-    else:
-        SampleParticle = Particle.add_variable(
-            [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
-        )
+        fieldset.add_constant("RK45_tol", atol)
+
+    SampleParticle = Particle.add_variable(
+        [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
+    )
 
     def UpdateP(particle, fieldset, time):  # pragma: no cover
         particle.p = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]

@@ -115,15 +115,7 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     Time-step dt is halved if error is larger than fieldset.RK45_tol,
     and doubled if error is smaller than 1/10th of tolerance.
     """
-    dt = particle.next_dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
-    particle.next_dt = np.where(
-        dt > fieldset.RK45_max_dt, fieldset.RK45_max_dt * np.timedelta64(1, "s"), particle.next_dt
-    )
-    repeat_particles = dt < fieldset.RK45_min_dt
-    particle.next_dt = np.where(repeat_particles, fieldset.RK45_min_dt * np.timedelta64(1, "s"), particle.next_dt)
-    particle.state = np.where(dt < fieldset.RK45_min_dt, StatusCode.Repeat, particle.state)
-    particle.dt = particle.next_dt
-    dt = np.where(dt > fieldset.RK45_max_dt, fieldset.RK45_max_dt, dt)
+    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
 
     c = [1.0 / 4.0, 3.0 / 8.0, 12.0 / 13.0, 1.0, 1.0 / 2.0]
     A = [
@@ -168,17 +160,27 @@ def AdvectionRK45(particle, fieldset, time):  # pragma: no cover
     kappa = np.sqrt(np.pow(lon_5th - lon_4th, 2) + np.pow(lat_5th - lat_4th, 2))
 
     good_particles = (kappa <= fieldset.RK45_tol) | (np.fabs(dt) <= np.fabs(fieldset.RK45_min_dt))
-    particle.dlon += np.where(good_particles, lon_4th, 0)
-    particle.dlat += np.where(good_particles, lat_4th, 0)
+    particle.dlon += np.where(good_particles, lon_5th, 0)
+    particle.dlat += np.where(good_particles, lat_5th, 0)
 
     increase_dt_particles = (
         good_particles & (kappa <= fieldset.RK45_tol / 10) & (np.fabs(dt * 2) <= np.fabs(fieldset.RK45_max_dt))
     )
-    particle.next_dt = np.where(increase_dt_particles, particle.next_dt * 2, particle.next_dt)
+    particle.dt = np.where(increase_dt_particles, particle.dt * 2, particle.dt)
+    particle.dt = np.where(
+        particle.dt > fieldset.RK45_max_dt * np.timedelta64(1, "s"),
+        fieldset.RK45_max_dt * np.timedelta64(1, "s"),
+        particle.dt,
+    )
     particle.state = np.where(good_particles, StatusCode.Success, particle.state)
 
     repeat_particles = np.invert(good_particles)
-    particle.next_dt = np.where(repeat_particles, particle.next_dt / 2, particle.next_dt)
+    particle.dt = np.where(repeat_particles, particle.dt / 2, particle.dt)
+    particle.dt = np.where(
+        particle.dt < fieldset.RK45_min_dt * np.timedelta64(1, "s"),
+        fieldset.RK45_min_dt * np.timedelta64(1, "s"),
+        particle.dt,
+    )
     particle.state = np.where(repeat_particles, StatusCode.Repeat, particle.state)
 
 

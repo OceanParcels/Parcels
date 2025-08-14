@@ -238,27 +238,26 @@ class Kernel:
             if all(time_to_endtime <= 0):
                 return StatusCode.Success
 
-            # keep a copy of dt in case it's changed below
-            pre_dt = pset.dt.copy()
+            # adapt dt to end exactly on endtime
+            if compute_time_direction == 1:
+                pset.dt = np.maximum(np.minimum(pset.dt, time_to_endtime), 0)
+            else:
+                pset.dt = np.minimum(np.maximum(pset.dt, -time_to_endtime), 0)
 
-            try:  # Use next_dt from AdvectionRK45 if it is set
-                if compute_time_direction == 1:
-                    pset.next_dt = np.maximum(np.minimum(pset.next_dt, time_to_endtime), 0)
-                else:
-                    pset.next_dt = np.minimum(np.maximum(pset.next_dt, -time_to_endtime), 0)
-            except KeyError:
-                if compute_time_direction == 1:
-                    pset.dt = np.maximum(np.minimum(pset.dt, time_to_endtime), 0)
-                else:
-                    pset.dt = np.minimum(np.maximum(pset.dt, -time_to_endtime), 0)
-
-            inds = (np.isin(pset.state, [StatusCode.Evaluate, StatusCode.Repeat])) & (pset.dt != 0)
+            # run kernels for all particles that need to be evaluated
+            evaluate_particles = (pset.state == StatusCode.Evaluate) & (pset.dt != 0)
             for f in self._pyfuncs:
-                # TODO remove "time" from kernel signature in v4; because it doesn't make sense for vectorized particles
-                f(pset[inds], self._fieldset, None)
+                f(pset[evaluate_particles], self._fieldset, None)
 
-            # revert to old dt
-            pset.dt = pre_dt
+                # check for particles that have to be repeated
+                repeat_particles = pset.state == StatusCode.Repeat
+                while np.any(repeat_particles):
+                    f(pset[repeat_particles], self._fieldset, None)
+                    repeat_particles = pset.state == StatusCode.Repeat
+
+            # revert to original dt (unless in RK45 mode)
+            if not hasattr(self.fieldset, "RK45_tol"):
+                pset._data["dt"][:] = dt
 
             # Reset particle state for particles that signalled success and have not reached endtime yet
             particles_to_evaluate = (pset.state == StatusCode.Success) & (time_to_endtime > 0)
