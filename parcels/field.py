@@ -36,9 +36,9 @@ __all__ = ["Field", "VectorField"]
 
 
 def _deal_with_errors(error, key, vector_type: VectorType):
-    if isinstance(key, ParticleSet):
+    if isinstance(key, (ParticleSet, KernelParticle)):
         key.state = AllParcelsErrorCodes[type(error)]
-    elif isinstance(key[-1], ParticleSet):
+    elif isinstance(key[-1], (ParticleSet, KernelParticle)):
         key[-1].state = AllParcelsErrorCodes[type(error)]
     else:
         raise RuntimeError(f"{error}. Error could not be handled because particle was not part of the Field Sampling.")

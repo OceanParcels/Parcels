@@ -580,9 +580,7 @@ class ParticleSet:
                 next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
             else:
                 next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
-            res = self._kernel.execute(self, endtime=next_time, dt=dt)
-            if res == StatusCode.StopAllExecution:
-                return StatusCode.StopAllExecution
+            self._kernel.execute(self, endtime=next_time, dt=dt)
 
             # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:

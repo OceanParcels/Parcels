@@ -15,10 +15,10 @@ from parcels.application_kernels.advection import (
 from parcels.basegrid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
-    TimeExtrapolationError,
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
     _raise_field_sampling_error,
+    _raise_time_extrapolation_error,
 )
 from parcels.tools.warnings import KernelWarning
 
@@ -236,9 +236,10 @@ class Kernel:
             time_to_endtime = compute_time_direction * (endtime - pset.time_nextloop)
 
             if all(time_to_endtime <= 0):
-                return pset
+                return StatusCode.Success
 
-            pre_dt = pset.dt  # TODO check if needed
+            # keep a copy of dt in case it's changed below
+            pre_dt = pset.dt.copy()
 
             try:  # Use next_dt from AdvectionRK45 if it is set
                 if compute_time_direction == 1:
@@ -256,29 +257,33 @@ class Kernel:
                 # TODO remove "time" from kernel signature in v4; because it doesn't make sense for vectorized particles
                 f(pset[inds], self._fieldset, None)
 
+            # revert to old dt
             pset.dt = pre_dt
 
             # Reset particle state for particles that signalled success and have not reached endtime yet
             particles_to_evaluate = (pset.state == StatusCode.Success) & (time_to_endtime > 0)
-            pset.state = np.where(particles_to_evaluate, StatusCode.Evaluate, pset.state)
+            pset[particles_to_evaluate].state = StatusCode.Evaluate
 
             # delete particles that signalled deletion
             self.remove_deleted(pset)
 
             # check and throw errors
-            if np.any(pset.state == StatusCode.ErrorTimeExtrapolation):
-                inds = pset.state == StatusCode.ErrorTimeExtrapolation
-                raise TimeExtrapolationError(pset[inds].time)
+            if np.any(pset.state == StatusCode.StopAllExecution):
+                return StatusCode.StopAllExecution
 
-            errors_to_check = {
+            errors_to_throw = {
+                StatusCode.ErrorTimeExtrapolation: _raise_time_extrapolation_error,
                 StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
                 StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
                 StatusCode.Error: _raise_field_sampling_error,
             }
 
-            for error_code, error_func in errors_to_check.items():
+            for error_code, error_func in errors_to_throw.items():
                 if np.any(pset.state == error_code):
                     inds = pset.state == error_code
-                    error_func(pset[inds].depth, pset[inds].lat, pset[inds].lon)
+                    if error_code == StatusCode.ErrorTimeExtrapolation:
+                        error_func(pset[inds].time)
+                    else:
+                        error_func(pset[inds].depth, pset[inds].lat, pset[inds].lon)
 
         return pset
