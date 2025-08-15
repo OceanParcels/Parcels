@@ -8,6 +8,8 @@ import dask.array as dask
 import numpy as np
 import xarray as xr
 
+import parcels.tools.interpolation_utils as i_u
+
 if TYPE_CHECKING:
     from parcels.field import Field, VectorField
     from parcels.uxgrid import _UXGRID_AXES
@@ -54,6 +56,7 @@ def XLinear(
 
     axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
     data = field.data
+    tdim, zdim, ydim, xdim = data.shape[0], data.shape[1], data.shape[2], data.shape[3]
 
     lenT = 2 if np.any(tau > 0) else 1
     lenZ = 2 if np.any(zeta > 0) else 1
@@ -62,22 +65,22 @@ def XLinear(
     if lenT == 1:
         ti = np.repeat(ti, lenZ * 4)
     else:
-        ti_1 = np.clip(ti + 1, 0, data.shape[0] - 1)
+        ti_1 = np.clip(ti + 1, 0, tdim - 1)
         ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti_1, lenZ * 4)])
 
     # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
     if lenZ == 1:
         zi = np.repeat(zi, lenT * 4)
     else:
-        zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
+        zi_1 = np.clip(zi + 1, 0, zdim - 1)
         zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
 
     # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
-    yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
+    yi_1 = np.clip(yi + 1, 0, ydim - 1)
     yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
 
     # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
-    xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
+    xi_1 = np.clip(xi + 1, 0, xdim - 1)
     xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
 
     # Create DataArrays for indexing
@@ -122,26 +125,151 @@ def CGrid_Velocity(
     z: np.float32 | np.float64,
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
+    applyConversion: bool,
 ):
     """
     Interpolation kernel for velocity fields on a C-Grid.
     Following Delandmeter and Van Sebille (2019), velocity fields should be interpolated
     only in the direction of the grid cell faces.
     """
-    # xi, xsi = position["X"]
-    # yi, eta = position["Y"]
-    # zi, zeta = position["Z"]
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
 
-    # U = vectorfield.U.data
-    # V = vectorfield.V.data
+    U = vectorfield.U.data
+    V = vectorfield.V.data
+    grid = vectorfield.grid
+    tdim, zdim, ydim, xdim = U.shape[0], U.shape[1], U.shape[2], U.shape[3]
 
-    # axis_dim = vectorfield.U.grid.get_axis_dim_mapping(U.dims)
+    if grid.lon.ndim == 1:
+        px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
+        py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
+    else:
+        px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
+        py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
 
-    # lenT = 2 if np.any(tau > 0) else 1
-    # lenZ = 2 if np.any(zeta > 0) else 1
+    if grid.mesh == "spherical":
+        px[0] = px[0] + 360 if px[0] < x - 225 else px[0]
+        px[0] = px[0] - 360 if px[0] > x + 225 else px[0]
+        px[1:] = np.where(px[1:] - px[0] > 180, px[1:] - 360, px[1:])
+        px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
+    xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
+    np.testing.assert_allclose(xx, x, atol=1e-4)
+    c1 = i_u._geodetic_distance(py[0], py[1], px[0], px[1], grid.mesh, np.dot(i_u.phi2D_lin(0.0, xsi), py))
+    c2 = i_u._geodetic_distance(py[1], py[2], px[1], px[2], grid.mesh, np.dot(i_u.phi2D_lin(eta, 1.0), py))
+    c3 = i_u._geodetic_distance(py[2], py[3], px[2], px[3], grid.mesh, np.dot(i_u.phi2D_lin(1.0, xsi), py))
+    c4 = i_u._geodetic_distance(py[3], py[0], px[3], px[0], grid.mesh, np.dot(i_u.phi2D_lin(eta, 0.0), py))
 
-    value = (0, 0, 0)
-    return value
+    lenT = 2 if np.any(tau > 0) else 1
+    lenZ = 2 if np.any(zeta > 0) else 1
+
+    # Create arrays of corner points for xarray.isel
+    # TODO C grid may not need all xi and yi cornerpoints, so could speed up here?
+
+    # Time coordinates: 8 points at ti, then 8 points at ti+1
+    if lenT == 1:
+        ti = np.repeat(ti, lenZ * 4)
+    else:
+        ti_1 = np.clip(ti + 1, 0, tdim - 1)
+        ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti_1, lenZ * 4)])
+
+    # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
+    if lenZ == 1:
+        zi = np.repeat(zi, lenT * 4)
+    else:
+        zi_1 = np.clip(zi + 1, 0, zdim - 1)
+        zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
+
+    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
+    yi_1 = np.clip(yi + 1, 0, ydim - 1)
+    yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
+
+    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
+    xi_1 = np.clip(xi + 1, 0, xdim - 1)
+    xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
+
+    for data in [U, V]:
+        axis_dim = grid.get_axis_dim_mapping(data.dims)
+
+        # Create DataArrays for indexing
+        selection_dict = {
+            axis_dim["X"]: xr.DataArray(xi, dims=("points")),
+            axis_dim["Y"]: xr.DataArray(yi, dims=("points")),
+        }
+        if "Z" in axis_dim:
+            selection_dict[axis_dim["Z"]] = xr.DataArray(zi, dims=("points"))
+        if "time" in data.dims:
+            selection_dict["time"] = xr.DataArray(ti, dims=("points"))
+
+        corner_data = data.isel(selection_dict).data.reshape(lenT, lenZ, len(xsi), 4)
+
+        if lenT == 2:
+            tau = tau[np.newaxis, :, np.newaxis]
+            corner_data = corner_data[0, :, :, :] * (1 - tau) + corner_data[1, :, :, :] * tau
+        else:
+            corner_data = corner_data[0, :, :, :]
+
+        if lenZ == 2:
+            zeta = zeta[:, np.newaxis]
+            corner_data = corner_data[0, :, :] * (1 - zeta) + corner_data[1, :, :] * zeta
+        else:
+            corner_data = corner_data[0, :, :]
+        # # See code below for v3 version
+        # # if self.gridindexingtype == "nemo":
+        # #     U0 = self.U.data[ti, zi, yi + 1, xi] * c4
+        # #     U1 = self.U.data[ti, zi, yi + 1, xi + 1] * c2
+        # #     V0 = self.V.data[ti, zi, yi, xi + 1] * c1
+        # #     V1 = self.V.data[ti, zi, yi + 1, xi + 1] * c3
+        # # elif self.gridindexingtype in ["mitgcm", "croco"]:
+        # #     U0 = self.U.data[ti, zi, yi, xi] * c4
+        # #     U1 = self.U.data[ti, zi, yi, xi + 1] * c2
+        # #     V0 = self.V.data[ti, zi, yi, xi] * c1
+        # #     V1 = self.V.data[ti, zi, yi + 1, xi] * c3
+        # # TODO Nick can you help use xgcm to fix this implementation?
+
+        # # CROCO and MITgcm grid indexing,
+        # if data is U:
+        #     U0 = corner_data[:, 0] * c4
+        #     U1 = corner_data[:, 1] * c2
+        # elif data is V:
+        #     V0 = corner_data[:, 0] * c1
+        #     V1 = corner_data[:, 2] * c3
+        # # NEMO grid indexing
+        if data is U:
+            U0 = corner_data[:, 2] * c4
+            U1 = corner_data[:, 3] * c2
+        elif data is V:
+            V0 = corner_data[:, 1] * c1
+            V1 = corner_data[:, 3] * c3
+
+    U = (1 - xsi) * U0 + xsi * U1
+    V = (1 - eta) * V0 + eta * V1
+
+    deg2m = 1852 * 60.0
+    if applyConversion:
+        meshJac = (deg2m * deg2m * np.cos(np.deg2rad(y))) if grid.mesh == "spherical" else 1
+    else:
+        meshJac = deg2m if grid.mesh == "spherical" else 1
+
+    jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
+
+    u = (
+        (-(1 - eta) * U - (1 - xsi) * V) * px[0]
+        + ((1 - eta) * U - xsi * V) * px[1]
+        + (eta * U + xsi * V) * px[2]
+        + (-eta * U + (1 - xsi) * V) * px[3]
+    ) / jac
+    v = (
+        (-(1 - eta) * U - (1 - xsi) * V) * py[0]
+        + ((1 - eta) * U - xsi * V) * py[1]
+        + (eta * U + xsi * V) * py[2]
+        + (-eta * U + (1 - xsi) * V) * py[3]
+    ) / jac
+    if isinstance(u, dask.Array):
+        u = u.compute()
+        v = v.compute()
+
+    return (u, v, 0)  # TODO fix and test W also
 
 
 def CGrid_Tracer(

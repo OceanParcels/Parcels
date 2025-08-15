@@ -24,10 +24,10 @@ def phi1D_quad(xsi: float) -> list[float]:
 
 
 def phi2D_lin(eta: float, xsi: float) -> list[float]:
-    phi = [(1-xsi) * (1-eta),
-              xsi  * (1-eta),
-              xsi  *    eta ,
-           (1-xsi) *    eta ]
+    phi = np.column_stack([(1-xsi) * (1-eta),
+                              xsi  * (1-eta),
+                              xsi  *    eta ,
+                           (1-xsi) *    eta ])
 
     return phi
 
@@ -185,12 +185,12 @@ def _geodetic_distance(lat1: float, lat2: float, lon1: float, lon2: float, mesh:
 
 
 def _compute_jacobian_determinant(py: np.ndarray, px: np.ndarray, eta: float, xsi: float) -> float:
-    dphidxsi = [eta - 1, 1 - eta, eta, -eta]
-    dphideta = [xsi - 1, -xsi, xsi, 1 - xsi]
+    dphidxsi = np.column_stack([eta - 1, 1 - eta, eta, -eta])
+    dphideta = np.column_stack([xsi - 1, -xsi, xsi, 1 - xsi])
 
-    dxdxsi = np.dot(px, dphidxsi)
-    dxdeta = np.dot(px, dphideta)
-    dydxsi = np.dot(py, dphidxsi)
-    dydeta = np.dot(py, dphideta)
+    dxdxsi = np.dot(dphidxsi, px)
+    dxdeta = np.dot(dphideta, px)
+    dydxsi = np.dot(dphidxsi, py)
+    dydeta = np.dot(dphideta, py)
     jac = dxdxsi * dydeta - dxdeta * dydxsi
-    return jac
+    return jac.trace()  # TODO check how to properly vectorize this function (and not return only half of the Jacobian)

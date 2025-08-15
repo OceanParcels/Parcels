@@ -333,7 +333,7 @@ class VectorField:
             if "3D" in self.vector_type:
                 w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
         else:
-            (u, v, w) = self._vector_interp_method(self, ti, position, tau, time, z, y, x)
+            (u, v, w) = self._vector_interp_method(self, ti, position, tau, time, z, y, x, applyConversion)
 
         if applyConversion:
             u = self.U.units.to_target(u, z, y, x)
