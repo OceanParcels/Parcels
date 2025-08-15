@@ -440,5 +440,5 @@ def test_nemo_curvilinear_fieldset():
         particle.dlon = np.where(particle.lon > 180, particle.dlon - 360, particle.dlon)
 
     pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)
-    pset.execute([AdvectionRK4, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))
+    pset.execute([AdvectionEE, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))
     np.testing.assert_allclose(pset.lat_nextloop, latp, atol=1e-1)

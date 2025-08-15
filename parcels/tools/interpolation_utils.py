@@ -193,4 +193,5 @@ def _compute_jacobian_determinant(py: np.ndarray, px: np.ndarray, eta: float, xs
     dydxsi = np.dot(dphidxsi, py)
     dydeta = np.dot(dphideta, py)
     jac = dxdxsi * dydeta - dxdeta * dydxsi
-    return jac.trace()  # TODO check how to properly vectorize this function (and not return only half of the Jacobian)
+    # TODO check how to properly vectorize this function (and not return only half of the Jacobian)
+    return jac.diagonal()
