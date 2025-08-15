@@ -9,11 +9,13 @@ import numpy as np
 import xarray as xr
 
 if TYPE_CHECKING:
-    from parcels.field import Field
+    from parcels.field import Field, VectorField
     from parcels.uxgrid import _UXGRID_AXES
     from parcels.xgrid import _XGRID_AXES
 
 __all__ = [
+    "CGrid_Tracer",
+    "CGrid_Velocity",
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
     "XLinear",
@@ -108,6 +110,92 @@ def XLinear(
         + (1 - xsi) * eta * corner_data[:, 2]
         + xsi * eta * corner_data[:, 3]
     )
+    return value.compute() if isinstance(value, dask.Array) else value
+
+
+def CGrid_Velocity(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """
+    Interpolation kernel for velocity fields on a C-Grid.
+    Following Delandmeter and Van Sebille (2019), velocity fields should be interpolated
+    only in the direction of the grid cell faces.
+    """
+    # xi, xsi = position["X"]
+    # yi, eta = position["Y"]
+    # zi, zeta = position["Z"]
+
+    # U = vectorfield.U.data
+    # V = vectorfield.V.data
+
+    # axis_dim = vectorfield.U.grid.get_axis_dim_mapping(U.dims)
+
+    # lenT = 2 if np.any(tau > 0) else 1
+    # lenZ = 2 if np.any(zeta > 0) else 1
+
+    value = (0, 0, 0)
+    return value
+
+
+def CGrid_Tracer(
+    field: Field,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Interpolation kernel for tracer fields on a C-Grid.
+
+    Following Delandmeter and Van Sebille (2019), tracer fields should be interpolated
+    constant over the grid cell
+    """
+    xi, _ = position["X"]
+    yi, _ = position["Y"]
+    zi, _ = position["Z"]
+
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+    data = field.data
+
+    lenT = 2 if np.any(tau > 0) else 1
+
+    if lenT == 2:
+        ti_1 = np.clip(ti + 1, 0, data.shape[0] - 1)
+        ti = np.concatenate([np.repeat(ti), np.repeat(ti_1)])
+        zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
+        zi = np.concatenate([np.repeat(zi), np.repeat(zi_1)])
+        yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
+        yi = np.concatenate([np.repeat(yi), np.repeat(yi_1)])
+        xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
+        xi = np.concatenate([np.repeat(xi), np.repeat(xi_1)])
+
+    # Create DataArrays for indexing
+    selection_dict = {
+        axis_dim["X"]: xr.DataArray(xi, dims=("points")),
+        axis_dim["Y"]: xr.DataArray(yi, dims=("points")),
+    }
+    if "Z" in axis_dim:
+        selection_dict[axis_dim["Z"]] = xr.DataArray(zi, dims=("points"))
+    if "time" in field.data.dims:
+        selection_dict["time"] = xr.DataArray(ti, dims=("points"))
+
+    value = data.isel(selection_dict).data.reshape(lenT, len(xi))
+
+    if lenT == 2:
+        tau = tau[:, np.newaxis]
+        value = value[0, :] * (1 - tau) + value[1, :] * tau
+    else:
+        value = value[0, :]
+
     return value.compute() if isinstance(value, dask.Array) else value
 
 
