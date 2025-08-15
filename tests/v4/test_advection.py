@@ -300,11 +300,11 @@ def test_decaying_moving_eddy(method, rtol):
     fieldset = FieldSet([U, V, UV])
 
     start_lon, start_lat = 10000, 10000
-    dt = np.timedelta64(30, "m")
+    dt = np.timedelta64(60, "m")
 
     if method == "RK45":
         fieldset.add_constant("RK45_tol", rtol)
-        fieldset.add_constant("RK45_min_dt", 60)
+        fieldset.add_constant("RK45_min_dt", 10 * 60)
 
     pset = ParticleSet(fieldset, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "D"))
@@ -328,28 +328,17 @@ def test_decaying_moving_eddy(method, rtol):
     np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
 
 
-# TODO decrease atol for these tests once the C-grid is implemented
 @pytest.mark.parametrize(
-    "method, atol",
+    "method, rtol",
     [
-        ("RK4", 1),
-        ("RK45", 10),
+        ("RK4", 0.1),
+        ("RK45", 0.1),
     ],
 )
 @pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
-@pytest.mark.parametrize("flowfield", ["stommel_gyre", "peninsula"])
-def test_gyre_flowfields(method, grid_type, atol, flowfield):
+def test_stommelgyre_fieldset(method, rtol, grid_type):
     npart = 2
-    if flowfield == "peninsula":
-        ds = peninsula_dataset(grid_type=grid_type)
-        start_lat = np.linspace(3e3, 47e3, npart)
-        start_lon = 3e3 * np.ones_like(start_lat)
-        runtime = np.timedelta64(1, "D")
-    else:
-        ds = stommel_gyre_dataset(grid_type=grid_type)
-        start_lon = np.linspace(10e3, 100e3, npart)
-        start_lat = np.ones_like(start_lon) * 5000e3
-        runtime = np.timedelta64(2, "D")
+    ds = stommel_gyre_dataset(grid_type=grid_type)
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=XLinear)
     V = Field("V", ds["V"], grid, interp_method=XLinear)
@@ -357,10 +346,13 @@ def test_gyre_flowfields(method, grid_type, atol, flowfield):
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, P, UV])
 
-    dt = np.timedelta64(1, "m")  # TODO check these settings (and possibly increase)
+    dt = np.timedelta64(30, "m")
+    runtime = np.timedelta64(1, "D")
+    start_lon = np.linspace(10e3, 100e3, npart)
+    start_lat = np.ones_like(start_lon) * 5000e3
 
     if method == "RK45":
-        fieldset.add_constant("RK45_tol", atol)
+        fieldset.add_constant("RK45_tol", rtol)
 
     SampleParticle = Particle.add_variable(
         [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
@@ -372,4 +364,43 @@ def test_gyre_flowfields(method, grid_type, atol, flowfield):
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
-    np.testing.assert_allclose(pset.p, pset.p_start, atol=atol)
+    np.testing.assert_allclose(pset.p, pset.p_start, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "method, rtol",
+    [
+        ("RK4", 5e-3),
+        ("RK45", 1e-4),
+    ],
+)
+@pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
+def test_peninsula_fieldset(method, rtol, grid_type):
+    npart = 2
+    ds = peninsula_dataset(grid_type=grid_type)
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    P = Field("P", ds["P"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, P, UV])
+
+    dt = np.timedelta64(30, "m")
+    runtime = np.timedelta64(1, "D")
+    start_lat = np.linspace(3e3, 47e3, npart)
+    start_lon = 3e3 * np.ones_like(start_lat)
+
+    if method == "RK45":
+        fieldset.add_constant("RK45_tol", rtol)
+
+    SampleParticle = Particle.add_variable(
+        [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
+    )
+
+    def UpdateP(particle, fieldset, time):  # pragma: no cover
+        particle.p = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]
+        particle.p_start = np.where(particle.time == 0, particle.p, particle.p_start)
+
+    pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
+    np.testing.assert_allclose(pset.p, pset.p_start, rtol=rtol)
