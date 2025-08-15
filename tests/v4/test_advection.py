@@ -406,3 +406,39 @@ def test_peninsula_fieldset(method, rtol, grid_type):
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
     np.testing.assert_allclose(pset.p, pset.p_start, rtol=rtol)
+
+
+def test_nemo_curvilinear_fieldset():
+    data_folder = parcels.download_example_dataset("NemoCurvilinear_data")
+    files = data_folder.glob("*.nc4")
+    ds = xr.open_mfdataset(files, combine="nested", data_vars="minimal", coords="minimal", compat="override")
+    ds = ds.isel(time_counter=0, drop=True).drop_vars({"time"}).rename({"glamf": "lon", "gphif": "lat", "z": "depth"})
+
+    xgcm_grid = parcels.xgcm.Grid(
+        ds,
+        coords={
+            "X": {"left": "x"},
+            "Y": {"left": "y"},
+        },
+        periodic=False,
+    )
+    grid = XGrid(xgcm_grid)
+
+    U = parcels.Field("U", ds["U"], grid)
+    V = parcels.Field("V", ds["V"], grid)
+    U.units = parcels.GeographicPolar()
+    V.units = parcels.Geographic()
+    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
+    fieldset = parcels.FieldSet([U, V, UV])
+
+    npart = 20
+    lonp = 30 * np.ones(npart)
+    latp = np.linspace(-70, 88, npart)
+    runtime = np.timedelta64(12, "h")  # TODO increase to 160 days
+
+    def periodicBC(particle, fieldSet, time):  # pragma: no cover
+        particle.dlon = np.where(particle.lon > 180, particle.dlon - 360, particle.dlon)
+
+    pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)
+    pset.execute([AdvectionRK4, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))
+    np.testing.assert_allclose(pset.lat_nextloop, latp, atol=1e-1)
