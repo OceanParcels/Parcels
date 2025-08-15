@@ -100,6 +100,10 @@ class XGrid(BaseGrid):
         self.mesh = mesh
         self._spatialhash = None
         ds = grid._ds
+        if hasattr(ds["lon"], "load"):
+            ds["lon"].load()
+        if hasattr(ds["lat"], "load"):
+            ds["lat"].load()
 
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
