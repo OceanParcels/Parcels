@@ -153,8 +153,6 @@ def CGrid_Velocity(
         px[0] = np.where(px[0] > x + 225, px[0] - 360, px[0])
         px[1:] = np.where(px[1:] - px[0] > 180, px[1:] - 360, px[1:])
         px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
-    xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
-    np.testing.assert_allclose(xx, x, atol=1e-4)
     c1 = i_u._geodetic_distance(
         py[0], py[1], px[0], px[1], vectorfield._mesh_type, np.einsum("ij,ji->i", i_u.phi2D_lin(0.0, xsi), py)
     )
@@ -276,6 +274,10 @@ def CGrid_Velocity(
     if isinstance(u, dask.Array):
         u = u.compute()
         v = v.compute()
+
+    # check whether the grid conversion has been applied correctly
+    xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
+    u = np.where(np.abs(xx - x) > 1e-4, np.nan, u)
 
     return (u, v, 0)  # TODO fix and test W also
 

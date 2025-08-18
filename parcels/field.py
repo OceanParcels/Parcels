@@ -245,7 +245,7 @@ class Field:
 
         tau, ti = _search_time_index(self, time)
         position = self.grid.search(z, y, x, ei=_ei)
-        _update_particle_states(particle, position)
+        _update_particle_states_position(particle, position)
 
         value = self._interp_method(self, ti, position, tau, time, z, y, x)
 
@@ -329,7 +329,7 @@ class VectorField:
 
         tau, ti = _search_time_index(self.U, time)
         position = self.grid.search(z, y, x, ei=_ei)
-        _update_particle_states(particle, position)
+        _update_particle_states_position(particle, position)
 
         if self._vector_interp_method is None:
             u = self.U._interp_method(self.U, ti, position, tau, time, z, y, x)
@@ -343,6 +343,8 @@ class VectorField:
 
         else:
             (u, v, w) = self._vector_interp_method(self, ti, position, tau, time, z, y, x, applyConversion)
+
+        _update_particle_states_velocity(particle, {"U": u})
 
         if applyConversion and ("3D" in self.vector_type):
             w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
@@ -362,7 +364,7 @@ class VectorField:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
 
-def _update_particle_states(particle, position):
+def _update_particle_states_position(particle, position):
     """Update the particle states based on the position dictionary."""
     if particle and "X" in position:  # TODO also support uxgrid search
         particle.state = np.where(position["X"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state)
@@ -371,6 +373,12 @@ def _update_particle_states(particle, position):
         particle.state = np.where(
             position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state
         )
+
+
+def _update_particle_states_velocity(particle, velocities):
+    """Update the particle states based on the velocity dictionary."""
+    if particle and "U" in velocities:
+        particle.state = np.where(np.isnan(velocities["U"]), StatusCode.Error, particle.state)
 
 
 def _assert_valid_uxdataarray(data: ux.UxDataArray):
