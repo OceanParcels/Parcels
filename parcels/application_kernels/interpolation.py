@@ -149,16 +149,24 @@ def CGrid_Velocity(
         py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
 
     if vectorfield._mesh_type == "spherical":
-        px[0] = px[0] + 360 if px[0] < x - 225 else px[0]
-        px[0] = px[0] - 360 if px[0] > x + 225 else px[0]
+        px[0] = np.where(px[0] < x - 225, px[0] + 360, px[0])
+        px[0] = np.where(px[0] > x + 225, px[0] - 360, px[0])
         px[1:] = np.where(px[1:] - px[0] > 180, px[1:] - 360, px[1:])
         px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
     xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
     np.testing.assert_allclose(xx, x, atol=1e-4)
-    c1 = i_u._geodetic_distance(py[0], py[1], px[0], px[1], vectorfield._mesh_type, np.dot(i_u.phi2D_lin(0.0, xsi), py))
-    c2 = i_u._geodetic_distance(py[1], py[2], px[1], px[2], vectorfield._mesh_type, np.dot(i_u.phi2D_lin(eta, 1.0), py))
-    c3 = i_u._geodetic_distance(py[2], py[3], px[2], px[3], vectorfield._mesh_type, np.dot(i_u.phi2D_lin(1.0, xsi), py))
-    c4 = i_u._geodetic_distance(py[3], py[0], px[3], px[0], vectorfield._mesh_type, np.dot(i_u.phi2D_lin(eta, 0.0), py))
+    c1 = i_u._geodetic_distance(
+        py[0], py[1], px[0], px[1], vectorfield._mesh_type, np.einsum("ij,ji->i", i_u.phi2D_lin(0.0, xsi), py)
+    )
+    c2 = i_u._geodetic_distance(
+        py[1], py[2], px[1], px[2], vectorfield._mesh_type, np.einsum("ij,ji->i", i_u.phi2D_lin(eta, 1.0), py)
+    )
+    c3 = i_u._geodetic_distance(
+        py[2], py[3], px[2], px[3], vectorfield._mesh_type, np.einsum("ij,ji->i", i_u.phi2D_lin(1.0, xsi), py)
+    )
+    c4 = i_u._geodetic_distance(
+        py[3], py[0], px[3], px[0], vectorfield._mesh_type, np.einsum("ij,ji->i", i_u.phi2D_lin(eta, 0.0), py)
+    )
 
     lenT = 2 if np.any(tau > 0) else 1
     lenZ = 2 if np.any(zeta > 0) else 1

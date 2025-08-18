@@ -1,4 +1,3 @@
-import math
 from collections.abc import Callable
 from typing import Literal
 
@@ -179,7 +178,7 @@ def _geodetic_distance(lat1: float, lat2: float, lon1: float, lon2: float, mesh:
     if mesh == "spherical":
         rad = np.pi / 180.0
         deg2m = 1852 * 60.0
-        return np.sqrt(((lon2 - lon1) * deg2m * math.cos(rad * lat)) ** 2 + ((lat2 - lat1) * deg2m) ** 2)
+        return np.sqrt(((lon2 - lon1) * deg2m * np.cos(rad * lat)) ** 2 + ((lat2 - lat1) * deg2m) ** 2)
     else:
         return np.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2)
 
@@ -188,10 +187,10 @@ def _compute_jacobian_determinant(py: np.ndarray, px: np.ndarray, eta: float, xs
     dphidxsi = np.column_stack([eta - 1, 1 - eta, eta, -eta])
     dphideta = np.column_stack([xsi - 1, -xsi, xsi, 1 - xsi])
 
-    dxdxsi = np.dot(dphidxsi, px)
-    dxdeta = np.dot(dphideta, px)
-    dydxsi = np.dot(dphidxsi, py)
-    dydeta = np.dot(dphideta, py)
-    jac = dxdxsi * dydeta - dxdeta * dydxsi
-    # TODO check how to properly vectorize this function (ok to return diagonal of the Jacobian?)
-    return jac.diagonal()
+    dxdxsi_diag = np.einsum("ij,ji->i", dphidxsi, px)
+    dxdeta_diag = np.einsum("ij,ji->i", dphideta, px)
+    dydxsi_diag = np.einsum("ij,ji->i", dphidxsi, py)
+    dydeta_diag = np.einsum("ij,ji->i", dphideta, py)
+
+    jac_diag = dxdxsi_diag * dydeta_diag - dxdeta_diag * dydxsi_diag
+    return jac_diag
