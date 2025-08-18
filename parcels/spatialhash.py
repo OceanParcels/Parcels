@@ -11,6 +11,9 @@ class SpatialHash:
     ----------
     grid : parcels.xgrid.XGrid
         Source grid used to construct the hash grid and hash table
+    dh_factor : float, default=2.0
+        Factor by which the hash cell size is multiplied. The hash cell size is set to the square root of the median cell area
+        multiplied by this factor.
     reconstruct : bool, default=False
         If true, reconstructs the spatial hash
 
@@ -22,6 +25,7 @@ class SpatialHash:
     def __init__(
         self,
         grid,
+        dh_factor=2.0,
         reconstruct=False,
     ):
         # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid
@@ -31,6 +35,7 @@ class SpatialHash:
         self.reconstruct = reconstruct
 
         # Hash grid size
+        self._dh_factor = dh_factor
         self._dh = self._hash_cell_size()
 
         # Lower left corner of the hash grid
@@ -77,9 +82,9 @@ class SpatialHash:
 
     def _hash_cell_size(self):
         """Computes the size of the hash cells from the source grid.
-        The hash cell size is set to 1/2 of the square root of the median cell area
+        The hash cell size is set to of the square root of the median cell area multiplied by the dh_factor.
         """
-        return np.sqrt(np.median(_planar_quad_area(self._source_grid.lat, self._source_grid.lon))) * 0.5
+        return np.sqrt(np.median(_planar_quad_area(self._source_grid.lat, self._source_grid.lon))) * self._dh_factor
 
     def _hash_index2d(self, coords):
         """Computes the 2-d hash index (i,j) for the location (x,y), where x and y is the same units
@@ -121,16 +126,16 @@ class SpatialHash:
             )
             coords = np.stack(
                 (
-                    lat_bounds[:, :, 0].flatten(),
-                    lon_bounds[:, :, 0].flatten(),
+                    lat_bounds[:, :, 0].ravel(),
+                    lon_bounds[:, :, 0].ravel(),
                 ),
                 axis=-1,
             )
             yi1, xi1 = self._hash_index2d(coords)
             coords = np.stack(
                 (
-                    lat_bounds[:, :, 1].flatten(),
-                    lon_bounds[:, :, 1].flatten(),
+                    lat_bounds[:, :, 1].ravel(),
+                    lon_bounds[:, :, 1].ravel(),
                 ),
                 axis=-1,
             )

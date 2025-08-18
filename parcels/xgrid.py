@@ -346,6 +346,7 @@ class XGrid(BaseGrid):
 
     def get_spatial_hash(
         self,
+        dh_factor=2.0,
         reconstruct=False,
     ):
         """Get the SpatialHash data structure of this Grid that allows for
@@ -356,6 +357,9 @@ class XGrid(BaseGrid):
         ----------
         global_grid : bool, default=False
             If true, the hash grid is constructed using the domain [-pi,pi] x [-pi,pi]
+        dh_factor : float, default=2.0
+            Factor by which the hash cell size is multiplied. The hash cell size is set to the square root of the median cell area
+            multiplied by this factor.
         reconstruct : bool, default=False
             If true, reconstructs the spatial hash
 
@@ -366,7 +370,7 @@ class XGrid(BaseGrid):
 
         """
         if self._spatialhash is None or reconstruct:
-            self._spatialhash = SpatialHash(self, reconstruct)
+            self._spatialhash = SpatialHash(self, dh_factor, reconstruct)
 
         return self._spatialhash
 
