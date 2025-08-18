@@ -832,7 +832,7 @@ class KernelGenerator(ast.NodeVisitor):
             # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
             Cs_w = [float(self.fieldset.Cs_w.data[0][zi][0][0]) for zi in range(self.fieldset.Cs_w.data.shape[1])]
             statements_croco = [
-                c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
+                c.Statement(f"float cs_w[] = {(*Cs_w,)}".replace("(", "{").replace(")", "}")),
                 c.Statement(
                     f"{node.var} = croco_from_z_to_sigma(time, {args[1]}, {args[2]}, {args[3]}, U, H, Zeta, &particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid], hc, &cs_w)"
                 ),
@@ -861,7 +861,7 @@ class KernelGenerator(ast.NodeVisitor):
             # Get Cs_w values directly from fieldset (since they are 1D in vertical only)
             Cs_w = [float(self.fieldset.Cs_w.data[0][zi][0][0]) for zi in range(self.fieldset.Cs_w.data.shape[1])]
             statements_croco = [
-                c.Statement(f"float cs_w[] = {*Cs_w, }".replace("(", "{").replace(")", "}")),
+                c.Statement(f"float cs_w[] = {(*Cs_w,)}".replace("(", "{").replace(")", "}")),
                 c.Statement(
                     f"{node.var4} = croco_from_z_to_sigma(time, {args[1]}, {args[2]}, {args[3]}, U, H, Zeta, &particles->ti[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->xi[pnum*ngrid], hc, &cs_w)"
                 ),
