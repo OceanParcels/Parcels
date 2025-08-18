@@ -367,18 +367,28 @@ class VectorField:
 def _update_particle_states_position(particle, position):
     """Update the particle states based on the position dictionary."""
     if particle and "X" in position:  # TODO also support uxgrid search
-        particle.state = np.where(position["X"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state)
-        particle.state = np.where(position["Y"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state)
-        particle.state = np.where(position["Z"][0] == RIGHT_OUT_OF_BOUNDS, StatusCode.ErrorOutOfBounds, particle.state)
-        particle.state = np.where(
-            position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state
+        particle.state = np.maximum(
+            np.where(position["X"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state), particle.state
+        )
+        particle.state = np.maximum(
+            np.where(position["Y"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state), particle.state
+        )
+        particle.state = np.maximum(
+            np.where(position["Z"][0] == RIGHT_OUT_OF_BOUNDS, StatusCode.ErrorOutOfBounds, particle.state),
+            particle.state,
+        )
+        particle.state = np.maximum(
+            np.where(position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state),
+            particle.state,
         )
 
 
 def _update_particle_states_velocity(particle, velocities):
-    """Update the particle states based on the velocity dictionary."""
+    """Update the particle states based on the velocity dictionary, but only if state is not an Error already."""
     if particle and "U" in velocities:
-        particle.state = np.where(np.isnan(velocities["U"]), StatusCode.Error, particle.state)
+        particle.state = np.maximum(
+            np.where(np.isnan(velocities["U"]), StatusCode.Error, particle.state), particle.state
+        )
 
 
 def _assert_valid_uxdataarray(data: ux.UxDataArray):
