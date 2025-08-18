@@ -424,8 +424,8 @@ def test_nemo_curvilinear_fieldset():
     )
     grid = XGrid(xgcm_grid)
 
-    U = parcels.Field("U", ds["U"], grid)
-    V = parcels.Field("V", ds["V"], grid)
+    U = parcels.Field("U", ds["U"], grid, mesh_type="spherical")
+    V = parcels.Field("V", ds["V"], grid, mesh_type="spherical")
     U.units = parcels.GeographicPolar()
     V.units = parcels.Geographic()
     UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)

@@ -295,6 +295,10 @@ class VectorField:
             _assert_same_function_signature(vector_interp_method, ref=CGrid_Velocity)
             self._vector_interp_method = vector_interp_method
 
+        if U._mesh_type != V._mesh_type or (W and U._mesh_type != W._mesh_type):
+            raise ValueError(f"Inconsistent mesh types: {U._mesh_type}, {V._mesh_type}, {W._mesh_type}")
+        self._mesh_type = U._mesh_type
+
     def __repr__(self):
         return f"""<{type(self).__name__}>
     name: {self.name!r}
@@ -332,14 +336,16 @@ class VectorField:
             v = self.V._interp_method(self.V, ti, position, tau, time, z, y, x)
             if "3D" in self.vector_type:
                 w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
+
+            if applyConversion:
+                u = self.U.units.to_target(u, z, y, x)
+                v = self.V.units.to_target(v, z, y, x)
+
         else:
             (u, v, w) = self._vector_interp_method(self, ti, position, tau, time, z, y, x, applyConversion)
 
-        if applyConversion:
-            u = self.U.units.to_target(u, z, y, x)
-            v = self.V.units.to_target(v, z, y, x)
-            if "3D" in self.vector_type:
-                w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
+        if applyConversion and ("3D" in self.vector_type):
+            w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
 
         if "3D" in self.vector_type:
             return (u, v, w)
