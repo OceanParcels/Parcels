@@ -100,9 +100,9 @@ class XGrid(BaseGrid):
         self.mesh = mesh
         self._spatialhash = None
         ds = grid._ds
-        if hasattr(ds["lon"], "load"):
+        if "lon" in ds and hasattr(ds["lon"], "load"):
             ds["lon"].load()
-        if hasattr(ds["lat"], "load"):
+        if "lat" in ds and hasattr(ds["lat"], "load"):
             ds["lat"].load()
 
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
