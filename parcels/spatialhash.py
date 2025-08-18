@@ -113,47 +113,96 @@ class SpatialHash:
         i = eid - j * (self._source_grid.xdim)
         return j, i
 
+    def _get_hash(self, index):
+        """Returns the list of face ids for the given hash index"""
+        start = self._face_hash_table["row_ptr"][index]
+        end = self._face_hash_table["row_ptr"][index + 1]
+        return self._face_hash_table["column_index"][start:end]
+
     def _initialize_face_hash_table(self):
         """Create a mapping that relates unstructured grid faces to hash indices by determining
         which faces overlap with which hash cells
         """
+        # Cache attributes to local variables for speed
+        nx, ny = self._nx, self._ny
+        n_cells = nx * ny
         if self._face_hash_table is None or self.reconstruct:
-            index_to_face = [[] for i in range(self._nx * self._ny)]
-            # Get the bounds of each curvilinear faces
             lat_bounds, lon_bounds = _curvilinear_grid_facebounds(
                 self._source_grid.lat,
                 self._source_grid.lon,
             )
-            coords = np.stack(
+            # Use ravel instead of flatten to return a view when possible instead of a copy
+            coords0 = np.stack(
                 (
                     lat_bounds[:, :, 0].ravel(),
                     lon_bounds[:, :, 0].ravel(),
                 ),
                 axis=-1,
             )
-            yi1, xi1 = self._hash_index2d(coords)
-            coords = np.stack(
+            yi0, xi0 = self._hash_index2d(coords0)
+            coords1 = np.stack(
                 (
                     lat_bounds[:, :, 1].ravel(),
                     lon_bounds[:, :, 1].ravel(),
                 ),
                 axis=-1,
             )
-            yi2, xi2 = self._hash_index2d(coords)
+            yi1, xi1 = self._hash_index2d(coords1)
+
             nface = (self._source_grid.xdim) * (self._source_grid.ydim)
+
+            # Compute indices for the bounding boxes
+            wrap = xi0 > xi1  # Find all hash cell index maps that wrap cross over the antimeridian
+
+            # Count up the total number of entries in the hash table
+            len_j = yi1 - yi0 + 1
+            len_i_nowrap = xi1 - xi0 + 1
+            len_i = np.where(wrap, (nx - xi0) + (xi1 + 1), len_i_nowrap)
+            counts = len_j * len_i  # Count the number of hash cells that each face overlaps with
+            total = int(counts.sum())
+
+            # Here we first store the raveled 2d index of the parent grid and the hash grid cell ids
+            idx_cells = np.empty(total, dtype=np.int32)
+            face_ids = np.empty(total, dtype=np.int32)
+
+            offset = 0
             for eid in range(nface):
-                for j in range(yi1[eid], yi2[eid] + 1):
-                    if xi1[eid] <= xi2[eid]:
-                        # Normal case, no wrap
-                        for i in range(xi1[eid], xi2[eid] + 1):
-                            index_to_face[(i % self._nx) + self._nx * j].append(eid)
-                    else:
-                        # Wrap-around case
-                        for i in range(xi1[eid], self._nx):
-                            index_to_face[(i % self._nx) + self._nx * j].append(eid)
-                        for i in range(0, xi2[eid] + 1):
-                            index_to_face[(i % self._nx) + self._nx * j].append(eid)
-            return index_to_face
+                ylo = yi0[eid]
+                yhi = yi1[eid]
+                if wrap[eid]:
+                    i_range = np.concatenate(
+                        (
+                            np.arange(xi0[eid], nx, dtype=np.int32),
+                            np.arange(0, xi1[eid] + 1, dtype=np.int32),
+                        )
+                    )
+                else:
+                    i_range = np.arange(xi0[eid], xi1[eid] + 1, dtype=np.int32)
+
+                width = i_range.size
+                for j in range(ylo, yhi + 1):
+                    idx_cells[offset : offset + width] = i_range + nx * j  # get the hash cell index
+                    face_ids[offset : offset + width] = eid  # get the flattened parent grid 2d index (face id)
+                    offset += width  # bump the offset by the width of this strip of indices
+
+        # Sort by the hash cell index
+        order = np.argsort(idx_cells, kind="mergesort")
+        idx_sorted = idx_cells[order]
+        faces_sorted = face_ids[order]
+
+        # Create the CSR representation of the hash table
+        # Recall the hash table is queried by the hash index (idx_sorted) and returns a list of face ids on the parent grid
+        # In a CSR represntation, we have a row pointer that indicates the start of each row in the data array
+        # and a data array that contains the face ids for each hash cell
+        self._face_hash_table = np.empty(n_cells, dtype=object)
+        row_ptr = np.zeros(n_cells + 1, dtype=np.int32)  # Initialize the row pointer for the CSR representation
+        unique_idx, counts_per_cell = np.unique(
+            idx_sorted, return_counts=True
+        )  # Get a unique list of hash indices and how many times each occurs
+        row_ptr[unique_idx + 1] = counts_per_cell  # Set the row pointer for each unique index
+        row_ptr = np.cumsum(row_ptr)  # Cumulatively sum the row pointer to get the start of each row in the data array
+
+        return {"row_ptr": row_ptr, "column_index": faces_sorted}
 
     def query(
         self,
@@ -180,7 +229,7 @@ class SpatialHash:
         faces = np.full((num_coords, 2), -1, dtype=np.int32)
 
         # Get the list of candidate faces for each coordinate
-        candidate_faces = [self._face_hash_table[pid] for pid in self._hash_index(coords)]
+        candidate_faces = [self._get_hash(pid) for pid in self._hash_index(coords)]
 
         for i, (coord, candidates) in enumerate(zip(coords, candidate_faces, strict=False)):
             for face_id in candidates:
