@@ -138,6 +138,13 @@ class KernelParticle:
         else:
             self._data[name][self._index] = value
 
+    def __getitem__(self, index):
+        self._index = index
+        return self
+
+    def __len__(self):
+        return len(self._index)
+
 
 def _assert_no_duplicate_variable_names(*, existing_vars: list[Variable], new_vars: list[Variable]):
     existing_names = {var.name for var in existing_vars}

@@ -5,8 +5,8 @@ from typing import Literal
 import numpy as np
 import uxarray as ux
 
-from parcels.field import FieldOutOfBoundError
 from parcels.spatialhash import _barycentric_coordinates
+from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.xgrid import _search_1d_array
 
 from .basegrid import BaseGrid
@@ -95,14 +95,14 @@ class UxGrid(BaseGrid):
                     return bcoords, self.ravel_index(zi, neighbor)
 
         # Global fallback as last ditch effort
-        face_ids = self.uxgrid.get_faces_containing_point([x, y], return_counts=False)[0]
+        points = np.column_stack((x, y))
+        face_ids = self.uxgrid.get_faces_containing_point(points, return_counts=False)[0]
         fi = face_ids[0] if len(face_ids) > 0 else -1
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
         bcoords = try_face(fi)
         if bcoords is None:
             raise FieldOutOfBoundError(z, y, x)
-
         return {"Z": (zi, zeta), "FACE": (fi, bcoords)}
 
     def _get_barycentric_coordinates_latlon(self, y, x, fi):
@@ -118,9 +118,10 @@ class UxGrid(BaseGrid):
             )
         )
 
-        coord = np.deg2rad([x, y])
+        coord = np.deg2rad(np.column_stack((x, y)))
         bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
-        err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
+        proj_coord = np.matmul(np.transpose(nodes), bcoord)
+        err = np.linalg.norm(proj_coord - coord)
         return bcoord, err
 
     def _get_barycentric_coordinates_cartesian(self, y, x, fi):

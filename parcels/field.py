@@ -16,6 +16,7 @@ from parcels._typing import (
     VectorType,
     assert_valid_mesh,
 )
+from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, ZeroInterpolator
 from parcels.particle import KernelParticle
 from parcels.tools.converters import (
     UnitConverter,
@@ -23,13 +24,10 @@ from parcels.tools.converters import (
 )
 from parcels.tools.statuscodes import (
     AllParcelsErrorCodes,
-    FieldOutOfBoundError,
-    FieldOutOfBoundSurfaceError,
-    FieldSamplingError,
-    _raise_field_out_of_bound_error,
+    StatusCode,
 )
 from parcels.uxgrid import UxGrid
-from parcels.xgrid import XGrid, _transpose_xfield_data_to_tzyx
+from parcels.xgrid import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS, XGrid, _transpose_xfield_data_to_tzyx
 
 from ._index_search import _search_time_index
 
@@ -52,23 +50,9 @@ def _deal_with_errors(error, key, vector_type: VectorType):
         return 0
 
 
-def ZeroInterpolator(
-    field: Field,
-    ti: int,
-    position: dict[str, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-) -> np.float32 | np.float64:
-    """Template function used for the signature check of the lateral interpolation methods."""
-    return 0.0
-
-
 _DEFAULT_INTERPOLATOR_MAPPING = {
-    XGrid: ZeroInterpolator,  # TODO v4: Update these to better defaults
-    UxGrid: ZeroInterpolator,
+    XGrid: XLinear,
+    UxGrid: UXPiecewiseLinearNode,
 }
 
 
@@ -258,18 +242,11 @@ class Field:
         # else:
         #    _ei = particle.ei[self.igrid]
 
-        try:
-            tau, ti = _search_time_index(self, time)
-            position = self.grid.search(z, y, x, ei=_ei)
-            value = self._interp_method(self, ti, position, tau, time, z, y, x)
+        tau, ti = _search_time_index(self, time)
+        position = self.grid.search(z, y, x, ei=_ei)
+        _update_particle_states(particle, position)
 
-            if np.isnan(value):
-                # Detect Out-of-bounds sampling and raise exception
-                _raise_field_out_of_bound_error(z, y, x)
-
-        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
-            e.add_note(f"Error interpolating field '{self.name}'.")
-            raise e
+        value = self._interp_method(self, ti, position, tau, time, z, y, x)
 
         if applyConversion:
             value = self.units.to_target(value, z, y, x)
@@ -345,31 +322,28 @@ class VectorField:
         # else:
         #    _ei = particle.ei[self.igrid]
 
-        try:
-            tau, ti = _search_time_index(self.U, time)
-            position = self.grid.search(z, y, x, ei=_ei)
-            if self._vector_interp_method is None:
-                u = self.U._interp_method(self.U, ti, position, tau, time, z, y, x)
-                v = self.V._interp_method(self.V, ti, position, tau, time, z, y, x)
-                if "3D" in self.vector_type:
-                    w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
-            else:
-                (u, v, w) = self._vector_interp_method(self, ti, position, time, z, y, x)
+        tau, ti = _search_time_index(self.U, time)
+        position = self.grid.search(z, y, x, ei=_ei)
+        _update_particle_states(particle, position)
 
-            if applyConversion:
-                u = self.U.units.to_target(u, z, y, x)
-                v = self.V.units.to_target(v, z, y, x)
-                if "3D" in self.vector_type:
-                    w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
-
+        if self._vector_interp_method is None:
+            u = self.U._interp_method(self.U, ti, position, tau, time, z, y, x)
+            v = self.V._interp_method(self.V, ti, position, tau, time, z, y, x)
             if "3D" in self.vector_type:
-                return (u, v, w)
-            else:
-                return (u, v)
+                w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
+        else:
+            (u, v, w) = self._vector_interp_method(self, ti, position, time, z, y, x)
 
-        except (FieldSamplingError, FieldOutOfBoundError, FieldOutOfBoundSurfaceError) as e:
-            e.add_note(f"Error interpolating field '{self.name}'.")
-            raise e
+        if applyConversion:
+            u = self.U.units.to_target(u, z, y, x)
+            v = self.V.units.to_target(v, z, y, x)
+            if "3D" in self.vector_type:
+                w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
+
+        if "3D" in self.vector_type:
+            return (u, v, w)
+        else:
+            return (u, v)
 
     def __getitem__(self, key):
         try:
@@ -379,6 +353,17 @@ class VectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
+
+
+def _update_particle_states(particle, position):
+    """Update the particle states based on the position dictionary."""
+    if particle and "X" in position:  # TODO also support uxgrid search
+        particle.state = np.where(position["X"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state)
+        particle.state = np.where(position["Y"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state)
+        particle.state = np.where(position["Z"][0] == RIGHT_OUT_OF_BOUNDS, StatusCode.ErrorOutOfBounds, particle.state)
+        particle.state = np.where(
+            position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state
+        )
 
 
 def _assert_valid_uxdataarray(data: ux.UxDataArray):
