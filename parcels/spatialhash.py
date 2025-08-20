@@ -86,7 +86,7 @@ class SpatialHash:
         as the source grid coordinates
         """
         # Wrap longitude to [-180, 180]
-        if self._source_grid.mesh == "spherical":
+        if self._source_grid._mesh_type == "spherical":
             lon = (coords[:, 1] + 180.0) % (360.0) - 180.0
         else:
             lon = coords[:, 1]

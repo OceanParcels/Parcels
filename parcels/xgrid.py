@@ -8,6 +8,7 @@ import xarray as xr
 
 from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
+from parcels._typing import assert_valid_mesh
 from parcels.basegrid import BaseGrid
 from parcels.spatialhash import SpatialHash
 
@@ -95,17 +96,19 @@ class XGrid(BaseGrid):
 
     """
 
-    def __init__(self, grid: xgcm.Grid, mesh="flat"):
+    def __init__(self, grid: xgcm.Grid, mesh_type="flat"):
         self.xgcm_grid = grid
-        self.mesh = mesh
+        self._mesh_type = mesh_type
         self._spatialhash = None
         ds = grid._ds
 
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
 
+        assert_valid_mesh(mesh_type)
+
     @classmethod
-    def from_dataset(cls, ds: xr.Dataset, mesh="flat", xgcm_kwargs=None):
+    def from_dataset(cls, ds: xr.Dataset, mesh_type="flat", xgcm_kwargs=None):
         """WARNING: unstable API, subject to change in future versions."""  # TODO v4: make private or remove warning on v4 release
         if xgcm_kwargs is None:
             xgcm_kwargs = {}
@@ -114,7 +117,7 @@ class XGrid(BaseGrid):
 
         ds = _drop_field_data(ds)
         grid = xgcm.Grid(ds, **xgcm_kwargs)
-        return cls(grid, mesh=mesh)
+        return cls(grid, mesh_type=mesh_type)
 
     @property
     def axes(self) -> list[_XGRID_AXES]:

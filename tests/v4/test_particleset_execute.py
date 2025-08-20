@@ -24,9 +24,9 @@ from tests.common_kernels import DoNothing
 @pytest.fixture
 def fieldset() -> FieldSet:
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
-    V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
+    grid = XGrid.from_dataset(ds, mesh_type="flat")
+    U = Field("U", ds["U (A grid)"], grid)
+    V = Field("V", ds["V (A grid)"], grid)
     return FieldSet([U, V])
 
 
@@ -34,9 +34,9 @@ def fieldset() -> FieldSet:
 def zonal_flow_fieldset() -> FieldSet:
     ds = simple_UV_dataset(mesh_type="flat")
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type="flat")
-    V = Field("V", ds["V"], grid, mesh_type="flat")
+    grid = XGrid.from_dataset(ds, mesh_type="flat")
+    U = Field("U", ds["U"], grid)
+    V = Field("V", ds["V"], grid)
     UV = VectorField("UV", U, V)
     return FieldSet([U, V, UV])
 
@@ -234,26 +234,23 @@ def test_execution_fail_python_exception(fieldset, npart):
 
 def test_uxstommelgyre_pset_execute():
     ds = datasets_unstructured["stommel_gyre_delaunay"]
-    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"])
+    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh_type="spherical")
     U = Field(
         name="U",
         data=ds.U,
         grid=grid,
-        mesh_type="spherical",
         interp_method=UXPiecewiseConstantFace,
     )
     V = Field(
         name="V",
         data=ds.V,
         grid=grid,
-        mesh_type="spherical",
         interp_method=UXPiecewiseConstantFace,
     )
     P = Field(
         name="P",
         data=ds.p,
         grid=grid,
-        mesh_type="spherical",
         interp_method=UXPiecewiseConstantFace,
     )
     UV = VectorField(name="UV", U=U, V=V)
@@ -278,26 +275,23 @@ def test_uxstommelgyre_pset_execute():
 @pytest.mark.xfail(reason="Output file not implemented yet")
 def test_uxstommelgyre_pset_execute_output():
     ds = datasets_unstructured["stommel_gyre_delaunay"]
-    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"])
+    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh_type="spherical")
     U = Field(
         name="U",
         data=ds.U,
         grid=grid,
-        mesh_type="spherical",
         interp_method=UXPiecewiseConstantFace,
     )
     V = Field(
         name="V",
         data=ds.V,
         grid=grid,
-        mesh_type="spherical",
         interp_method=UXPiecewiseConstantFace,
     )
     P = Field(
         name="P",
         data=ds.p,
         grid=grid,
-        mesh_type="spherical",
         interp_method=UXPiecewiseConstantFace,
     )
     UV = VectorField(name="UV", U=U, V=V)

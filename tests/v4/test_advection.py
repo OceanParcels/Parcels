@@ -37,9 +37,9 @@ def test_advection_zonal(mesh_type, npart=10):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
     ds = simple_UV_dataset(mesh_type=mesh_type)
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh_type=mesh_type)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
@@ -208,9 +208,9 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
 
 def test_radialrotation(npart=10):
     ds = radial_rotation_dataset()
-    grid = XGrid.from_dataset(ds)
-    U = parcels.Field("U", ds["U"], grid, mesh_type="flat", interp_method=XLinear)
-    V = parcels.Field("V", ds["V"], grid, mesh_type="flat", interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh_type="flat")
+    U = parcels.Field("U", ds["U"], grid, interp_method=XLinear)
+    V = parcels.Field("V", ds["V"], grid, interp_method=XLinear)
     UV = parcels.VectorField("UV", U, V)
     fieldset = parcels.FieldSet([U, V, UV])
 

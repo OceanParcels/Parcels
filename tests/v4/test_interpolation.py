@@ -20,9 +20,9 @@ from tests.utils import TEST_DATA
 def test_interpolation_mesh_type(mesh_type, npart=10):
     ds = simple_UV_dataset(mesh_type=mesh_type)
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh_type=mesh_type)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
 
     lat = 30.0
@@ -91,10 +91,10 @@ def test_interp_regression_v3(interp_name):
         },
     )
 
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
-    V = Field("V", ds["V"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
-    W = Field("W", ds["W"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
+    grid = XGrid.from_dataset(ds, mesh_type="flat")
+    U = Field("U", ds["U"], grid, interp_method=interp_methods[interp_name])
+    V = Field("V", ds["V"], grid, interp_method=interp_methods[interp_name])
+    W = Field("W", ds["W"], grid, interp_method=interp_methods[interp_name])
     fieldset = FieldSet([U, V, W, VectorField("UVW", U, V, W)])
 
     x, y, z = np.meshgrid(np.linspace(0, 1, 7), np.linspace(0, 1, 13), np.linspace(0, 1, 5))
