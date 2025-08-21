@@ -442,3 +442,60 @@ def test_nemo_curvilinear_fieldset():
     pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)
     pset.execute([AdvectionEE, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))
     np.testing.assert_allclose(pset.lat_nextloop, latp, atol=1e-1)
+
+
+def test_nemo_3D_curvilinear_fieldset():
+    download_dir = parcels.download_example_dataset("NemoNorthSeaORCA025-N006_data")
+    ufiles = download_dir.glob("*U.nc")
+    dsu = xr.open_mfdataset(ufiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsu = dsu.rename({"time_counter": "time", "uo": "U"})
+
+    vfiles = download_dir.glob("*V.nc")
+    dsv = xr.open_mfdataset(vfiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsv = dsv.rename({"time_counter": "time", "vo": "V"})
+
+    wfiles = download_dir.glob("*W.nc")
+    dsw = xr.open_mfdataset(wfiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsw = dsw.rename({"time_counter": "time", "depthw": "depth", "wo": "W"})
+
+    dsu = dsu.assign_coords(depthu=dsw.depth.values)
+    dsu = dsu.rename({"depthu": "depth"})
+
+    dsv = dsv.assign_coords(depthv=dsw.depth.values)
+    dsv = dsv.rename({"depthv": "depth"})
+
+    coord_file = f"{download_dir}/coordinates.nc"
+    dscoord = xr.open_dataset(coord_file, decode_times=False).rename({"glamf": "lon", "gphif": "lat"})
+
+    ds = xr.merge([dsu, dsv, dsw, dscoord])
+
+    ds.load()  # TODO remove for debug
+
+    xgcm_grid = parcels.xgcm.Grid(
+        ds,
+        coords={
+            "X": {"left": "x"},
+            "Y": {"left": "y"},
+            "Z": {"left": "depth"},
+            "T": {"center": "time"},
+        },
+        periodic=False,
+    )
+    grid = XGrid(xgcm_grid)
+
+    U = parcels.Field("U", ds["U"], grid, mesh_type="spherical")
+    V = parcels.Field("V", ds["V"], grid, mesh_type="spherical")
+    W = parcels.Field("W", ds["W"], grid, mesh_type="spherical")
+    U.units = parcels.GeographicPolar()
+    V.units = parcels.Geographic()
+    W.units = parcels.Geographic()
+    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)  # TODO remove
+    UVW = parcels.VectorField("UVW", U, V, W, vector_interp_method=CGrid_Velocity)
+    fieldset = parcels.FieldSet([U, V, W, UV, UVW])
+
+    lons = np.linspace(1.9, 3.4, 10)
+    lats = np.linspace(52.5, 51.6, 10)
+    pset = parcels.ParticleSet(fieldset, lon=lons, lat=lats, depth=np.ones_like(lons))
+
+    pset.execute(parcels.AdvectionRK4, runtime=np.timedelta64(4, "D"), dt=np.timedelta64(6, "h"))
+    print(pset.depth)

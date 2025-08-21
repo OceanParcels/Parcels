@@ -210,14 +210,14 @@ def CGrid_Velocity(
         corner_data = data.isel(selection_dict).data.reshape(lenT, lenZ, len(xsi), 4)
 
         if lenT == 2:
-            tau = tau[np.newaxis, :, np.newaxis]
-            corner_data = corner_data[0, :, :, :] * (1 - tau) + corner_data[1, :, :, :] * tau
+            tau_full = tau[np.newaxis, :, np.newaxis]
+            corner_data = corner_data[0, :, :, :] * (1 - tau_full) + corner_data[1, :, :, :] * tau_full
         else:
             corner_data = corner_data[0, :, :, :]
 
         if lenZ == 2:
-            zeta = zeta[:, np.newaxis]
-            corner_data = corner_data[0, :, :] * (1 - zeta) + corner_data[1, :, :] * zeta
+            zeta_full = zeta[:, np.newaxis]
+            corner_data = corner_data[0, :, :] * (1 - zeta_full) + corner_data[1, :, :] * zeta_full
         else:
             corner_data = corner_data[0, :, :]
         # # See code below for v3 version
