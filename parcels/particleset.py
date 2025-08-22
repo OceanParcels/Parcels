@@ -390,7 +390,7 @@ class ParticleSet:
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
-        return ParticleFile(*args, particleset=self, **kwargs)
+        return ParticleFile(*args, **kwargs)
 
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
@@ -567,7 +567,7 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            logger.info(f"Output files are stored in {output_file.fname}.")
+            logger.info(f"Output files are stored in {output_file.store.path}.")
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
