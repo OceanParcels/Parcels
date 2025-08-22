@@ -269,7 +269,7 @@ def CGrid_Velocity(
 
     # check whether the grid conversion has been applied correctly
     xx = (1 - xsi) * (1 - eta) * px[0] + xsi * (1 - eta) * px[1] + xsi * eta * px[2] + (1 - xsi) * eta * px[3]
-    u = np.where(np.abs(xx - x) > 1e-4, np.nan, u)
+    u = np.where(np.abs((xx - x) / x) > 1e-4, np.nan, u)
 
     if vectorfield.W:
         data = vectorfield.W.data

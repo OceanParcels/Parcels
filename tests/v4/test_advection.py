@@ -13,7 +13,7 @@ from parcels._datasets.structured.generated import (
 )
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
 from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
-from parcels.application_kernels.interpolation import CGrid_Tracer, CGrid_Velocity, XLinear
+from parcels.application_kernels.interpolation import CGrid_Velocity, XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
@@ -342,10 +342,9 @@ def test_stommelgyre_fieldset(method, rtol, grid_type):
     ds = stommel_gyre_dataset(grid_type=grid_type)
     grid = XGrid.from_dataset(ds)
     vector_interp_method = None if grid_type == "A" else CGrid_Velocity
-    tracer_interp_method = XLinear if grid_type == "A" else CGrid_Tracer
     U = Field("U", ds["U"], grid)
     V = Field("V", ds["V"], grid)
-    P = Field("P", ds["P"], grid, interp_method=tracer_interp_method)
+    P = Field("P", ds["P"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V, vector_interp_method=vector_interp_method)
     fieldset = FieldSet([U, V, P, UV])
 
