@@ -139,6 +139,7 @@ class SpatialHash:
             for eid in range(nface):
                 for j in range(yi1[eid], yi2[eid] + 1):
                     if abs(xi1[eid] - xi2[eid]) > 225:
+                        # TODO make sure this is only called when mesh_type is spherical; but requires #2155
                         pass
                     elif xi1[eid] <= xi2[eid]:
                         # Normal case, no wrap
