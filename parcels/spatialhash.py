@@ -30,15 +30,6 @@ class SpatialHash:
         self._source_grid = grid
         self.reconstruct = reconstruct
 
-        # Hash grid size
-        self._dh = self._hash_cell_size()
-
-        # # Lower left corner of the hash grid
-        # lon_min = self._source_grid.lon.min()
-        # lat_min = self._source_grid.lat.min()
-        # lon_max = self._source_grid.lon.max()
-        # lat_max = self._source_grid.lat.max()
-
         if self._source_grid.mesh == "spherical":
             # Boundaries of the hash grid are the unit cube
             self._xmin = -1.0
@@ -85,8 +76,11 @@ class SpatialHash:
         else:
             # Boundaries of the hash grid are the bounding box of the source grid
             self._xmin = self._source_grid.lon.min()
+            self._xmax = self._source_grid.lon.max()
             self._ymin = self._source_grid.lat.min()
+            self._ymax = self._source_grid.lat.max()
             self._zmin = 0.0
+            self._zmax = 0.0
             x = self._source_grid.lon
             y = self._source_grid.lat
 
@@ -124,7 +118,9 @@ class SpatialHash:
         if self._hash_table is None or self.reconstruct:
             j, i = np.indices(self._xc.shape)  # Get the indices of the curvilinear grid
 
-            morton_codes = _encode_morton3d(self._xc, self._yc, self._zc)
+            morton_codes = _encode_morton3d(
+                self._xc, self._yc, self._zc, self._xmin, self._xmax, self._ymin, self._ymax, self._zmin, self._zmax
+            )
             ## Prepare quick lookup (hash) table for relating i,j indices to morton codes
             # Sort i,j indices by morton code
             order = np.argsort(morton_codes.ravel())
@@ -146,46 +142,55 @@ class SpatialHash:
     def query(
         self,
         coords,
-        tol=1e-6,
     ):
-        """Queries the hash table.
+        """
+        Queries the hash table and finds the closes face in the source grid for each coordinate pair.
 
         Parameters
         ----------
         coords : array_like
-            coordinate pairs in degrees (lat, lon) to query.
-
+            coordinate pairs in degrees (lat, lon) to query of shape (N,2) where N is the number of queries.
 
         Returns
         -------
-        faces : ndarray of shape (coords.shape[0]), dtype=np.int32
-            Face id's in the self._source_grid where each coords element is found. When a coords element is not found, the
-            corresponding array entry in faces is set to -1.
+        faces : ndarray of shape (N,2), dtype=np.int32
+            For each coordinate pair, returns the (j,i) indices of the closest face in the hash grid.
+            If no face is found, returns (-1,-1) for that query.
         """
-        keys = self._hash_table["keys"], starts = self._hash_table["starts"], counts = self._hash_table["counts"]
-        i = self._hash_table["i"], j = self._hash_table["j"]
+        keys = self._hash_table["keys"]
+        starts = self._hash_table["starts"]
+        counts = self._hash_table["counts"]
+        i = self._hash_table["i"]
+        j = self._hash_table["j"]
+
+        xc = self._xc
+        yc = self._yc
+        zc = self._zc
 
         if self._source_grid.mesh == "spherical":
             # Convert coords to Cartesian coordinates (x, y, z)
             lat = np.deg2rad(coords[:, 0])
             lon = np.deg2rad(coords[:, 1])
-            x, y, z = _latlon_rad_to_xyz(lat, lon)
+            qx, qy, qz = _latlon_rad_to_xyz(lat, lon)
         else:
             # For Cartesian grids, use the coordinates directly
-            x = coords[:, 0]
-            y = coords[:, 1]
-            z = np.zeros_like(x)
+            qx = coords[:, 0]
+            qy = coords[:, 1]
+            qz = np.zeros_like(qx)
 
-        query_codes = _encode_morton3d(x, y, z)
+        query_codes = _encode_morton3d(
+            qx, qy, qz, self._xmin, self._xmax, self._ymin, self._ymax, self._zmin, self._zmax
+        ).ravel()
+        num_queries = query_codes.size
 
         # Locate each query in the unique key array
-        pos = np.searchsorted(keys, query_codes)
+        pos = np.searchsorted(keys, query_codes)  # pos is shape (N,)
 
         # Valid hits: inside range and exact match
-        valid = (pos < len(keys)) & (keys[pos] == query_codes)
+        valid = (pos < len(keys)) & (keys[pos] == query_codes)  # has shape (N,)
 
-        # How many matches each query has
-        hit_counts = np.where(valid, counts[pos], 0).astype(np.int64)
+        # How many matches each query has; hit_counts[i] is the number of hits for query i
+        hit_counts = np.where(valid, counts[pos], 0).astype(np.int64)  # has shape (N,)
 
         # CSR-style offsets (prefix sum), total number of hits
         offsets = np.empty(hit_counts.size + 1, dtype=np.int64)
@@ -193,35 +198,61 @@ class SpatialHash:
         np.cumsum(hit_counts, out=offsets[1:])
         total = int(offsets[-1])
 
-        # Preallocate output (total,2); early exit if no hits at all
-        matches = np.empty((total, 2), dtype=i.dtype)
-        # if total == 0: # TODO : Do we want to error out here ?
-        #     return matches, offsets
-
-        # For each *element* in the flattened output, figure out which query it belongs to.
-        # Repeat each query index i by its hit_count to build a per-element mapping.
-        q_index_for_elem = np.repeat(np.arange(query_codes.size, dtype=np.int64), hit_counts)
+        # Now, we need to create some quick lookup arrays that give us the list of positions in the hash table
+        # that correspond to each query.
+        # Create a quick lookup array that maps each element of all the valid queries (with repeats) to its query index
+        q_index_for_elem = np.repeat(np.arange(num_queries, dtype=np.int64), hit_counts)  # This has shape (total,)
 
         # For each element, compute its "intra-group" offset (0..hits_i-1).
-        # This is a vectorized trick: a global ramp minus the repeated group starts.
         intra = np.arange(total, dtype=np.int64) - np.repeat(offsets[:-1], hit_counts)
 
-        # Map each element to a source index in I/J:
-        #   source_start = starts[pos[i]] for the query i
-        #   source_idx   = source_start + intra
+        # starts[pos[q_index_for_elem]] + intra gives a list of positions in the hash table that we can
+        # use to quickly gather the (i,j) pairs for each query
         source_idx = starts[pos[q_index_for_elem]].astype(np.int64) + intra
 
-        # Gather all (I,J) pairs in one shot
-        matches[:, 0] = j[source_idx]
-        matches[:, 1] = i[source_idx]
+        # Gather all (j,i) pairs in one shot
+        j_all = j[source_idx]
+        i_all = i[source_idx]
 
-        # Split into per-query blocks (views, no copies)
-        blocks = np.split(matches, offsets[1:-1])
-        # Wrap into an object array with the same leading shape as query_codes
-        faces = np.empty(np.prod(query_codes.shape, dtype=int), dtype=object)
-        faces[:] = blocks  # no append, just vectorized assignment
+        # Gather centroid coordinates at those (j,i)
+        xc_all = xc[j_all, i_all]
+        yc_all = yc[j_all, i_all]
+        zc_all = zc[j_all, i_all]
 
-        return faces.reshape(query_codes.shape)
+        # Broadcast to flat (same as q_flat), then repeat per candidate
+        # This makes it easy to compute distances from the query points
+        # to the candidate points for minimization.
+        qx_all = np.repeat(qx.ravel(), hit_counts)
+        qy_all = np.repeat(qy.ravel(), hit_counts)
+        qz_all = np.repeat(qz.ravel(), hit_counts)
+
+        # Squared distances for all candidates
+        dist_all = (xc_all - qx_all) ** 2 + (yc_all - qy_all) ** 2 + (zc_all - qz_all) ** 2
+
+        # Segment-wise minima per query using reduceat
+        # For each query, we need to find the minimum distance.
+        dmin_per_q = np.minimum.reduceat(dist_all, offsets[:-1])
+
+        # To get argmin indices per query (without loops):
+        # Build a masked "within-index" array that is large unless it equals the segment-min.
+        big = np.iinfo(np.int64).max
+        within_masked = np.where(dist_all == np.repeat(dmin_per_q, hit_counts), intra, big)
+        argmin_within = np.minimum.reduceat(within_masked, offsets[:-1])  # first occurrence in ties
+
+        # Build absolute source index for the winning candidate in each query
+        start_for_q = np.where(valid, starts[pos], 0)  # 0 is dummy for invalid queries
+        src_best = (start_for_q + argmin_within).astype(np.int64)
+
+        # Write outputs only for queries that had candidates
+        # Pre-allocate i and j indices of the best match for each query
+        # Default values to -1 (no match case)
+        j_best = np.full(num_queries, -1, dtype=np.int64)
+        i_best = np.full(num_queries, -1, dtype=np.int64)
+        has_hits = hit_counts > 0
+        j_best[has_hits] = i_all[src_best[has_hits]]
+        i_best[has_hits] = j_all[src_best[has_hits]]
+
+        return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
 
 
 def _triangle_area(A, B, C):
