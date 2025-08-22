@@ -6,7 +6,6 @@ Kernels:
 
 FieldSet
 
-- `mesh` is now called `mesh_type`?
 - `interp_method` has to be an Interpolation function, instead of a string
 
 ParticleSet
