@@ -1,5 +1,6 @@
 """General helper functions and utilies for test suite."""
 
+import struct
 from pathlib import Path
 
 import numpy as np
@@ -116,3 +117,18 @@ def create_fieldset_zeros_simple(xdim=40, ydim=100, withtime=False):
 
 def assert_empty_folder(path: Path):
     assert [p.name for p in path.iterdir()] == []
+
+
+def round_and_hash_float_array(arr, decimals=6):
+    arr = np.round(arr, decimals=decimals)
+
+    # Adapted from https://cs.stackexchange.com/a/37965
+    h = 1
+    for f in arr:
+        # Mimic Float.floatToIntBits: converts float to 4-byte binary, then interprets as int
+        float_as_int = struct.unpack("!i", struct.pack("!f", f))[0]
+        h = 31 * h + float_as_int
+
+    # Mimic Java's HashMap hash transformation
+    h ^= (h >> 20) ^ (h >> 12)
+    return h ^ (h >> 7) ^ (h >> 4)
