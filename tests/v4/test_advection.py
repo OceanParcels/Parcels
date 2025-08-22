@@ -412,7 +412,11 @@ def test_nemo_curvilinear_fieldset():
     data_folder = parcels.download_example_dataset("NemoCurvilinear_data")
     files = data_folder.glob("*.nc4")
     ds = xr.open_mfdataset(files, combine="nested", data_vars="minimal", coords="minimal", compat="override")
-    ds = ds.isel(time_counter=0, drop=True).drop_vars({"time"}).rename({"glamf": "lon", "gphif": "lat", "z": "depth"})
+    ds = (
+        ds.isel(time_counter=0, drop=True)
+        .isel(time=0, drop=True)
+        .rename({"glamf": "lon", "gphif": "lat", "z": "depth"})
+    )
 
     xgcm_grid = parcels.xgcm.Grid(
         ds,
