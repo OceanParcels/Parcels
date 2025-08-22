@@ -408,7 +408,7 @@ def _search_indices_curvilinear(field, time, z, y, x, ti, particle=None, search2
     return (zeta, eta, xsi, zi, yi, xi)
 
 
-def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, mesh_type: str):
+def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, mesh_type: Mesh):
     xi = np.where(xi < 0, (xdim - 2) if mesh_type == "spherical" else 0, xi)
     xi = np.where(xi > xdim - 2, 0 if mesh_type == "spherical" else (xdim - 2), xi)
 
