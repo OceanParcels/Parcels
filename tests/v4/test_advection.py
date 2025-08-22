@@ -415,6 +415,7 @@ def test_nemo_curvilinear_fieldset():
     ds = (
         ds.isel(time_counter=0, drop=True)
         .isel(time=0, drop=True)
+        .isel(z_a=0, drop=True)
         .rename({"glamf": "lon", "gphif": "lat", "z": "depth"})
     )
 
