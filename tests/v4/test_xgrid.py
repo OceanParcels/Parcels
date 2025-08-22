@@ -39,6 +39,12 @@ def assert_equal(actual, expected):
         assert_allclose(actual, expected)
 
 
+@pytest.mark.parametrize("ds", [datasets["ds_2d_left"]])
+def test_grid_init_param_types(ds):
+    with pytest.raises(ValueError, match="Invalid value 'invalid'. Valid options are.*"):
+        XGrid.from_dataset(ds, mesh="invalid")
+
+
 @pytest.mark.parametrize("ds, attr, expected", test_cases)
 def test_xgrid_properties_ground_truth(ds, attr, expected):
     grid = XGrid.from_dataset(ds)
