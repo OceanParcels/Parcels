@@ -138,7 +138,9 @@ class SpatialHash:
             nface = (self._source_grid.xdim) * (self._source_grid.ydim)
             for eid in range(nface):
                 for j in range(yi1[eid], yi2[eid] + 1):
-                    if xi1[eid] <= xi2[eid]:
+                    if abs(xi1[eid] - xi2[eid]) > 225:
+                        pass
+                    elif xi1[eid] <= xi2[eid]:
                         # Normal case, no wrap
                         for i in range(xi1[eid], xi2[eid] + 1):
                             index_to_face[(i % self._nx) + self._nx * j].append(eid)
