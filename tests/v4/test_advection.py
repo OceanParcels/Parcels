@@ -20,6 +20,7 @@ from parcels.particle import Particle, Variable
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
 from parcels.xgrid import XGrid
+from tests.utils import round_and_hash_float_array
 
 kernel = {
     "EE": AdvectionEE,
@@ -444,7 +445,8 @@ def test_nemo_curvilinear_fieldset():
     np.testing.assert_allclose(pset.lat_nextloop, latp, atol=1e-1)
 
 
-def test_nemo_3D_curvilinear_fieldset():
+@pytest.mark.parametrize("method", ["RK4", "RK4_3D"])
+def test_nemo_3D_curvilinear_fieldset(method):
     download_dir = parcels.download_example_dataset("NemoNorthSeaORCA025-N006_data")
     ufiles = download_dir.glob("*U.nc")
     dsu = xr.open_mfdataset(ufiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
@@ -466,10 +468,34 @@ def test_nemo_3D_curvilinear_fieldset():
 
     coord_file = f"{download_dir}/coordinates.nc"
     dscoord = xr.open_dataset(coord_file, decode_times=False).rename({"glamf": "lon", "gphif": "lat"})
+    dscoord = dscoord.isel(time=0, drop=True)
 
     ds = xr.merge([dsu, dsv, dsw, dscoord])
+    ds = ds.drop_vars(
+        [
+            "uos",
+            "vos",
+            "nav_lev",
+            "nav_lon",
+            "nav_lat",
+            "tauvo",
+            "tauuo",
+            "time_steps",
+            "gphiu",
+            "gphiv",
+            "gphit",
+            "glamu",
+            "glamv",
+            "glamt",
+            "time_centered_bounds",
+            "time_counter_bounds",
+            "time_centered",
+        ]
+    )
+    ds = ds.drop_vars(["e1f", "e1t", "e1u", "e1v", "e2f", "e2t", "e2u", "e2v"])
+    ds["time"] = [np.timedelta64(int(t), "s") + np.datetime64("1900-01-01") for t in ds["time"]]
 
-    ds.load()  # TODO remove for debug
+    ds["W"] *= -1  # Invert W velocity
 
     xgcm_grid = parcels.xgcm.Grid(
         ds,
@@ -488,14 +514,21 @@ def test_nemo_3D_curvilinear_fieldset():
     W = parcels.Field("W", ds["W"], grid, mesh_type="spherical")
     U.units = parcels.GeographicPolar()
     V.units = parcels.Geographic()
-    W.units = parcels.Geographic()
-    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)  # TODO remove
+    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
     UVW = parcels.VectorField("UVW", U, V, W, vector_interp_method=CGrid_Velocity)
     fieldset = parcels.FieldSet([U, V, W, UV, UVW])
 
-    lons = np.linspace(1.9, 3.4, 10)
-    lats = np.linspace(52.5, 51.6, 10)
+    npart = 10
+    lons = np.linspace(1.9, 3.4, npart)
+    lats = np.linspace(52.5, 51.6, npart)
     pset = parcels.ParticleSet(fieldset, lon=lons, lat=lats, depth=np.ones_like(lons))
 
-    pset.execute(parcels.AdvectionRK4, runtime=np.timedelta64(4, "D"), dt=np.timedelta64(6, "h"))
-    print(pset.depth)
+    pset.execute(kernel[method], runtime=np.timedelta64(4, "D"), dt=np.timedelta64(6, "h"))
+
+    if method == "RK4":
+        np.testing.assert_equal(round_and_hash_float_array([p.lon for p in pset], decimals=5), 29977383852960156017546)
+    elif method == "RK4_3D":
+        # TODO check why decimals needs to be so low in RK4_3D (compare to v3)
+        np.testing.assert_equal(
+            round_and_hash_float_array([p.depth for p in pset], decimals=1), 29747210774230389239432
+        )
