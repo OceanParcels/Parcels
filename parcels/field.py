@@ -82,7 +82,7 @@ class Field:
     -----
     The xarray.DataArray or uxarray.UxDataArray object contains the field data and metadata.
         * dims: (time, [nz1 | nz], [face_lat | node_lat | edge_lat], [face_lon | node_lon | edge_lon])
-        * attrs: (location, mesh, mesh_type)
+        * attrs: (location, mesh, mesh)
 
     When using a xarray.DataArray object,
     * The xarray.DataArray object must have the "location" and "mesh" attributes set.
@@ -157,9 +157,9 @@ class Field:
 
         self.igrid = -1  # Default the grid index to -1
 
-        if self.grid._mesh_type == "flat" or (self.name not in unitconverters_map.keys()):
+        if self.grid._mesh == "flat" or (self.name not in unitconverters_map.keys()):
             self.units = UnitConverter()
-        elif self.grid._mesh_type == "spherical":
+        elif self.grid._mesh == "spherical":
             self.units = unitconverters_map[self.name]
 
         if self.data.shape[0] > 1:

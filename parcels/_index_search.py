@@ -8,6 +8,7 @@ import numpy as np
 from parcels._typing import (
     GridIndexingType,
     InterpMethodOption,
+    Mesh,
 )
 from parcels.tools.statuscodes import (
     FieldOutOfBoundError,
@@ -174,7 +175,7 @@ def _search_indices_rectilinear(
         _raise_field_out_of_bound_error(z, y, x)
 
     if field.xdim > 1:
-        if field._mesh_type != "spherical":
+        if field._mesh != "spherical":
             lon_index = field.lon < x
             if lon_index.all():
                 xi = len(field.lon) - 2
@@ -305,7 +306,7 @@ def _search_indices_curvilinear_2d(
         xi = np.where(xsi < -tol, xi - 1, np.where(xsi > 1 + tol, xi + 1, xi))
         yi = np.where(eta < -tol, yi - 1, np.where(eta > 1 + tol, yi + 1, yi))
 
-        (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid._mesh_type)
+        (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid._mesh)
         it += 1
         if it > maxIterSearch:
             print(f"Correct cell not found after {maxIterSearch} iterations")
@@ -408,11 +409,11 @@ def _search_indices_curvilinear(field, time, z, y, x, ti, particle=None, search2
     return (zeta, eta, xsi, zi, yi, xi)
 
 
-def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, mesh_type: Mesh):
-    xi = np.where(xi < 0, (xdim - 2) if mesh_type == "spherical" else 0, xi)
-    xi = np.where(xi > xdim - 2, 0 if mesh_type == "spherical" else (xdim - 2), xi)
+def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, mesh: Mesh):
+    xi = np.where(xi < 0, (xdim - 2) if mesh == "spherical" else 0, xi)
+    xi = np.where(xi > xdim - 2, 0 if mesh == "spherical" else (xdim - 2), xi)
 
-    xi = np.where(yi > ydim - 2, xdim - xi if mesh_type == "spherical" else xi, xi)
+    xi = np.where(yi > ydim - 2, xdim - xi if mesh == "spherical" else xi, xi)
 
     yi = np.where(yi < 0, 0, yi)
     yi = np.where(yi > ydim - 2, ydim - 2, yi)

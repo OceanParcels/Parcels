@@ -24,7 +24,7 @@ from tests.common_kernels import DoNothing
 @pytest.fixture
 def fieldset() -> FieldSet:
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid.from_dataset(ds, mesh_type="flat")
+    grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U (A grid)"], grid)
     V = Field("V", ds["V (A grid)"], grid)
     return FieldSet([U, V])
@@ -32,9 +32,9 @@ def fieldset() -> FieldSet:
 
 @pytest.fixture
 def zonal_flow_fieldset() -> FieldSet:
-    ds = simple_UV_dataset(mesh_type="flat")
+    ds = simple_UV_dataset(mesh="flat")
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds, mesh_type="flat")
+    grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U"], grid)
     V = Field("V", ds["V"], grid)
     UV = VectorField("UV", U, V)
@@ -234,7 +234,7 @@ def test_execution_fail_python_exception(fieldset, npart):
 
 def test_uxstommelgyre_pset_execute():
     ds = datasets_unstructured["stommel_gyre_delaunay"]
-    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh_type="spherical")
+    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh="spherical")
     U = Field(
         name="U",
         data=ds.U,
@@ -275,7 +275,7 @@ def test_uxstommelgyre_pset_execute():
 @pytest.mark.xfail(reason="Output file not implemented yet")
 def test_uxstommelgyre_pset_execute_output():
     ds = datasets_unstructured["stommel_gyre_delaunay"]
-    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh_type="spherical")
+    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh="spherical")
     U = Field(
         name="U",
         data=ds.U,

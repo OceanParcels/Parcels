@@ -16,18 +16,18 @@ from parcels.xgrid import XGrid
 from tests.utils import TEST_DATA
 
 
-@pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
-def test_interpolation_mesh_type(mesh_type, npart=10):
-    ds = simple_UV_dataset(mesh_type=mesh_type)
+@pytest.mark.parametrize("mesh", ["spherical", "flat"])
+def test_interpolation_mesh(mesh, npart=10):
+    ds = simple_UV_dataset(mesh=mesh)
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds, mesh_type=mesh_type)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
     U = Field("U", ds["U"], grid, interp_method=XLinear)
     V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
 
     lat = 30.0
     time = U.time_interval.left
-    u_expected = 1.0 if mesh_type == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(lat)))
+    u_expected = 1.0 if mesh == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(lat)))
 
     assert np.isclose(U[time, 0, lat, 0], u_expected, atol=1e-7)
     assert V[time, 0, lat, 0] == 0.0
@@ -91,7 +91,7 @@ def test_interp_regression_v3(interp_name):
         },
     )
 
-    grid = XGrid.from_dataset(ds, mesh_type="flat")
+    grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U"], grid, interp_method=interp_methods[interp_name])
     V = Field("V", ds["V"], grid, interp_method=interp_methods[interp_name])
     W = Field("W", ds["W"], grid, interp_method=interp_methods[interp_name])

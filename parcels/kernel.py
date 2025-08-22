@@ -143,7 +143,7 @@ class Kernel:
                         stacklevel=2,
                     )
                     self.fieldset.add_constant("RK45_tol", 10)
-                if self.fieldset.U.grid._mesh_type == "spherical":
+                if self.fieldset.U.grid._mesh == "spherical":
                     self.fieldset.RK45_tol /= (
                         1852 * 60
                     )  # TODO does not account for zonal variation in meter -> degree conversion
