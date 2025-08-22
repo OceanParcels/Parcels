@@ -6,7 +6,7 @@ from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels._index_search import _search_time_index
 from parcels.application_kernels.advection import AdvectionRK4_3D
-from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, ZeroInterpolator
+from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, XNearest, ZeroInterpolator
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
@@ -49,9 +49,25 @@ def field():
     "func, t, z, y, x, expected",
     [
         pytest.param(ZeroInterpolator, np.timedelta64(1, "s"), 2.5, 0.49, 0.51, 0, id="Zero"),
-        pytest.param(XLinear, np.timedelta64(0, "s"), 0, 0.49, 0.51, 1.49, id="Linear-1"),
-        pytest.param(XLinear, np.timedelta64(1, "s"), 0, 0.49, 0.51, 6.49, id="Linear-2"),
+        pytest.param(
+            XLinear,
+            [np.timedelta64(0, "s"), np.timedelta64(1, "s")],
+            [0, 0],
+            [0.49, 0.49],
+            [0.51, 0.51],
+            [1.49, 6.49],
+            id="Linear",
+        ),
         pytest.param(XLinear, np.timedelta64(1, "s"), 2.5, 0.49, 0.51, 13.99, id="Linear-2"),
+        pytest.param(
+            XNearest,
+            [np.timedelta64(0, "s"), np.timedelta64(3, "s")],
+            [0.2, 0.2],
+            [0.2, 0.2],
+            [0.51, 0.51],
+            [1.0, 16.0],
+            id="Nearest",
+        ),
     ],
 )
 def test_raw_2d_interpolation(field, func, t, z, y, x, expected):
