@@ -30,7 +30,7 @@ class SpatialHash:
         self._source_grid = grid
         self.reconstruct = reconstruct
 
-        if self._source_grid.mesh == "spherical":
+        if self._source_grid._mesh == "spherical":
             # Boundaries of the hash grid are the unit cube
             self._xmin = -1.0
             self._ymin = -1.0
@@ -172,7 +172,7 @@ class SpatialHash:
 
         y = np.asarray(y)
         x = np.asarray(x)
-        if self._source_grid.mesh == "spherical":
+        if self._source_grid._mesh == "spherical":
             # Convert coords to Cartesian coordinates (x, y, z)
             lat = np.deg2rad(y)
             lon = np.deg2rad(x)
