@@ -254,8 +254,8 @@ class SpatialHash:
         j_best = np.full(num_queries, -1, dtype=np.int64)
         i_best = np.full(num_queries, -1, dtype=np.int64)
         has_hits = hit_counts > 0
-        j_best[has_hits] = i_all[src_best[has_hits]]
-        i_best[has_hits] = j_all[src_best[has_hits]]
+        j_best[has_hits] = j[src_best[has_hits]]
+        i_best[has_hits] = i[src_best[has_hits]]
 
         return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
 

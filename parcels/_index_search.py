@@ -254,8 +254,7 @@ def _search_indices_curvilinear_2d(
 ):  # TODO fix typing instructions to make clear that y, x etc need to be ndarrays
     yi, xi = yi_guess, xi_guess
     if yi is None or xi is None:
-        faces = grid.get_spatial_hash().query(np.column_stack((y, x)))
-        yi, xi = faces[0]
+        yi, xi = grid.get_spatial_hash().query(y, x)
 
     xsi = eta = -1.0 * np.ones(len(x), dtype=float)
     invA = np.array(
