@@ -141,15 +141,18 @@ class SpatialHash:
 
     def query(
         self,
-        coords,
+        y,
+        x,
     ):
         """
         Queries the hash table and finds the closes face in the source grid for each coordinate pair.
 
         Parameters
         ----------
-        coords : array_like
-            coordinate pairs in degrees (lat, lon) to query of shape (N,2) where N is the number of queries.
+        y : array_like
+            y-coordinates in degrees (lat) to query of shape (N,) where N is the number of queries.
+        x : array_like
+            x-coordinates in degrees (lon) to query of shape (N,) where N is the number of queries.
 
         Returns
         -------
@@ -167,15 +170,17 @@ class SpatialHash:
         yc = self._yc
         zc = self._zc
 
+        y = np.asarray(y)
+        x = np.asarray(x)
         if self._source_grid.mesh == "spherical":
             # Convert coords to Cartesian coordinates (x, y, z)
-            lat = np.deg2rad(coords[:, 0])
-            lon = np.deg2rad(coords[:, 1])
+            lat = np.deg2rad(y)
+            lon = np.deg2rad(x)
             qx, qy, qz = _latlon_rad_to_xyz(lat, lon)
         else:
             # For Cartesian grids, use the coordinates directly
-            qx = coords[:, 0]
-            qy = coords[:, 1]
+            qx = x
+            qy = y
             qz = np.zeros_like(qx)
 
         query_codes = _encode_morton3d(
@@ -186,8 +191,8 @@ class SpatialHash:
         # Locate each query in the unique key array
         pos = np.searchsorted(keys, query_codes)  # pos is shape (N,)
 
-        # Valid hits: inside range and exact match
-        valid = (pos < len(keys)) & (keys[pos] == query_codes)  # has shape (N,)
+        # Valid hits: inside range
+        valid = pos < len(keys)
 
         # How many matches each query has; hit_counts[i] is the number of hits for query i
         hit_counts = np.where(valid, counts[pos], 0).astype(np.int64)  # has shape (N,)
