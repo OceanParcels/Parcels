@@ -11,11 +11,7 @@ import xarray as xr
 
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import default_repr
-from parcels._typing import (
-    Mesh,
-    VectorType,
-    assert_valid_mesh,
-)
+from parcels._typing import VectorType
 from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, ZeroInterpolator
 from parcels.particle import KernelParticle
 from parcels.tools.converters import (
@@ -86,7 +82,7 @@ class Field:
     -----
     The xarray.DataArray or uxarray.UxDataArray object contains the field data and metadata.
         * dims: (time, [nz1 | nz], [face_lat | node_lat | edge_lat], [face_lon | node_lon | edge_lon])
-        * attrs: (location, mesh, mesh_type)
+        * attrs: (location, mesh, mesh)
 
     When using a xarray.DataArray object,
     * The xarray.DataArray object must have the "location" and "mesh" attributes set.
@@ -114,7 +110,6 @@ class Field:
         name: str,
         data: xr.DataArray | ux.UxDataArray,
         grid: UxGrid | XGrid,
-        mesh_type: Mesh = "flat",
         interp_method: Callable | None = None,
     ):
         if not isinstance(data, (ux.UxDataArray, xr.DataArray)):
@@ -125,8 +120,6 @@ class Field:
             raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
         if not isinstance(grid, (UxGrid, XGrid)):
             raise ValueError(f"Expected `grid` to be a parcels UxGrid, or parcels XGrid object, got {type(grid)}.")
-
-        assert_valid_mesh(mesh_type)
 
         _assert_compatible_combination(data, grid)
 
@@ -155,8 +148,6 @@ class Field:
             e.add_note(f"Error validating field {name!r}.")
             raise e
 
-        self._mesh_type = mesh_type
-
         # Setting the interpolation method dynamically
         if interp_method is None:
             self._interp_method = _DEFAULT_INTERPOLATOR_MAPPING[type(self.grid)]
@@ -166,12 +157,10 @@ class Field:
 
         self.igrid = -1  # Default the grid index to -1
 
-        if self._mesh_type == "flat" or (self.name not in unitconverters_map.keys()):
+        if self.grid._mesh == "flat" or (self.name not in unitconverters_map.keys()):
             self.units = UnitConverter()
-        elif self._mesh_type == "spherical":
+        elif self.grid._mesh == "spherical":
             self.units = unitconverters_map[self.name]
-        else:
-            raise ValueError("Unsupported mesh type in data array attributes. Choose either: 'spherical' or 'flat'")
 
         if self.data.shape[0] > 1:
             if "time" not in self.data.coords:

@@ -5,6 +5,7 @@ from typing import Literal
 import numpy as np
 import uxarray as ux
 
+from parcels._typing import assert_valid_mesh
 from parcels.spatialhash import _barycentric_coordinates
 from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.xgrid import _search_1d_array
@@ -20,7 +21,7 @@ class UxGrid(BaseGrid):
     for interpolation on unstructured grids.
     """
 
-    def __init__(self, grid: ux.grid.Grid, z: ux.UxDataArray) -> UxGrid:
+    def __init__(self, grid: ux.grid.Grid, z: ux.UxDataArray, mesh="flat") -> UxGrid:
         """
         Initializes the UxGrid with a uxarray grid and vertical coordinate array.
 
@@ -32,6 +33,8 @@ class UxGrid(BaseGrid):
             A 1D array of vertical coordinates (depths) associated with the layer interface heights (not the mid-layer depths).
             While uxarray allows nz to be spatially and temporally varying, the parcels.UxGrid class considers the case where
             the vertical coordinate is constant in time and space. This implies flat bottom topography and no moving ALE vertical grid.
+        mesh : str, optional
+            The type of mesh used for the grid. Either "flat" (default) or "spherical".
         """
         self.uxgrid = grid
         if not isinstance(z, ux.UxDataArray):
@@ -39,6 +42,9 @@ class UxGrid(BaseGrid):
         if z.ndim != 1:
             raise ValueError("z must be a 1D array of vertical coordinates")
         self.z = z
+        self._mesh = mesh
+
+        assert_valid_mesh(mesh)
 
     @property
     def depth(self):
