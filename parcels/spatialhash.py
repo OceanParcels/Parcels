@@ -368,11 +368,26 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
     Quantize (x, y, z) to 10 bits each (0..1023), dilate the bits so there are
     two zeros between successive bits, and interleave them into a 3D Morton code.
 
+    Parameters
+    ----------
+    x, y, z : array_like
+        Input coordinates to encode. Can be scalars or arrays (broadcasting applies).
+    xmin, xmax : float
+        Minimum and maximum bounds for x coordinate.
+    ymin, ymax : float
+        Minimum and maximum bounds for y coordinate.
+    zmin, zmax : float
+        Minimum and maximum bounds for z coordinate.
+
+    Returns
+    -------
+    code : ndarray, dtype=uint32
+        The resulting Morton codes, same shape as the broadcasted input coordinates.
+
     Notes
     -----
     - Works with scalars or NumPy arrays (broadcasting applies).
-    - Output is up to 30 bits; we return np.uint32 (or np.uint64 if you prefer).
-    - Requires `part1by2` defined as in your previous snippet.
+    - Output is up to 30 bits returned as uint32.
     """
     # Convert inputs to ndarray for consistent dtype/ufunc behavior.
     x = np.asarray(x)
