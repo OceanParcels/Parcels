@@ -79,6 +79,7 @@ class SpatialHash:
             self._xmax = self._source_grid.lon.max()
             self._ymin = self._source_grid.lat.min()
             self._ymax = self._source_grid.lat.max()
+            # setting min and max below is needed for mesh="flat"
             self._zmin = 0.0
             self._zmax = 0.0
             x = self._source_grid.lon
