@@ -96,9 +96,11 @@ class ParticleSet:
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
         if time is None or len(time) == 0:
-            time = type(fieldset.U.data.time[0].values)(
-                "NaT", "ns"
-            )  # do not set a time yet (because sign_dt not known)
+            # do not set a time yet (because sign_dt not known)
+            if fieldset.time_interval is None:
+                time = np.timedelta64("NaT", "ns")
+            else:
+                time = type(fieldset.time_interval.left)("NaT", "ns")
         elif type(time[0]) in [np.datetime64, np.timedelta64]:
             pass  # already in the right format
         else:
