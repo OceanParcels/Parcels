@@ -408,5 +408,5 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
     # Cast to a wide type before shifting/OR to be safe when arrays are used.
     code = (dz3 << 2) | (dy3 << 1) | dx3
 
-    # If you want a compact type, it fits in 30 bits; uint32 is enough.
+    # Since our compact type fits in 30 bits, uint32 is enough.
     return code.astype(np.uint32)
