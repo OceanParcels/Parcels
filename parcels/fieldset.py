@@ -82,6 +82,13 @@ class FieldSet:
             return None
         return functools.reduce(lambda x, y: x.intersection(y), time_intervals)
 
+    def _load_timesteps(self, time):
+        """Load the appropriate timesteps of all fields in the fieldset."""
+        for fldname in self.fields:
+            field = self.fields[fldname]
+            if isinstance(field, Field):
+                field._load_timesteps(time)
+
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
 
