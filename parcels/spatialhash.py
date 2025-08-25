@@ -385,9 +385,10 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
     dz = zmax - zmin
 
     # Normalize to [0,1]; if a range is degenerate, map to 0 to avoid NaN/inf.
-    xn = np.where(dx != 0, (x - xmin) / dx, 0.0)
-    yn = np.where(dy != 0, (y - ymin) / dy, 0.0)
-    zn = np.where(dz != 0, (z - zmin) / dz, 0.0)
+    with np.errstate(invalid="ignore"):
+        xn = np.where(dx != 0, (x - xmin) / dx, 0.0)
+        yn = np.where(dy != 0, (y - ymin) / dy, 0.0)
+        zn = np.where(dz != 0, (z - zmin) / dz, 0.0)
 
     # --- 2) Quantize to 10 bits (0..1023). ---
     # Multiply by 1023, round down, and clip to be safe against slight overshoot.
