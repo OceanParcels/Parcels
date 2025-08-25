@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import dask.array as dask
 import numpy as np
 import xarray as xr
+from dask import is_dask_collection
 
 import parcels.tools.interpolation_utils as i_u
 
@@ -113,7 +113,7 @@ def XLinear(
         + (1 - xsi) * eta * corner_data[:, 2]
         + xsi * eta * corner_data[:, 3]
     )
-    return value.compute() if isinstance(value, dask.Array) else value
+    return value.compute() if is_dask_collection(value) else value
 
 
 def CGrid_Velocity(
@@ -263,7 +263,7 @@ def CGrid_Velocity(
         + (eta * U + xsi * V) * py[2]
         + (-eta * U + (1 - xsi) * V) * py[3]
     ) / jac
-    if isinstance(u, dask.Array):
+    if is_dask_collection(u):
         u = u.compute()
         v = v.compute()
 
@@ -312,7 +312,7 @@ def CGrid_Velocity(
             corner_data = corner_data[0, :, :]
 
         w = corner_data[0, :] * (1 - zeta) + corner_data[1, :] * zeta
-        if isinstance(w, dask.Array):
+        if is_dask_collection(w):
             w = w.compute()
     else:
         w = np.zeros_like(u)
@@ -372,7 +372,7 @@ def CGrid_Tracer(
     else:
         value = value[0, :]
 
-    return value.compute() if isinstance(value, dask.Array) else value
+    return value.compute() if is_dask_collection(value) else value
 
 
 def UXPiecewiseConstantFace(
