@@ -148,22 +148,22 @@ def CGrid_Velocity(
         px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
         py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
 
-    if vectorfield._mesh == "spherical":
+    if grid._mesh == "spherical":
         px[0] = np.where(px[0] < x - 225, px[0] + 360, px[0])
         px[0] = np.where(px[0] > x + 225, px[0] - 360, px[0])
         px[1:] = np.where(px[1:] - px[0] > 180, px[1:] - 360, px[1:])
         px[1:] = np.where(-px[1:] + px[0] > 180, px[1:] + 360, px[1:])
     c1 = i_u._geodetic_distance(
-        py[0], py[1], px[0], px[1], vectorfield._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(0.0, xsi), py)
+        py[0], py[1], px[0], px[1], grid._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(0.0, xsi), py)
     )
     c2 = i_u._geodetic_distance(
-        py[1], py[2], px[1], px[2], vectorfield._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(eta, 1.0), py)
+        py[1], py[2], px[1], px[2], grid._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(eta, 1.0), py)
     )
     c3 = i_u._geodetic_distance(
-        py[2], py[3], px[2], px[3], vectorfield._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(1.0, xsi), py)
+        py[2], py[3], px[2], px[3], grid._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(1.0, xsi), py)
     )
     c4 = i_u._geodetic_distance(
-        py[3], py[0], px[3], px[0], vectorfield._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(eta, 0.0), py)
+        py[3], py[0], px[3], px[0], grid._mesh, np.einsum("ij,ji->i", i_u.phi2D_lin(eta, 0.0), py)
     )
 
     lenT = 2 if np.any(tau > 0) else 1
@@ -245,9 +245,9 @@ def CGrid_Velocity(
 
     deg2m = 1852 * 60.0
     if applyConversion:
-        meshJac = (deg2m * deg2m * np.cos(np.deg2rad(y))) if vectorfield._mesh == "spherical" else 1
+        meshJac = (deg2m * deg2m * np.cos(np.deg2rad(y))) if grid._mesh == "spherical" else 1
     else:
-        meshJac = deg2m if vectorfield._mesh == "spherical" else 1
+        meshJac = deg2m if grid._mesh == "spherical" else 1
 
     jac = i_u._compute_jacobian_determinant(py, px, eta, xsi) * meshJac
 
