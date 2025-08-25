@@ -33,21 +33,21 @@ kernel = {
 }
 
 
-@pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
-def test_advection_zonal(mesh_type, npart=10):
+@pytest.mark.parametrize("mesh", ["spherical", "flat"])
+def test_advection_zonal(mesh, npart=10):
     """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
-    ds = simple_UV_dataset(mesh_type=mesh_type)
+    ds = simple_UV_dataset(mesh=mesh)
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
     pset = ParticleSet(fieldset, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
-    if mesh_type == "spherical":
+    if mesh == "spherical":
         assert (np.diff(pset.lon) > 1.0e-4).all()
     else:
         assert (np.diff(pset.lon) < 1.0e-4).all()
@@ -59,7 +59,7 @@ def periodicBC(particle, fieldset, time):
 
 
 def test_advection_zonal_periodic():
-    ds = simple_UV_dataset(dims=(2, 2, 2, 2), mesh_type="flat")
+    ds = simple_UV_dataset(dims=(2, 2, 2, 2), mesh="flat")
     ds["U"].data[:] = 0.1
     ds["lon"].data = np.array([0, 2])
     ds["lat"].data = np.array([0, 2])
@@ -87,7 +87,7 @@ def test_advection_zonal_periodic():
 
 def test_horizontal_advection_in_3D_flow(npart=10):
     """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
-    ds = simple_UV_dataset(mesh_type="flat")
+    ds = simple_UV_dataset(mesh="flat")
     ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=XLinear)
@@ -106,7 +106,7 @@ def test_horizontal_advection_in_3D_flow(npart=10):
 @pytest.mark.parametrize("direction", ["up", "down"])
 @pytest.mark.parametrize("wErrorThroughSurface", [True, False])
 def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
-    ds = simple_UV_dataset(mesh_type="flat")
+    ds = simple_UV_dataset(mesh="flat")
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=XLinear)
     U.data[:] = 0.01  # Set U to small value (to avoid horizontal out of bounds)
@@ -209,9 +209,9 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
 
 def test_radialrotation(npart=10):
     ds = radial_rotation_dataset()
-    grid = XGrid.from_dataset(ds)
-    U = parcels.Field("U", ds["U"], grid, mesh_type="flat", interp_method=XLinear)
-    V = parcels.Field("V", ds["V"], grid, mesh_type="flat", interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = parcels.Field("U", ds["U"], grid, interp_method=XLinear)
+    V = parcels.Field("V", ds["V"], grid, interp_method=XLinear)
     UV = parcels.VectorField("UV", U, V)
     fieldset = parcels.FieldSet([U, V, UV])
 
@@ -427,10 +427,10 @@ def test_nemo_curvilinear_fieldset():
         },
         periodic=False,
     )
-    grid = XGrid(xgcm_grid)
+    grid = XGrid(xgcm_grid, mesh="spherical")
 
-    U = parcels.Field("U", ds["U"], grid, mesh_type="spherical")
-    V = parcels.Field("V", ds["V"], grid, mesh_type="spherical")
+    U = parcels.Field("U", ds["U"], grid)
+    V = parcels.Field("V", ds["V"], grid)
     U.units = parcels.GeographicPolar()
     V.units = parcels.Geographic()
     UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
@@ -511,11 +511,11 @@ def test_nemo_3D_curvilinear_fieldset(method):
         },
         periodic=False,
     )
-    grid = XGrid(xgcm_grid)
+    grid = XGrid(xgcm_grid, mesh="spherical")
 
-    U = parcels.Field("U", ds["U"], grid, mesh_type="spherical")
-    V = parcels.Field("V", ds["V"], grid, mesh_type="spherical")
-    W = parcels.Field("W", ds["W"], grid, mesh_type="spherical")
+    U = parcels.Field("U", ds["U"], grid)
+    V = parcels.Field("V", ds["V"], grid)
+    W = parcels.Field("W", ds["W"], grid)
     U.units = parcels.GeographicPolar()
     V.units = parcels.Geographic()
     UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
