@@ -127,7 +127,7 @@ class Field:
             data = _transpose_xfield_data_to_tzyx(data, grid.xgcm_grid)
 
         self.name = name
-        self.data = data
+        self.data_full = data
         self.grid = grid
 
         try:
@@ -162,8 +162,8 @@ class Field:
         elif self.grid._mesh == "spherical":
             self.units = unitconverters_map[self.name]
 
-        if self.data.shape[0] > 1:
-            if "time" not in self.data.coords:
+        if data.shape[0] > 1:
+            if "time" not in data.coords:
                 raise ValueError("Field data is missing a 'time' coordinate.")
 
     @property
@@ -178,27 +178,27 @@ class Field:
 
     @property
     def xdim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.xdim
         else:
             raise NotImplementedError("xdim not implemented for unstructured grids")
 
     @property
     def ydim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.ydim
         else:
             raise NotImplementedError("ydim not implemented for unstructured grids")
 
     @property
     def zdim(self):
-        if type(self.data) is xr.DataArray:
+        if type(self.data_full) is xr.DataArray:
             return self.grid.zdim
         else:
-            if "nz1" in self.data.dims:
-                return self.data.sizes["nz1"]
-            elif "nz" in self.data.dims:
-                return self.data.sizes["nz"]
+            if "nz1" in self.data_full.dims:
+                return self.data_full.sizes["nz1"]
+            elif "nz" in self.data_full.dims:
+                return self.data_full.sizes["nz"]
             else:
                 return 0
 
@@ -218,6 +218,19 @@ class Field:
                 RuntimeWarning,
                 stacklevel=2,
             )
+
+    def _load_timesteps(self, time):
+        """Load the appropriate timesteps of a field."""
+        ti = np.argmin(self.data_full.time.data <= time) - 1  # TODO also implement dt < 0
+        if not hasattr(self, "data"):
+            self.data = self.data_full.isel({"time": slice(ti, ti + 2)}).load()
+        elif self.data_full.time.data[ti] == self.data.time.data[1]:
+            self.data = xr.concat([self.data[1, :], self.data_full.isel({"time": ti + 1}).load()], dim="time")
+        elif self.data_full.time.data[ti] != self.data.time.data[0]:
+            self.data = self.data_full.isel({"time": slice(ti, ti + 2)}).load()
+        assert len(self.data.time) == 2, (
+            f"Field {self.name} has not been loaded correctly. Expected 2 timesteps, but got {len(self.data.time)}."
+        )
 
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.

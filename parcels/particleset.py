@@ -96,9 +96,11 @@ class ParticleSet:
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
         if time is None or len(time) == 0:
-            time = type(fieldset.U.data.time[0].values)(
-                "NaT", "ns"
-            )  # do not set a time yet (because sign_dt not known)
+            # do not set a time yet (because sign_dt not known)
+            if fieldset.time_interval is None:
+                time = np.timedelta64("NaT", "ns")
+            else:
+                time = type(fieldset.time_interval.left)("NaT", "ns")
         elif type(time[0]) in [np.datetime64, np.timedelta64]:
             pass  # already in the right format
         else:
@@ -576,10 +578,13 @@ class ParticleSet:
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
+            # Load the appropriate timesteps of the fieldset
+            self.fieldset._load_timesteps(self._data["time_nextloop"][0])
+
             if sign_dt > 0:
-                next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
+                next_time = min(time + dt, end_time)
             else:
-                next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
+                next_time = max(time - dt, end_time)
             self._kernel.execute(self, endtime=next_time, dt=dt)
 
             # TODO: Handle IO timing based of timedelta or datetime objects
