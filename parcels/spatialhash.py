@@ -79,6 +79,7 @@ class SpatialHash:
             self._xmax = self._source_grid.lon.max()
             self._ymin = self._source_grid.lat.min()
             self._ymax = self._source_grid.lat.max()
+            # setting min and max below is needed for mesh="flat"
             self._zmin = 0.0
             self._zmax = 0.0
             x = self._source_grid.lon
@@ -367,11 +368,26 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
     Quantize (x, y, z) to 10 bits each (0..1023), dilate the bits so there are
     two zeros between successive bits, and interleave them into a 3D Morton code.
 
+    Parameters
+    ----------
+    x, y, z : array_like
+        Input coordinates to encode. Can be scalars or arrays (broadcasting applies).
+    xmin, xmax : float
+        Minimum and maximum bounds for x coordinate.
+    ymin, ymax : float
+        Minimum and maximum bounds for y coordinate.
+    zmin, zmax : float
+        Minimum and maximum bounds for z coordinate.
+
+    Returns
+    -------
+    code : ndarray, dtype=uint32
+        The resulting Morton codes, same shape as the broadcasted input coordinates.
+
     Notes
     -----
     - Works with scalars or NumPy arrays (broadcasting applies).
-    - Output is up to 30 bits; we return np.uint32 (or np.uint64 if you prefer).
-    - Requires `part1by2` defined as in your previous snippet.
+    - Output is up to 30 bits returned as uint32.
     """
     # Convert inputs to ndarray for consistent dtype/ufunc behavior.
     x = np.asarray(x)
@@ -385,9 +401,10 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
     dz = zmax - zmin
 
     # Normalize to [0,1]; if a range is degenerate, map to 0 to avoid NaN/inf.
-    xn = np.where(dx != 0, (x - xmin) / dx, 0.0)
-    yn = np.where(dy != 0, (y - ymin) / dy, 0.0)
-    zn = np.where(dz != 0, (z - zmin) / dz, 0.0)
+    with np.errstate(invalid="ignore"):
+        xn = np.where(dx != 0, (x - xmin) / dx, 0.0)
+        yn = np.where(dy != 0, (y - ymin) / dy, 0.0)
+        zn = np.where(dz != 0, (z - zmin) / dz, 0.0)
 
     # --- 2) Quantize to 10 bits (0..1023). ---
     # Multiply by 1023, round down, and clip to be safe against slight overshoot.
@@ -407,5 +424,5 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
     # Cast to a wide type before shifting/OR to be safe when arrays are used.
     code = (dz3 << 2) | (dy3 << 1) | dx3
 
-    # If you want a compact type, it fits in 30 bits; uint32 is enough.
+    # Since our compact type fits in 30 bits, uint32 is enough.
     return code.astype(np.uint32)
