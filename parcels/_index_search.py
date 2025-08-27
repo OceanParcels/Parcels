@@ -15,7 +15,7 @@ from parcels.tools.statuscodes import (
     FieldOutOfBoundSurfaceError,
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
-    _raise_field_sampling_error,
+    _raise_grid_searching_error,
     _raise_time_extrapolation_error,
 )
 
@@ -243,7 +243,7 @@ def _search_indices_rectilinear(
         zi, zeta = -1, 0
 
     if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-        _raise_field_sampling_error(z, y, x)
+        _raise_grid_searching_error(z, y, x)
 
     _ei = field.ravel_index(zi, yi, xi)
 
@@ -314,7 +314,7 @@ def _search_indices_curvilinear_2d(
     eta = np.where(eta < 0.0, 0.0, np.where(eta > 1.0, 1.0, eta))
 
     if np.any((xsi < 0) | (xsi > 1) | (eta < 0) | (eta > 1)):
-        _raise_field_sampling_error(y, x)
+        _raise_grid_searching_error(y, x)
     return (yi, eta, xi, xsi)
 
 
@@ -400,7 +400,7 @@ def _search_indices_curvilinear(field, time, z, y, x, ti, particle=None, search2
         zeta = 0
 
     if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
-        _raise_field_sampling_error(z, y, x)
+        _raise_grid_searching_error(z, y, x)
 
     if particle:
         particle.ei[field.igrid] = field.ravel_index(zi, yi, xi)

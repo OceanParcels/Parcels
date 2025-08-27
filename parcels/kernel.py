@@ -15,9 +15,11 @@ from parcels.application_kernels.advection import (
 from parcels.basegrid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
+    _raise_field_interpolation_error,
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
-    _raise_field_sampling_error,
+    _raise_general_error,
+    _raise_grid_searching_error,
     _raise_time_extrapolation_error,
 )
 from parcels.tools.warnings import KernelWarning
@@ -274,7 +276,9 @@ class Kernel:
                 StatusCode.ErrorTimeExtrapolation: _raise_time_extrapolation_error,
                 StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
                 StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
-                StatusCode.Error: _raise_field_sampling_error,
+                StatusCode.ErrorInterpolation: _raise_field_interpolation_error,
+                StatusCode.ErrorGridSearching: _raise_grid_searching_error,
+                StatusCode.Error: _raise_general_error,
             }
 
             for error_code, error_func in errors_to_throw.items():
