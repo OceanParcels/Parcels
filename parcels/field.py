@@ -12,7 +12,12 @@ import xarray as xr
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import default_repr
 from parcels._typing import VectorType
-from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, ZeroInterpolator
+from parcels.application_kernels.interpolation import (
+    UXPiecewiseLinearNode,
+    XLinear,
+    ZeroInterpolator,
+    ZeroInterpolator_Vector,
+)
 from parcels.particle import KernelParticle
 from parcels.tools.converters import (
     UnitConverter,
@@ -280,8 +285,8 @@ class VectorField:
         if vector_interp_method is None:
             self._vector_interp_method = None
         else:
-            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator)
-            self._interp_method = vector_interp_method
+            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator_Vector)
+            self._vector_interp_method = vector_interp_method
 
     def __repr__(self):
         return f"""<{type(self).__name__}>
@@ -296,7 +301,7 @@ class VectorField:
 
     @vector_interp_method.setter
     def vector_interp_method(self, method: Callable):
-        _assert_same_function_signature(method, ref=ZeroInterpolator)
+        _assert_same_function_signature(method, ref=ZeroInterpolator_Vector)
         self._vector_interp_method = method
 
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
@@ -321,7 +326,7 @@ class VectorField:
             if "3D" in self.vector_type:
                 w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
         else:
-            (u, v, w) = self._vector_interp_method(self, ti, position, time, z, y, x)
+            (u, v, w) = self._vector_interp_method(self, ti, position, tau, time, z, y, x)
 
         if applyConversion:
             u = self.U.units.to_target(u, z, y, x)

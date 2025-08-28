@@ -20,6 +20,7 @@ __all__ = [
     "XLinear",
     "XNearest",
     "ZeroInterpolator",
+    "ZeroInterpolator_Vector",
 ]
 
 
@@ -34,6 +35,20 @@ def ZeroInterpolator(
     x: np.float32 | np.float64,
 ) -> np.float32 | np.float64:
     """Template function used for the signature check of the lateral interpolation methods."""
+    return 0.0
+
+
+def ZeroInterpolator_Vector(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[str, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+) -> np.float32 | np.float64:
+    """Template function used for the signature check of the interpolation methods for velocity fields."""
     return 0.0
 
 
