@@ -165,24 +165,95 @@ def XFreeslip(
 
     u = XLinear(vectorfield.U, ti, position, tau, t, z, y, x)
     v = XLinear(vectorfield.V, ti, position, tau, t, z, y, x)
+    if vectorfield.W:
+        w = XLinear(vectorfield.W, ti, position, tau, t, z, y, x)
 
     corner_dataU = _get_corner_data_Agrid(vectorfield.U.data, ti, zi, yi, xi, lenT, lenZ, npart, axis_dim)
     corner_dataV = _get_corner_data_Agrid(vectorfield.V.data, ti, zi, yi, xi, lenT, lenZ, npart, axis_dim)
 
-    def _is_land(ti: int, zi: int, yi: int, xi: int):
+    def is_land(ti: int, zi: int, yi: int, xi: int):
         uval = corner_dataU[ti, zi, :, xi + 2 * yi]
         vval = corner_dataV[ti, zi, :, xi + 2 * yi]
         return np.where(np.isclose(uval, 0.0) & np.isclose(vval, 0.0), True, False)
 
-    f_u, f_v = (1, 1)
-    f_u = np.where((_is_land(0, 0, 0, 0)) & (_is_land(0, 0, 0, 1)) & (eta > 0), f_u / eta, f_u)
-    f_u = np.where((_is_land(0, 0, 1, 0)) & (_is_land(0, 0, 1, 1)) & (eta < 1), f_u / (1 - eta), f_u)
-    f_v = np.where((_is_land(0, 0, 0, 0)) & (_is_land(0, 0, 1, 0)) & (xsi > 0), f_v / xsi, f_v)
-    f_v = np.where((_is_land(0, 0, 0, 1)) & (_is_land(0, 0, 1, 1)) & (xsi < 1), f_v / (1 - xsi), f_v)
+    f_u = np.ones_like(xsi)
+    f_v = np.ones_like(eta)
+
+    if lenZ == 1:
+        f_u = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & (eta > 0), f_u / eta, f_u)
+        f_u = np.where(is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & (eta < 1), f_u / (1 - eta), f_u)
+        f_v = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & (xsi > 0), f_v / xsi, f_v)
+        f_v = np.where(is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & (xsi < 1), f_v / (1 - xsi), f_v)
+    else:
+        f_u = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & (eta > 0),
+            f_u / eta,
+            f_u,
+        )
+        f_u = np.where(
+            is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & is_land(0, 1, 1, 0) & is_land(0, 1, 1, 1) & (eta < 1),
+            f_u / (1 - eta),
+            f_u,
+        )
+        f_v = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & is_land(0, 1, 0, 0) & is_land(0, 1, 1, 0) & (xsi > 0),
+            f_v / xsi,
+            f_v,
+        )
+        f_v = np.where(
+            is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 1) & (xsi < 1),
+            f_v / (1 - xsi),
+            f_v,
+        )
+        f_u = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 0, 1, 0 & is_land(0, 0, 1, 1) & (zeta > 0)),
+            f_u / zeta,
+            f_u,
+        )
+        f_u = np.where(
+            is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
+            f_u / (1 - zeta),
+            f_u,
+        )
+        f_v = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 0, 1, 0 & is_land(0, 0, 1, 1) & (zeta > 0)),
+            f_v / zeta,
+            f_v,
+        )
+        f_v = np.where(
+            is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
+            f_v / (1 - zeta),
+            f_v,
+        )
 
     u *= f_u
     v *= f_v
-    w = None  # TODO also for 3D fields and W component
+    if vectorfield.W:
+        f_w = np.ones_like(zeta)
+        f_w = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & (eta > 0),
+            f_w / eta,
+            f_w,
+        )
+        f_w = np.where(
+            is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & is_land(0, 1, 1, 0) & is_land(0, 1, 1, 1) & (eta < 1),
+            f_w / (1 - eta),
+            f_w,
+        )
+        f_w = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & is_land(0, 1, 0, 0) & is_land(0, 1, 1, 0) & (xsi > 0),
+            f_w / xsi,
+            f_w,
+        )
+        f_w = np.where(
+            is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 1) & (xsi < 1),
+            f_w / (1 - xsi),
+            f_w,
+        )
+
+        w *= f_w
+    else:
+        w = None
     return u, v, w
 
 
