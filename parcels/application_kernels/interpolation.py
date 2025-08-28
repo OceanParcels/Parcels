@@ -19,6 +19,7 @@ __all__ = [
     "XFreeslip",
     "XLinear",
     "XNearest",
+    "XPartialslip",
     "ZeroInterpolator",
     "ZeroInterpolator_Vector",
 ]
@@ -143,7 +144,7 @@ def XLinear(
     return value.compute() if isinstance(value, dask.Array) else value
 
 
-def XFreeslip(
+def _Spatialslip(
     vectorfield: VectorField,
     ti: int,
     position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
@@ -152,8 +153,10 @@ def XFreeslip(
     z: np.float32 | np.float64,
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
+    a: np.float32,
+    b: np.float32,
 ):
-    """Free-slip boundary condition interpolation for velocity fields."""
+    """Helper function for spatial boundary condition interpolation for velocity fields."""
     xi, xsi = position["X"]
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
@@ -187,42 +190,42 @@ def XFreeslip(
     else:
         f_u = np.where(
             is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & (eta > 0),
-            f_u / eta,
+            f_u * (a + b * eta) / eta,
             f_u,
         )
         f_u = np.where(
             is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & is_land(0, 1, 1, 0) & is_land(0, 1, 1, 1) & (eta < 1),
-            f_u / (1 - eta),
+            f_u * (a - b * eta) / (1 - eta),
             f_u,
         )
         f_v = np.where(
             is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & is_land(0, 1, 0, 0) & is_land(0, 1, 1, 0) & (xsi > 0),
-            f_v / xsi,
+            f_v * (a + b * xsi) / xsi,
             f_v,
         )
         f_v = np.where(
             is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 1) & (xsi < 1),
-            f_v / (1 - xsi),
+            f_v * (a - b * xsi) / (1 - xsi),
             f_v,
         )
         f_u = np.where(
             is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 0, 1, 0 & is_land(0, 0, 1, 1) & (zeta > 0)),
-            f_u / zeta,
+            f_u * (a + b * zeta) / zeta,
             f_u,
         )
         f_u = np.where(
             is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
-            f_u / (1 - zeta),
+            f_u * (a - b * zeta) / (1 - zeta),
             f_u,
         )
         f_v = np.where(
             is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 0, 1, 0 & is_land(0, 0, 1, 1) & (zeta > 0)),
-            f_v / zeta,
+            f_v * (a + b * zeta) / zeta,
             f_v,
         )
         f_v = np.where(
             is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
-            f_v / (1 - zeta),
+            f_v * (a - b * zeta) / (1 - zeta),
             f_v,
         )
 
@@ -232,22 +235,22 @@ def XFreeslip(
         f_w = np.ones_like(zeta)
         f_w = np.where(
             is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & (eta > 0),
-            f_w / eta,
+            f_w * (a + b * eta) / eta,
             f_w,
         )
         f_w = np.where(
             is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & is_land(0, 1, 1, 0) & is_land(0, 1, 1, 1) & (eta < 1),
-            f_w / (1 - eta),
+            f_w * (a - b * eta) / (1 - eta),
             f_w,
         )
         f_w = np.where(
             is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & is_land(0, 1, 0, 0) & is_land(0, 1, 1, 0) & (xsi > 0),
-            f_w / xsi,
+            f_w * (a + b * xsi) / xsi,
             f_w,
         )
         f_w = np.where(
             is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 1) & (xsi < 1),
-            f_w / (1 - xsi),
+            f_w * (a - b * xsi) / (1 - xsi),
             f_w,
         )
 
@@ -255,6 +258,34 @@ def XFreeslip(
     else:
         w = None
     return u, v, w
+
+
+def XFreeslip(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Free-slip boundary condition interpolation for velocity fields."""
+    return _Spatialslip(vectorfield, ti, position, tau, t, z, y, x, a=1.0, b=0.0)
+
+
+def XPartialslip(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Partial-slip boundary condition interpolation for velocity fields."""
+    return _Spatialslip(vectorfield, ti, position, tau, t, z, y, x, a=0.5, b=0.5)
 
 
 def XNearest(
