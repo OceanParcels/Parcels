@@ -52,27 +52,18 @@ def ZeroInterpolator_Vector(
     return 0.0
 
 
-def XLinear(
-    field: Field,
+def _get_corner_data_Agrid(
+    data: np.ndarray | xr.DataArray,
     ti: int,
-    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
-    tau: np.float32 | np.float64,
-    t: np.float32 | np.float64,
-    z: np.float32 | np.float64,
-    y: np.float32 | np.float64,
-    x: np.float32 | np.float64,
-):
-    """Trilinear interpolation on a regular grid."""
-    xi, xsi = position["X"]
-    yi, eta = position["Y"]
-    zi, zeta = position["Z"]
-
-    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
-    data = field.data
-
-    lenT = 2 if np.any(tau > 0) else 1
-    lenZ = 2 if np.any(zeta > 0) else 1
-
+    zi: int,
+    yi: int,
+    xi: int,
+    lenT: int,
+    lenZ: int,
+    npart: int,
+    axis_dim: dict[str, str],
+) -> np.ndarray:
+    """Helper function to get the corner data for a given A-grid field and position."""
     # Time coordinates: 8 points at ti, then 8 points at ti+1
     if lenT == 1:
         ti = np.repeat(ti, lenZ * 4)
@@ -105,7 +96,31 @@ def XLinear(
     if "time" in data.dims:
         selection_dict["time"] = xr.DataArray(ti, dims=("points"))
 
-    corner_data = data.isel(selection_dict).data.reshape(lenT, lenZ, len(xsi), 4)
+    return data.isel(selection_dict).data.reshape(lenT, lenZ, npart, 4)
+
+
+def XLinear(
+    field: Field,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Trilinear interpolation on a regular grid."""
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+    data = field.data
+
+    lenT = 2 if np.any(tau > 0) else 1
+    lenZ = 2 if np.any(zeta > 0) else 1
+
+    corner_data = _get_corner_data_Agrid(data, ti, zi, yi, xi, lenT, lenZ, len(xsi), axis_dim)
 
     if lenT == 2:
         tau = tau[np.newaxis, :, np.newaxis]
@@ -143,27 +158,34 @@ def XFreeslip(
     yi, eta = position["Y"]
     zi, zeta = position["Z"]
 
-    def _is_land(ti, zi, yi, xi):
-        return np.isclose(vectorfield.U.data[ti, zi, yi, xi], 0.0) and np.isclose(
-            vectorfield.V.data[ti, zi, yi, xi], 0.0
-        )
+    axis_dim = vectorfield.U.grid.get_axis_dim_mapping(vectorfield.U.data.dims)
+    lenT = 2 if np.any(tau > 0) else 1
+    lenZ = 2 if np.any(zeta > 0) else 1
+    npart = len(xsi)
+
+    u = XLinear(vectorfield.U, ti, position, tau, t, z, y, x)
+    v = XLinear(vectorfield.V, ti, position, tau, t, z, y, x)
+
+    corner_dataU = _get_corner_data_Agrid(vectorfield.U.data, ti, zi, yi, xi, lenT, lenZ, npart, axis_dim)
+    corner_dataV = _get_corner_data_Agrid(vectorfield.V.data, ti, zi, yi, xi, lenT, lenZ, npart, axis_dim)
+
+    def _is_land(ti: int, zi: int, yi: int, xi: int):
+        uval = corner_dataU[ti, zi, :, xi + 2 * yi]
+        vval = corner_dataV[ti, zi, :, xi + 2 * yi]
+        return np.isclose(uval, 0.0) and np.isclose(vval, 0.0)
 
     f_u, f_v = (1, 1)
-    print(_is_land(ti, zi, yi, xi))
-    print(_is_land(ti, zi, yi, xi + 1))
-    print(_is_land(ti, zi, yi + 1, xi))
-    print(_is_land(ti, zi, yi + 1, xi + 1))
-    if _is_land(ti, zi, yi, xi) and _is_land(ti, zi, yi, xi + 1) and eta > 0:
+    if _is_land(0, 0, 0, 0) and _is_land(0, 0, 0, 1) and eta > 0:
         f_u = f_u / eta
-    if _is_land(ti, zi, yi + 1, xi) and _is_land(ti, zi, yi + 1, xi + 1) and eta < 1:
+    if _is_land(0, 0, 1, 0) and _is_land(0, 0, 1, 1) and eta < 1:
         f_u = f_u / (1 - eta)
-    if _is_land(ti, zi, yi, xi) and _is_land(ti, zi, yi + 1, xi) and xsi > 0:
+    if _is_land(0, 0, 0, 0) and _is_land(0, 0, 1, 0) and xsi > 0:
         f_v = f_v / xsi
-    if _is_land(ti, zi, yi, xi + 1) and _is_land(ti, zi, yi + 1, xi + 1) and xsi < 1:
+    if _is_land(0, 0, 0, 1) and _is_land(0, 0, 1, 1) and xsi < 1:
         f_v = f_v / (1 - xsi)
 
-    u = f_u * XLinear(vectorfield.U, ti, position, tau, t, z, y, x)
-    v = f_v * XLinear(vectorfield.V, ti, position, tau, t, z, y, x)
+    u *= f_u
+    v *= f_v
     w = None  # TODO also for 3D fields and W component
     return u, v, w
 
