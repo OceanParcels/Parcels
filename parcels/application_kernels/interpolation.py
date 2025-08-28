@@ -172,17 +172,13 @@ def XFreeslip(
     def _is_land(ti: int, zi: int, yi: int, xi: int):
         uval = corner_dataU[ti, zi, :, xi + 2 * yi]
         vval = corner_dataV[ti, zi, :, xi + 2 * yi]
-        return np.isclose(uval, 0.0) and np.isclose(vval, 0.0)
+        return np.where(np.isclose(uval, 0.0) & np.isclose(vval, 0.0), True, False)
 
     f_u, f_v = (1, 1)
-    if _is_land(0, 0, 0, 0) and _is_land(0, 0, 0, 1) and eta > 0:
-        f_u = f_u / eta
-    if _is_land(0, 0, 1, 0) and _is_land(0, 0, 1, 1) and eta < 1:
-        f_u = f_u / (1 - eta)
-    if _is_land(0, 0, 0, 0) and _is_land(0, 0, 1, 0) and xsi > 0:
-        f_v = f_v / xsi
-    if _is_land(0, 0, 0, 1) and _is_land(0, 0, 1, 1) and xsi < 1:
-        f_v = f_v / (1 - xsi)
+    f_u = np.where((_is_land(0, 0, 0, 0)) & (_is_land(0, 0, 0, 1)) & (eta > 0), f_u / eta, f_u)
+    f_u = np.where((_is_land(0, 0, 1, 0)) & (_is_land(0, 0, 1, 1)) & (eta < 1), f_u / (1 - eta), f_u)
+    f_v = np.where((_is_land(0, 0, 0, 0)) & (_is_land(0, 0, 1, 0)) & (xsi > 0), f_v / xsi, f_v)
+    f_v = np.where((_is_land(0, 0, 0, 1)) & (_is_land(0, 0, 1, 1)) & (xsi < 1), f_v / (1 - xsi), f_v)
 
     u *= f_u
     v *= f_v

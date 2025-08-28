@@ -90,6 +90,14 @@ def test_raw_2d_interpolation(field, func, t, z, y, x, expected):
     [
         (XFreeslip, np.timedelta64(1, "s"), 0, 0.5, 1.5, [[1], [0.5]]),
         (XFreeslip, np.timedelta64(1, "s"), 0, 1.5, 0.5, [[0.5], [1]]),
+        (
+            XFreeslip,
+            [np.timedelta64(1, "s"), np.timedelta64(0, "s")],
+            [0, 2],
+            [1.5, 1.5],
+            [2.5, 0.5],
+            [[0.5, 0.5], [1, 1]],
+        ),
     ],
 )
 def test_spatial_slip_interpolation(field, func, t, z, y, x, expected):
