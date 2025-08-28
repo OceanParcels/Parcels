@@ -11,10 +11,13 @@ import xarray as xr
 
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import default_repr
-from parcels._typing import (
-    VectorType,
+from parcels._typing import VectorType
+from parcels.application_kernels.interpolation import (
+    UXPiecewiseLinearNode,
+    XLinear,
+    ZeroInterpolator,
+    ZeroInterpolator_Vector,
 )
-from parcels.application_kernels.interpolation import CGrid_Velocity, UXPiecewiseLinearNode, XLinear, ZeroInterpolator
 from parcels.particle import KernelParticle
 from parcels.tools.converters import (
     UnitConverter,
@@ -282,7 +285,7 @@ class VectorField:
         if vector_interp_method is None:
             self._vector_interp_method = None
         else:
-            _assert_same_function_signature(vector_interp_method, ref=CGrid_Velocity)
+            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator_Vector)
             self._vector_interp_method = vector_interp_method
 
         if U.grid._mesh != V.grid._mesh or (W and U.grid._mesh != W.grid._mesh):
@@ -301,7 +304,7 @@ class VectorField:
 
     @vector_interp_method.setter
     def vector_interp_method(self, method: Callable):
-        _assert_same_function_signature(method, ref=CGrid_Velocity)
+        _assert_same_function_signature(method, ref=ZeroInterpolator_Vector)
         self._vector_interp_method = method
 
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
