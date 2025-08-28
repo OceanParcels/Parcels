@@ -28,7 +28,7 @@ __all__ = [
 def ZeroInterpolator(
     field: Field,
     ti: int,
-    position: dict[str, tuple[int, float | np.ndarray]],
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
@@ -42,7 +42,7 @@ def ZeroInterpolator(
 def ZeroInterpolator_Vector(
     vectorfield: VectorField,
     ti: int,
-    position: dict[str, tuple[int, float | np.ndarray]],
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
