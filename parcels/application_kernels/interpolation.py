@@ -9,13 +9,14 @@ import numpy as np
 import xarray as xr
 
 if TYPE_CHECKING:
-    from parcels.field import Field
+    from parcels.field import Field, VectorField
     from parcels.uxgrid import _UXGRID_AXES
     from parcels.xgrid import _XGRID_AXES
 
 __all__ = [
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
+    "XFreeslip",
     "XLinear",
     "XNearest",
     "ZeroInterpolator",
@@ -110,6 +111,46 @@ def XLinear(
         + xsi * eta * corner_data[:, 3]
     )
     return value.compute() if isinstance(value, dask.Array) else value
+
+
+def XFreeslip(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Free-slip boundary condition interpolation for velocity fields."""
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+
+    def _is_land(ti, zi, yi, xi):
+        return np.isclose(vectorfield.U.data[ti, zi, yi, xi], 0.0) and np.isclose(
+            vectorfield.V.data[ti, zi, yi, xi], 0.0
+        )
+
+    f_u, f_v = (1, 1)
+    print(_is_land(ti, zi, yi, xi))
+    print(_is_land(ti, zi, yi, xi + 1))
+    print(_is_land(ti, zi, yi + 1, xi))
+    print(_is_land(ti, zi, yi + 1, xi + 1))
+    if _is_land(ti, zi, yi, xi) and _is_land(ti, zi, yi, xi + 1) and eta > 0:
+        f_u = f_u / eta
+    if _is_land(ti, zi, yi + 1, xi) and _is_land(ti, zi, yi + 1, xi + 1) and eta < 1:
+        f_u = f_u / (1 - eta)
+    if _is_land(ti, zi, yi, xi) and _is_land(ti, zi, yi + 1, xi) and xsi > 0:
+        f_v = f_v / xsi
+    if _is_land(ti, zi, yi, xi + 1) and _is_land(ti, zi, yi + 1, xi + 1) and xsi < 1:
+        f_v = f_v / (1 - xsi)
+
+    u = f_u * XLinear(vectorfield.U, ti, position, tau, t, z, y, x)
+    v = f_v * XLinear(vectorfield.V, ti, position, tau, t, z, y, x)
+    w = None  # TODO also for 3D fields and W component
+    return u, v, w
 
 
 def XNearest(
