@@ -230,7 +230,7 @@ class Field:
         """Load the appropriate timesteps of a field."""
         if self.data_full is not None:
             ti = np.argmin(self.data_full.time.data <= time) - 1  # TODO also implement dt < 0
-            if not hasattr(self, "data"):
+            if self.data is None:
                 self.data = self.data_full.isel({"time": slice(ti, ti + 2)}).load()
             elif self.data_full.time.data[ti] == self.data.time.data[1]:
                 self.data = xr.concat([self.data[1, :], self.data_full.isel({"time": ti + 1}).load()], dim="time")
