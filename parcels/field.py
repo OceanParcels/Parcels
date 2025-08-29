@@ -185,27 +185,31 @@ class Field:
 
     @property
     def xdim(self):
-        if type(self.data_full) is xr.DataArray:
+        if hasattr(self.grid, "xdim"):
             return self.grid.xdim
         else:
             raise NotImplementedError("xdim not implemented for unstructured grids")
 
     @property
     def ydim(self):
-        if type(self.data_full) is xr.DataArray:
+        if hasattr(self.grid, "ydim"):
             return self.grid.ydim
         else:
             raise NotImplementedError("ydim not implemented for unstructured grids")
 
     @property
     def zdim(self):
-        if type(self.data_full) is xr.DataArray:
+        if hasattr(self.grid, "zdim"):
             return self.grid.zdim
         else:
             if "nz1" in self.data_full.dims:
                 return self.data_full.sizes["nz1"]
+            elif "nz1" in self.data.dims:
+                return self.data.sizes["nz1"]
             elif "nz" in self.data_full.dims:
                 return self.data_full.sizes["nz"]
+            elif "nz" in self.data.dims:
+                return self.data.sizes["nz"]
             else:
                 return 0
 
