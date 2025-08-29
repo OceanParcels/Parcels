@@ -78,16 +78,16 @@ def uvw_fesom_channel(ds_fesom_channel) -> VectorField:
 def test_fesom_fieldset(ds_fesom_channel, uv_fesom_channel):
     fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
     # Check that the fieldset has the expected properties
-    assert (fieldset.U.data == ds_fesom_channel.U).all()
-    assert (fieldset.V.data == ds_fesom_channel.V).all()
+    assert (fieldset.U.data_full == ds_fesom_channel.U).all()
+    assert (fieldset.V.data_full == ds_fesom_channel.V).all()
 
 
 def test_fesom_in_particleset(ds_fesom_channel, uv_fesom_channel):
     fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
 
     # Check that the fieldset has the expected properties
-    assert (fieldset.U.data == ds_fesom_channel.U).all()
-    assert (fieldset.V.data == ds_fesom_channel.V).all()
+    assert (fieldset.U.data_full == ds_fesom_channel.U).all()
+    assert (fieldset.V.data_full == ds_fesom_channel.V).all()
     pset = ParticleSet(fieldset, pclass=Particle)
     assert pset.fieldset == fieldset
 
@@ -95,8 +95,8 @@ def test_fesom_in_particleset(ds_fesom_channel, uv_fesom_channel):
 def test_set_interp_methods(ds_fesom_channel, uv_fesom_channel):
     fieldset = FieldSet([uv_fesom_channel, uv_fesom_channel.U, uv_fesom_channel.V])
     # Check that the fieldset has the expected properties
-    assert (fieldset.U.data == ds_fesom_channel.U).all()
-    assert (fieldset.V.data == ds_fesom_channel.V).all()
+    assert (fieldset.U.data_full == ds_fesom_channel.U).all()
+    assert (fieldset.V.data_full == ds_fesom_channel.V).all()
 
     # Set the interpolation method for each field
     fieldset.U.interp_method = UXPiecewiseConstantFace

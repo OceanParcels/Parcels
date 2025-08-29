@@ -8,6 +8,7 @@ from datetime import datetime
 import numpy as np
 import uxarray as ux
 import xarray as xr
+from dask import is_dask_collection
 
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import default_repr
@@ -127,8 +128,14 @@ class Field:
             data = _transpose_xfield_data_to_tzyx(data, grid.xgcm_grid)
 
         self.name = name
-        self.data_full = data
         self.grid = grid
+        if is_dask_collection(data):
+            self.data = None
+            self.data_full = data
+        else:
+            self.data = data
+            self.data_full = None
+        self._nexttime_to_load = None
 
         try:
             self.time_interval = _get_time_interval(data)
@@ -221,7 +228,7 @@ class Field:
 
     def _load_timesteps(self, time):
         """Load the appropriate timesteps of a field."""
-        if hasattr(self.data_full, "time") and len(self.data_full.time) > 2:
+        if self.data_full is not None:
             ti = np.argmin(self.data_full.time.data <= time) - 1  # TODO also implement dt < 0
             if not hasattr(self, "data"):
                 self.data = self.data_full.isel({"time": slice(ti, ti + 2)}).load()
@@ -232,10 +239,7 @@ class Field:
             assert len(self.data.time) == 2, (
                 f"Field {self.name} has not been loaded correctly. Expected 2 timesteps, but got {len(self.data.time)}."
             )
-            return self.data_full.time.data[ti + 1]
-        else:
-            self.data = self.data_full
-            return None
+            self._nexttime_to_load = self.data_full.time.data[ti + 1]
 
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.

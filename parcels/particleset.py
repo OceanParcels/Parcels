@@ -582,9 +582,9 @@ class ParticleSet:
             next_load_time = self.fieldset._load_timesteps(time)
 
             if sign_dt > 0:
-                next_time = min(next_load_time, end_time)
+                next_time = end_time if next_load_time is None else min(next_load_time, end_time)
             else:
-                next_time = max(next_load_time, end_time)
+                next_time = end_time if next_load_time is None else max(next_load_time, end_time)
             self._kernel.execute(self, endtime=next_time, dt=dt)
 
             # TODO: Handle IO timing based of timedelta or datetime objects
