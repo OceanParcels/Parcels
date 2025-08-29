@@ -45,8 +45,8 @@ def _search_time_index(field: Field, time: datetime):
     if not field.time_interval.is_all_time_in_interval(time):
         _raise_time_extrapolation_error(time, field=None)
 
-    ti = np.searchsorted(field.data.time.data, time, side="right") - 1
-    tau = (time - field.data.time.data[ti]) / (field.data.time.data[ti + 1] - field.data.time.data[ti])
+    ti = np.zeros_like(time, dtype=np.int32)  # TODO since ti is always zero, it can be removed?
+    tau = (time - field.data.time.data[0]) / (field.data.time.data[1] - field.data.time.data[0])
     return np.atleast_1d(tau), np.atleast_1d(ti)
 
 

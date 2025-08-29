@@ -88,9 +88,9 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
     ds = simple_UV_dataset(mesh="flat")
     ds["U"].data[:] = 1.0
+    ds["U"].data[:, 0, :, :] = 0.0  # Set U to 0 at the surface
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=XLinear)
-    U.data[:, 0, :, :] = 0.0  # Set U to 0 at the surface
     V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
@@ -106,12 +106,13 @@ def test_horizontal_advection_in_3D_flow(npart=10):
 @pytest.mark.parametrize("wErrorThroughSurface", [True, False])
 def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     ds = simple_UV_dataset(mesh="flat")
+    ds["U"].data[:] = 0.01  # Set U to small value (to avoid horizontal out of bounds)
+    ds["W"] = ds["V"].copy()  # Use V as W for testing
+    ds["W"].data[:] = -1.0 if direction == "up" else 1.0
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=XLinear)
-    U.data[:] = 0.01  # Set U to small value (to avoid horizontal out of bounds)
     V = Field("V", ds["V"], grid, interp_method=XLinear)
-    W = Field("W", ds["V"], grid, interp_method=XLinear)  # Use V as W for testing
-    W.data[:] = -1.0 if direction == "up" else 1.0
+    W = Field("W", ds["W"], grid, interp_method=XLinear)
     UVW = VectorField("UVW", U, V, W)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, W, UVW, UV])
@@ -191,6 +192,7 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     fields = [U, V, VectorField("UV", U, V)]
     if w:
         W = Field("W", ds["W"], grid, interp_method=XLinear)
+        fields.append(W)
         fields.append(VectorField("UVW", U, V, W))
     fieldset = FieldSet(fields)
 

@@ -84,10 +84,12 @@ class FieldSet:
 
     def _load_timesteps(self, time):
         """Load the appropriate timesteps of all fields in the fieldset."""
+        next_time = 0
         for fldname in self.fields:
             field = self.fields[fldname]
             if isinstance(field, Field):
-                field._load_timesteps(time)
+                next_time = min(next_time, field._load_timesteps(time))
+        return next_time
 
     def add_field(self, field: Field, name: str | None = None):
         """Add a :class:`parcels.field.Field` object to the FieldSet.
