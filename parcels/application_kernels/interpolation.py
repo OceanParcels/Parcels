@@ -21,6 +21,7 @@ __all__ = [
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
     "XLinear",
+    "XNearest",
     "ZeroInterpolator",
     "ZeroInterpolator_Vector",
 ]
@@ -389,6 +390,69 @@ def CGrid_Tracer(
         value = value[0, :]
 
     return value.compute() if is_dask_collection(value) else value
+
+
+def XNearest(
+    field: Field,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """
+    Nearest-Neighbour spatial interpolation on a regular grid.
+    Note that this still uses linear interpolation in time.
+    """
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+    data = field.data
+
+    lenT = 2 if np.any(tau > 0) else 1
+
+    # Spatial coordinates: left if barycentric < 0.5, otherwise right
+    zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
+    zi_full = np.where(zeta < 0.5, zi, zi_1)
+
+    yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
+    yi_full = np.where(eta < 0.5, yi, yi_1)
+
+    xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
+    xi_full = np.where(xsi < 0.5, xi, xi_1)
+
+    # Time coordinates: 1 point at ti, then 1 point at ti+1
+    if lenT == 1:
+        ti_full = ti
+    else:
+        ti_1 = np.clip(ti + 1, 0, data.shape[0] - 1)
+        ti_full = np.concatenate([ti, ti_1])
+        xi_full = np.repeat(xi_full, 2)
+        yi_full = np.repeat(yi_full, 2)
+        zi_full = np.repeat(zi_full, 2)
+
+    # Create DataArrays for indexing
+    selection_dict = {
+        axis_dim["X"]: xr.DataArray(xi_full, dims=("points")),
+        axis_dim["Y"]: xr.DataArray(yi_full, dims=("points")),
+    }
+    if "Z" in axis_dim:
+        selection_dict[axis_dim["Z"]] = xr.DataArray(zi_full, dims=("points"))
+    if "time" in data.dims:
+        selection_dict["time"] = xr.DataArray(ti_full, dims=("points"))
+
+    corner_data = data.isel(selection_dict).data.reshape(lenT, len(xsi))
+
+    if lenT == 2:
+        value = corner_data[0, :] * (1 - tau) + corner_data[1, :] * tau
+    else:
+        value = corner_data[0, :]
+
+    return value.compute() if isinstance(value, dask.Array) else value
 
 
 def UXPiecewiseConstantFace(
