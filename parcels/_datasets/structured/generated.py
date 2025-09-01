@@ -4,8 +4,8 @@ import numpy as np
 import xarray as xr
 
 
-def simple_UV_dataset(dims=(360, 2, 30, 4), maxdepth=1, mesh_type="spherical"):
-    max_lon = 180.0 if mesh_type == "spherical" else 1e6
+def simple_UV_dataset(dims=(360, 2, 30, 4), maxdepth=1, mesh="spherical"):
+    max_lon = 180.0 if mesh == "spherical" else 1e6
 
     return xr.Dataset(
         {"U": (["time", "depth", "YG", "XG"], np.zeros(dims)), "V": (["time", "depth", "YG", "XG"], np.zeros(dims))},

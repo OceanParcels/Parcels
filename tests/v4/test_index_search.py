@@ -26,8 +26,8 @@ def test_grid_indexing_fpoints(field_cone):
 
     for yi_expected in range(grid.ydim - 1):
         for xi_expected in range(grid.xdim - 1):
-            x = grid.lon[yi_expected, xi_expected] + 0.00001
-            y = grid.lat[yi_expected, xi_expected] + 0.00001
+            x = np.array([grid.lon[yi_expected, xi_expected] + 0.00001])
+            y = np.array([grid.lat[yi_expected, xi_expected] + 0.00001])
 
             yi, eta, xi, xsi = _search_indices_curvilinear_2d(grid, y, x)
             if eta > 0.9:

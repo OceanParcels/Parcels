@@ -5,8 +5,9 @@ from typing import Literal
 import numpy as np
 import uxarray as ux
 
-from parcels.field import FieldOutOfBoundError
+from parcels._typing import assert_valid_mesh
 from parcels.spatialhash import _barycentric_coordinates
+from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.xgrid import _search_1d_array
 
 from .basegrid import BaseGrid
@@ -20,7 +21,7 @@ class UxGrid(BaseGrid):
     for interpolation on unstructured grids.
     """
 
-    def __init__(self, grid: ux.grid.Grid, z: ux.UxDataArray) -> UxGrid:
+    def __init__(self, grid: ux.grid.Grid, z: ux.UxDataArray, mesh="flat") -> UxGrid:
         """
         Initializes the UxGrid with a uxarray grid and vertical coordinate array.
 
@@ -32,6 +33,8 @@ class UxGrid(BaseGrid):
             A 1D array of vertical coordinates (depths) associated with the layer interface heights (not the mid-layer depths).
             While uxarray allows nz to be spatially and temporally varying, the parcels.UxGrid class considers the case where
             the vertical coordinate is constant in time and space. This implies flat bottom topography and no moving ALE vertical grid.
+        mesh : str, optional
+            The type of mesh used for the grid. Either "flat" (default) or "spherical".
         """
         self.uxgrid = grid
         if not isinstance(z, ux.UxDataArray):
@@ -39,6 +42,9 @@ class UxGrid(BaseGrid):
         if z.ndim != 1:
             raise ValueError("z must be a 1D array of vertical coordinates")
         self.z = z
+        self._mesh = mesh
+
+        assert_valid_mesh(mesh)
 
     @property
     def depth(self):
@@ -95,14 +101,14 @@ class UxGrid(BaseGrid):
                     return bcoords, self.ravel_index(zi, neighbor)
 
         # Global fallback as last ditch effort
-        face_ids = self.uxgrid.get_faces_containing_point([x, y], return_counts=False)[0]
+        points = np.column_stack((x, y))
+        face_ids = self.uxgrid.get_faces_containing_point(points, return_counts=False)[0]
         fi = face_ids[0] if len(face_ids) > 0 else -1
         if fi == -1:
             raise FieldOutOfBoundError(z, y, x)
         bcoords = try_face(fi)
         if bcoords is None:
             raise FieldOutOfBoundError(z, y, x)
-
         return {"Z": (zi, zeta), "FACE": (fi, bcoords)}
 
     def _get_barycentric_coordinates_latlon(self, y, x, fi):
@@ -118,9 +124,10 @@ class UxGrid(BaseGrid):
             )
         )
 
-        coord = np.deg2rad([x, y])
+        coord = np.deg2rad(np.column_stack((x, y)))
         bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
-        err = abs(np.dot(bcoord, nodes[:, 0]) - coord[0]) + abs(np.dot(bcoord, nodes[:, 1]) - coord[1])
+        proj_coord = np.matmul(np.transpose(nodes), bcoord)
+        err = np.linalg.norm(proj_coord - coord)
         return bcoord, err
 
     def _get_barycentric_coordinates_cartesian(self, y, x, fi):

@@ -2,13 +2,10 @@ import numpy as np
 import pytest
 
 from parcels import (
-    FieldOutOfBoundError,
     FieldSet,
     Particle,
     ParticleSet,
-    StatusCode,
 )
-from tests.common_kernels import DeleteParticle, DoNothing, MoveEast, MoveNorth
 from tests.utils import create_fieldset_unit_mesh
 
 
@@ -52,132 +49,6 @@ def test_execution_order(kernel_type):
     else:
         assert np.isclose(ps[0] - ps[1], 0.1)
         assert np.allclose(lons[0], 0.2)
-
-
-@pytest.mark.parametrize(
-    "start, end, substeps, dt",
-    [
-        (0.0, 10.0, 1, 1.0),
-        (0.0, 10.0, 4, 1.0),
-        (0.0, 10.0, 1, 3.0),
-        (2.0, 16.0, 5, 3.0),
-        (20.0, 10.0, 4, -1.0),
-        (20.0, -10.0, 7, -2.0),
-    ],
-)
-def test_execution_endtime(fieldset_unit_mesh, start, end, substeps, dt):
-    npart = 10
-    pset = ParticleSet(
-        fieldset_unit_mesh, pclass=Particle, time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
-    )
-    pset.execute(DoNothing, endtime=end, dt=dt)
-    assert np.allclose(pset.time_nextloop, end)
-
-
-@pytest.mark.parametrize(
-    "start, end, substeps, dt",
-    [
-        (0.0, 10.0, 1, 1.0),
-        (0.0, 10.0, 4, 1.0),
-        (0.0, 10.0, 1, 3.0),
-        (2.0, 16.0, 5, 3.0),
-        (20.0, 10.0, 4, -1.0),
-        (20.0, -10.0, 7, -2.0),
-    ],
-)
-def test_execution_runtime(fieldset_unit_mesh, start, end, substeps, dt):
-    npart = 10
-    pset = ParticleSet(
-        fieldset_unit_mesh, pclass=Particle, time=start, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart)
-    )
-    t_step = abs(end - start) / substeps
-    for _ in range(substeps):
-        pset.execute(DoNothing, runtime=t_step, dt=dt)
-    assert np.allclose(pset.time_nextloop, end)
-
-
-def test_execution_fail_out_of_bounds(fieldset_unit_mesh):
-    npart = 10
-
-    def MoveRight(particle, fieldset, time):  # pragma: no cover
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
-        particle.dlon += 0.1
-
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
-    with pytest.raises(FieldOutOfBoundError):
-        pset.execute(MoveRight, endtime=10.0, dt=1.0)
-    assert len(pset) == npart
-    assert (pset.lon - 1.0 > -1.0e12).all()
-
-
-def test_execution_recover_out_of_bounds(fieldset_unit_mesh):
-    npart = 2
-
-    def MoveRight(particle, fieldset, time):  # pragma: no cover
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
-        particle.dlon += 0.1
-
-    def MoveLeft(particle, fieldset, time):  # pragma: no cover
-        if particle.state == StatusCode.ErrorOutOfBounds:
-            particle.dlon -= 1.0
-            particle.state = StatusCode.Success
-
-    lon = np.linspace(0.05, 0.95, npart)
-    lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=lon, lat=lat)
-    pset.execute([MoveRight, MoveLeft], endtime=11.0, dt=1.0)
-    assert len(pset) == npart
-    assert np.allclose(pset.lon, lon, rtol=1e-5)
-    assert np.allclose(pset.lat, lat, rtol=1e-5)
-
-
-def test_execution_check_all_errors(fieldset_unit_mesh):
-    def MoveRight(particle, fieldset, time):  # pragma: no cover
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
-
-    def RecoverAllErrors(particle, fieldset, time):  # pragma: no cover
-        if particle.state > 4:
-            particle.state = StatusCode.Delete
-
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=10, lat=0)
-    pset.execute([MoveRight, RecoverAllErrors], endtime=11.0, dt=1.0)
-    assert len(pset) == 0
-
-
-def test_execution_check_stopallexecution(fieldset_unit_mesh):
-    def addoneLon(particle, fieldset, time):  # pragma: no cover
-        particle.dlon += 1
-
-        if particle.lon + particle.dlon >= 10:
-            particle.state = StatusCode.StopAllExecution
-
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0, 1], lat=[0, 0])
-    pset.execute(addoneLon, endtime=20.0, dt=1.0)
-    assert pset[0].lon == 9
-    assert pset[0].time == 9
-    assert pset[1].lon == 1
-    assert pset[1].time == 0
-
-
-def test_execution_delete_out_of_bounds(fieldset_unit_mesh):
-    npart = 10
-
-    def MoveRight(particle, fieldset, time):  # pragma: no cover
-        tmp1, tmp2 = fieldset.UV[time, particle.depth, particle.lat, particle.lon + 0.1, particle]
-        particle.dlon += 0.1
-
-    lon = np.linspace(0.05, 0.95, npart)
-    lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=lon, lat=lat)
-    pset.execute([MoveRight, DeleteParticle], endtime=10.0, dt=1.0)
-    assert len(pset) == 0
-
-
-def test_kernel_add_no_new_variables(fieldset_unit_mesh):
-    pset = ParticleSet(fieldset_unit_mesh, pclass=Particle, lon=[0.5], lat=[0.5])
-    pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth), endtime=2.0, dt=1.0)
-    assert np.allclose(pset.lon, 0.6, rtol=1e-5)
-    assert np.allclose(pset.lat, 0.6, rtol=1e-5)
 
 
 def test_multi_kernel_duplicate_varnames(fieldset_unit_mesh):

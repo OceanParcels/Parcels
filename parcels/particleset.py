@@ -176,6 +176,14 @@ class ParticleSet:
         """Get a single particle by index."""
         return KernelParticle(self._data, index=index)
 
+    def __setattr__(self, name, value):
+        if name in ["_data"]:
+            object.__setattr__(self, name, value)
+        elif isinstance(self._data, dict) and name in self._data.keys():
+            self._data[name][:] = value
+        else:
+            object.__setattr__(self, name, value)
+
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
         # TODO update this when now interp methods are implemented
@@ -517,11 +525,11 @@ class ParticleSet:
                     raise TypeError("The runtime must be a np.timedelta64 object")
 
         else:
-            if not np.isnat(self._data["time_nextloop"]).any():
+            if not np.isnat(self.time_nextloop).any():
                 if sign_dt > 0:
-                    start_time = self._data["time_nextloop"].min()
+                    start_time = self.time_nextloop.min()
                 else:
-                    start_time = self._data["time_nextloop"].max()
+                    start_time = self.time_nextloop.max()
             else:
                 if sign_dt > 0:
                     start_time = self.fieldset.time_interval.left
@@ -572,9 +580,7 @@ class ParticleSet:
                 next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
             else:
                 next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
-            res = self._kernel.execute(self, endtime=next_time, dt=dt)
-            if res == StatusCode.StopAllExecution:
-                return StatusCode.StopAllExecution
+            self._kernel.execute(self, endtime=next_time, dt=dt)
 
             # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:

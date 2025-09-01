@@ -10,7 +10,7 @@ import xarray as xr
 
 import parcels
 from parcels._datasets.structured.generated import simple_UV_dataset
-from parcels.application_kernels.interpolation import XBiLinear
+from parcels.application_kernels.interpolation import XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
@@ -68,15 +68,15 @@ def create_fieldset_global(xdim=200, ydim=100):
     return FieldSet.from_data(data, dimensions, mesh="flat")
 
 
-def create_fieldset_zeros_conversion(mesh_type="spherical", xdim=200, ydim=100) -> FieldSet:
+def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100) -> FieldSet:
     """Zero velocity field with lat and lon determined by a conversion factor."""
-    mesh_conversion = 1 / 1852.0 / 60 if mesh_type == "spherical" else 1
-    ds = simple_UV_dataset(dims=(2, 1, ydim, xdim), mesh_type=mesh_type)
+    mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
+    ds = simple_UV_dataset(dims=(2, 1, ydim, xdim), mesh=mesh)
     ds["lon"].data = np.linspace(-1e6 * mesh_conversion, 1e6 * mesh_conversion, xdim)
     ds["lat"].data = np.linspace(-1e6 * mesh_conversion, 1e6 * mesh_conversion, ydim)
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
 
     UV = VectorField("UV", U, V)
     return FieldSet([U, V, UV])

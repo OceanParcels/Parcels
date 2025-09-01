@@ -8,9 +8,9 @@ import xarray as xr
 
 from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
+from parcels._typing import assert_valid_mesh
 from parcels.basegrid import BaseGrid
 from parcels.spatialhash import SpatialHash
-from parcels.tools.statuscodes import FieldOutOfBoundError, FieldOutOfBoundSurfaceError
 
 _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"
@@ -22,6 +22,9 @@ _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
 _FIELD_DATA_ORDERING: Sequence[_XGCM_AXIS_DIRECTION] = "TZYX"
 
 _DEFAULT_XGCM_KWARGS = {"periodic": False}
+
+LEFT_OUT_OF_BOUNDS = -2
+RIGHT_OUT_OF_BOUNDS = -1
 
 
 def get_cell_count_along_dim(axis: xgcm.Axis) -> int:
@@ -95,12 +98,14 @@ class XGrid(BaseGrid):
 
     def __init__(self, grid: xgcm.Grid, mesh="flat"):
         self.xgcm_grid = grid
-        self.mesh = mesh
+        self._mesh = mesh
         self._spatialhash = None
         ds = grid._ds
 
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
+
+        assert_valid_mesh(mesh)
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset, mesh="flat", xgcm_kwargs=None):
@@ -277,15 +282,6 @@ class XGrid(BaseGrid):
             zi, zeta = _search_1d_array(ds.depth.values, z)
         else:
             zi, zeta = 0, 0.0
-        if zi == -1:
-            if zeta < 0:
-                raise FieldOutOfBoundError(
-                    f"Depth {z} is out of bounds for the grid with depth values {ds.depth.values}."
-                )
-            elif zeta > 1:
-                raise FieldOutOfBoundSurfaceError(
-                    f"Depth {z} is out of the surface for the grid with depth values {ds.depth.values}."
-                )
 
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
@@ -318,6 +314,38 @@ class XGrid(BaseGrid):
             axis_position_mapping[axis] = edge_positions[0]
 
         return axis_position_mapping
+
+    def get_axis_dim_mapping(self, dims: list[str]) -> dict[_XGRID_AXES, str]:
+        """
+        Maps xarray dimension names to their corresponding axis (X, Y, Z).
+
+        WARNING: This API is unstable and subject to change in future versions.
+
+        Parameters
+        ----------
+        dims : list[str]
+            List of xarray dimension names
+
+        Returns
+        -------
+        dict[_XGRID_AXES, str]
+            Dictionary mapping axes (X, Y, Z) to their corresponding dimension names
+
+        Examples
+        --------
+        >>> grid.get_axis_dim_mapping(['time', 'lat', 'lon'])
+        {'Y': 'lat', 'X': 'lon'}
+
+        Notes
+        -----
+        Only returns mappings for spatial axes (X, Y, Z) that are present in the grid.
+        """
+        result = {}
+        for dim in dims:
+            axis = get_axis_from_dim_name(self.xgcm_grid.axes, dim)
+            if axis in self.axes:  # Only include spatial axes (X, Y, Z)
+                result[cast(_XGRID_AXES, axis)] = dim
+        return result
 
     def get_spatial_hash(
         self,
@@ -477,7 +505,6 @@ def _search_1d_array(
     Searches for the particle location in a 1D array and returns barycentric coordinate along dimension.
 
     Assumptions:
-    - particle position x is within the bounds of the array
     - array is strictly monotonically increasing.
 
     Parameters
@@ -489,17 +516,30 @@ def _search_1d_array(
 
     Returns
     -------
-    int
-        Index of the element just before the position x in the array.
-    float
+    array of int
+        Index of the element just before the position x in the array. Note that this index is -2 if the index is left out of bounds and -1 if the index is right out of bounds.
+    array of float
         Barycentric coordinate.
     """
     # TODO v4: We probably rework this to deal with 0D arrays before this point (as we already know field dimensionality)
     if len(arr) < 2:
-        return 0, 0.0
-    i = np.argmin(arr <= x) - 1
-    bcoord = (x - arr[i]) / (arr[i + 1] - arr[i])
-    return i, bcoord
+        return np.zeros(shape=x.shape, dtype=np.int32), np.zeros_like(x)
+    index = np.searchsorted(arr, x, side="right") - 1
+    # Use broadcasting to avoid repeated array access
+    arr_index = arr[index]
+    arr_next = arr[np.clip(index + 1, 1, len(arr) - 1)]  # Ensure we don't go out of bounds
+    bcoord = (x - arr_index) / (arr_next - arr_index)
+
+    # TODO check how we can avoid searchsorted when grid spacing is uniform
+    # dx = arr[1] - arr[0]
+    # index = ((x - arr[0]) / dx).astype(int)
+    # index = np.clip(index, 0, len(arr) - 2)
+    # bcoord = (x - arr[index]) / dx
+
+    index = np.where(x < arr[0], LEFT_OUT_OF_BOUNDS, index)
+    index = np.where(x >= arr[-1], RIGHT_OUT_OF_BOUNDS, index)
+
+    return np.atleast_1d(index), np.atleast_1d(bcoord)
 
 
 def _convert_center_pos_to_fpoint(
