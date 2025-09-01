@@ -15,22 +15,22 @@ from parcels.xgrid import XGrid
 from tests.utils import create_fieldset_zeros_conversion
 
 
-@pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
-def test_fieldKh_Brownian(mesh_type):
+@pytest.mark.parametrize("mesh", ["spherical", "flat"])
+def test_fieldKh_Brownian(mesh):
     kh_zonal = 100
     kh_meridional = 50
-    mesh_conversion = 1 / 1852.0 / 60 if mesh_type == "spherical" else 1
+    mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
 
-    ds = simple_UV_dataset(dims=(2, 1, 2, 2), mesh_type=mesh_type)
+    ds = simple_UV_dataset(dims=(2, 1, 2, 2), mesh=mesh)
     ds["lon"].data = np.array([-1e6, 1e6])
     ds["lat"].data = np.array([-1e6, 1e6])
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     ds["Kh_zonal"] = (["time", "depth", "YG", "XG"], np.full((2, 1, 2, 2), kh_zonal))
     ds["Kh_meridional"] = (["time", "depth", "YG", "XG"], np.full((2, 1, 2, 2), kh_meridional))
-    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
-    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
+    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, interp_method=XLinear)
+    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV, Kh_zonal, Kh_meridional])
 
@@ -51,19 +51,19 @@ def test_fieldKh_Brownian(mesh_type):
     assert np.allclose(np.mean(pset.lat), 0, atol=tol)
 
 
-@pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
+@pytest.mark.parametrize("mesh", ["spherical", "flat"])
 @pytest.mark.parametrize("kernel", [AdvectionDiffusionM1, AdvectionDiffusionEM])
-def test_fieldKh_SpatiallyVaryingDiffusion(mesh_type, kernel):
+def test_fieldKh_SpatiallyVaryingDiffusion(mesh, kernel):
     """Test advection-diffusion kernels on a non-uniform diffusivity field with a linear gradient in one direction."""
     ydim, xdim = 100, 200
 
-    mesh_conversion = 1 / 1852.0 / 60 if mesh_type == "spherical" else 1
-    ds = simple_UV_dataset(dims=(2, 1, ydim, xdim), mesh_type=mesh_type)
+    mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
+    ds = simple_UV_dataset(dims=(2, 1, ydim, xdim), mesh=mesh)
     ds["lon"].data = np.linspace(-1e6, 1e6, xdim)
     ds["lat"].data = np.linspace(-1e6, 1e6, ydim)
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
 
     Kh = np.zeros((ydim, xdim), dtype=np.float32)
     for x in range(xdim):
@@ -71,8 +71,8 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh_type, kernel):
 
     ds["Kh_zonal"] = (["time", "depth", "YG", "XG"], np.full((2, 1, ydim, xdim), Kh))
     ds["Kh_meridional"] = (["time", "depth", "YG", "XG"], np.full((2, 1, ydim, xdim), Kh))
-    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
-    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, mesh_type=mesh_type, interp_method=XLinear)
+    Kh_zonal = Field("Kh_zonal", ds["Kh_zonal"], grid=grid, interp_method=XLinear)
+    Kh_meridional = Field("Kh_meridional", ds["Kh_meridional"], grid=grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV, Kh_zonal, Kh_meridional])
     fieldset.add_constant("dres", float(ds["lon"][1] - ds["lon"][0]))

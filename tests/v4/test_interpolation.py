@@ -4,8 +4,9 @@ import xarray as xr
 
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
+from parcels._index_search import _search_time_index
 from parcels.application_kernels.advection import AdvectionRK4_3D
-from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear
+from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, XNearest, ZeroInterpolator
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
@@ -16,18 +17,80 @@ from parcels.xgrid import XGrid
 from tests.utils import TEST_DATA
 
 
-@pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
-def test_interpolation_mesh_type(mesh_type, npart=10):
-    ds = simple_UV_dataset(mesh_type=mesh_type)
+@pytest.fixture
+def field():
+    """Reference data used for testing interpolation."""
+    z0 = np.array(  # each x is +1 from the previous, each y is +2 from the previous
+        [
+            [0.0, 1.0, 2.0, 3.0],
+            [2.0, 3.0, 4.0, 5.0],
+            [4.0, 5.0, 6.0, 7.0],
+            [6.0, 7.0, 8.0, 9.0],
+        ]
+    )
+    spatial_data = np.array([z0, z0 + 3, z0 + 6, z0 + 9])  # each z is +3 from the previous
+    temporal_data = np.array([spatial_data, spatial_data + 10, spatial_data + 20])  # each t is +10 from the previous
+
+    ds = xr.Dataset(
+        {"U": (["time", "depth", "lat", "lon"], temporal_data)},
+        coords={
+            "time": (["time"], [np.timedelta64(t, "s") for t in [0, 2, 4]], {"axis": "T"}),
+            "depth": (["depth"], [0, 1, 2, 3], {"axis": "Z"}),
+            "lat": (["lat"], [0, 1, 2, 3], {"axis": "Y", "c_grid_axis_shift": -0.5}),
+            "lon": (["lon"], [0, 1, 2, 3], {"axis": "X", "c_grid_axis_shift": -0.5}),
+            "x": (["x"], [0.5, 1.5, 2.5, 3.5], {"axis": "X"}),
+            "y": (["y"], [0.5, 1.5, 2.5, 3.5], {"axis": "Y"}),
+        },
+    )
+    return Field("U", ds["U"], XGrid.from_dataset(ds))
+
+
+@pytest.mark.parametrize(
+    "func, t, z, y, x, expected",
+    [
+        pytest.param(ZeroInterpolator, np.timedelta64(1, "s"), 2.5, 0.49, 0.51, 0, id="Zero"),
+        pytest.param(
+            XLinear,
+            [np.timedelta64(0, "s"), np.timedelta64(1, "s")],
+            [0, 0],
+            [0.49, 0.49],
+            [0.51, 0.51],
+            [1.49, 6.49],
+            id="Linear",
+        ),
+        pytest.param(XLinear, np.timedelta64(1, "s"), 2.5, 0.49, 0.51, 13.99, id="Linear-2"),
+        pytest.param(
+            XNearest,
+            [np.timedelta64(0, "s"), np.timedelta64(3, "s")],
+            [0.2, 0.2],
+            [0.2, 0.2],
+            [0.51, 0.51],
+            [1.0, 16.0],
+            id="Nearest",
+        ),
+    ],
+)
+def test_raw_2d_interpolation(field, func, t, z, y, x, expected):
+    """Test the interpolation functions on the Field."""
+    tau, ti = _search_time_index(field, t)
+    position = field.grid.search(z, y, x)
+
+    value = func(field, ti, position, tau, 0, 0, y, x)
+    np.testing.assert_equal(value, expected)
+
+
+@pytest.mark.parametrize("mesh", ["spherical", "flat"])
+def test_interpolation_mesh_type(mesh, npart=10):
+    ds = simple_UV_dataset(mesh=mesh)
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XLinear)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
 
     lat = 30.0
     time = U.time_interval.left
-    u_expected = 1.0 if mesh_type == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(lat)))
+    u_expected = 1.0 if mesh == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(lat)))
 
     assert np.isclose(U[time, 0, lat, 0], u_expected, atol=1e-7)
     assert V[time, 0, lat, 0] == 0.0
@@ -91,10 +154,10 @@ def test_interp_regression_v3(interp_name):
         },
     )
 
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
-    V = Field("V", ds["V"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
-    W = Field("W", ds["W"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = Field("U", ds["U"], grid, interp_method=interp_methods[interp_name])
+    V = Field("V", ds["V"], grid, interp_method=interp_methods[interp_name])
+    W = Field("W", ds["W"], grid, interp_method=interp_methods[interp_name])
     fieldset = FieldSet([U, V, W, VectorField("UVW", U, V, W)])
 
     x, y, z = np.meshgrid(np.linspace(0, 1, 7), np.linspace(0, 1, 13), np.linspace(0, 1, 5))

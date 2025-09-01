@@ -8,6 +8,7 @@ import xarray as xr
 
 from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
+from parcels._typing import assert_valid_mesh
 from parcels.basegrid import BaseGrid
 from parcels.spatialhash import SpatialHash
 
@@ -97,12 +98,14 @@ class XGrid(BaseGrid):
 
     def __init__(self, grid: xgcm.Grid, mesh="flat"):
         self.xgcm_grid = grid
-        self.mesh = mesh
+        self._mesh = mesh
         self._spatialhash = None
         ds = grid._ds
 
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
+
+        assert_valid_mesh(mesh)
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset, mesh="flat", xgcm_kwargs=None):
@@ -278,7 +281,7 @@ class XGrid(BaseGrid):
         if "Z" in self.axes:
             zi, zeta = _search_1d_array(ds.depth.values, z)
         else:
-            zi, zeta = 0, 0.0
+            zi, zeta = np.zeros(z.shape, dtype=int), np.zeros(z.shape, dtype=float)
 
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
