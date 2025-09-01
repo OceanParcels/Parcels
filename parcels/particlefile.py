@@ -148,7 +148,7 @@ class ParticleFile:
         #         stacklevel=2,
         #     )
         #     return
-
+        nparticles = len(particle_data["trajectory"])
         vars_to_write = _get_vars_to_write(pclass)
         if indices is None:
             indices_to_write = _to_write_particles(particle_data, time)
@@ -173,7 +173,7 @@ class ParticleFile:
         store = self.store
         if self.create_new_zarrfile:
             if self.chunks is None:
-                self._chunks = (len(pset), 1)
+                self._chunks = (nparticles, 1)
             if (self._maxids > len(ids)) or (self._maxids > self.chunks[0]):  # type: ignore[index]
                 arrsize = (self._maxids, self.chunks[1])  # type: ignore[index]
             else:
@@ -307,7 +307,9 @@ def _convert_particle_data_time_to_float_seconds(particle_data, time_interval):
 def _maybe_convert_time_dtype(dtype: np.dtype | _SAME_AS_FIELDSET_TIME_INTERVAL) -> np.dtype:
     """Convert the dtype of time to float64 if it is not already."""
     if dtype is _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
-        return np.dtype(np.float64)
+        return np.dtype(
+            np.uint64
+        )  #! We need to have here some proper mechanism for converting particle data to the data that is to be output to zarr (namely the time needs to be converted to float seconds by subtracting the time_interval.left)
     return dtype
 
 

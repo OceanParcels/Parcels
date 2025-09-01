@@ -5,14 +5,14 @@ from datetime import timedelta
 import numpy as np
 import pytest
 import xarray as xr
-from zarr.storage import MemoryStore
+from zarr.storage import DirectoryStore, MemoryStore
 
 import parcels
 from parcels import AdvectionRK4, Field, FieldSet, Particle, ParticleSet, Variable, VectorField
-from parcels._datasets.structured.generic import datasets
-from parcels.particlefile import ParticleFile
-from parcels.particle import create_particle_data
 from parcels._core.utils.time import TimeInterval
+from parcels._datasets.structured.generic import datasets
+from parcels.particle import Particle, create_particle_data
+from parcels.particlefile import ParticleFile
 from parcels.xgrid import XGrid
 from tests.common_kernels import DoNothing
 
@@ -351,6 +351,7 @@ def test_pset_execute_outputdt_backwards_fieldset_timevarying():
 
 @pytest.fixture
 def store():
+    return DirectoryStore("/tmp/test.zarr")
     return MemoryStore()
 
 
@@ -366,4 +367,37 @@ def test_particlefile_init_invalid(store):  # TODO: Add test for read only store
 
 
 @pytest.mark.new
-def test_particlefile_writing(store): ...
+def test_particlefile_write_particle_data(store):
+    nparticles = 100
+
+    pfile = ParticleFile(store, outputdt=np.timedelta64(1, "s"), chunks=(nparticles, 40))
+    pclass = Particle
+
+    left, right = np.datetime64("2019-05-30T12:00:00.000000000", "ns"), np.datetime64("2020-01-02", "ns")
+    time_interval = TimeInterval(left=left, right=right)
+
+    initial_lon = np.linspace(0, 1, nparticles)
+    data = create_particle_data(
+        pclass=pclass,
+        nparticles=nparticles,
+        ngrids=4,
+        time_interval=time_interval,
+        initial={
+            "time": np.full(nparticles, fill_value=left),
+            "lon": initial_lon,
+            "dt": np.full(nparticles, fill_value=1.0),
+            "trajectory": np.arange(nparticles),
+        },
+    )
+    np.testing.assert_array_equal(data["time"], left)
+    pfile._write_particle_data(
+        particle_data=data,
+        pclass=pclass,
+        time_interval=time_interval,
+        time=left,
+    )
+    ds = xr.open_zarr(store, decode_cf=False)  # TODO: Fix metadata and re-enable decode_cf
+    # assert ds.time.dtype == "datetime64[ns]"
+    # np.testing.assert_equal(ds["time"].isel(obs=0).values, left)
+    assert ds.sizes["trajectory"] == nparticles
+    np.testing.assert_allclose(ds["lon"].isel(obs=0).values, initial_lon)
