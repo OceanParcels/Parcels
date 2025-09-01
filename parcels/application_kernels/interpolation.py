@@ -49,6 +49,7 @@ def ZeroInterpolator_Vector(
     z: np.float32 | np.float64,
     y: np.float32 | np.float64,
     x: np.float32 | np.float64,
+    applyConversion: bool,
 ) -> np.float32 | np.float64:
     """Template function used for the signature check of the interpolation methods for velocity fields."""
     return 0.0

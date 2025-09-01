@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from parcels._typing import Mesh
 from parcels.tools.statuscodes import (
     _raise_field_out_of_bound_error,
     _raise_field_sampling_error,
@@ -110,21 +111,13 @@ def _search_indices_curvilinear_2d(
     return (yi, eta, xi, xsi)
 
 
-def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, sphere_mesh: bool):
-    if xi < 0:
-        if sphere_mesh:
-            xi = xdim - 2
-        else:
-            xi = 0
-    if xi > xdim - 2:
-        if sphere_mesh:
-            xi = 0
-        else:
-            xi = xdim - 2
-    if yi < 0:
-        yi = 0
-    if yi > ydim - 2:
-        yi = ydim - 2
-        if sphere_mesh:
-            xi = xdim - xi
+def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, mesh: Mesh):
+    xi = np.where(xi < 0, (xdim - 2) if mesh == "spherical" else 0, xi)
+    xi = np.where(xi > xdim - 2, 0 if mesh == "spherical" else (xdim - 2), xi)
+
+    xi = np.where(yi > ydim - 2, xdim - xi if mesh == "spherical" else xi, xi)
+
+    yi = np.where(yi < 0, 0, yi)
+    yi = np.where(yi > ydim - 2, ydim - 2, yi)
+
     return yi, xi
