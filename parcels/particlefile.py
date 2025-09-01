@@ -333,6 +333,8 @@ def _get_calendar_and_units(time_interval: TimeInterval) -> dict[str, str]:
 
 def _assert_valid_chunks_tuple(chunks):
     e = ValueError(f"chunks must be a tuple of integers with length 2, got {chunks=!r} instead.")
+    if chunks is None:
+        return
 
     if not isinstance(chunks, tuple):
         raise e
