@@ -3,29 +3,31 @@ import pytest
 import xarray as xr
 
 from parcels._datasets.structured.generated import simple_UV_dataset
+from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.application_kernels.advection import AdvectionRK4_3D
-from parcels.application_kernels.interpolation import XBiLinear, XTriLinear
+from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
+from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
 from tests.utils import TEST_DATA
 
 
-@pytest.mark.parametrize("mesh_type", ["spherical", "flat"])
-def test_interpolation_mesh_type(mesh_type, npart=10):
-    ds = simple_UV_dataset(mesh_type=mesh_type)
+@pytest.mark.parametrize("mesh", ["spherical", "flat"])
+def test_interpolation_mesh(mesh, npart=10):
+    ds = simple_UV_dataset(mesh=mesh)
     ds["U"].data[:] = 1.0
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
-    V = Field("V", ds["V"], grid, mesh_type=mesh_type, interp_method=XBiLinear)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
     UV = VectorField("UV", U, V)
 
     lat = 30.0
     time = U.time_interval.left
-    u_expected = 1.0 if mesh_type == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(lat)))
+    u_expected = 1.0 if mesh == "flat" else 1.0 / (1852 * 60 * np.cos(np.radians(lat)))
 
     assert np.isclose(U[time, 0, lat, 0], u_expected, atol=1e-7)
     assert V[time, 0, lat, 0] == 0.0
@@ -37,8 +39,20 @@ def test_interpolation_mesh_type(mesh_type, npart=10):
     assert U.eval(time, 0, lat, 0, applyConversion=False) == 1
 
 
+def test_default_interpolator_set_correctly():
+    ds = simple_UV_dataset()
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid)
+    assert U.interp_method == XLinear
+
+    ds = datasets_unstructured["stommel_gyre_delaunay"]
+    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"])
+    U = Field("U", ds["U"], grid)
+    assert U.interp_method == UXPiecewiseLinearNode
+
+
 interp_methods = {
-    "linear": XTriLinear,
+    "linear": XLinear,
 }
 
 
@@ -77,10 +91,10 @@ def test_interp_regression_v3(interp_name):
         },
     )
 
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
-    V = Field("V", ds["V"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
-    W = Field("W", ds["W"], grid, mesh_type="flat", interp_method=interp_methods[interp_name])
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = Field("U", ds["U"], grid, interp_method=interp_methods[interp_name])
+    V = Field("V", ds["V"], grid, interp_method=interp_methods[interp_name])
+    W = Field("W", ds["W"], grid, interp_method=interp_methods[interp_name])
     fieldset = FieldSet([U, V, W, VectorField("UVW", U, V, W)])
 
     x, y, z = np.meshgrid(np.linspace(0, 1, 7), np.linspace(0, 1, 13), np.linspace(0, 1, 5))

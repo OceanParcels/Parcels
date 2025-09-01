@@ -84,9 +84,9 @@ def test_time_interval_contains(interval):
     right = interval.right
     middle = left + (right - left) / 2
 
-    assert left in interval
-    assert right in interval
-    assert middle in interval
+    assert interval.is_all_time_in_interval(left)
+    assert interval.is_all_time_in_interval(right)
+    assert interval.is_all_time_in_interval(middle)
 
 
 @given(time_interval_strategy(calendar="365_day"), time_interval_strategy(calendar="365_day"))
