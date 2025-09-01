@@ -285,7 +285,7 @@ class XGrid(BaseGrid):
         if "Z" in self.axes:
             zi, zeta = _search_1d_array(ds.depth.values, z)
         else:
-            zi, zeta = 0, 0.0
+            zi, zeta = np.zeros(z.shape, dtype=int), np.zeros(z.shape, dtype=float)
 
         if ds.lon.ndim == 1:
             yi, eta = _search_1d_array(ds.lat.values, y)
