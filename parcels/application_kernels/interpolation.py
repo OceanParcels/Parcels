@@ -452,7 +452,7 @@ def XNearest(
     else:
         value = corner_data[0, :]
 
-    return value.compute() if isinstance(value, dask.Array) else value
+    return value.compute() if is_dask_collection(value) else value
 
 
 def UXPiecewiseConstantFace(
