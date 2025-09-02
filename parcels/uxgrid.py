@@ -6,8 +6,6 @@ import numpy as np
 import uxarray as ux
 
 from parcels._typing import assert_valid_mesh
-from parcels.spatialhash import _barycentric_coordinates
-from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.xgrid import _search_1d_array
 
 from .basegrid import BaseGrid
@@ -43,6 +41,7 @@ class UxGrid(BaseGrid):
             raise ValueError("z must be a 1D array of vertical coordinates")
         self.z = z
         self._mesh = mesh
+        self._spatialhash = None
 
         assert_valid_mesh(mesh)
 
@@ -74,63 +73,43 @@ class UxGrid(BaseGrid):
             return self.uxgrid.n_face
 
     def search(self, z, y, x, ei=None, tol=1e-6):
-        def try_face(fid):
-            bcoords, err = self._get_barycentric_coordinates_latlon(y, x, fid)
-            if (bcoords >= 0).all() and (bcoords <= 1).all() and err < tol:
-                return bcoords
-            else:
-                bcoords = self._get_barycentric_coordinates_cartesian(y, x, fid)
-                if (bcoords >= 0).all() and (bcoords <= 1).all():
-                    return bcoords
+        """
+        Search for the grid cell (face) and vertical layer that contains the given points.
 
-            return None
+        Parameters
+        ----------
+        z : float or np.ndarray
+            The vertical coordinate(s) (depth) of the point(s).
+        y : float or np.ndarray
+            The latitude(s) of the point(s).
+        x : float or np.ndarray
+            The longitude(s) of the point(s).
+        ei : np.ndarray, optional
+            Precomputed horizontal indices (face indices) for the points.
 
+            TO BE IMPLEMENTED : If provided, we'll check
+            if the points are within the faces specified by these indices. For cells where the particles
+            are not found, a nearest neighbor search will be performed. As a last resort, the spatial hash will be used.
+        tol : float, optional
+            Tolerance for barycentric coordinate checks. Default is 1e-6.
+        """
         zi, zeta = _search_1d_array(self.z.values, z)
+        _, face_ids = self.get_spatial_hash().query(y, x)
+        valid_faces = face_ids != -1
+        bcoords = np.zeros((len(face_ids), self.uxgrid.n_max_face_nodes), dtype=np.float32)
+        # Get the barycentric coordinates for all valid faces
+        for idx in np.where(valid_faces)[0]:
+            fi = face_ids[idx]
+            bc = self._get_barycentric_coordinates(y, x, fi)
+            if np.all(bc <= 1.0) and np.all(bc >= 0.0) and np.isclose(np.sum(bc), 1.0, atol=tol):
+                bcoords[idx, : len(bc)] = bc
+            else:
+                # If the barycentric coordinates are invalid, mark the face as invalid
+                face_ids[idx] = -1
 
-        if ei is not None:
-            _, fi = self.unravel_index(ei)
-            bcoords = try_face(fi)
-            if bcoords is not None:
-                return bcoords, self.ravel_index(zi, fi)
-            # Try neighbors of current face
-            for neighbor in self.uxgrid.face_face_connectivity[fi, :]:
-                if neighbor == -1:
-                    continue
-                bcoords = try_face(neighbor)
-                if bcoords is not None:
-                    return bcoords, self.ravel_index(zi, neighbor)
+        return {"Z": (zi, zeta), "FACE": (face_ids, bcoords)}
 
-        # Global fallback as last ditch effort
-        points = np.column_stack((x, y))
-        face_ids = self.uxgrid.get_faces_containing_point(points, return_counts=False)[0]
-        fi = face_ids[0] if len(face_ids) > 0 else -1
-        if fi == -1:
-            raise FieldOutOfBoundError(z, y, x)
-        bcoords = try_face(fi)
-        if bcoords is None:
-            raise FieldOutOfBoundError(z, y, x)
-        return {"Z": (zi, zeta), "FACE": (fi, bcoords)}
-
-    def _get_barycentric_coordinates_latlon(self, y, x, fi):
-        """Checks if a point is inside a given face id on a UxGrid."""
-        # Check if particle is in the same face, otherwise search again.
-
-        n_nodes = self.uxgrid.n_nodes_per_face[fi].to_numpy()
-        node_ids = self.uxgrid.face_node_connectivity[fi, 0:n_nodes]
-        nodes = np.column_stack(
-            (
-                np.deg2rad(self.uxgrid.node_lon[node_ids].to_numpy()),
-                np.deg2rad(self.uxgrid.node_lat[node_ids].to_numpy()),
-            )
-        )
-
-        coord = np.deg2rad(np.column_stack((x, y)))
-        bcoord = np.asarray(_barycentric_coordinates(nodes, coord))
-        proj_coord = np.matmul(np.transpose(nodes), bcoord)
-        err = np.linalg.norm(proj_coord - coord)
-        return bcoord, err
-
-    def _get_barycentric_coordinates_cartesian(self, y, x, fi):
+    def _get_barycentric_coordinates(self, y, x, fi):
         n_nodes = self.uxgrid.n_nodes_per_face[fi].to_numpy()
         node_ids = self.uxgrid.face_node_connectivity[fi, 0:n_nodes]
 
@@ -150,6 +129,51 @@ class UxGrid(BaseGrid):
         bcoord = np.asarray(_barycentric_coordinates(nodes, cart_coord))
 
         return bcoord
+
+
+def _triangle_area(A, B, C):
+    """Compute the area of a triangle given by three points."""
+    d1 = B - A
+    d2 = C - A
+    d3 = np.cross(d1, d2)
+    return 0.5 * np.linalg.norm(d3)
+
+
+def _barycentric_coordinates(nodes, point, min_area=1e-8):
+    """
+    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
+    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
+    barycentric coordinates, which is only valid for convex polygons.
+
+    Parameters
+    ----------
+        nodes : numpy.ndarray
+            Spherical coordinates (lat,lon) of each corner node of a face
+        point : numpy.ndarray
+            Spherical coordinates (lat,lon) of the point
+
+    Returns
+    -------
+    numpy.ndarray
+        Barycentric coordinates corresponding to each vertex.
+
+    """
+    n = len(nodes)
+    sum_wi = 0
+    w = []
+
+    for i in range(0, n):
+        vim1 = nodes[i - 1]
+        vi = nodes[i]
+        vi1 = nodes[(i + 1) % n]
+        a0 = _triangle_area(vim1, vi, vi1)
+        a1 = max(_triangle_area(point, vim1, vi), min_area)
+        a2 = max(_triangle_area(point, vi, vi1), min_area)
+        sum_wi += a0 / (a1 * a2)
+        w.append(a0 / (a1 * a2))
+    barycentric_coords = [w_i / sum_wi for w_i in w]
+
+    return barycentric_coords
 
 
 def _lonlat_rad_to_xyz(
