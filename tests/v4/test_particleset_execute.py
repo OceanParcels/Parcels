@@ -41,6 +41,16 @@ def zonal_flow_fieldset() -> FieldSet:
     return FieldSet([U, V, UV])
 
 
+def test_pset_execute_implicit_dt_one_second(fieldset):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle)
+    pset.execute(DoNothing, runtime=np.timedelta64(1, "s"))
+
+    time = pset.time.copy()
+
+    pset.execute(DoNothing, runtime=np.timedelta64(1, "s"))
+    np.testing.assert_array_equal(pset.time, time + np.timedelta64(1, "s"))
+
+
 def test_pset_remove_particle_in_kernel(fieldset):
     npart = 100
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
