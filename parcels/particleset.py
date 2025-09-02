@@ -1,6 +1,7 @@
 import sys
 import warnings
 from collections.abc import Iterable
+from typing import Literal
 
 import numpy as np
 import xarray as xr
@@ -514,50 +515,9 @@ class ParticleSet:
 
         self._data["dt"][:] = dt
 
-        if self.fieldset.time_interval is None:
-            start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
-            if runtime is None:
-                raise TypeError("The runtime must be provided when the time_interval is not defined for a fieldset.")
-
-            else:
-                if isinstance(runtime, np.timedelta64):
-                    end_time = runtime
-                else:
-                    raise TypeError("The runtime must be a np.timedelta64 object")
-
-        else:
-            if not np.isnat(self.time_nextloop).any():
-                if sign_dt > 0:
-                    start_time = self.time_nextloop.min()
-                else:
-                    start_time = self.time_nextloop.max()
-            else:
-                if sign_dt > 0:
-                    start_time = self.fieldset.time_interval.left
-                else:
-                    start_time = self.fieldset.time_interval.right
-
-            if runtime is None:
-                if endtime is None:
-                    raise ValueError(
-                        "Must provide either runtime or endtime when time_interval is defined for a fieldset."
-                    )
-                # Ensure that the endtime uses the same type as the start_time
-                if isinstance(endtime, self.fieldset.time_interval.left.__class__):
-                    if sign_dt > 0:
-                        if endtime < self.fieldset.time_interval.left:
-                            raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
-                        end_time = min(endtime, self.fieldset.time_interval.right)
-                    else:
-                        if endtime > self.fieldset.time_interval.right:
-                            raise ValueError(
-                                "The endtime must be before the end time of the fieldset.time_interval when dt < 0"
-                            )
-                        end_time = max(endtime, self.fieldset.time_interval.left)
-                else:
-                    raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
-            else:
-                end_time = start_time + runtime * sign_dt
+        start_time, end_time = _get_simulation_start_and_end_times(
+            self.fieldset.time_interval, self._data["time_nextloop"], runtime, endtime, sign_dt
+        )
 
         # Set the time of the particles if it hadn't been set on initialisation
         if np.isnat(self._data["time"]).any():
@@ -630,3 +590,55 @@ def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray,
             ParticleSetWarning,
             stacklevel=2,
         )
+
+
+def _get_simulation_start_and_end_times(
+    time_interval: TimeInterval,
+    particle_release_times: np.ndarray,
+    runtime: np.timedelta64 | None,
+    endtime: np.datetime64 | None,
+    sign_dt: Literal[-1, 1],
+) -> tuple[np.datetime64, np.datetime64]:
+    if time_interval is None:
+        start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
+        if runtime is None:
+            raise TypeError("The runtime must be provided when the time_interval is not defined for a fieldset.")
+
+        else:
+            if isinstance(runtime, np.timedelta64):
+                end_time = runtime
+            else:
+                raise TypeError("The runtime must be a np.timedelta64 object")
+
+    else:
+        if not np.isnat(particle_release_times).any():
+            if sign_dt > 0:
+                start_time = particle_release_times.min()
+            else:
+                start_time = particle_release_times.max()
+        else:
+            if sign_dt > 0:
+                start_time = time_interval.left
+            else:
+                start_time = time_interval.right
+
+        if runtime is None:
+            if endtime is None:
+                raise ValueError("Must provide either runtime or endtime when time_interval is defined for a fieldset.")
+            # Ensure that the endtime uses the same type as the start_time
+            if isinstance(endtime, time_interval.left.__class__):
+                if sign_dt > 0:
+                    if endtime < time_interval.left:
+                        raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
+                    end_time = min(endtime, time_interval.right)
+                else:
+                    if endtime > time_interval.right:
+                        raise ValueError(
+                            "The endtime must be before the end time of the fieldset.time_interval when dt < 0"
+                        )
+                    end_time = max(endtime, time_interval.left)
+            else:
+                raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
+        else:
+            end_time = start_time + runtime * sign_dt
+    return start_time, end_time
