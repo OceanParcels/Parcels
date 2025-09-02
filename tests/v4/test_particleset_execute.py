@@ -27,7 +27,20 @@ def fieldset() -> FieldSet:
     grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U (A grid)"], grid)
     V = Field("V", ds["V (A grid)"], grid)
-    return FieldSet([U, V])
+    UV = VectorField("UV", U, V)
+    return FieldSet([U, V, UV])
+
+
+@pytest.fixture
+def fieldset_no_time_interval() -> FieldSet:
+    # i.e., no time variation
+    ds = datasets_structured["ds_2d_left"].isel(time=0)
+
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = Field("U", ds["U (A grid)"], grid)
+    V = Field("V", ds["V (A grid)"], grid)
+    UV = VectorField("UV", U, V)
+    return FieldSet([U, V, UV])
 
 
 @pytest.fixture
@@ -49,6 +62,66 @@ def test_pset_execute_implicit_dt_one_second(fieldset):
 
     pset.execute(DoNothing, runtime=np.timedelta64(1, "s"))
     np.testing.assert_array_equal(pset.time, time + np.timedelta64(1, "s"))
+
+
+def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
+    with pytest.raises(
+        ValueError,
+        match="dt must be a positive or negative np.timedelta64 object, got .*",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=1)
+
+    with pytest.raises(
+        ValueError,
+        match="dt must be a positive or negative np.timedelta64 object, got .*",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=np.timedelta64(0, "s"))
+
+    with pytest.raises(
+        ValueError,
+        match="runtime and endtime are mutually exclusive, you must provide one or the other. Got .*",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            runtime=np.timedelta64(1, "s"), endtime=np.datetime64("2100-01-01")
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="The runtime must be a np.timedelta64 object",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(runtime="invalid_runtime")
+
+    with pytest.raises(
+        ValueError,
+        match="Must provide either runtime or endtime when time_interval is defined for a fieldset.",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute()
+
+    with pytest.raises(
+        ValueError,
+        match="The endtime must be after the start time of the fieldset.time_interval",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=np.datetime64("1990-01-01"))
+
+    with pytest.raises(
+        ValueError,
+        match="The endtime must be before the end time of the fieldset.time_interval when dt < 0",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            endtime=np.datetime64("2100-01-01"), dt=np.timedelta64(-1, "s")
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="The endtime must be of the same type as the fieldset.time_interval start time.",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=12345)
+
+    with pytest.raises(
+        TypeError,
+        match="The runtime must be provided when the time_interval is not defined for a fieldset.",
+    ):  # TODO: use fieldset with no time_interval
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute()
 
 
 def test_pset_remove_particle_in_kernel(fieldset):

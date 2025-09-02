@@ -114,21 +114,6 @@ def test_pset_create_outside_time(fieldset):
         ParticleSet(fieldset, pclass=Particle, lon=[0] * len(time), lat=[0] * len(time), time=time)
 
 
-@pytest.mark.parametrize(
-    "dt, expectation",
-    [
-        (np.timedelta64(5, "s"), does_not_raise()),
-        (5.0, pytest.raises(TypeError)),
-        (np.datetime64("2000-01-02T00:00:00"), pytest.raises(TypeError)),
-        (timedelta(seconds=2), pytest.raises(TypeError)),
-    ],
-)
-def test_particleset_dt_type(fieldset, dt, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
-    with expectation:
-        pset.execute(runtime=np.timedelta64(10, "s"), dt=dt, pyfunc=DoNothing)
-
-
 def test_pset_starttime_not_multiple_dt(fieldset):
     times = [0, 1, 2]
     datetimes = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in times]
