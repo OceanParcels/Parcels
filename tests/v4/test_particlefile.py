@@ -22,8 +22,8 @@ def fieldset() -> FieldSet:  # TODO v4: Move into a `conftest.py` file and remov
     """Fixture to create a FieldSet object for testing."""
     ds = datasets["ds_2d_left"]
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
-    V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
+    U = Field("U", ds["U (A grid)"], grid)
+    V = Field("V", ds["V (A grid)"], grid)
     UV = VectorField("UV", U, V)
 
     return FieldSet(
@@ -191,11 +191,18 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, tmp_zarrfile, d
 
 def test_write_timebackward(fieldset, tmp_zarrfile):
     def Update_lon(particle, fieldset, time):  # pragma: no cover
-        particle.dlon -= 0.1 * particle.dt
+        dt = particle.dt / np.timedelta64(1, "s")
+        particle.dlon -= 0.1 * dt
 
-    pset = ParticleSet(fieldset, pclass=Particle, lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1.0)
-    pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.0, output_file=pfile)
+    pset = ParticleSet(
+        fieldset,
+        pclass=Particle,
+        lat=np.linspace(0, 1, 3),
+        lon=[0, 0, 0],
+        time=np.array([np.datetime64("2000-01-01") for _ in range(3)]),
+    )
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
+    pset.execute(pset.Kernel(Update_lon), runtime=np.timedelta64(1, "s"), dt=-np.timedelta64(1, "s"), output_file=pfile)
     ds = xr.open_zarr(tmp_zarrfile)
     trajs = ds["trajectory"][:]
     assert trajs.values.dtype == "int64"
