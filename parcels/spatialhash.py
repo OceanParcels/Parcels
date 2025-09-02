@@ -1,5 +1,7 @@
 import numpy as np
 
+import parcels
+
 
 class SpatialHash:
     """Custom data structure that is used for performing grid searches using Spatial Hashing. This class constructs an overlying
@@ -24,89 +26,98 @@ class SpatialHash:
         grid,
         reconstruct=False,
     ):
-        # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid
-        # Currently, this is not done due to circular import with parcels.xgrid
-
         self._source_grid = grid
         self.reconstruct = reconstruct
 
-        if self._source_grid._mesh == "spherical":
-            # Boundaries of the hash grid are the unit cube
+        if isinstance(grid, parcels.xgrid.XGrid):
+            if self._source_grid._mesh == "spherical":
+                # Boundaries of the hash grid are the unit cube
+                self._xmin = -1.0
+                self._ymin = -1.0
+                self._zmin = -1.0
+                self._xmax = 1.0
+                self._ymax = 1.0
+                self._zmax = 1.0  # Compute the cell centers of the source grid (for now, assuming Xgrid)
+                lon = np.deg2rad(self._source_grid.lon)
+                lat = np.deg2rad(self._source_grid.lat)
+                x, y, z = _latlon_rad_to_xyz(lat, lon)
+                _xbound = np.stack(
+                    (
+                        x[:-1, :-1],
+                        x[:-1, 1:],
+                        x[1:, 1:],
+                        x[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                _ybound = np.stack(
+                    (
+                        y[:-1, :-1],
+                        y[:-1, 1:],
+                        y[1:, 1:],
+                        y[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                _zbound = np.stack(
+                    (
+                        z[:-1, :-1],
+                        z[:-1, 1:],
+                        z[1:, 1:],
+                        z[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                # Compute centroid locations of each cells
+                self._xc = np.mean(_xbound, axis=-1)
+                self._yc = np.mean(_ybound, axis=-1)
+                self._zc = np.mean(_zbound, axis=-1)
+
+            else:
+                # Boundaries of the hash grid are the bounding box of the source grid
+                self._xmin = self._source_grid.lon.min()
+                self._xmax = self._source_grid.lon.max()
+                self._ymin = self._source_grid.lat.min()
+                self._ymax = self._source_grid.lat.max()
+                # setting min and max below is needed for mesh="flat"
+                self._zmin = 0.0
+                self._zmax = 0.0
+                x = self._source_grid.lon
+                y = self._source_grid.lat
+
+                _xbound = np.stack(
+                    (
+                        x[:-1, :-1],
+                        x[:-1, 1:],
+                        x[1:, 1:],
+                        x[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                _ybound = np.stack(
+                    (
+                        y[:-1, :-1],
+                        y[:-1, 1:],
+                        y[1:, 1:],
+                        y[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                # Compute centroid locations of each cells
+                self._xc = np.mean(_xbound, axis=-1)
+                self._yc = np.mean(_ybound, axis=-1)
+                self._zc = np.zeros_like(self._xc)
+        else:
             self._xmin = -1.0
             self._ymin = -1.0
             self._zmin = -1.0
             self._xmax = 1.0
             self._ymax = 1.0
-            self._zmax = 1.0  # Compute the cell centers of the source grid (for now, assuming Xgrid)
-            lon = np.deg2rad(self._source_grid.lon)
-            lat = np.deg2rad(self._source_grid.lat)
-            x, y, z = _latlon_rad_to_xyz(lat, lon)
-            _xbound = np.stack(
-                (
-                    x[:-1, :-1],
-                    x[:-1, 1:],
-                    x[1:, 1:],
-                    x[1:, :-1],
-                ),
-                axis=-1,
-            )
-            _ybound = np.stack(
-                (
-                    y[:-1, :-1],
-                    y[:-1, 1:],
-                    y[1:, 1:],
-                    y[1:, :-1],
-                ),
-                axis=-1,
-            )
-            _zbound = np.stack(
-                (
-                    z[:-1, :-1],
-                    z[:-1, 1:],
-                    z[1:, 1:],
-                    z[1:, :-1],
-                ),
-                axis=-1,
-            )
-            # Compute centroid locations of each cells
-            self._xc = np.mean(_xbound, axis=-1)
-            self._yc = np.mean(_ybound, axis=-1)
-            self._zc = np.mean(_zbound, axis=-1)
+            self._zmax = 1.0
 
-        else:
-            # Boundaries of the hash grid are the bounding box of the source grid
-            self._xmin = self._source_grid.lon.min()
-            self._xmax = self._source_grid.lon.max()
-            self._ymin = self._source_grid.lat.min()
-            self._ymax = self._source_grid.lat.max()
-            # setting min and max below is needed for mesh="flat"
-            self._zmin = 0.0
-            self._zmax = 0.0
-            x = self._source_grid.lon
-            y = self._source_grid.lat
-
-            _xbound = np.stack(
-                (
-                    x[:-1, :-1],
-                    x[:-1, 1:],
-                    x[1:, 1:],
-                    x[1:, :-1],
-                ),
-                axis=-1,
-            )
-            _ybound = np.stack(
-                (
-                    y[:-1, :-1],
-                    y[:-1, 1:],
-                    y[1:, 1:],
-                    y[1:, :-1],
-                ),
-                axis=-1,
-            )
-            # Compute centroid locations of each cells
-            self._xc = np.mean(_xbound, axis=-1)
-            self._yc = np.mean(_ybound, axis=-1)
-            self._zc = np.zeros_like(self._xc)
+            self._xc = self._source_grid.uxgrid.face_x.values
+            self._yc = self._source_grid.uxgrid.face_y.values
+            self._zc = self._source_grid.uxgrid.face_z.values
 
         # Generate the mapping from the hash indices to unstructured grid elements
         self._hash_table = None
