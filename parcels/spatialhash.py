@@ -115,9 +115,11 @@ class SpatialHash:
             self._ymax = 1.0
             self._zmax = 1.0
 
-            self._xc = self._source_grid.uxgrid.face_x.values
-            self._yc = self._source_grid.uxgrid.face_y.values
-            self._zc = self._source_grid.uxgrid.face_z.values
+            # Here, we force _xc, _yc, _zc to be 2D arrays to
+            # mininimizes code change requirements between curvilinear and unstructured grids
+            self._xc = np.atleast_2d(self._source_grid.uxgrid.face_x.values)
+            self._yc = np.atleast_2d(self._source_grid.uxgrid.face_y.values)
+            self._zc = np.atleast_2d(self._source_grid.uxgrid.face_z.values)
 
         # Generate the mapping from the hash indices to unstructured grid elements
         self._hash_table = None
@@ -277,51 +279,6 @@ class SpatialHash:
         i_best[has_hits] = i[src_best[has_hits]]
 
         return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
-
-
-def _triangle_area(A, B, C):
-    """Compute the area of a triangle given by three points."""
-    d1 = B - A
-    d2 = C - A
-    d3 = np.cross(d1, d2)
-    return 0.5 * np.linalg.norm(d3)
-
-
-def _barycentric_coordinates(nodes, point, min_area=1e-8):
-    """
-    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
-    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
-    barycentric coordinates, which is only valid for convex polygons.
-
-    Parameters
-    ----------
-        nodes : numpy.ndarray
-            Spherical coordinates (lat,lon) of each corner node of a face
-        point : numpy.ndarray
-            Spherical coordinates (lat,lon) of the point
-
-    Returns
-    -------
-    numpy.ndarray
-        Barycentric coordinates corresponding to each vertex.
-
-    """
-    n = len(nodes)
-    sum_wi = 0
-    w = []
-
-    for i in range(0, n):
-        vim1 = nodes[i - 1]
-        vi = nodes[i]
-        vi1 = nodes[(i + 1) % n]
-        a0 = _triangle_area(vim1, vi, vi1)
-        a1 = max(_triangle_area(point, vim1, vi), min_area)
-        a2 = max(_triangle_area(point, vi, vi1), min_area)
-        sum_wi += a0 / (a1 * a2)
-        w.append(a0 / (a1 * a2))
-    barycentric_coords = [w_i / sum_wi for w_i in w]
-
-    return barycentric_coords
 
 
 def _latlon_rad_to_xyz(lat, lon):
