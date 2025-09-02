@@ -126,38 +126,6 @@ def test_pset_starttime_not_multiple_dt(fieldset):
     assert np.allclose([p.lon_nextloop for p in pset], [8 - t for t in times])
 
 
-@pytest.mark.parametrize(
-    "runtime, expectation",
-    [
-        (np.timedelta64(5, "s"), does_not_raise()),
-        (5.0, pytest.raises(ValueError)),
-        (timedelta(seconds=2), pytest.raises(ValueError)),
-        (np.datetime64("2001-01-02T00:00:00"), pytest.raises(ValueError)),
-        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
-    ],
-)
-def test_particleset_runtime_type(fieldset, runtime, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
-    with expectation:
-        pset.execute(runtime=runtime, dt=np.timedelta64(10, "s"), pyfunc=DoNothing)
-
-
-@pytest.mark.parametrize(
-    "endtime, expectation",
-    [
-        (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
-        (5.0, pytest.raises(ValueError)),
-        (np.timedelta64(5, "s"), pytest.raises(ValueError)),
-        (timedelta(seconds=2), pytest.raises(ValueError)),
-        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
-    ],
-)
-def test_particleset_endtime_type(fieldset, endtime, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
-    with expectation:
-        pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
-
-
 def test_pset_add_explicit(fieldset):
     npart = 11
     lon = np.linspace(0, 1, npart)

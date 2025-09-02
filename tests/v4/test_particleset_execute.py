@@ -1,3 +1,6 @@
+from contextlib import nullcontext as does_not_raise
+from datetime import datetime, timedelta
+
 import numpy as np
 import pytest
 
@@ -112,6 +115,38 @@ def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
         match="The runtime must be provided when the time_interval is not defined for a fieldset.",
     ):
         ParticleSet(fieldset_no_time_interval, lon=[0.2], lat=[5.0], pclass=Particle).execute()
+
+
+@pytest.mark.parametrize(
+    "runtime, expectation",
+    [
+        (np.timedelta64(5, "s"), does_not_raise()),
+        (5.0, pytest.raises(ValueError)),
+        (timedelta(seconds=2), pytest.raises(ValueError)),
+        (np.datetime64("2001-01-02T00:00:00"), pytest.raises(ValueError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
+    ],
+)
+def test_particleset_runtime_type(fieldset, runtime, expectation):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    with expectation:
+        pset.execute(runtime=runtime, dt=np.timedelta64(10, "s"), pyfunc=DoNothing)
+
+
+@pytest.mark.parametrize(
+    "endtime, expectation",
+    [
+        (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
+        (5.0, pytest.raises(ValueError)),
+        (np.timedelta64(5, "s"), pytest.raises(ValueError)),
+        (timedelta(seconds=2), pytest.raises(ValueError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
+    ],
+)
+def test_particleset_endtime_type(fieldset, endtime, expectation):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    with expectation:
+        pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
 
 
 def test_pset_remove_particle_in_kernel(fieldset):
