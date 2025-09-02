@@ -261,10 +261,10 @@ def test_some_particles_throw_outoftime(fieldset):
     pset = ParticleSet(fieldset, lon=np.zeros_like(time), lat=np.zeros_like(time), time=time)
 
     def FieldAccessOutsideTime(particle, fieldset, time):  # pragma: no cover
-        fieldset.U[particle.time + np.timedelta64(1, "D"), particle.depth, particle.lat, particle.lon, particle]
+        fieldset.U[particle.time + np.timedelta64(400, "D"), particle.depth, particle.lat, particle.lon, particle]
 
     with pytest.raises(TimeExtrapolationError):
-        pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(400, "D"), dt=np.timedelta64(10, "D"))
+        pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(1, "D"), dt=np.timedelta64(10, "D"))
 
 
 def test_execution_check_stopallexecution(fieldset):
