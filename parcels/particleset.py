@@ -625,7 +625,7 @@ def _get_simulation_start_and_end_times(
                 "provided endtime, or change your release timing."
                 "Important info:\n"
                 f"    First particle release: {first_release_time!r}\n"
-                f"    {runtime=!r}\n"
+                f"    runtime: {runtime!r}\n"
                 f"    (calculated) endtime: {endtime!r}"
             )
             raise ValueError(msg)
