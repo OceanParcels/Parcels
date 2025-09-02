@@ -506,14 +506,13 @@ class ParticleSet:
         if output_file:
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
-        if (dt is not None) and (not isinstance(dt, np.timedelta64)):
-            raise TypeError("dt must be a np.timedelta64 object")
         if dt is None:
             dt = np.timedelta64(1, "s")
+
+        if not isinstance(dt, np.timedelta64) or np.isnat(dt) or (sign_dt := np.sign(dt).astype(int)) not in [-1, 1]:
+            raise ValueError(f"dt must be a positive or negative np.timedelta64 object, got {dt=!r}")
+
         self._data["dt"][:] = dt
-        sign_dt = np.sign(dt).astype(int)
-        if sign_dt not in [-1, 1]:
-            raise ValueError("dt must be a positive or negative np.timedelta64 object")
 
         if self.fieldset.time_interval is None:
             start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object

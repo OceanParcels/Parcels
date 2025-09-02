@@ -210,7 +210,8 @@ def test_execution_runtime(fieldset, starttime, runtime, dt, npart):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
     runtime = np.timedelta64(runtime, "s")
     sign_dt = 1 if dt is None else np.sign(dt)
-    dt = np.timedelta64(dt, "s")
+    if dt is not None:
+        dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(DoNothing, runtime=runtime, dt=dt)
     assert all([abs(p.time_nextloop - starttime - runtime * sign_dt) < np.timedelta64(1, "ms") for p in pset])
