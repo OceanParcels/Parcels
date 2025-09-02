@@ -34,7 +34,7 @@ def fieldset() -> FieldSet:
 @pytest.fixture
 def fieldset_no_time_interval() -> FieldSet:
     # i.e., no time variation
-    ds = datasets_structured["ds_2d_left"].isel(time=0)
+    ds = datasets_structured["ds_2d_left"].isel(time=0).drop("time")
 
     grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U (A grid)"], grid)
@@ -65,21 +65,16 @@ def test_pset_execute_implicit_dt_one_second(fieldset):
 
 
 def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
-    with pytest.raises(
-        ValueError,
-        match="dt must be a positive or negative np.timedelta64 object, got .*",
-    ):
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=1)
+    for dt in [1, np.timedelta64(0, "s"), np.timedelta64(None)]:
+        with pytest.raises(
+            ValueError,
+            match="dt must be a positive or negative np.timedelta64 object, got .*",
+        ):
+            ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=dt)
 
     with pytest.raises(
         ValueError,
-        match="dt must be a positive or negative np.timedelta64 object, got .*",
-    ):
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=np.timedelta64(0, "s"))
-
-    with pytest.raises(
-        ValueError,
-        match="runtime and endtime are mutually exclusive, you must provide one or the other. Got .*",
+        match="runtime and endtime are mutually exclusive - provide one or the other. Got .*",
     ):
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
             runtime=np.timedelta64(1, "s"), endtime=np.datetime64("2100-01-01")
@@ -87,25 +82,20 @@ def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
 
     with pytest.raises(
         ValueError,
-        match="The runtime must be a np.timedelta64 object",
+        match="The runtime must be a np.timedelta64 object. Got .*",
     ):
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(runtime="invalid_runtime")
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(runtime=1)
 
+    msg = """Calculated/provided end time of .* is not in fieldset time interval .* Either reduce your runtime, modify your provided endtime, or change your release timing.*"""
     with pytest.raises(
         ValueError,
-        match="Must provide either runtime or endtime when time_interval is defined for a fieldset.",
-    ):
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute()
-
-    with pytest.raises(
-        ValueError,
-        match="The endtime must be after the start time of the fieldset.time_interval",
+        match=msg,
     ):
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=np.datetime64("1990-01-01"))
 
     with pytest.raises(
         ValueError,
-        match="The endtime must be before the end time of the fieldset.time_interval when dt < 0",
+        match=msg,
     ):
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
             endtime=np.datetime64("2100-01-01"), dt=np.timedelta64(-1, "s")
@@ -113,15 +103,15 @@ def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
 
     with pytest.raises(
         ValueError,
-        match="The endtime must be of the same type as the fieldset.time_interval start time.",
+        match="The endtime must be of the same type as the fieldset.time_interval start time. Got .*",
     ):
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=12345)
 
     with pytest.raises(
-        TypeError,
+        ValueError,
         match="The runtime must be provided when the time_interval is not defined for a fieldset.",
-    ):  # TODO: use fieldset with no time_interval
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute()
+    ):
+        ParticleSet(fieldset_no_time_interval, lon=[0.2], lat=[5.0], pclass=Particle).execute()
 
 
 def test_pset_remove_particle_in_kernel(fieldset):
@@ -175,7 +165,8 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
 def test_execution_endtime(fieldset, starttime, endtime, dt):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
     endtime = fieldset.time_interval.left + np.timedelta64(endtime, "s")
-    dt = np.timedelta64(dt, "s")
+    if dt is not None:
+        dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
     pset.execute(DoNothing, endtime=endtime, dt=dt)
     assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")

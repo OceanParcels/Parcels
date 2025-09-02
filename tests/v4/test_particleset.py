@@ -130,10 +130,10 @@ def test_pset_starttime_not_multiple_dt(fieldset):
     "runtime, expectation",
     [
         (np.timedelta64(5, "s"), does_not_raise()),
-        (5.0, pytest.raises(TypeError)),
-        (timedelta(seconds=2), pytest.raises(TypeError)),
-        (np.datetime64("2001-01-02T00:00:00"), pytest.raises(TypeError)),
-        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(TypeError)),
+        (5.0, pytest.raises(ValueError)),
+        (timedelta(seconds=2), pytest.raises(ValueError)),
+        (np.datetime64("2001-01-02T00:00:00"), pytest.raises(ValueError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
     ],
 )
 def test_particleset_runtime_type(fieldset, runtime, expectation):
@@ -146,10 +146,10 @@ def test_particleset_runtime_type(fieldset, runtime, expectation):
     "endtime, expectation",
     [
         (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
-        (5.0, pytest.raises(TypeError)),
-        (np.timedelta64(5, "s"), pytest.raises(TypeError)),
-        (timedelta(seconds=2), pytest.raises(TypeError)),
-        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(TypeError)),
+        (5.0, pytest.raises(ValueError)),
+        (np.timedelta64(5, "s"), pytest.raises(ValueError)),
+        (timedelta(seconds=2), pytest.raises(ValueError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
     ],
 )
 def test_particleset_endtime_type(fieldset, endtime, expectation):

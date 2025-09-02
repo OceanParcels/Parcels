@@ -578,15 +578,9 @@ def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray,
 
     if isinstance(time.left, np.datetime64) and isinstance(release_times[0], np.timedelta64):
         release_times = np.array([t + time.left for t in release_times])
-    if np.any(release_times < time.left):
+    if np.any(release_times < time.left) or np.any(release_times > time.right):
         warnings.warn(
             "Some particles are set to be released outside the FieldSet's executable time domain.",
-            ParticleSetWarning,
-            stacklevel=2,
-        )
-    if np.any(release_times > time.right):
-        warnings.warn(
-            "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
             ParticleSetWarning,
             stacklevel=2,
         )
@@ -599,46 +593,54 @@ def _get_simulation_start_and_end_times(
     endtime: np.datetime64 | None,
     sign_dt: Literal[-1, 1],
 ) -> tuple[np.datetime64, np.datetime64]:
-    if time_interval is None:
-        start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
-        if runtime is None:
-            raise TypeError("The runtime must be provided when the time_interval is not defined for a fieldset.")
+    if runtime is not None and endtime is not None:
+        raise ValueError(
+            f"runtime and endtime are mutually exclusive - provide one or the other. Got {runtime=!r}, {endtime=!r}"
+        )
 
-        else:
-            if isinstance(runtime, np.timedelta64):
-                end_time = runtime
-            else:
-                raise TypeError("The runtime must be a np.timedelta64 object")
+    if runtime is None and time_interval is None:
+        raise ValueError("The runtime must be provided when the time_interval is not defined for a fieldset.")
 
+    if sign_dt == 1:
+        first_release_time = particle_release_times.min()
     else:
-        if not np.isnat(particle_release_times).any():
-            if sign_dt > 0:
-                start_time = particle_release_times.min()
-            else:
-                start_time = particle_release_times.max()
-        else:
-            if sign_dt > 0:
-                start_time = time_interval.left
-            else:
-                start_time = time_interval.right
+        first_release_time = particle_release_times.max()
 
-        if runtime is None:
-            if endtime is None:
-                raise ValueError("Must provide either runtime or endtime when time_interval is defined for a fieldset.")
-            # Ensure that the endtime uses the same type as the start_time
-            if isinstance(endtime, time_interval.left.__class__):
-                if sign_dt > 0:
-                    if endtime < time_interval.left:
-                        raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
-                    end_time = min(endtime, time_interval.right)
-                else:
-                    if endtime > time_interval.right:
-                        raise ValueError(
-                            "The endtime must be before the end time of the fieldset.time_interval when dt < 0"
-                        )
-                    end_time = max(endtime, time_interval.left)
-            else:
-                raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
-        else:
-            end_time = start_time + runtime * sign_dt
-    return start_time, end_time
+    start_time = _get_start_time(first_release_time, time_interval, sign_dt, runtime)
+
+    if endtime is None:
+        if not isinstance(runtime, np.timedelta64):
+            raise ValueError(f"The runtime must be a np.timedelta64 object. Got {type(runtime)}")
+
+        endtime = start_time + sign_dt * runtime
+
+    if time_interval is not None:
+        if type(endtime) != type(time_interval.left):  # noqa: E721
+            raise ValueError(
+                f"The endtime must be of the same type as the fieldset.time_interval start time. Got {endtime=!r} with {time_interval=!r}"
+            )
+        if endtime not in time_interval:
+            msg = (
+                f"Calculated/provided end time of {endtime!r} is not in fieldset time interval {time_interval!r}. Either reduce your runtime, modify your "
+                "provided endtime, or change your release timing."
+                "Important info:\n"
+                f"    First particle release: {first_release_time!r}\n"
+                f"    {runtime=!r}\n"
+                f"    (calculated) endtime: {endtime!r}"
+            )
+            raise ValueError(msg)
+
+    return start_time, endtime
+
+
+def _get_start_time(first_release_time, time_interval, sign_dt, runtime):
+    if time_interval is None:
+        time_interval = TimeInterval(left=np.timedelta64(0, "s"), right=runtime)
+
+    if sign_dt == 1:
+        fieldset_start = time_interval.left
+    else:
+        fieldset_start = time_interval.right
+
+    start_time = first_release_time if not np.isnat(first_release_time) else fieldset_start
+    return start_time
