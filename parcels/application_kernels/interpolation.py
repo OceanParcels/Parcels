@@ -351,6 +351,57 @@ def XNearest(
     return value.compute() if isinstance(value, dask.Array) else value
 
 
+def XLinearInvdistLandTracer(
+    field: Field,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+):
+    """Linear spatial interpolation on a regular grid, where points on land are not used."""
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+
+    axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
+    lenT = 2 if np.any(tau > 0) else 1
+    lenZ = 2 if np.any(zeta > 0) else 1
+    npart = len(xsi)
+
+    values = XLinear(field, ti, position, tau, t, z, y, x)
+    corner_data = _get_corner_data_Agrid(field.data, ti, zi, yi, xi, lenT, lenZ, npart, axis_dim)
+
+    on_land = np.where(np.isnan(values))
+
+    def is_land(ti: int, zi: int, p: int):
+        value = corner_data[ti, zi, p, :, :]
+        return np.where(np.isclose(value, 0.0), True, False)
+
+    for p in on_land:
+        land = is_land(ti[p], zi[p], p)
+        nb_land = np.sum(land)
+        if nb_land == 4:
+            values[p] = 0.0
+        elif nb_land > 0:
+            val = 0
+            w_sum = 0
+            for j in range(2):
+                for i in range(2):
+                    distance = pow((eta - j), 2) + pow((xsi - i), 2)
+                    if land[j][i] == 0:
+                        val += corner_data[ti, zi, p, yi + j, xi + i] / distance
+                        w_sum += 1 / distance
+                    else:
+                        values[p] = 0.0
+            return val / w_sum
+
+        else:
+            values[p] = np.nan
+
+
 def UXPiecewiseConstantFace(
     field: Field,
     ti: int,
