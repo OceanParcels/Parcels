@@ -385,6 +385,7 @@ def test_particlefile_write_particle_data(tmp_store):
         time_interval=time_interval,
         initial={
             "time": np.full(nparticles, fill_value=left),
+            "time_nextloop": np.full(nparticles, fill_value=left),
             "lon": initial_lon,
             "dt": np.full(nparticles, fill_value=1.0),
             "trajectory": np.arange(nparticles),
