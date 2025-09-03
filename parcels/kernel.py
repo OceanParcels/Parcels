@@ -30,6 +30,16 @@ if TYPE_CHECKING:
 __all__ = ["Kernel"]
 
 
+ErrorsToThrow = {
+    StatusCode.ErrorTimeExtrapolation: _raise_time_extrapolation_error,
+    StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
+    StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
+    StatusCode.ErrorInterpolation: _raise_field_interpolation_error,
+    StatusCode.ErrorGridSearching: _raise_grid_searching_error,
+    StatusCode.Error: _raise_general_error,
+}
+
+
 class Kernel:
     """Kernel object that encapsulates auto-generated code.
 
@@ -272,16 +282,7 @@ class Kernel:
             if np.any(pset.state == StatusCode.StopAllExecution):
                 return StatusCode.StopAllExecution
 
-            errors_to_throw = {
-                StatusCode.ErrorTimeExtrapolation: _raise_time_extrapolation_error,
-                StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
-                StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
-                StatusCode.ErrorInterpolation: _raise_field_interpolation_error,
-                StatusCode.ErrorGridSearching: _raise_grid_searching_error,
-                StatusCode.Error: _raise_general_error,
-            }
-
-            for error_code, error_func in errors_to_throw.items():
+            for error_code, error_func in ErrorsToThrow.items():
                 if np.any(pset.state == error_code):
                     inds = pset.state == error_code
                     if error_code == StatusCode.ErrorTimeExtrapolation:
