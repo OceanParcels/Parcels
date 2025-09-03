@@ -11,6 +11,7 @@ from parcels.application_kernels.interpolation import (
     XFreeslip,
     XLinear,
     XNearest,
+    XPartialslip,
     ZeroInterpolator,
 )
 from parcels.field import Field, VectorField
@@ -88,7 +89,11 @@ def test_raw_2d_interpolation(field, func, t, z, y, x, expected):
 @pytest.mark.parametrize(
     "func, t, z, y, x, expected",
     [
+        (XPartialslip, np.timedelta64(1, "s"), 0, 0, 0.0, [[1], [1]]),
         (XFreeslip, np.timedelta64(1, "s"), 0, 0.5, 1.5, [[1], [0.5]]),
+        (XPartialslip, np.timedelta64(1, "s"), 0, 2.5, 1.5, [[0.75], [0.5]]),
+        (XFreeslip, np.timedelta64(1, "s"), 0, 2.5, 1.5, [[1], [0.5]]),
+        (XPartialslip, np.timedelta64(1, "s"), 0, 1.5, 0.5, [[0.5], [0.75]]),
         (XFreeslip, np.timedelta64(1, "s"), 0, 1.5, 0.5, [[0.5], [1]]),
         (
             XFreeslip,
@@ -103,7 +108,6 @@ def test_raw_2d_interpolation(field, func, t, z, y, x, expected):
 def test_spatial_slip_interpolation(field, func, t, z, y, x, expected):
     field.data[:] = 1.0
     field.data[:, :, 1:3, 1:3] = 0.0  # Set zero land value to test spatial slip
-    print(field.data[0, 0, :, :])
     U = field
     V = field
     UV = VectorField("UV", U, V, vector_interp_method=func)

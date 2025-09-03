@@ -183,10 +183,10 @@ def _Spatialslip(
     f_v = np.ones_like(eta)
 
     if lenZ == 1:
-        f_u = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & (eta > 0), f_u / eta, f_u)
-        f_u = np.where(is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & (eta < 1), f_u / (1 - eta), f_u)
-        f_v = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & (xsi > 0), f_v / xsi, f_v)
-        f_v = np.where(is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & (xsi < 1), f_v / (1 - xsi), f_v)
+        f_u = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & (eta > 0), f_u * (a + b * eta) / eta, f_u)
+        f_u = np.where(is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & (eta < 1), f_u * (1 - b * eta) / (1 - eta), f_u)
+        f_v = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & (xsi > 0), f_v * (a + b * xsi) / xsi, f_v)
+        f_v = np.where(is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & (xsi < 1), f_v * (1 - b * xsi) / (1 - xsi), f_v)
     else:
         f_u = np.where(
             is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & (eta > 0),
@@ -195,7 +195,7 @@ def _Spatialslip(
         )
         f_u = np.where(
             is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & is_land(0, 1, 1, 0) & is_land(0, 1, 1, 1) & (eta < 1),
-            f_u * (a - b * eta) / (1 - eta),
+            f_u * (1 - b * eta) / (1 - eta),
             f_u,
         )
         f_v = np.where(
@@ -205,7 +205,7 @@ def _Spatialslip(
         )
         f_v = np.where(
             is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 1) & (xsi < 1),
-            f_v * (a - b * xsi) / (1 - xsi),
+            f_v * (1 - b * xsi) / (1 - xsi),
             f_v,
         )
         f_u = np.where(
@@ -215,7 +215,7 @@ def _Spatialslip(
         )
         f_u = np.where(
             is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
-            f_u * (a - b * zeta) / (1 - zeta),
+            f_u * (1 - b * zeta) / (1 - zeta),
             f_u,
         )
         f_v = np.where(
@@ -225,7 +225,7 @@ def _Spatialslip(
         )
         f_v = np.where(
             is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
-            f_v * (a - b * zeta) / (1 - zeta),
+            f_v * (1 - b * zeta) / (1 - zeta),
             f_v,
         )
 
