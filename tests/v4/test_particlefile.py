@@ -35,7 +35,7 @@ def fieldset() -> FieldSet:  # TODO v4: Move into a `conftest.py` file and remov
 def test_metadata(fieldset, tmp_zarrfile):
     pset = ParticleSet(fieldset, pclass=Particle, lon=0, lat=0)
 
-    pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(tmp_zarrfile, outputdt=1))
+    pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s")))
 
     ds = xr.open_zarr(tmp_zarrfile)
     assert ds.attrs["parcels_kernels"].lower() == "ParticleDoNothing".lower()
@@ -52,7 +52,7 @@ def test_pfile_array_write_zarr_memorystore(fieldset):
         lat=0.5 * np.ones(npart),
         time=fieldset.time_interval.left,
     )
-    pfile = pset.ParticleFile(zarr_store, outputdt=1)
+    pfile = pset.ParticleFile(zarr_store, outputdt=np.timedelta64(1, "s"))
     pfile.write(pset, time=fieldset.time_interval.left)
 
     ds = xr.open_zarr(zarr_store)
@@ -68,7 +68,7 @@ def test_pfile_array_remove_particles(fieldset, tmp_zarrfile):
         lat=0.5 * np.ones(npart),
         time=fieldset.time_interval.left,
     )
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
     pfile.write(pset, time=fieldset.time_interval.left)
     pset.remove_indices(3)
     for p in pset:
@@ -91,7 +91,7 @@ def test_pfile_array_remove_all_particles(fieldset, chunks_obs, tmp_zarrfile):
         time=fieldset.time_interval.left,
     )
     chunks = (npart, chunks_obs) if chunks_obs else None
-    pfile = pset.ParticleFile(tmp_zarrfile, chunks=chunks, outputdt=1)
+    pfile = pset.ParticleFile(tmp_zarrfile, chunks=chunks, outputdt=np.timedelta64(1, "s"))
     pfile.write(pset, time=fieldset.time_interval.left)
     for _ in range(npart):
         pset.remove_indices(-1)
@@ -113,7 +113,7 @@ def test_variable_write_double(fieldset, tmp_zarrfile):
         particle.dlon += 0.1
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=0.00001)
+    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(10, "us"))
     pset.execute(pset.Kernel(Update_lon), endtime=0.001, dt=0.00001, output_file=ofile)
 
     ds = xr.open_zarr(tmp_zarrfile)
@@ -140,7 +140,7 @@ def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
     MyParticle = Particle.add_variable(extra_vars)
 
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=fieldset.time_interval.left)
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
     pfile.write(pset, time=fieldset.time_interval.left)
 
     ds = xr.open_zarr(
@@ -267,7 +267,7 @@ def test_reset_dt(fieldset, tmp_zarrfile):
         particle.dlon += 0.1
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=0.05)
+    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(50, "ms"))
     pset.execute(pset.Kernel(Update_lon), endtime=0.12, dt=0.02, output_file=ofile)
 
     assert np.allclose(pset.lon, 0.6)
@@ -280,7 +280,7 @@ def test_correct_misaligned_outputdt_dt(fieldset, tmp_zarrfile):
         particle.dlon += particle.dt
 
     pset = ParticleSet(fieldset, pclass=Particle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=3)
+    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(3, "s"))
     pset.execute(pset.Kernel(Update_lon), endtime=11, dt=2, output_file=ofile)
 
     ds = xr.open_zarr(tmp_zarrfile)
