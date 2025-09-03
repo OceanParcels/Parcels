@@ -156,7 +156,13 @@ def test_some_particles_throw_outoftime(fieldset):
 
     with pytest.raises(TimeExtrapolationError):
         pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(400, "D"), dt=np.timedelta64(10, "D"))
+
+
 def test_raise_grid_searching_error(): ...
+
+
+def test_raise_general_error(): ...
+
 
 def test_errorinterpolation(fieldset):
     def NaNInterpolator(field, ti, position, tau, t, z, y, x):  # pragma: no cover
