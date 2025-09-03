@@ -154,6 +154,7 @@ select = [
     "RUF", # ruff
     "ISC001", # single-line-implicit-string-concatenation
     "TID", # flake8-tidy-imports
+    "T100", # Checks for the presence of debugger calls and imports
 ]
 
 ignore = [
