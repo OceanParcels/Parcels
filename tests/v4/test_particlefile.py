@@ -356,27 +356,22 @@ def test_pset_execute_outputdt_backwards_fieldset_timevarying():
     assert np.all(file_outputdt == np.timedelta64(-outputdt)), (file_outputdt, np.timedelta64(-outputdt))
 
 
-@pytest.fixture
-def store():
-    return MemoryStore()
+@pytest.mark.new
+def test_particlefile_init(tmp_store):
+    ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=(1, 3))
 
 
 @pytest.mark.new
-def test_particlefile_init(store):
-    ParticleFile(store, outputdt=np.timedelta64(1, "s"), chunks=(1, 3))
-
-
-@pytest.mark.new
-def test_particlefile_init_invalid(store):  # TODO: Add test for read only store
+def test_particlefile_init_invalid(tmp_store):  # TODO: Add test for read only store
     with pytest.raises(ValueError, match="chunks must be a tuple"):
-        ParticleFile(store, outputdt=np.timedelta64(1, "s"), chunks=1)
+        ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=1)
 
 
 @pytest.mark.new
-def test_particlefile_write_particle_data(store):
+def test_particlefile_write_particle_data(tmp_store):
     nparticles = 100
 
-    pfile = ParticleFile(store, outputdt=np.timedelta64(1, "s"), chunks=(nparticles, 40))
+    pfile = ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=(nparticles, 40))
     pclass = Particle
 
     left, right = np.datetime64("2019-05-30T12:00:00.000000000", "ns"), np.datetime64("2020-01-02", "ns")
@@ -402,7 +397,7 @@ def test_particlefile_write_particle_data(store):
         time_interval=time_interval,
         time=left,
     )
-    ds = xr.open_zarr(store, decode_cf=False)  # TODO: Fix metadata and re-enable decode_cf
+    ds = xr.open_zarr(tmp_store, decode_cf=False)  # TODO: Fix metadata and re-enable decode_cf
     # assert ds.time.dtype == "datetime64[ns]"
     # np.testing.assert_equal(ds["time"].isel(obs=0).values, left)
     assert ds.sizes["trajectory"] == nparticles
