@@ -542,24 +542,24 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            logger.info(f"Output files are stored in {output_file.store.path}.")
+            logger.info(f"Output files are stored in {output_file.store}.")
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
 
-        next_output = outputdt if output_file else None
+        next_output = start_time + sign_dt * outputdt if output_file else None
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
             if sign_dt > 0:
-                next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
+                next_time = min(next_output, end_time)
             else:
-                next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
+                next_time = max(next_output, end_time)
             self._kernel.execute(self, endtime=next_time, dt=dt)
 
             # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:
-                if abs(next_time - next_output) < 1e-12:
+                if np.abs(next_time - next_output) < np.timedelta64(1000, "ns"):
                     if output_file:
                         output_file.write(self, next_output)
                     if np.isfinite(outputdt):
