@@ -5,7 +5,7 @@ from datetime import timedelta
 import numpy as np
 import pytest
 import xarray as xr
-from zarr.storage import DirectoryStore, MemoryStore
+from zarr.storage import MemoryStore
 
 import parcels
 from parcels import AdvectionRK4, Field, FieldSet, Particle, ParticleSet, Variable, VectorField
@@ -358,7 +358,6 @@ def test_pset_execute_outputdt_backwards_fieldset_timevarying():
 
 @pytest.fixture
 def store():
-    return DirectoryStore("/tmp/test.zarr")
     return MemoryStore()
 
 
