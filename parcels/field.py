@@ -242,6 +242,8 @@ class Field:
 
         value = self._interp_method(self, ti, position, tau, time, z, y, x)
 
+        _update_particle_states_interp_value(particle, value)
+
         if applyConversion:
             value = self.units.to_target(value, z, y, x)
         return value
@@ -328,6 +330,8 @@ class VectorField:
             v = self.V._interp_method(self.V, ti, position, tau, time, z, y, x)
             if "3D" in self.vector_type:
                 w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
+            else:
+                w = 0.0
 
             if applyConversion:
                 u = self.U.units.to_target(u, z, y, x)
@@ -336,7 +340,8 @@ class VectorField:
         else:
             (u, v, w) = self._vector_interp_method(self, ti, position, tau, time, z, y, x, applyConversion)
 
-        _update_particle_states_velocity(particle, {"U": u})
+        for vel in (u, v, w):
+            _update_particle_states_interp_value(particle, vel)
 
         if applyConversion and ("3D" in self.vector_type):
             w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
@@ -375,11 +380,11 @@ def _update_particle_states_position(particle, position):
         )
 
 
-def _update_particle_states_velocity(particle, velocities):
-    """Update the particle states based on the velocity dictionary, but only if state is not an Error already."""
-    if particle and "U" in velocities:
+def _update_particle_states_interp_value(particle, value):
+    """Update the particle states based on the interpolated value, but only if state is not an Error already."""
+    if particle:
         particle.state = np.maximum(
-            np.where(np.isnan(velocities["U"]), StatusCode.Error, particle.state), particle.state
+            np.where(np.isnan(value), StatusCode.ErrorInterpolation, particle.state), particle.state
         )
 
 

@@ -7,8 +7,7 @@ import numpy as np
 
 from parcels._typing import Mesh
 from parcels.tools.statuscodes import (
-    _raise_field_out_of_bound_error,
-    _raise_field_sampling_error,
+    _raise_grid_searching_error,
     _raise_time_extrapolation_error,
 )
 
@@ -65,12 +64,12 @@ def _search_indices_curvilinear_2d(
     # TODO: Re-enable in some capacity
     # if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:
     #     if grid.lon[0, 0] < grid.lon[0, -1]:
-    #         _raise_field_out_of_bound_error(y, x)
+    #         _raise_grid_searching_error(y, x)
     #     elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-    #         _raise_field_out_of_bound_error(z, y, x)
+    #         _raise_grid_searching_error(z, y, x)
 
     # if y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]:
-    #     _raise_field_out_of_bound_error(z, y, x)
+    #     _raise_grid_searching_error(z, y, x)
 
     while np.any(xsi < -tol) or np.any(xsi > 1 + tol) or np.any(eta < -tol) or np.any(eta > 1 + tol):
         px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
@@ -102,12 +101,12 @@ def _search_indices_curvilinear_2d(
         it += 1
         if it > maxIterSearch:
             print(f"Correct cell not found after {maxIterSearch} iterations")
-            _raise_field_out_of_bound_error(0, y, x)
+            _raise_grid_searching_error(0, y, x)
     xsi = np.where(xsi < 0.0, 0.0, np.where(xsi > 1.0, 1.0, xsi))
     eta = np.where(eta < 0.0, 0.0, np.where(eta > 1.0, 1.0, eta))
 
     if np.any((xsi < 0) | (xsi > 1) | (eta < 0) | (eta > 1)):
-        _raise_field_sampling_error(y, x)
+        _raise_grid_searching_error(y, x)
     return (yi, eta, xi, xsi)
 
 
