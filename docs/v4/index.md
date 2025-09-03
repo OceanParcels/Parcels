@@ -7,7 +7,7 @@ The key goals of this update are
 1. to support `Fields` on unstructured grids;
 2. to allow for user-defined interpolation methods (somewhat similar to user-defined kernels);
 3. to make the codebase more modular, easier to extend, and more maintainable;
-4. to align Parcels more with other tools in the [Pangeo ecosystemand](https://www.pangeo.io/#ecosystem), particularly by leveraging `xarray` more; and
+4. to align Parcels more with other tools in the [Pangeo ecosystem](https://www.pangeo.io/#ecosystem), particularly by leveraging `xarray` more; and
 5. to improve the performance of Parcels.
 
 The timeline for the release of Parcels v4 is not yet fixed, but we are aiming for a release of an 'alpha' version in September 2025. This v4-alpha will have support for unstructured grids and user-defined interpolation methods, but is not yet performance-optimised.
