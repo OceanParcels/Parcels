@@ -17,7 +17,7 @@ from parcels import (
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
-from parcels.tools.statuscodes import FieldOutOfBoundError, TimeExtrapolationError
+from parcels.tools.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
 from tests import utils
@@ -265,6 +265,25 @@ def test_some_particles_throw_outoftime(fieldset):
 
     with pytest.raises(TimeExtrapolationError):
         pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(1, "D"), dt=np.timedelta64(10, "D"))
+
+
+def test_raise_grid_searching_error(): ...
+
+
+def test_raise_general_error(): ...
+
+
+def test_errorinterpolation(fieldset):
+    def NaNInterpolator(field, ti, position, tau, t, z, y, x):  # pragma: no cover
+        return np.nan * np.zeros_like(x)
+
+    def SampleU(particle, fieldset, time):  # pragma: no cover
+        fieldset.U[particle.time, particle.depth, particle.lat, particle.lon, particle]
+
+    fieldset.U.interp_method = NaNInterpolator
+    pset = ParticleSet(fieldset, lon=[0, 2], lat=[0, 0])
+    with pytest.raises(FieldInterpolationError):
+        pset.execute(SampleU, runtime=np.timedelta64(2, "s"), dt=np.timedelta64(1, "s"))
 
 
 def test_execution_check_stopallexecution(fieldset):

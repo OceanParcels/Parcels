@@ -7,9 +7,11 @@ __all__ = [
     "KernelError",
     "StatusCode",
     "TimeExtrapolationError",
+    "_raise_field_interpolation_error",
     "_raise_field_out_of_bound_error",
     "_raise_field_out_of_bound_surface_error",
-    "_raise_field_sampling_error",
+    "_raise_general_error",
+    "_raise_grid_searching_error",
     "_raise_time_extrapolation_error",
 ]
 
@@ -25,15 +27,20 @@ class StatusCode:
     StopAllExecution = 41
     Error = 50
     ErrorInterpolation = 51
+    ErrorGridSearching = 52
     ErrorOutOfBounds = 60
     ErrorThroughSurface = 61
     ErrorTimeExtrapolation = 70
 
 
-class FieldSamplingError(RuntimeError):
-    """Utility error class to propagate erroneous field sampling."""
+class FieldInterpolationError(RuntimeError):
+    """Utility error class to propagate NaN field interpolation."""
 
     pass
+
+
+def _raise_field_interpolation_error(z, y, x):
+    raise FieldInterpolationError(f"Field interpolation returned NaN at (depth={z}, lat={y}, lon={x})")
 
 
 class FieldOutOfBoundError(RuntimeError):
@@ -42,18 +49,14 @@ class FieldOutOfBoundError(RuntimeError):
     pass
 
 
+def _raise_field_out_of_bound_error(z, y, x):
+    raise FieldOutOfBoundError(f"Field sampled out-of-bound, at (depth={z}, lat={y}, lon={x})")
+
+
 class FieldOutOfBoundSurfaceError(RuntimeError):
     """Utility error class to propagate out-of-bound field sampling at the surface."""
 
     pass
-
-
-def _raise_field_sampling_error(z, y, x):
-    raise FieldSamplingError(f"Field sampled at (depth={z}, lat={y}, lon={x})")
-
-
-def _raise_field_out_of_bound_error(z, y, x):
-    raise FieldOutOfBoundError(f"Field sampled out-of-bound, at (depth={z}, lat={y}, lon={x})")
 
 
 def _raise_field_out_of_bound_surface_error(z: float | None, y: float | None, x: float | None) -> None:
@@ -63,6 +66,32 @@ def _raise_field_out_of_bound_surface_error(z: float | None, y: float | None, x:
     raise FieldOutOfBoundSurfaceError(
         f"Field sampled out-of-bound at the surface, at (depth={format_out(z)}, lat={format_out(y)}, lon={format_out(x)})"
     )
+
+
+class FieldSamplingError(RuntimeError):
+    """Utility error class to propagate field sampling errors."""
+
+    pass
+
+
+class GridSearchingError(RuntimeError):
+    """Utility error class to propagate grid searching errors."""
+
+    pass
+
+
+def _raise_grid_searching_error(z, y, x):
+    raise GridSearchingError(f"Grid searching failed at (depth={z}, lat={y}, lon={x})")
+
+
+class GeneralError(RuntimeError):
+    """Utility error class to propagate general errors."""
+
+    pass
+
+
+def _raise_general_error(z, y, x):
+    raise GeneralError(f"General error occurred at (depth={z}, lat={y}, lon={x})")
 
 
 class TimeExtrapolationError(RuntimeError):
@@ -91,9 +120,11 @@ class KernelError(RuntimeError):
 
 
 AllParcelsErrorCodes = {
-    FieldSamplingError: StatusCode.Error,
+    FieldInterpolationError: StatusCode.ErrorInterpolation,
     FieldOutOfBoundError: StatusCode.ErrorOutOfBounds,
     FieldOutOfBoundSurfaceError: StatusCode.ErrorThroughSurface,
+    GridSearchingError: StatusCode.ErrorGridSearching,
     TimeExtrapolationError: StatusCode.ErrorTimeExtrapolation,
     KernelError: StatusCode.Error,
+    GeneralError: StatusCode.Error,
 }
