@@ -552,10 +552,12 @@ class ParticleSet:
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
-            if sign_dt > 0:
-                next_time = min(next_output, end_time)
+            if next_output is not None:
+                f = min if sign_dt > 0 else max
+                next_time = f(next_output, end_time)
             else:
-                next_time = max(next_output, end_time)
+                next_time = end_time
+
             self._kernel.execute(self, endtime=next_time, dt=dt)
 
             # TODO: Handle IO timing based of timedelta or datetime objects
