@@ -168,19 +168,19 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
             Variable(
                 "lon",
                 dtype=spatial_dtype,
-                attrs={"long_name": "", "standard_name": "longitude", "units": "degrees_east", "axis": "X"},
+                attrs={"standard_name": "longitude", "units": "degrees_east", "axis": "X"},
             ),
             Variable("lon_nextloop", dtype=spatial_dtype, to_write=False),
             Variable(
                 "lat",
                 dtype=spatial_dtype,
-                attrs={"long_name": "", "standard_name": "latitude", "units": "degrees_north", "axis": "Y"},
+                attrs={"standard_name": "latitude", "units": "degrees_north", "axis": "Y"},
             ),
             Variable("lat_nextloop", dtype=spatial_dtype, to_write=False),
             Variable(
                 "depth",
                 dtype=spatial_dtype,
-                attrs={"long_name": "", "standard_name": "depth", "units": "m", "positive": "down"},
+                attrs={"standard_name": "depth", "units": "m", "positive": "down"},
             ),
             Variable("dlon", dtype=spatial_dtype, to_write=False),
             Variable("dlat", dtype=spatial_dtype, to_write=False),
@@ -189,7 +189,7 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
             Variable(
                 "time",
                 dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE,
-                attrs={"long_name": "", "standard_name": "time", "units": "seconds", "axis": "T"},
+                attrs={"standard_name": "time", "units": "seconds", "axis": "T"},
             ),
             Variable("time_nextloop", dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE, to_write=False),
             Variable(
