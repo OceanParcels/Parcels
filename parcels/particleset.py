@@ -507,7 +507,7 @@ class ParticleSet:
 
         if output_file is not None:
             output_file.set_metadata(self.fieldset.gridset[0]._mesh)
-            output_file.metadata["parcels_kernels"] = self._kernel.name
+            output_file.metadata["parcels_kernels"] = self._kernel.funcname
 
         if dt is None:
             dt = np.timedelta64(1, "s")

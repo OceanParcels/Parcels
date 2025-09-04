@@ -92,11 +92,6 @@ class Kernel:
             ret += f.__name__
         return ret
 
-    @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
-    def name(self):
-        # return f"{self._ptype.name}{self.funcname}" # TODO v4: Should we propogate the name of the particle to the metadata? At the moment we don't have the concept of naming particles (somewhat incompatible with the .add_variable() API?)
-        return f"{self.funcname}"
-
     @property
     def ptype(self):
         return self._ptype
