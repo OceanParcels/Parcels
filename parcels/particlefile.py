@@ -65,8 +65,8 @@ class ParticleFile:
     """
 
     def __init__(self, store, outputdt, chunks=None, create_new_zarrfile=True):
-        if not isinstance(outputdt, (np.datetime64, np.timedelta64)):
-            raise ValueError(f"Expected outputdt to be a np.timedelta64 or datetime64, got {type(outputdt)}")
+        if not isinstance(outputdt, np.timedelta64):
+            raise ValueError(f"Expected outputdt to be a np.timedelta64, got {type(outputdt)}")
 
         self._outputdt = outputdt
 
