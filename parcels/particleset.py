@@ -1,3 +1,4 @@
+import datetime
 import sys
 import warnings
 from collections.abc import Iterable
@@ -8,7 +9,7 @@ import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
-from parcels._core.utils.time import TimeInterval
+from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
@@ -460,8 +461,8 @@ class ParticleSet:
         self,
         pyfunc=AdvectionRK4,
         endtime: np.timedelta64 | np.datetime64 | None = None,
-        runtime: np.timedelta64 | None = None,
-        dt: np.timedelta64 | None = None,
+        runtime: datetime.timedelta | np.timedelta64 | None = None,
+        dt: datetime.timedelta | np.timedelta64 | None = None,
         output_file=None,
         verbose_progress=True,
     ):
@@ -510,8 +511,21 @@ class ParticleSet:
         if dt is None:
             dt = np.timedelta64(1, "s")
 
-        if not isinstance(dt, np.timedelta64) or np.isnat(dt) or (sign_dt := np.sign(dt).astype(int)) not in [-1, 1]:
-            raise ValueError(f"dt must be a positive or negative np.timedelta64 object, got {dt=!r}")
+        try:
+            dt = maybe_convert_python_timedelta_to_numpy(dt)
+            assert not np.isnat(dt)
+            sign_dt = np.sign(dt).astype(int)
+            assert sign_dt in [-1, 1]
+        except (ValueError, AssertionError):
+            raise ValueError(f"dt must be a non-zero datetime.timedelta or np.timedelta64 object, got {dt=!r}")
+
+        if runtime is not None:
+            try:
+                runtime = maybe_convert_python_timedelta_to_numpy(runtime)
+            except ValueError:
+                raise ValueError(
+                    f"The runtime must be a datetime.timedelta or np.timedelta64 object. Got {type(runtime)}"
+                )
 
         self._data["dt"][:] = dt
 
@@ -609,9 +623,6 @@ def _get_simulation_start_and_end_times(
     start_time = _get_start_time(first_release_time, time_interval, sign_dt, runtime)
 
     if endtime is None:
-        if not isinstance(runtime, np.timedelta64):
-            raise ValueError(f"The runtime must be a np.timedelta64 object. Got {type(runtime)}")
-
         endtime = start_time + sign_dt * runtime
 
     if time_interval is not None:
