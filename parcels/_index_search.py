@@ -56,33 +56,17 @@ def _search_indices_curvilinear_2d(
             [1, -1, 1, -1],
         ]
     )
-    maxIterSearch = 1e6
-    it = 0
-    tol = 1.0e-10
 
-    # # ! Error handling for out of bounds
-    # TODO: Re-enable in some capacity
-    # if x < field.lonlat_minmax[0] or x > field.lonlat_minmax[1]:
-    #     if grid.lon[0, 0] < grid.lon[0, -1]:
-    #         _raise_grid_searching_error(y, x)
-    #     elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-    #         _raise_grid_searching_error(z, y, x)
+    px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
+    py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
 
-    # if y < field.lonlat_minmax[2] or y > field.lonlat_minmax[3]:
-    #     _raise_grid_searching_error(z, y, x)
+    a, b = np.dot(invA, px), np.dot(invA, py)
+    aa = a[3] * b[2] - a[2] * b[3]
+    bb = a[3] * b[0] - a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + x * b[3] - y * a[3]
+    cc = a[1] * b[0] - a[0] * b[1] + x * b[1] - y * a[1]
+    det2 = bb * bb - 4 * aa * cc
 
-    while np.any(xsi < -tol) or np.any(xsi > 1 + tol) or np.any(eta < -tol) or np.any(eta > 1 + tol):
-        px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
-
-        py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
-        a = np.dot(invA, px)
-        b = np.dot(invA, py)
-
-        aa = a[3] * b[2] - a[2] * b[3]
-        bb = a[3] * b[0] - a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + x * b[3] - y * a[3]
-        cc = a[1] * b[0] - a[0] * b[1] + x * b[1] - y * a[1]
-
-        det2 = bb * bb - 4 * aa * cc
+    with np.errstate(divide="ignore", invalid="ignore"):
         det = np.where(det2 > 0, np.sqrt(det2), eta)
         eta = np.where(abs(aa) < 1e-12, -cc / bb, np.where(det2 > 0, (-bb + det) / (2 * aa), eta))
 
@@ -92,17 +76,12 @@ def _search_indices_curvilinear_2d(
             (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta),
         )
 
-        xi = np.where(xsi < -tol, xi - 1, np.where(xsi > 1 + tol, xi + 1, xi))
-        yi = np.where(eta < -tol, yi - 1, np.where(eta > 1 + tol, yi + 1, yi))
-
-        (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid._mesh)
-        it += 1
-        if it > maxIterSearch:
-            print(f"Correct cell not found after {maxIterSearch} iterations")
+    (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid._mesh)
 
     # checking if xsi or eta is outside [0, 1]
     xi = np.where(xsi < 0, GRID_SEARCH_ERROR, np.where(xsi > 1, GRID_SEARCH_ERROR, xi))
     yi = np.where(eta < 0, GRID_SEARCH_ERROR, np.where(eta > 1, GRID_SEARCH_ERROR, yi))
+
     return (yi, eta, xi, xsi)
 
 
