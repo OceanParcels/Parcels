@@ -516,16 +516,16 @@ class ParticleSet:
             assert not np.isnat(dt)
             sign_dt = np.sign(dt).astype(int)
             assert sign_dt in [-1, 1]
-        except (ValueError, AssertionError):
-            raise ValueError(f"dt must be a non-zero datetime.timedelta or np.timedelta64 object, got {dt=!r}")
+        except (ValueError, AssertionError) as e:
+            raise ValueError(f"dt must be a non-zero datetime.timedelta or np.timedelta64 object, got {dt=!r}") from e
 
         if runtime is not None:
             try:
                 runtime = maybe_convert_python_timedelta_to_numpy(runtime)
-            except ValueError:
+            except ValueError as e:
                 raise ValueError(
                     f"The runtime must be a datetime.timedelta or np.timedelta64 object. Got {type(runtime)}"
-                )
+                ) from e
 
         self._data["dt"][:] = dt
 
