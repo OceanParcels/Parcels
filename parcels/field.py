@@ -25,7 +25,7 @@ from parcels.tools.statuscodes import (
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS, XGrid, _transpose_xfield_data_to_tzyx
 
-from ._index_search import _search_time_index
+from ._index_search import GRID_SEARCH_ERROR, _search_time_index
 
 __all__ = ["Field", "VectorField"]
 
@@ -353,21 +353,25 @@ class VectorField:
 
 def _update_particle_states_position(particle, position):
     """Update the particle states based on the position dictionary."""
-    if particle and "X" in position:  # TODO also support uxgrid search
-        particle.state = np.maximum(
-            np.where(position["X"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state), particle.state
-        )
-        particle.state = np.maximum(
-            np.where(position["Y"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state), particle.state
-        )
-        particle.state = np.maximum(
-            np.where(position["Z"][0] == RIGHT_OUT_OF_BOUNDS, StatusCode.ErrorOutOfBounds, particle.state),
-            particle.state,
-        )
-        particle.state = np.maximum(
-            np.where(position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state),
-            particle.state,
-        )
+    if particle:  # TODO also support uxgrid search
+        for dim in ["X", "Y"]:
+            if dim in position:
+                particle.state = np.maximum(
+                    np.where(position[dim][0] == -1, StatusCode.ErrorOutOfBounds, particle.state), particle.state
+                )
+                particle.state = np.maximum(
+                    np.where(position[dim][0] == GRID_SEARCH_ERROR, StatusCode.ErrorGridSearching, particle.state),
+                    particle.state,
+                )
+        if "Z" in position:
+            particle.state = np.maximum(
+                np.where(position["Z"][0] == RIGHT_OUT_OF_BOUNDS, StatusCode.ErrorOutOfBounds, particle.state),
+                particle.state,
+            )
+            particle.state = np.maximum(
+                np.where(position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state),
+                particle.state,
+            )
 
 
 def _update_particle_states_interp_value(particle, value):

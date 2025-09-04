@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from parcels._typing import Mesh
-from parcels.tools.statuscodes import (
-    _raise_grid_searching_error,
-    _raise_time_extrapolation_error,
-)
+from parcels.tools.statuscodes import _raise_time_extrapolation_error
 
 if TYPE_CHECKING:
     from parcels.xgrid import XGrid
 
     from .field import Field
+
+
+GRID_SEARCH_ERROR = -3
 
 
 def _search_time_index(field: Field, time: datetime):
@@ -99,12 +99,10 @@ def _search_indices_curvilinear_2d(
         it += 1
         if it > maxIterSearch:
             print(f"Correct cell not found after {maxIterSearch} iterations")
-            _raise_grid_searching_error(0, y, x)
-    xsi = np.where(xsi < 0.0, 0.0, np.where(xsi > 1.0, 1.0, xsi))
-    eta = np.where(eta < 0.0, 0.0, np.where(eta > 1.0, 1.0, eta))
 
-    if np.any((xsi < 0) | (xsi > 1) | (eta < 0) | (eta > 1)):
-        _raise_grid_searching_error(y, x)
+    # checking if xsi or eta is outside [0, 1]
+    xi = np.where(xsi < 0, GRID_SEARCH_ERROR, np.where(xsi > 1, GRID_SEARCH_ERROR, xi))
+    yi = np.where(eta < 0, GRID_SEARCH_ERROR, np.where(eta > 1, GRID_SEARCH_ERROR, yi))
     return (yi, eta, xi, xsi)
 
 
