@@ -69,7 +69,7 @@ def test_advection_zonal_with_particlefile(tmp_store):
 
     assert (np.diff(pset.lon) < 1.0e-4).all()
     ds = xr.open_zarr(tmp_store)
-    breakpoint()
+    np.testing.assert_allclose(ds.isel(obs=-1).lon.values, pset.lon)
 
 
 def periodicBC(particle, fieldset, time):
