@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -65,8 +65,11 @@ class ParticleFile:
     """
 
     def __init__(self, store, outputdt, chunks=None, create_new_zarrfile=True):
+        if isinstance(outputdt, timedelta):
+            outputdt = np.timedelta64(int(outputdt.total_seconds()), "s")
+
         if not isinstance(outputdt, np.timedelta64):
-            raise ValueError(f"Expected outputdt to be a np.timedelta64, got {type(outputdt)}")
+            raise ValueError(f"Expected outputdt to be a np.timedelta64 or datetime.timedelta, got {type(outputdt)}")
 
         self._outputdt = outputdt
 

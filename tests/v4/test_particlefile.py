@@ -296,8 +296,8 @@ def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwarg
     pset = ParticleSet(
         fieldset,
         pclass=particle_class,
-        lon=np.full(npart, fieldset.U.lon.mean()),
-        lat=np.full(npart, fieldset.U.lat.mean()),
+        lon=np.full(npart, fieldset.U.data.lon.mean()),
+        lat=np.full(npart, fieldset.U.data.lat.mean()),
     )
 
     with tempfile.TemporaryDirectory() as dir:
@@ -356,18 +356,15 @@ def test_pset_execute_outputdt_backwards_fieldset_timevarying():
     assert np.all(file_outputdt == np.timedelta64(-outputdt)), (file_outputdt, np.timedelta64(-outputdt))
 
 
-@pytest.mark.new
 def test_particlefile_init(tmp_store):
     ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=(1, 3))
 
 
-@pytest.mark.new
 def test_particlefile_init_invalid(tmp_store):  # TODO: Add test for read only store
     with pytest.raises(ValueError, match="chunks must be a tuple"):
         ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=1)
 
 
-@pytest.mark.new
 def test_particlefile_write_particle_data(tmp_store):
     nparticles = 100
 

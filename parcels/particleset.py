@@ -505,7 +505,8 @@ class ParticleSet:
 
         self._kernel = pyfunc
 
-        if output_file:
+        if output_file is not None:
+            output_file.set_metadata(self.fieldset.gridset[0]._mesh)
             output_file.metadata["parcels_kernels"] = self._kernel.name
 
         if dt is None:
