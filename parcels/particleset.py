@@ -555,7 +555,6 @@ class ParticleSet:
 
             self._kernel.execute(self, endtime=next_time, dt=dt)
 
-            # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:
                 if np.abs(next_time - next_output) < np.timedelta64(1000, "ns"):
                     if output_file:
