@@ -405,6 +405,13 @@ def test_particlefile_init(tmp_store):
     ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=(1, 3))
 
 
+@pytest.mark.parametrize("name", ["store", "outputdt", "chunks", "create_new_zarrfile"])
+def test_particlefile_readonly_attrs(tmp_store, name):
+    pfile = ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=(1, 3))
+    with pytest.raises(AttributeError, match="property .* of 'ParticleFile' object has no setter"):
+        setattr(pfile, name, "something")
+
+
 def test_particlefile_init_invalid(tmp_store):  # TODO: Add test for read only store
     with pytest.raises(ValueError, match="chunks must be a tuple"):
         ParticleFile(tmp_store, outputdt=np.timedelta64(1, "s"), chunks=1)

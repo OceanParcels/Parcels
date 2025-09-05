@@ -78,12 +78,12 @@ class ParticleFile:
         self._maxids = 0
         self._pids_written = {}
         self.metadata = {}
-        self.create_new_zarrfile = create_new_zarrfile
+        self._create_new_zarrfile = create_new_zarrfile
 
-        if isinstance(store, zarr.storage.Store):
-            self.store = store
-        else:
-            self.store = _get_store_from_pathlike(store)
+        if not isinstance(store, zarr.storage.Store):
+            store = _get_store_from_pathlike(store)
+
+        self._store = store
 
         # TODO v4: Enable once updating to zarr v3
         # if store.read_only:
@@ -117,6 +117,14 @@ class ParticleFile:
     @property
     def chunks(self):
         return self._chunks
+
+    @property
+    def store(self):
+        return self._store
+
+    @property
+    def create_new_zarrfile(self):
+        return self._create_new_zarrfile
 
     def _convert_varout_name(self, var):
         if var == "depth":
@@ -223,7 +231,7 @@ class ParticleFile:
                     ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[var.name])
                     ds[varout].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks  # type: ignore[index]
             ds.to_zarr(store, mode="w")
-            self.create_new_zarrfile = False
+            self._create_new_zarrfile = False
         else:
             Z = zarr.group(store=store, overwrite=False)
             obs = particle_data["obs_written"][indices_to_write]
