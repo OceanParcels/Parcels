@@ -17,6 +17,7 @@ from parcels.application_kernels.interpolation import XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
+from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
 from parcels.xgrid import XGrid
@@ -64,7 +65,7 @@ def test_advection_zonal_with_particlefile(tmp_store):
     fieldset = FieldSet([U, V, UV])
 
     pset = ParticleSet(fieldset, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
-    pfile = pset.ParticleFile(tmp_store, outputdt=np.timedelta64(15, "m"))
+    pfile = ParticleFile(tmp_store, outputdt=np.timedelta64(15, "m"))
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"), output_file=pfile)
 
     assert (np.diff(pset.lon) < 1.0e-4).all()

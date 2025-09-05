@@ -15,7 +15,6 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.kernel import Kernel
 from parcels.particle import KernelParticle, Particle, create_particle_data
-from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
@@ -391,10 +390,6 @@ class ParticleSet:
         if pyfunc_inter is None:
             return None
         return InteractionKernel(self.fieldset, self._ptype, pyfunc=pyfunc_inter)
-
-    def ParticleFile(self, *args, **kwargs):
-        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
-        return ParticleFile(*args, **kwargs)
 
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.

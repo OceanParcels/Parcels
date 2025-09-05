@@ -17,6 +17,7 @@ from parcels import (
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
+from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
@@ -433,7 +434,7 @@ def test_uxstommelgyre_pset_execute_output():
         time=[0.0],
         pclass=Particle,
     )
-    output_file = pset.ParticleFile(
+    output_file = ParticleFile(
         name="stommel_uxarray_particles.zarr",  # the file name
         outputdt=np.timedelta64(5, "m"),  # the time step of the outputs
     )

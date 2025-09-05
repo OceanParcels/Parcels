@@ -36,7 +36,7 @@ def fieldset() -> FieldSet:  # TODO v4: Move into a `conftest.py` file and remov
 def test_metadata(fieldset, tmp_zarrfile):
     pset = ParticleSet(fieldset, pclass=Particle, lon=0, lat=0)
 
-    pset.execute(DoNothing, runtime=1, output_file=pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s")))
+    pset.execute(DoNothing, runtime=1, output_file=ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s")))
 
     ds = xr.open_zarr(tmp_zarrfile, decode_cf=False)  # TODO v4: Fix metadata and re-enable decode_cf
     assert ds.attrs["parcels_kernels"].lower() == "ParticleDoNothing".lower()
@@ -53,7 +53,7 @@ def test_pfile_array_write_zarr_memorystore(fieldset):
         lat=0.5 * np.ones(npart),
         time=fieldset.time_interval.left,
     )
-    pfile = pset.ParticleFile(zarr_store, outputdt=np.timedelta64(1, "s"))
+    pfile = ParticleFile(zarr_store, outputdt=np.timedelta64(1, "s"))
     pfile.write(pset, time=fieldset.time_interval.left)
 
     ds = xr.open_zarr(zarr_store)
@@ -69,7 +69,7 @@ def test_pfile_array_remove_particles(fieldset, tmp_zarrfile):
         lat=0.5 * np.ones(npart),
         time=fieldset.time_interval.left,
     )
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
+    pfile = ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
     pset._data["time"][:] = fieldset.time_interval.left
     pset._data["time_nextloop"][:] = fieldset.time_interval.left
     pfile.write(pset, time=fieldset.time_interval.left)
@@ -97,7 +97,7 @@ def test_pfile_array_remove_all_particles(fieldset, chunks_obs, tmp_zarrfile):
         time=fieldset.time_interval.left,
     )
     chunks = (npart, chunks_obs) if chunks_obs else None
-    pfile = pset.ParticleFile(tmp_zarrfile, chunks=chunks, outputdt=np.timedelta64(1, "s"))
+    pfile = ParticleFile(tmp_zarrfile, chunks=chunks, outputdt=np.timedelta64(1, "s"))
     pfile.write(pset, time=fieldset.time_interval.left)
     for _ in range(npart):
         pset.remove_indices(-1)
@@ -123,7 +123,7 @@ def test_variable_write_double(fieldset, tmp_zarrfile):
 
     particle = get_default_particle(np.float64)
     pset = ParticleSet(fieldset, pclass=particle, lon=[0], lat=[0])
-    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(10, "us"))
+    ofile = ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(10, "us"))
     pset.execute(
         pset.Kernel(Update_lon),
         runtime=np.timedelta64(1, "ms"),
@@ -155,7 +155,7 @@ def test_write_dtypes_pfile(fieldset, tmp_zarrfile):
     MyParticle = Particle.add_variable(extra_vars)
 
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=0, time=fieldset.time_interval.left)
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
+    pfile = ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
     pfile.write(pset, time=fieldset.time_interval.left)
 
     ds = xr.open_zarr(
@@ -196,7 +196,7 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, tmp_zarrfile, d
         pclass=MyParticle,
         time=fieldset.time_interval.left + np.array([np.timedelta64(i, "s") for i in range(npart)]),
     )
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=abs(dt), chunks=(1, 1))
+    pfile = ParticleFile(tmp_zarrfile, outputdt=abs(dt), chunks=(1, 1))
 
     def IncrLon(particle, fieldset, time):  # pragma: no cover
         particle.sample_var += 1.0
@@ -235,7 +235,7 @@ def test_write_timebackward(fieldset, tmp_zarrfile):
         lon=[0, 0, 0],
         time=np.array([np.datetime64("2000-01-01") for _ in range(3)]),
     )
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
+    pfile = ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(1, "s"))
     pset.execute(pset.Kernel(Update_lon), runtime=np.timedelta64(1, "s"), dt=-np.timedelta64(1, "s"), output_file=pfile)
     ds = xr.open_zarr(tmp_zarrfile)
     trajs = ds["trajectory"][:]
@@ -274,7 +274,7 @@ def test_write_xiyi(fieldset, tmp_zarrfile):
             _ = fieldset.P[particle]  # To trigger sampling of the P field
 
     pset = ParticleSet(fieldset, pclass=XiYiParticle, lon=[0, 0.2], lat=[0.2, 1])
-    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=dt)
+    pfile = ParticleFile(tmp_zarrfile, outputdt=dt)
     pset.execute([SampleP, Get_XiYi, AdvectionRK4], endtime=10 * dt, dt=dt, output_file=pfile)
 
     ds = xr.open_zarr(tmp_zarrfile)
@@ -307,7 +307,7 @@ def test_reset_dt(fieldset, tmp_zarrfile):
 
     particle = get_default_particle(np.float64)
     pset = ParticleSet(fieldset, pclass=particle, lon=[0], lat=[0])
-    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(50, "ms"))
+    ofile = ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(50, "ms"))
     dt = np.timedelta64(20, "ms")
     pset.execute(pset.Kernel(Update_lon), runtime=6 * dt, dt=dt, output_file=ofile)
 
@@ -324,7 +324,7 @@ def test_correct_misaligned_outputdt_dt(fieldset, tmp_zarrfile):
 
     particle = get_default_particle(np.float64)
     pset = ParticleSet(fieldset, pclass=particle, lon=[0], lat=[0])
-    ofile = pset.ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(3, "s"))
+    ofile = ParticleFile(tmp_zarrfile, outputdt=np.timedelta64(3, "s"))
     pset.execute(pset.Kernel(Update_lon), runtime=np.timedelta64(11, "s"), dt=np.timedelta64(2, "s"), output_file=ofile)
 
     ds = xr.open_zarr(tmp_zarrfile)
@@ -346,7 +346,7 @@ def setup_pset_execute(*, fieldset: FieldSet, outputdt: timedelta, execute_kwarg
 
     with tempfile.TemporaryDirectory() as dir:
         name = f"{dir}/test.zarr"
-        output_file = pset.ParticleFile(name, outputdt=outputdt)
+        output_file = ParticleFile(name, outputdt=outputdt)
 
         pset.execute(DoNothing, output_file=output_file, **execute_kwargs)
         ds = xr.open_zarr(name).load()
