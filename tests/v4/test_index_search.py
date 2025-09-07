@@ -63,7 +63,7 @@ def test_indexing_nemo_curvilinear():
         {"glamf": "lon", "gphif": "lat", "z": "depth"}
     )
     xgcm_grid = Grid(ds, coords={"X": {"left": "x"}, "Y": {"left": "y"}}, periodic=False)
-    grid = XGrid(xgcm_grid)
+    grid = XGrid(xgcm_grid, mesh="spherical")
 
     # Test points on the NEMO 1/4 degree curvilinear grid
     lats = np.array([-30, 0, 88])
