@@ -99,14 +99,14 @@ class ParticleFile:
             f"create_new_zarrfile={self.create_new_zarrfile!r})"
         )
 
-    def set_metadata(self, parcels_mesh: Literal["spherical", "flat"]):
+    def set_metadata(self, parcels_grid_mesh: Literal["spherical", "flat"]):
         self.metadata.update(
             {
                 "feature_type": "trajectory",
                 "Conventions": "CF-1.6/CF-1.7",
                 "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
                 "parcels_version": parcels.__version__,
-                "parcels_mesh": parcels_mesh,
+                "parcels_grid_mesh": parcels_grid_mesh,
             }
         )
 
