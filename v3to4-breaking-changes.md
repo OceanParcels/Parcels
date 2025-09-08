@@ -16,3 +16,7 @@
 - `repeatdt` and `lonlatdepth_dtype` have been removed from the ParticleSet.
 - ParticleSet.execute() expects `numpy.datetime64`/`numpy.timedelta.64` for `runtime`, `endtime` and `dt`.
 - `ParticleSet.from_field()`, `ParticleSet.from_line()`, `ParticleSet.from_list()` have been removed.
+
+## ParticleFile
+
+- Particlefiles should be created by `ParticleFile(...)` instead of `pset.ParticleFile(...)`

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 import pytest
@@ -8,7 +8,7 @@ from cftime import datetime as cftime_datetime
 from hypothesis import given
 from hypothesis import strategies as st
 
-from parcels._core.utils.time import TimeInterval
+from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
 
 calendar_strategy = st.sampled_from(
     [
@@ -181,3 +181,20 @@ def test_time_interval_intersection_different_calendars():
     )
     with pytest.raises(ValueError, match="TimeIntervals are not compatible."):
         interval1.intersection(interval2)
+
+
+@pytest.mark.parametrize(
+    "td,expected",
+    [
+        pytest.param(np.timedelta64(1, "s"), np.timedelta64(1, "s"), id="noop"),
+        pytest.param(timedelta(days=5), np.timedelta64(5, "D"), id="single unit"),
+        pytest.param(timedelta(days=5, seconds=30), np.timedelta64(5, "D") + np.timedelta64(30, "s"), id="mixed units"),
+        pytest.param(timedelta(days=0), np.timedelta64(0, "s"), id="zero timedelta"),
+        pytest.param(
+            timedelta(seconds=-2), np.timedelta64(-2, "s"), id="negative timedelta"
+        ),  # included because timedelta(seconds=-2) -> timedelta(days=-1, seconds=86398)
+    ],
+)
+def test_maybe_convert_python_timedelta_to_numpy(td, expected):
+    result = maybe_convert_python_timedelta_to_numpy(td)
+    assert result == expected

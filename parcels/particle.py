@@ -165,18 +165,42 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
 
     return ParticleClass(
         variables=[
-            Variable("lon", dtype=spatial_dtype),
+            Variable(
+                "lon",
+                dtype=spatial_dtype,
+                attrs={"standard_name": "longitude", "units": "degrees_east", "axis": "X"},
+            ),
             Variable("lon_nextloop", dtype=spatial_dtype, to_write=False),
-            Variable("lat", dtype=spatial_dtype),
+            Variable(
+                "lat",
+                dtype=spatial_dtype,
+                attrs={"standard_name": "latitude", "units": "degrees_north", "axis": "Y"},
+            ),
             Variable("lat_nextloop", dtype=spatial_dtype, to_write=False),
-            Variable("depth", dtype=spatial_dtype),
+            Variable(
+                "depth",
+                dtype=spatial_dtype,
+                attrs={"standard_name": "depth", "units": "m", "positive": "down"},
+            ),
             Variable("dlon", dtype=spatial_dtype, to_write=False),
             Variable("dlat", dtype=spatial_dtype, to_write=False),
             Variable("ddepth", dtype=spatial_dtype, to_write=False),
             Variable("depth_nextloop", dtype=spatial_dtype, to_write=False),
-            Variable("time", dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE),
+            Variable(
+                "time",
+                dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE,
+                attrs={"standard_name": "time", "units": "seconds", "axis": "T"},
+            ),
             Variable("time_nextloop", dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE, to_write=False),
-            Variable("trajectory", dtype=np.int64, to_write="once"),
+            Variable(
+                "trajectory",
+                dtype=np.int64,
+                to_write="once",
+                attrs={
+                    "long_name": "Unique identifier for each particle",
+                    "cf_role": "trajectory_id",
+                },
+            ),
             Variable("obs_written", dtype=np.int32, initial=0, to_write=False),
             Variable("dt", dtype="timedelta64[s]", initial=np.timedelta64(1, "s"), to_write=False),
             Variable("state", dtype=np.int32, initial=StatusCode.Evaluate, to_write=False),
@@ -239,7 +263,7 @@ def _create_array_for_variable(variable: Variable, nparticles: int, time_interva
         "This function cannot handle attrgetter initial values."
     )
     if (dtype := variable.dtype) is _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
-        dtype = type(time_interval.left)
+        dtype = _get_time_interval_dtype(time_interval)
     return np.full(
         shape=(nparticles,),
         fill_value=variable.initial,
@@ -250,4 +274,8 @@ def _create_array_for_variable(variable: Variable, nparticles: int, time_interva
 def _get_time_interval_dtype(time_interval: TimeInterval | None) -> np.dtype:
     if time_interval is None:
         return np.timedelta64(1, "ns")
-    return type(time_interval.left)
+    time = time_interval.left
+    if isinstance(time, (np.datetime64, np.timedelta64)):
+        return time.dtype
+    else:
+        return object  # cftime objects needs to be stored as object dtype

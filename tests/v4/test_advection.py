@@ -17,6 +17,7 @@ from parcels.application_kernels.interpolation import CGrid_Velocity, XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
+from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
 from parcels.xgrid import XGrid
@@ -51,6 +52,26 @@ def test_advection_zonal(mesh, npart=10):
         assert (np.diff(pset.lon) > 1.0e-4).all()
     else:
         assert (np.diff(pset.lon) < 1.0e-4).all()
+
+
+def test_advection_zonal_with_particlefile(tmp_store):
+    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
+    npart = 10
+    ds = simple_UV_dataset(mesh="flat")
+    ds["U"].data[:] = 1.0
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    pset = ParticleSet(fieldset, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
+    pfile = ParticleFile(tmp_store, outputdt=np.timedelta64(30, "m"))
+    pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"), output_file=pfile)
+
+    assert (np.diff(pset.lon) < 1.0e-4).all()
+    ds = xr.open_zarr(tmp_store)
+    np.testing.assert_allclose(ds.isel(obs=-1).lon.values, pset.lon)
 
 
 def periodicBC(particle, fieldset, time):
