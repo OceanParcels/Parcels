@@ -1,12 +1,12 @@
 # Parcels v4 migration guide
 
 ```{warning}
-Version 4 of Parcels is unreleased at the moment. The information in this migration guide is subject to change up to the release of Parcels. If you would like to provide feedback on this migration guide (or generally on the development of v4) please [submit an issue](https://github.com/OceanParcels/Parcels/issues/new/choose).
+Version 4 of Parcels is unreleased at the moment. The information in this migration guide is a work in progress, and is subject to change. If you would like to provide feedback on this migration guide (or generally on the development of v4) please [submit an issue](https://github.com/OceanParcels/Parcels/issues/new/choose).
 ```
 
-## Kernels:
+## Kernels
 
-- The Kernel loop has been 'vectorized', so that the input of a Kernel is not one particle anymore, but a list of particles. This means that `if`-statements in Kernels don't work anymore. Replace `if`-statements with `numpy.where` statements.
+- The Kernel loop has been 'vectorized', so that the input of a Kernel is not one particle anymore, but a collection of particles. This means that `if`-statements in Kernels don't work anymore. Replace `if`-statements with `numpy.where` statements.
 - `particle.delete()` is no longer valid. Instead, use `particle.state = StatusCode.Delete`.
 - Sharing state between kernels must be done via the particle data (as the kernels are not combined under the hood anymore).
 - `particl_dlon`, `particle_dlat` etc have been renamed to `particle.dlon` and `particle.dlat`.
