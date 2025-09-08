@@ -452,3 +452,35 @@ def test_particlefile_write_particle_data(tmp_store):
     # np.testing.assert_equal(ds["time"].isel(obs=0).values, left)
     assert ds.sizes["trajectory"] == nparticles
     np.testing.assert_allclose(ds["lon"].isel(obs=0).values, initial_lon)
+
+
+def test_pfile_write_custom_particle():
+    # Test the writing of a custom particle with variables that are to_write, some to_write once, and some not to_write
+    # ? This is more of an integration test... Should it be housed here?
+    ...
+
+
+@pytest.mark.xfail(
+    reason="set_variable_write_status should be removed - with Particle writing defined on the particle level. GH2186"
+)
+def test_pfile_set_towrite_False(fieldset, tmp_zarrfile):
+    npart = 10
+    pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart))
+    pset.set_variable_write_status("depth", False)
+    pset.set_variable_write_status("lat", False)
+    pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
+
+    def Update_lon(particle, fieldset, time):  # pragma: no cover
+        particle.dlon += 0.1
+
+    pset.execute(Update_lon, runtime=10, output_file=pfile)
+
+    ds = xr.open_zarr(tmp_zarrfile)
+    assert "time" in ds
+    assert "z" not in ds
+    assert "lat" not in ds
+    ds.close()
+
+    # For pytest purposes, we need to reset to original status
+    pset.set_variable_write_status("depth", True)
+    pset.set_variable_write_status("lat", True)
