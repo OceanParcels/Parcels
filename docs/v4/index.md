@@ -22,4 +22,5 @@ api
 nojit
 TODO
 Parcels v4 Project Board <https://github.com/orgs/OceanParcels/projects/5>
+Parcels v4 migration guide <../community/v4-migration>
 ```
