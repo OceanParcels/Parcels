@@ -17,6 +17,7 @@ from parcels.application_kernels.interpolation import (
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
+from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
 from parcels.uxgrid import UxGrid
@@ -206,7 +207,7 @@ def test_interp_regression_v3(interp_name):
         if particle.state >= 50:
             particle.state = StatusCode.Delete
 
-    outfile = pset.ParticleFile(f"test_interpolation_v4_{interp_name}", outputdt=np.timedelta64(1, "s"))
+    outfile = ParticleFile(f"test_interpolation_v4_{interp_name}", outputdt=np.timedelta64(1, "s"))
     pset.execute(
         [AdvectionRK4_3D, DeleteParticle],
         runtime=np.timedelta64(4, "s"),

@@ -17,6 +17,7 @@ from parcels import (
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
+from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
@@ -71,7 +72,7 @@ def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
     for dt in [1, np.timedelta64(0, "s"), np.timedelta64(None)]:
         with pytest.raises(
             ValueError,
-            match="dt must be a positive or negative np.timedelta64 object, got .*",
+            match="dt must be a non-zero datetime.timedelta or np.timedelta64 object, got .*",
         ):
             ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=dt)
 
@@ -85,7 +86,7 @@ def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
 
     with pytest.raises(
         ValueError,
-        match="The runtime must be a np.timedelta64 object. Got .*",
+        match="The runtime must be a datetime.timedelta or np.timedelta64 object. Got .*",
     ):
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(runtime=1)
 
@@ -121,8 +122,8 @@ def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
     "runtime, expectation",
     [
         (np.timedelta64(5, "s"), does_not_raise()),
+        (timedelta(seconds=2), does_not_raise()),
         (5.0, pytest.raises(ValueError)),
-        (timedelta(seconds=2), pytest.raises(ValueError)),
         (np.datetime64("2001-01-02T00:00:00"), pytest.raises(ValueError)),
         (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
     ],
@@ -433,7 +434,7 @@ def test_uxstommelgyre_pset_execute_output():
         time=[0.0],
         pclass=Particle,
     )
-    output_file = pset.ParticleFile(
+    output_file = ParticleFile(
         name="stommel_uxarray_particles.zarr",  # the file name
         outputdt=np.timedelta64(5, "m"),  # the time step of the outputs
     )

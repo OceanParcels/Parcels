@@ -515,7 +515,7 @@ class Grid:
                     try:
                         neighbor_link = face_links[idx][ax][correct_position]
                     except (KeyError, IndexError):
-                        raise KeyError(
+                        raise KeyError(  # noqa: B904
                             f"Couldn't find a face link for face {idx!r}in axis {ax!r} at position {correct_position!r}"
                         )
                     idx_n, ax_n, rev_n = neighbor_link

@@ -1,3 +1,4 @@
+import datetime
 import sys
 import warnings
 from collections.abc import Iterable
@@ -8,13 +9,12 @@ import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
-from parcels._core.utils.time import TimeInterval
+from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.kernel import Kernel
 from parcels.particle import KernelParticle, Particle, create_particle_data
-from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
@@ -391,10 +391,6 @@ class ParticleSet:
             return None
         return InteractionKernel(self.fieldset, self._ptype, pyfunc=pyfunc_inter)
 
-    def ParticleFile(self, *args, **kwargs):
-        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
-        return ParticleFile(*args, particleset=self, **kwargs)
-
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
 
@@ -460,8 +456,8 @@ class ParticleSet:
         self,
         pyfunc=AdvectionRK4,
         endtime: np.timedelta64 | np.datetime64 | None = None,
-        runtime: np.timedelta64 | None = None,
-        dt: np.timedelta64 | None = None,
+        runtime: datetime.timedelta | np.timedelta64 | None = None,
+        dt: datetime.timedelta | np.timedelta64 | None = None,
         output_file=None,
         verbose_progress=True,
     ):
@@ -504,14 +500,28 @@ class ParticleSet:
 
         self._kernel = pyfunc
 
-        if output_file:
-            output_file.metadata["parcels_kernels"] = self._kernel.name
+        if output_file is not None:
+            output_file.set_metadata(self.fieldset.gridset[0]._mesh)
+            output_file.metadata["parcels_kernels"] = self._kernel.funcname
 
         if dt is None:
             dt = np.timedelta64(1, "s")
 
-        if not isinstance(dt, np.timedelta64) or np.isnat(dt) or (sign_dt := np.sign(dt).astype(int)) not in [-1, 1]:
-            raise ValueError(f"dt must be a positive or negative np.timedelta64 object, got {dt=!r}")
+        try:
+            dt = maybe_convert_python_timedelta_to_numpy(dt)
+            assert not np.isnat(dt)
+            sign_dt = np.sign(dt).astype(int)
+            assert sign_dt in [-1, 1]
+        except (ValueError, AssertionError) as e:
+            raise ValueError(f"dt must be a non-zero datetime.timedelta or np.timedelta64 object, got {dt=!r}") from e
+
+        if runtime is not None:
+            try:
+                runtime = maybe_convert_python_timedelta_to_numpy(runtime)
+            except ValueError as e:
+                raise ValueError(
+                    f"The runtime must be a datetime.timedelta or np.timedelta64 object. Got {type(runtime)}"
+                ) from e
 
         self._data["dt"][:] = dt
 
@@ -528,24 +538,25 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            logger.info(f"Output files are stored in {output_file.fname}.")
+            logger.info(f"Output files are stored in {output_file.store}.")
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
 
-        next_output = outputdt if output_file else None
+        next_output = start_time + sign_dt * outputdt if output_file else None
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
-            if sign_dt > 0:
-                next_time = end_time  # TODO update to min(next_output, end_time) when ParticleFile works
+            if next_output is not None:
+                f = min if sign_dt > 0 else max
+                next_time = f(next_output, end_time)
             else:
-                next_time = end_time  # TODO update to max(next_output, end_time) when ParticleFile works
+                next_time = end_time
+
             self._kernel.execute(self, endtime=next_time, dt=dt)
 
-            # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:
-                if abs(next_time - next_output) < 1e-12:
+                if np.abs(next_time - next_output) < np.timedelta64(1000, "ns"):
                     if output_file:
                         output_file.write(self, next_output)
                     if np.isfinite(outputdt):
@@ -609,9 +620,6 @@ def _get_simulation_start_and_end_times(
     start_time = _get_start_time(first_release_time, time_interval, sign_dt, runtime)
 
     if endtime is None:
-        if not isinstance(runtime, np.timedelta64):
-            raise ValueError(f"The runtime must be a np.timedelta64 object. Got {type(runtime)}")
-
         endtime = start_time + sign_dt * runtime
 
     if time_interval is not None:
