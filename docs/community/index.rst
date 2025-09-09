@@ -10,6 +10,8 @@ See the sections in the primary sidebar and below to explore.
 
     contributing
     Versioning and Deprecation Policies <policies>
+    Release Notes <https://github.com/OceanParcels/Parcels/releases>
+    Parcels v4.0 Migration Guide <v4-migration>
 
 
 
