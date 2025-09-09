@@ -13,7 +13,7 @@ from parcels._datasets.structured.generated import (
 )
 from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
 from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
-from parcels.application_kernels.interpolation import XLinear
+from parcels.application_kernels.interpolation import CGrid_Velocity, XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
@@ -21,6 +21,7 @@ from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
 from parcels.xgrid import XGrid
+from tests.utils import round_and_hash_float_array
 
 kernel = {
     "EE": AdvectionEE,
@@ -356,15 +357,16 @@ def test_decaying_moving_eddy(method, rtol):
         ("RK45", 0.1),
     ],
 )
-@pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
+@pytest.mark.parametrize("grid_type", ["A", "C"])
 def test_stommelgyre_fieldset(method, rtol, grid_type):
     npart = 2
     ds = stommel_gyre_dataset(grid_type=grid_type)
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U"], grid, interp_method=XLinear)
-    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    vector_interp_method = None if grid_type == "A" else CGrid_Velocity
+    U = Field("U", ds["U"], grid)
+    V = Field("V", ds["V"], grid)
     P = Field("P", ds["P"], grid, interp_method=XLinear)
-    UV = VectorField("UV", U, V)
+    UV = VectorField("UV", U, V, vector_interp_method=vector_interp_method)
     fieldset = FieldSet([U, V, P, UV])
 
     dt = np.timedelta64(30, "m")
@@ -425,3 +427,133 @@ def test_peninsula_fieldset(method, rtol, grid_type):
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
     np.testing.assert_allclose(pset.p, pset.p_start, rtol=rtol)
+
+
+def test_nemo_curvilinear_fieldset():
+    data_folder = parcels.download_example_dataset("NemoCurvilinear_data")
+    files = data_folder.glob("*.nc4")
+    ds = xr.open_mfdataset(files, combine="nested", data_vars="minimal", coords="minimal", compat="override")
+    ds = (
+        ds.isel(time_counter=0, drop=True)
+        .isel(time=0, drop=True)
+        .isel(z_a=0, drop=True)
+        .rename({"glamf": "lon", "gphif": "lat", "z": "depth"})
+    )
+
+    xgcm_grid = parcels.xgcm.Grid(
+        ds,
+        coords={
+            "X": {"left": "x"},
+            "Y": {"left": "y"},
+        },
+        periodic=False,
+    )
+    grid = XGrid(xgcm_grid, mesh="spherical")
+
+    U = parcels.Field("U", ds["U"], grid)
+    V = parcels.Field("V", ds["V"], grid)
+    U.units = parcels.GeographicPolar()
+    V.units = parcels.Geographic()
+    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
+    fieldset = parcels.FieldSet([U, V, UV])
+
+    npart = 20
+    lonp = 30 * np.ones(npart)
+    latp = np.linspace(-70, 88, npart)
+    runtime = np.timedelta64(12, "h")  # TODO increase to 160 days
+
+    def periodicBC(particle, fieldSet, time):  # pragma: no cover
+        particle.dlon = np.where(particle.lon > 180, particle.dlon - 360, particle.dlon)
+
+    pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)
+    pset.execute([AdvectionEE, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))
+    np.testing.assert_allclose(pset.lat_nextloop, latp, atol=1e-1)
+
+
+@pytest.mark.parametrize("method", ["RK4", "RK4_3D"])
+def test_nemo_3D_curvilinear_fieldset(method):
+    download_dir = parcels.download_example_dataset("NemoNorthSeaORCA025-N006_data")
+    ufiles = download_dir.glob("*U.nc")
+    dsu = xr.open_mfdataset(ufiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsu = dsu.rename({"time_counter": "time", "uo": "U"})
+
+    vfiles = download_dir.glob("*V.nc")
+    dsv = xr.open_mfdataset(vfiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsv = dsv.rename({"time_counter": "time", "vo": "V"})
+
+    wfiles = download_dir.glob("*W.nc")
+    dsw = xr.open_mfdataset(wfiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsw = dsw.rename({"time_counter": "time", "depthw": "depth", "wo": "W"})
+
+    dsu = dsu.assign_coords(depthu=dsw.depth.values)
+    dsu = dsu.rename({"depthu": "depth"})
+
+    dsv = dsv.assign_coords(depthv=dsw.depth.values)
+    dsv = dsv.rename({"depthv": "depth"})
+
+    coord_file = f"{download_dir}/coordinates.nc"
+    dscoord = xr.open_dataset(coord_file, decode_times=False).rename({"glamf": "lon", "gphif": "lat"})
+    dscoord = dscoord.isel(time=0, drop=True)
+
+    ds = xr.merge([dsu, dsv, dsw, dscoord])
+    ds = ds.drop_vars(
+        [
+            "uos",
+            "vos",
+            "nav_lev",
+            "nav_lon",
+            "nav_lat",
+            "tauvo",
+            "tauuo",
+            "time_steps",
+            "gphiu",
+            "gphiv",
+            "gphit",
+            "glamu",
+            "glamv",
+            "glamt",
+            "time_centered_bounds",
+            "time_counter_bounds",
+            "time_centered",
+        ]
+    )
+    ds = ds.drop_vars(["e1f", "e1t", "e1u", "e1v", "e2f", "e2t", "e2u", "e2v"])
+    ds["time"] = [np.timedelta64(int(t), "s") + np.datetime64("1900-01-01") for t in ds["time"]]
+
+    ds["W"] *= -1  # Invert W velocity
+
+    xgcm_grid = parcels.xgcm.Grid(
+        ds,
+        coords={
+            "X": {"left": "x"},
+            "Y": {"left": "y"},
+            "Z": {"left": "depth"},
+            "T": {"center": "time"},
+        },
+        periodic=False,
+    )
+    grid = XGrid(xgcm_grid, mesh="spherical")
+
+    U = parcels.Field("U", ds["U"], grid)
+    V = parcels.Field("V", ds["V"], grid)
+    W = parcels.Field("W", ds["W"], grid)
+    U.units = parcels.GeographicPolar()
+    V.units = parcels.Geographic()
+    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
+    UVW = parcels.VectorField("UVW", U, V, W, vector_interp_method=CGrid_Velocity)
+    fieldset = parcels.FieldSet([U, V, W, UV, UVW])
+
+    npart = 10
+    lons = np.linspace(1.9, 3.4, npart)
+    lats = np.linspace(52.5, 51.6, npart)
+    pset = parcels.ParticleSet(fieldset, lon=lons, lat=lats, depth=np.ones_like(lons))
+
+    pset.execute(kernel[method], runtime=np.timedelta64(4, "D"), dt=np.timedelta64(6, "h"))
+
+    if method == "RK4":
+        np.testing.assert_equal(round_and_hash_float_array([p.lon for p in pset], decimals=5), 29977383852960156017546)
+    elif method == "RK4_3D":
+        # TODO check why decimals needs to be so low in RK4_3D (compare to v3)
+        np.testing.assert_equal(
+            round_and_hash_float_array([p.depth for p in pset], decimals=1), 29747210774230389239432
+        )

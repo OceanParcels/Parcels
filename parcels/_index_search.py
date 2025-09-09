@@ -83,14 +83,16 @@ def _search_indices_curvilinear_2d(
         cc = a[1] * b[0] - a[0] * b[1] + x * b[1] - y * a[1]
 
         det2 = bb * bb - 4 * aa * cc
-        det = np.where(det2 > 0, np.sqrt(det2), eta)
-        eta = np.where(abs(aa) < 1e-12, -cc / bb, np.where(det2 > 0, (-bb + det) / (2 * aa), eta))
+        with np.errstate(divide="ignore", invalid="ignore"):
+            det = np.where(det2 > 0, np.sqrt(det2), eta)
 
-        xsi = np.where(
-            abs(a[1] + a[3] * eta) < 1e-12,
-            ((y - py[0]) / (py[1] - py[0]) + (y - py[3]) / (py[2] - py[3])) * 0.5,
-            (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta),
-        )
+            eta = np.where(abs(aa) < 1e-12, -cc / bb, np.where(det2 > 0, (-bb + det) / (2 * aa), eta))
+
+            xsi = np.where(
+                abs(a[1] + a[3] * eta) < 1e-12,
+                ((y - py[0]) / (py[1] - py[0]) + (y - py[3]) / (py[2] - py[3])) * 0.5,
+                (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta),
+            )
 
         xi = np.where(xsi < -tol, xi - 1, np.where(xsi > 1 + tol, xi + 1, xi))
         yi = np.where(eta < -tol, yi - 1, np.where(eta > 1 + tol, yi + 1, yi))

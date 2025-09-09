@@ -102,6 +102,12 @@ class XGrid(BaseGrid):
         self._spatialhash = None
         ds = grid._ds
 
+        # Set the coordinates for the dataset (needed to be done explicitly for curvilinear grids)
+        if "lon" in ds:
+            ds.set_coords("lon")
+        if "lat" in ds:
+            ds.set_coords("lat")
+
         if len(set(grid.axes) & {"X", "Y", "Z"}) > 0:  # Only if spatial grid is >0D (see #2054 for further development)
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
 
