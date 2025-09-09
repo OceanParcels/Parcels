@@ -191,10 +191,6 @@ ignore = [
     # 1 blank line required between summary line and description (requires writing of summaries)
     "D205",
     "F811",
-
-
-    # TODO: These bugbear issues are to be resolved
-    "B904", # Within an `except` clause, raise exceptions
 ]
 
 [tool.ruff.lint.pydocstyle]
