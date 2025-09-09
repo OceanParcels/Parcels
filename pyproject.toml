@@ -40,10 +40,13 @@ homepage = "https://oceanparcels.org/"
 repository = "https://github.com/OceanParcels/parcels"
 Tracker = "https://github.com/OceanParcels/parcels/issues"
 
-[tool.pixi.project]
+[tool.pixi.workspace]
+preview = ["pixi-build"]
 channels = ["conda-forge"]
 name = "parcels-dev"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+
 
 [tool.pixi.tasks]
 tests = "pytest"
@@ -59,6 +62,7 @@ tests-exclude-v4 = "pytest -m 'not v4alpha and not v4future and not v4remove'"
 
 [tool.pixi.dependencies] #! Keep in sync with environment.yml
 python = ">=3.11"
+parcels = { path = "."}
 ffmpeg = ">=3.2.3"
 jupyter = "*"
 matplotlib-base = ">=2.0.2"
