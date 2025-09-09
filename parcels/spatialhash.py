@@ -168,8 +168,8 @@ class SpatialHash:
 
             # Compute the j, i indices corresponding to each hash entry
             nface = np.size(self._xlow)
-            face_ids = np.repeat(np.arange(nface, dtype=np.int64), num_hash_per_face)
-            offsets = np.concatenate(([0], np.cumsum(num_hash_per_face))).astype(np.int64)[:-1]
+            face_ids = np.repeat(np.arange(nface, dtype=np.int32), num_hash_per_face)
+            offsets = np.concatenate(([0], np.cumsum(num_hash_per_face))).astype(np.int32)[:-1]
 
             valid = num_hash_per_face != 0
             if not np.any(valid):
@@ -177,16 +177,16 @@ class SpatialHash:
                 pass
             else:
                 # Grab only valid faces to avoid empty arrays
-                nx_v = np.asarray(nx[valid], dtype=np.int64)
-                ny_v = np.asarray(ny[valid], dtype=np.int64)
-                nz_v = np.asarray(nz[valid], dtype=np.int64)
-                xlow_v = np.asarray(xqlow[valid], dtype=np.int64)
-                ylow_v = np.asarray(yqlow[valid], dtype=np.int64)
-                zlow_v = np.asarray(zqlow[valid], dtype=np.int64)
-                starts_v = np.asarray(offsets[valid], dtype=np.int64)
+                nx_v = np.asarray(nx[valid], dtype=np.int32)
+                ny_v = np.asarray(ny[valid], dtype=np.int32)
+                nz_v = np.asarray(nz[valid], dtype=np.int32)
+                xlow_v = np.asarray(xqlow[valid], dtype=np.int32)
+                ylow_v = np.asarray(yqlow[valid], dtype=np.int32)
+                zlow_v = np.asarray(zqlow[valid], dtype=np.int32)
+                starts_v = np.asarray(offsets[valid], dtype=np.int32)
 
                 # Count of elements per valid face (should match num_hash_per_face[valid])
-                counts = (nx_v * ny_v * nz_v).astype(np.int64)
+                counts = (nx_v * ny_v * nz_v).astype(np.int32)
                 total = int(counts.sum())
 
                 # Map each global element to its face and output position
@@ -195,7 +195,7 @@ class SpatialHash:
                 # Intra-face linear index for each element (0..counts_i-1)
                 # Offsets per face within the concatenation of valid faces:
                 face_starts_local = np.cumsum(np.r_[0, counts[:-1]])
-                intra = np.arange(total, dtype=np.int64) - np.repeat(face_starts_local, counts)
+                intra = np.arange(total, dtype=np.int32) - np.repeat(face_starts_local, counts)
 
                 # Derive (zi, yi, xi) from intra using per-face sizes
                 ny_nz = np.repeat(ny_v * nz_v, counts)
@@ -289,11 +289,11 @@ class SpatialHash:
 
         # Pre-allocate i and j indices of the best match for each query
         # Default values to -1 (no match case)
-        j_best = np.full(num_queries, -1, dtype=np.int64)
-        i_best = np.full(num_queries, -1, dtype=np.int64)
+        j_best = np.full(num_queries, -1, dtype=np.int32)
+        i_best = np.full(num_queries, -1, dtype=np.int32)
 
         # How many matches each query has; hit_counts[i] is the number of hits for query i
-        hit_counts = np.where(valid, counts[pos], 0).astype(np.int64)  # has shape (num_queries,)
+        hit_counts = np.where(valid, counts[pos], 0).astype(np.int32)  # has shape (num_queries,)
         if hit_counts.sum() == 0:
             return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
 
@@ -305,7 +305,7 @@ class SpatialHash:
 
         # A quick lookup array that maps all candindates back to its query index
         q_index_for_candidate = np.repeat(
-            np.arange(num_queries, dtype=np.int64), hit_counts
+            np.arange(num_queries, dtype=np.int32), hit_counts
         )  # shape (hit_counts.sum(),)
         # Map all candidates to positions in the hash table
         hash_positions = pos[q_index_for_candidate]  # shape (hit_counts.sum(),)
@@ -316,18 +316,18 @@ class SpatialHash:
         # hit_counts gives the number of candidates for each query
 
         # We need to build an array that gives the offset within each query's candidates
-        offsets = np.concatenate(([0], np.cumsum(hit_counts))).astype(np.int64)  # shape (num_queries+1,)
+        offsets = np.concatenate(([0], np.cumsum(hit_counts))).astype(np.int32)  # shape (num_queries+1,)
         total = int(offsets[-1])  # total number of candidates across all queries
 
         # Now, for each candidate, we need a simple array that tells us its "local candidate id" within its query
         # This way, we can easily take the starts[pos[q_index_for_candidate]] and add this local id to get the absolute index
         # We calculate this by computing the "global candidate number" (0..total-1) and subtracting the offsets of the corresponding query
         # This gives us an array that goes from 0..hit_counts[i]-1 for each query i
-        intra = np.arange(total, dtype=np.int64) - np.repeat(offsets[:-1], hit_counts)  # shape (hit_counts.sum(),)
+        intra = np.arange(total, dtype=np.int32) - np.repeat(offsets[:-1], hit_counts)  # shape (hit_counts.sum(),)
 
         # starts[pos[q_index_for_candidate]] + intra gives a list of positions in the hash table that we can
         # use to quickly gather the (i,j) pairs for each query
-        source_idx = starts[hash_positions].astype(np.int64) + intra
+        source_idx = starts[hash_positions].astype(np.int32) + intra
 
         # Gather all candidate (j,i) pairs in one shot
         j_all = j[source_idx]
