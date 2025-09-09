@@ -190,14 +190,10 @@ ignore = [
     "D404",
     # 1 blank line required between summary line and description (requires writing of summaries)
     "D205",
-    # do not use bare except, specify exception instead
-    "E722",
     "F811",
 
 
     # TODO: These bugbear issues are to be resolved
-    "B011", # Do not `assert False`
-    "B016", # Cannot raise a literal. Did you intend to return it or raise an Exception?
     "B904", # Within an `except` clause, raise exceptions
 ]
 
