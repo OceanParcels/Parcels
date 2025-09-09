@@ -471,9 +471,9 @@ def _encode_quantized_morton3d(xq, yq, zq):
 
     # --- 3) Bit-dilate each 10-bit number so each bit is separated by two zeros. ---
     # _dilate_bits maps:  b9..b0  ->  b9 0 0 b8 0 0 ... b0 0 0
-    dx3 = _dilate_bits(xq).astype(np.uint64)
-    dy3 = _dilate_bits(yq).astype(np.uint64)
-    dz3 = _dilate_bits(zq).astype(np.uint64)
+    dx3 = _dilate_bits(xq).astype(np.uint32)
+    dy3 = _dilate_bits(yq).astype(np.uint32)
+    dz3 = _dilate_bits(zq).astype(np.uint32)
 
     # --- 4) Interleave the dilated bits into a single Morton code. ---
     # Bit layout (from LSB upward): x0,y0,z0, x1,y1,z1, ..., x9,y9,z9
@@ -520,9 +520,9 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax, bitwidth=1023)
 
     # --- 3) Bit-dilate each 10-bit number so each bit is separated by two zeros. ---
     # _dilate_bits maps:  b9..b0  ->  b9 0 0 b8 0 0 ... b0 0 0
-    dx3 = _dilate_bits(xq).astype(np.uint64)
-    dy3 = _dilate_bits(yq).astype(np.uint64)
-    dz3 = _dilate_bits(zq).astype(np.uint64)
+    dx3 = _dilate_bits(xq).astype(np.uint32)
+    dy3 = _dilate_bits(yq).astype(np.uint32)
+    dz3 = _dilate_bits(zq).astype(np.uint32)
 
     # --- 4) Interleave the dilated bits into a single Morton code. ---
     # Bit layout (from LSB upward): x0,y0,z0, x1,y1,z1, ..., x9,y9,z9
