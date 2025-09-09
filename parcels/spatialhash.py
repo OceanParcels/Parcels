@@ -342,16 +342,21 @@ class SpatialHash:
         is_in_face = point_in_cell(self._source_grid, y_rep, x_rep, j_all, i_all)
 
         # For each query that has hits, we need to find the first candidate that was inside the face
-        for q in range(num_queries):
-            if has_hits[q]:
-                # Masked array for the current query
-                mask = is_in_face[offsets[q] : offsets[q + 1]]
-                if mask.any():
-                    # Find the candidate face that contains the query point
-                    argmin_within = mask.argmax()
-                    # Store the result
-                    j_best[q] = j_all[offsets[q] + argmin_within]
-                    i_best[q] = i_all[offsets[q] + argmin_within]
+        f_indices = np.flatnonzero(is_in_face)  # Indices of all faces that contained the point
+        # For each true position, find which query it belongs to by searching offsets
+        # Query index q satisfies offsets[q] <= pos < offsets[q+1].
+        q = np.searchsorted(offsets[1:], f_indices, side="right")
+
+        uniq_q, q_idx = np.unique(q, return_index=True)
+        keep = has_hits[uniq_q]
+
+        if keep.any():
+            uniq_q = uniq_q[keep]
+            pos_first = f_indices[q_idx[keep]]
+
+            # Directly scatter: the code wants the first True inside each slice
+            j_best[uniq_q] = j_all[pos_first]
+            i_best[uniq_q] = i_all[pos_first]
 
         return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
 
