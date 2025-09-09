@@ -18,6 +18,10 @@ Version 4 of Parcels is unreleased at the moment. The information in this migrat
 
 - `interp_method` has to be an Interpolation function, instead of a string.
 
+## Particle
+
+- `Particle.add_variables()` has been replaced by `Particle.add_variable()`, which now also takes a list of `Variables`.
+
 ## ParticleSet
 
 - `repeatdt` and `lonlatdepth_dtype` have been removed from the ParticleSet.
@@ -27,3 +31,4 @@ Version 4 of Parcels is unreleased at the moment. The information in this migrat
 ## ParticleFile
 
 - Particlefiles should be created by `ParticleFile(...)` instead of `pset.ParticleFile(...)`
+- The `name` argument in `ParticleFile` has been replaced by `store` and can now be a string, a Path or a zarr store.
