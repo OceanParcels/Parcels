@@ -51,9 +51,9 @@ class Variable:
 
         try:
             dtype = np.dtype(dtype)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as e:
             if dtype is not _SAME_AS_FIELDSET_TIME_INTERVAL.VALUE:
-                raise TypeError(f"Variable dtype must be a valid numpy dtype. Got {dtype=!r}")
+                raise TypeError(f"Variable dtype must be a valid numpy dtype. Got {dtype=!r}") from e
 
         if to_write not in _TO_WRITE_OPTIONS:
             raise ValueError(f"to_write must be one of {_TO_WRITE_OPTIONS!r}. Got {to_write=!r}")
