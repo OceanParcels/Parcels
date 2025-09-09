@@ -164,27 +164,63 @@ class SpatialHash:
             nz = zqhigh - zqlow + 1
             num_hash_per_face = nx * ny * nz
             total_hash_entries = np.sum(num_hash_per_face)
-
             morton_codes = np.zeros(total_hash_entries, dtype=np.uint32)
 
             # Compute the j, i indices corresponding to each hash entry
             nface = np.size(self._xlow)
             face_ids = np.repeat(np.arange(nface, dtype=np.int64), num_hash_per_face)
-            offsets = np.concatenate(([0], np.cumsum(num_hash_per_face))).astype(np.int64)
+            offsets = np.concatenate(([0], np.cumsum(num_hash_per_face))).astype(np.int64)[:-1]
 
-            for k in range(len(num_hash_per_face)):
-                if num_hash_per_face[k] == 0:
-                    continue
-                start, end = offsets[k], offsets[k + 1]
-                # Local sizes
-                nxk, nyk, nzk = int(nx[k]), int(ny[k]), int(nz[k])
+            valid = num_hash_per_face != 0
+            if not np.any(valid):
+                # nothing to do
+                pass
+            else:
+                # Grab only valid faces to avoid empty arrays
+                nx_v = np.asarray(nx[valid], dtype=np.int64)
+                ny_v = np.asarray(ny[valid], dtype=np.int64)
+                nz_v = np.asarray(nz[valid], dtype=np.int64)
+                xlow_v = np.asarray(xqlow[valid], dtype=np.int64)
+                ylow_v = np.asarray(yqlow[valid], dtype=np.int64)
+                zlow_v = np.asarray(zqlow[valid], dtype=np.int64)
+                starts_v = np.asarray(offsets[valid], dtype=np.int64)
 
-                # Build the Cartesian product
-                xq_block = xqlow[k] + np.repeat(np.arange(nxk), nyk * nzk)
-                yq_block = yqlow[k] + np.tile(np.repeat(np.arange(nyk), nzk), nxk)
-                zq_block = zqlow[k] + np.tile(np.arange(nzk), nxk * nyk)
+                # Count of elements per valid face (should match num_hash_per_face[valid])
+                counts = (nx_v * ny_v * nz_v).astype(np.int64)
+                total = int(counts.sum())
 
-                morton_codes[start:end] = _encode_quantized_morton3d(xq_block, yq_block, zq_block)
+                # Map each global element to its face and output position
+                start_for_elem = np.repeat(starts_v, counts)  # shape (total,)
+
+                # Intra-face linear index for each element (0..counts_i-1)
+                # Offsets per face within the concatenation of valid faces:
+                face_starts_local = np.cumsum(np.r_[0, counts[:-1]])
+                intra = np.arange(total, dtype=np.int64) - np.repeat(face_starts_local, counts)
+
+                # Derive (zi, yi, xi) from intra using per-face sizes
+                ny_nz = np.repeat(ny_v * nz_v, counts)
+                nz_rep = np.repeat(nz_v, counts)
+
+                xi = intra // ny_nz
+                rem = intra % ny_nz
+                yi = rem // nz_rep
+                zi = rem % nz_rep
+
+                # Add per-face lows
+                x0 = np.repeat(xlow_v, counts)
+                y0 = np.repeat(ylow_v, counts)
+                z0 = np.repeat(zlow_v, counts)
+
+                xq = x0 + xi
+                yq = y0 + yi
+                zq = z0 + zi
+
+                # Vectorized morton encode for all elements at once
+                codes_all = _encode_quantized_morton3d(xq, yq, zq)
+
+                # Scatter into the preallocated output using computed absolute indices
+                out_idx = start_for_elem + intra
+                morton_codes[out_idx] = codes_all
 
             # Sort face indices by morton code
             order = np.argsort(morton_codes)
@@ -194,6 +230,7 @@ class SpatialHash:
 
             # Get a list of unique morton codes and their corresponding starts and counts (CSR format)
             keys, starts, counts = np.unique(morton_codes_sorted, return_index=True, return_counts=True)
+
             hash_table = {
                 "keys": keys,
                 "starts": starts,
@@ -458,8 +495,8 @@ def quantize_coordinates(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax, bitwidth=1
         yn = np.where(dy != 0, (y - ymin) / dy, 0.0)
         zn = np.where(dz != 0, (z - zmin) / dz, 0.0)
 
-    # --- 2) Quantize to 10 bits (0..1023). ---
-    # Multiply by 1023, round down, and clip to be safe against slight overshoot.
+    # --- 2) Quantize to (0..bitwidth). ---
+    # Multiply by bitwidth, round down, and clip to be safe against slight overshoot.
     xq = np.clip((xn * bitwidth).astype(np.uint32), 0, bitwidth)
     yq = np.clip((yn * bitwidth).astype(np.uint32), 0, bitwidth)
     zq = np.clip((zn * bitwidth).astype(np.uint32), 0, bitwidth)
