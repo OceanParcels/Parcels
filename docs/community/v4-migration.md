@@ -12,6 +12,7 @@ Version 4 of Parcels is unreleased at the moment. The information in this migrat
 - `particl_dlon`, `particle_dlat` etc have been renamed to `particle.dlon` and `particle.dlat`.
 - `particle.dt` is a np.timedelta64 object; be careful when multiplying `particle.dt` with a velocity, as its value may be cast to nanoseconds.
 - The `time` argument in the Kernel signature is now standard `None` (and may be removed in the Kernel API before release of v4), so can't be used. Use `particle.time` instead.
+- `math` functions should be replaced with array compatible equivalents (e.g., `math.sin` -> `np.sin`). Instead of `ParcelsRandom` you should use numpy's random functions.
 
 ## FieldSet
 
