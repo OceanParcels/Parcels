@@ -111,9 +111,6 @@ parcels = { path = ".", editable = true }
 [tool.setuptools]
 packages = ["parcels"]
 
-[tool.setuptools.package-data]
-parcels = ["parcels/include/*"]
-
 [tool.setuptools_scm]
 write_to = "parcels/_version_setup.py"
 local_scheme = "no-local-version"
