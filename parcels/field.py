@@ -290,9 +290,6 @@ class VectorField:
             _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator_Vector)
             self._vector_interp_method = vector_interp_method
 
-        if U.grid._mesh != V.grid._mesh or (W and U.grid._mesh != W.grid._mesh):
-            raise ValueError(f"Inconsistent mesh types: {U.grid._mesh}, {V.grid._mesh}, {W.grid._mesh}")
-
     def __repr__(self):
         return f"""<{type(self).__name__}>
     name: {self.name!r}
