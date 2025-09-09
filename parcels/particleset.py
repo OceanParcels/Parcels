@@ -538,7 +538,7 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            logger.info(f"Output files are stored in {output_file.store}.")
+            logger.info(f"Output files are stored in {output_file.store.path}")
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
