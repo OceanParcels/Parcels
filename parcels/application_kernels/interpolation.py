@@ -20,8 +20,10 @@ __all__ = [
     "CGrid_Velocity",
     "UXPiecewiseConstantFace",
     "UXPiecewiseLinearNode",
+    "XFreeslip",
     "XLinear",
     "XNearest",
+    "XPartialslip",
     "ZeroInterpolator",
     "ZeroInterpolator_Vector",
 ]
@@ -30,7 +32,7 @@ __all__ = [
 def ZeroInterpolator(
     field: Field,
     ti: int,
-    position: dict[str, tuple[int, float | np.ndarray]],
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
@@ -44,7 +46,7 @@ def ZeroInterpolator(
 def ZeroInterpolator_Vector(
     vectorfield: VectorField,
     ti: int,
-    position: dict[str, tuple[int, float | np.ndarray]],
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
     tau: np.float32 | np.float64,
     t: np.float32 | np.float64,
     z: np.float32 | np.float64,
@@ -54,6 +56,53 @@ def ZeroInterpolator_Vector(
 ) -> np.float32 | np.float64:
     """Template function used for the signature check of the interpolation methods for velocity fields."""
     return 0.0
+
+
+def _get_corner_data_Agrid(
+    data: np.ndarray | xr.DataArray,
+    ti: int,
+    zi: int,
+    yi: int,
+    xi: int,
+    lenT: int,
+    lenZ: int,
+    npart: int,
+    axis_dim: dict[str, str],
+) -> np.ndarray:
+    """Helper function to get the corner data for a given A-grid field and position."""
+    # Time coordinates: 8 points at ti, then 8 points at ti+1
+    if lenT == 1:
+        ti = np.repeat(ti, lenZ * 4)
+    else:
+        ti_1 = np.clip(ti + 1, 0, data.shape[0] - 1)
+        ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti_1, lenZ * 4)])
+
+    # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
+    if lenZ == 1:
+        zi = np.repeat(zi, lenT * 4)
+    else:
+        zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
+        zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
+
+    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
+    yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
+    yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
+
+    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
+    xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
+    xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
+
+    # Create DataArrays for indexing
+    selection_dict = {
+        axis_dim["X"]: xr.DataArray(xi, dims=("points")),
+        axis_dim["Y"]: xr.DataArray(yi, dims=("points")),
+    }
+    if "Z" in axis_dim:
+        selection_dict[axis_dim["Z"]] = xr.DataArray(zi, dims=("points"))
+    if "time" in data.dims:
+        selection_dict["time"] = xr.DataArray(ti, dims=("points"))
+
+    return data.isel(selection_dict).data.reshape(lenT, lenZ, npart, 4)
 
 
 def XLinear(
@@ -73,44 +122,11 @@ def XLinear(
 
     axis_dim = field.grid.get_axis_dim_mapping(field.data.dims)
     data = field.data
-    tdim, zdim, ydim, xdim = data.shape[0], data.shape[1], data.shape[2], data.shape[3]
 
     lenT = 2 if np.any(tau > 0) else 1
     lenZ = 2 if np.any(zeta > 0) else 1
 
-    # Time coordinates: 8 points at ti, then 8 points at ti+1
-    if lenT == 1:
-        ti = np.repeat(ti, lenZ * 4)
-    else:
-        ti_1 = np.clip(ti + 1, 0, tdim - 1)
-        ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti_1, lenZ * 4)])
-
-    # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
-    if lenZ == 1:
-        zi = np.repeat(zi, lenT * 4)
-    else:
-        zi_1 = np.clip(zi + 1, 0, zdim - 1)
-        zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
-
-    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
-    yi_1 = np.clip(yi + 1, 0, ydim - 1)
-    yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
-
-    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
-    xi_1 = np.clip(xi + 1, 0, xdim - 1)
-    xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
-
-    # Create DataArrays for indexing
-    selection_dict = {
-        axis_dim["X"]: xr.DataArray(xi, dims=("points")),
-        axis_dim["Y"]: xr.DataArray(yi, dims=("points")),
-    }
-    if "Z" in axis_dim:
-        selection_dict[axis_dim["Z"]] = xr.DataArray(zi, dims=("points"))
-    if "time" in data.dims:
-        selection_dict["time"] = xr.DataArray(ti, dims=("points"))
-
-    corner_data = data.isel(selection_dict).data.reshape(lenT, lenZ, len(xsi), 4)
+    corner_data = _get_corner_data_Agrid(data, ti, zi, yi, xi, lenT, lenZ, len(xsi), axis_dim)
 
     if lenT == 2:
         tau = tau[np.newaxis, :, np.newaxis]
@@ -390,6 +406,152 @@ def CGrid_Tracer(
         value = value[0, :]
 
     return value.compute() if is_dask_collection(value) else value
+
+
+def _Spatialslip(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+    a: np.float32,
+    b: np.float32,
+):
+    """Helper function for spatial boundary condition interpolation for velocity fields."""
+    xi, xsi = position["X"]
+    yi, eta = position["Y"]
+    zi, zeta = position["Z"]
+
+    axis_dim = vectorfield.U.grid.get_axis_dim_mapping(vectorfield.U.data.dims)
+    lenT = 2 if np.any(tau > 0) else 1
+    lenZ = 2 if np.any(zeta > 0) else 1
+    npart = len(xsi)
+
+    u = XLinear(vectorfield.U, ti, position, tau, t, z, y, x)
+    v = XLinear(vectorfield.V, ti, position, tau, t, z, y, x)
+    if vectorfield.W:
+        w = XLinear(vectorfield.W, ti, position, tau, t, z, y, x)
+
+    corner_dataU = _get_corner_data_Agrid(vectorfield.U.data, ti, zi, yi, xi, lenT, lenZ, npart, axis_dim)
+    corner_dataV = _get_corner_data_Agrid(vectorfield.V.data, ti, zi, yi, xi, lenT, lenZ, npart, axis_dim)
+
+    def is_land(ti: int, zi: int, yi: int, xi: int):
+        uval = corner_dataU[ti, zi, :, xi + 2 * yi]
+        vval = corner_dataV[ti, zi, :, xi + 2 * yi]
+        return np.where(np.isclose(uval, 0.0) & np.isclose(vval, 0.0), True, False)
+
+    f_u = np.ones_like(xsi)
+    f_v = np.ones_like(eta)
+
+    if lenZ == 1:
+        f_u = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & (eta > 0), f_u * (a + b * eta) / eta, f_u)
+        f_u = np.where(is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & (eta < 1), f_u * (1 - b * eta) / (1 - eta), f_u)
+        f_v = np.where(is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & (xsi > 0), f_v * (a + b * xsi) / xsi, f_v)
+        f_v = np.where(is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & (xsi < 1), f_v * (1 - b * xsi) / (1 - xsi), f_v)
+    else:
+        f_u = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & (eta > 0),
+            f_u * (a + b * eta) / eta,
+            f_u,
+        )
+        f_u = np.where(
+            is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & is_land(0, 1, 1, 0) & is_land(0, 1, 1, 1) & (eta < 1),
+            f_u * (1 - b * eta) / (1 - eta),
+            f_u,
+        )
+        f_v = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & is_land(0, 1, 0, 0) & is_land(0, 1, 1, 0) & (xsi > 0),
+            f_v * (a + b * xsi) / xsi,
+            f_v,
+        )
+        f_v = np.where(
+            is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 1) & (xsi < 1),
+            f_v * (1 - b * xsi) / (1 - xsi),
+            f_v,
+        )
+        f_u = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 0, 1, 0 & is_land(0, 0, 1, 1) & (zeta > 0)),
+            f_u * (a + b * zeta) / zeta,
+            f_u,
+        )
+        f_u = np.where(
+            is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
+            f_u * (1 - b * zeta) / (1 - zeta),
+            f_u,
+        )
+        f_v = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 0, 1, 0 & is_land(0, 0, 1, 1) & (zeta > 0)),
+            f_v * (a + b * zeta) / zeta,
+            f_v,
+        )
+        f_v = np.where(
+            is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 0 & is_land(0, 1, 1, 1) & (zeta < 1)),
+            f_v * (1 - b * zeta) / (1 - zeta),
+            f_v,
+        )
+
+    u *= f_u
+    v *= f_v
+    if vectorfield.W:
+        f_w = np.ones_like(zeta)
+        f_w = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 0, 1) & is_land(0, 1, 0, 0) & is_land(0, 1, 0, 1) & (eta > 0),
+            f_w * (a + b * eta) / eta,
+            f_w,
+        )
+        f_w = np.where(
+            is_land(0, 0, 1, 0) & is_land(0, 0, 1, 1) & is_land(0, 1, 1, 0) & is_land(0, 1, 1, 1) & (eta < 1),
+            f_w * (a - b * eta) / (1 - eta),
+            f_w,
+        )
+        f_w = np.where(
+            is_land(0, 0, 0, 0) & is_land(0, 0, 1, 0) & is_land(0, 1, 0, 0) & is_land(0, 1, 1, 0) & (xsi > 0),
+            f_w * (a + b * xsi) / xsi,
+            f_w,
+        )
+        f_w = np.where(
+            is_land(0, 0, 0, 1) & is_land(0, 0, 1, 1) & is_land(0, 1, 0, 1) & is_land(0, 1, 1, 1) & (xsi < 1),
+            f_w * (a - b * xsi) / (1 - xsi),
+            f_w,
+        )
+
+        w *= f_w
+    else:
+        w = None
+    return u, v, w
+
+
+def XFreeslip(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+    applyConversion: bool,
+):
+    """Free-slip boundary condition interpolation for velocity fields."""
+    return _Spatialslip(vectorfield, ti, position, tau, t, z, y, x, a=1.0, b=0.0)
+
+
+def XPartialslip(
+    vectorfield: VectorField,
+    ti: int,
+    position: dict[_XGRID_AXES, tuple[int, float | np.ndarray]],
+    tau: np.float32 | np.float64,
+    t: np.float32 | np.float64,
+    z: np.float32 | np.float64,
+    y: np.float32 | np.float64,
+    x: np.float32 | np.float64,
+    applyConversion: bool,
+):
+    """Partial-slip boundary condition interpolation for velocity fields."""
+    return _Spatialslip(vectorfield, ti, position, tau, t, z, y, x, a=0.5, b=0.5)
 
 
 def XNearest(
