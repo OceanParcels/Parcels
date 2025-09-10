@@ -15,9 +15,11 @@ from parcels.application_kernels.advection import (
 from parcels.basegrid import GridType
 from parcels.tools.statuscodes import (
     StatusCode,
+    _raise_field_interpolation_error,
     _raise_field_out_of_bound_error,
     _raise_field_out_of_bound_surface_error,
-    _raise_field_sampling_error,
+    _raise_general_error,
+    _raise_grid_searching_error,
     _raise_time_extrapolation_error,
 )
 from parcels.tools.warnings import KernelWarning
@@ -26,6 +28,16 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 __all__ = ["Kernel"]
+
+
+ErrorsToThrow = {
+    StatusCode.ErrorTimeExtrapolation: _raise_time_extrapolation_error,
+    StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
+    StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
+    StatusCode.ErrorInterpolation: _raise_field_interpolation_error,
+    StatusCode.ErrorGridSearching: _raise_grid_searching_error,
+    StatusCode.Error: _raise_general_error,
+}
 
 
 class Kernel:
@@ -79,10 +91,6 @@ class Kernel:
         for f in self._pyfuncs:
             ret += f.__name__
         return ret
-
-    @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
-    def name(self):
-        return f"{self._ptype.name}{self.funcname}"
 
     @property
     def ptype(self):
@@ -270,14 +278,7 @@ class Kernel:
             if np.any(pset.state == StatusCode.StopAllExecution):
                 return StatusCode.StopAllExecution
 
-            errors_to_throw = {
-                StatusCode.ErrorTimeExtrapolation: _raise_time_extrapolation_error,
-                StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
-                StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
-                StatusCode.Error: _raise_field_sampling_error,
-            }
-
-            for error_code, error_func in errors_to_throw.items():
+            for error_code, error_func in ErrorsToThrow.items():
                 if np.any(pset.state == error_code):
                     inds = pset.state == error_code
                     if error_code == StatusCode.ErrorTimeExtrapolation:

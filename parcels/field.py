@@ -13,7 +13,12 @@ from dask import is_dask_collection
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import default_repr
 from parcels._typing import VectorType
-from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, ZeroInterpolator
+from parcels.application_kernels.interpolation import (
+    UXPiecewiseLinearNode,
+    XLinear,
+    ZeroInterpolator,
+    ZeroInterpolator_Vector,
+)
 from parcels.particle import KernelParticle
 from parcels.tools.converters import (
     UnitConverter,
@@ -259,9 +264,11 @@ class Field:
 
         tau, ti = _search_time_index(self, time)
         position = self.grid.search(z, y, x, ei=_ei)
-        _update_particle_states(particle, position)
+        _update_particle_states_position(particle, position)
 
         value = self._interp_method(self, ti, position, tau, time, z, y, x)
+
+        _update_particle_states_interp_value(particle, value)
 
         if applyConversion:
             value = self.units.to_target(value, z, y, x)
@@ -306,8 +313,8 @@ class VectorField:
         if vector_interp_method is None:
             self._vector_interp_method = None
         else:
-            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator)
-            self._interp_method = vector_interp_method
+            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator_Vector)
+            self._vector_interp_method = vector_interp_method
 
     def __repr__(self):
         return f"""<{type(self).__name__}>
@@ -322,7 +329,7 @@ class VectorField:
 
     @vector_interp_method.setter
     def vector_interp_method(self, method: Callable):
-        _assert_same_function_signature(method, ref=ZeroInterpolator)
+        _assert_same_function_signature(method, ref=ZeroInterpolator_Vector)
         self._vector_interp_method = method
 
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):
@@ -339,21 +346,28 @@ class VectorField:
 
         tau, ti = _search_time_index(self.U, time)
         position = self.grid.search(z, y, x, ei=_ei)
-        _update_particle_states(particle, position)
+        _update_particle_states_position(particle, position)
 
         if self._vector_interp_method is None:
             u = self.U._interp_method(self.U, ti, position, tau, time, z, y, x)
             v = self.V._interp_method(self.V, ti, position, tau, time, z, y, x)
             if "3D" in self.vector_type:
                 w = self.W._interp_method(self.W, ti, position, tau, time, z, y, x)
-        else:
-            (u, v, w) = self._vector_interp_method(self, ti, position, time, z, y, x)
+            else:
+                w = 0.0
 
-        if applyConversion:
-            u = self.U.units.to_target(u, z, y, x)
-            v = self.V.units.to_target(v, z, y, x)
-            if "3D" in self.vector_type:
-                w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
+            if applyConversion:
+                u = self.U.units.to_target(u, z, y, x)
+                v = self.V.units.to_target(v, z, y, x)
+
+        else:
+            (u, v, w) = self._vector_interp_method(self, ti, position, tau, time, z, y, x, applyConversion)
+
+        for vel in (u, v, w):
+            _update_particle_states_interp_value(particle, vel)
+
+        if applyConversion and ("3D" in self.vector_type):
+            w = self.W.units.to_target(w, z, y, x) if self.W else 0.0
 
         if "3D" in self.vector_type:
             return (u, v, w)
@@ -370,14 +384,30 @@ class VectorField:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
 
 
-def _update_particle_states(particle, position):
+def _update_particle_states_position(particle, position):
     """Update the particle states based on the position dictionary."""
     if particle and "X" in position:  # TODO also support uxgrid search
-        particle.state = np.where(position["X"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state)
-        particle.state = np.where(position["Y"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state)
-        particle.state = np.where(position["Z"][0] == RIGHT_OUT_OF_BOUNDS, StatusCode.ErrorOutOfBounds, particle.state)
-        particle.state = np.where(
-            position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state
+        particle.state = np.maximum(
+            np.where(position["X"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state), particle.state
+        )
+        particle.state = np.maximum(
+            np.where(position["Y"][0] < 0, StatusCode.ErrorOutOfBounds, particle.state), particle.state
+        )
+        particle.state = np.maximum(
+            np.where(position["Z"][0] == RIGHT_OUT_OF_BOUNDS, StatusCode.ErrorOutOfBounds, particle.state),
+            particle.state,
+        )
+        particle.state = np.maximum(
+            np.where(position["Z"][0] == LEFT_OUT_OF_BOUNDS, StatusCode.ErrorThroughSurface, particle.state),
+            particle.state,
+        )
+
+
+def _update_particle_states_interp_value(particle, value):
+    """Update the particle states based on the interpolated value, but only if state is not an Error already."""
+    if particle:
+        particle.state = np.maximum(
+            np.where(np.isnan(value), StatusCode.ErrorInterpolation, particle.state), particle.state
         )
 
 

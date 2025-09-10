@@ -1,3 +1,6 @@
+from contextlib import nullcontext as does_not_raise
+from datetime import datetime, timedelta
+
 import numpy as np
 import pytest
 
@@ -14,7 +17,8 @@ from parcels import (
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
-from parcels.tools.statuscodes import FieldOutOfBoundError, TimeExtrapolationError
+from parcels.particlefile import ParticleFile
+from parcels.tools.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
 from tests import utils
@@ -27,7 +31,20 @@ def fieldset() -> FieldSet:
     grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U (A grid)"], grid)
     V = Field("V", ds["V (A grid)"], grid)
-    return FieldSet([U, V])
+    UV = VectorField("UV", U, V)
+    return FieldSet([U, V, UV])
+
+
+@pytest.fixture
+def fieldset_no_time_interval() -> FieldSet:
+    # i.e., no time variation
+    ds = datasets_structured["ds_2d_left"].isel(time=0).drop("time")
+
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = Field("U", ds["U (A grid)"], grid)
+    V = Field("V", ds["V (A grid)"], grid)
+    UV = VectorField("UV", U, V)
+    return FieldSet([U, V, UV])
 
 
 @pytest.fixture
@@ -39,6 +56,98 @@ def zonal_flow_fieldset() -> FieldSet:
     V = Field("V", ds["V"], grid)
     UV = VectorField("UV", U, V)
     return FieldSet([U, V, UV])
+
+
+def test_pset_execute_implicit_dt_one_second(fieldset):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle)
+    pset.execute(DoNothing, runtime=np.timedelta64(1, "s"))
+
+    time = pset.time.copy()
+
+    pset.execute(DoNothing, runtime=np.timedelta64(1, "s"))
+    np.testing.assert_array_equal(pset.time, time + np.timedelta64(1, "s"))
+
+
+def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
+    for dt in [1, np.timedelta64(0, "s"), np.timedelta64(None)]:
+        with pytest.raises(
+            ValueError,
+            match="dt must be a non-zero datetime.timedelta or np.timedelta64 object, got .*",
+        ):
+            ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=dt)
+
+    with pytest.raises(
+        ValueError,
+        match="runtime and endtime are mutually exclusive - provide one or the other. Got .*",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            runtime=np.timedelta64(1, "s"), endtime=np.datetime64("2100-01-01")
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="The runtime must be a datetime.timedelta or np.timedelta64 object. Got .*",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(runtime=1)
+
+    msg = """Calculated/provided end time of .* is not in fieldset time interval .* Either reduce your runtime, modify your provided endtime, or change your release timing.*"""
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=np.datetime64("1990-01-01"))
+
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            endtime=np.datetime64("2100-01-01"), dt=np.timedelta64(-1, "s")
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="The endtime must be of the same type as the fieldset.time_interval start time. Got .*",
+    ):
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=12345)
+
+    with pytest.raises(
+        ValueError,
+        match="The runtime must be provided when the time_interval is not defined for a fieldset.",
+    ):
+        ParticleSet(fieldset_no_time_interval, lon=[0.2], lat=[5.0], pclass=Particle).execute()
+
+
+@pytest.mark.parametrize(
+    "runtime, expectation",
+    [
+        (np.timedelta64(5, "s"), does_not_raise()),
+        (timedelta(seconds=2), does_not_raise()),
+        (5.0, pytest.raises(ValueError)),
+        (np.datetime64("2001-01-02T00:00:00"), pytest.raises(ValueError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
+    ],
+)
+def test_particleset_runtime_type(fieldset, runtime, expectation):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    with expectation:
+        pset.execute(runtime=runtime, dt=np.timedelta64(10, "s"), pyfunc=DoNothing)
+
+
+@pytest.mark.parametrize(
+    "endtime, expectation",
+    [
+        (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
+        (5.0, pytest.raises(ValueError)),
+        (np.timedelta64(5, "s"), pytest.raises(ValueError)),
+        (timedelta(seconds=2), pytest.raises(ValueError)),
+        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(ValueError)),
+    ],
+)
+def test_particleset_endtime_type(fieldset, endtime, expectation):
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    with expectation:
+        pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
 
 
 def test_pset_remove_particle_in_kernel(fieldset):
@@ -92,7 +201,8 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
 def test_execution_endtime(fieldset, starttime, endtime, dt):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
     endtime = fieldset.time_interval.left + np.timedelta64(endtime, "s")
-    dt = np.timedelta64(dt, "s")
+    if dt is not None:
+        dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
     pset.execute(DoNothing, endtime=endtime, dt=dt)
     assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
@@ -152,10 +262,29 @@ def test_some_particles_throw_outoftime(fieldset):
     pset = ParticleSet(fieldset, lon=np.zeros_like(time), lat=np.zeros_like(time), time=time)
 
     def FieldAccessOutsideTime(particle, fieldset, time):  # pragma: no cover
-        fieldset.U[particle.time + np.timedelta64(1, "D"), particle.depth, particle.lat, particle.lon, particle]
+        fieldset.U[particle.time + np.timedelta64(400, "D"), particle.depth, particle.lat, particle.lon, particle]
 
     with pytest.raises(TimeExtrapolationError):
-        pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(400, "D"), dt=np.timedelta64(10, "D"))
+        pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(1, "D"), dt=np.timedelta64(10, "D"))
+
+
+def test_raise_grid_searching_error(): ...
+
+
+def test_raise_general_error(): ...
+
+
+def test_errorinterpolation(fieldset):
+    def NaNInterpolator(field, ti, position, tau, t, z, y, x):  # pragma: no cover
+        return np.nan * np.zeros_like(x)
+
+    def SampleU(particle, fieldset, time):  # pragma: no cover
+        fieldset.U[particle.time, particle.depth, particle.lat, particle.lon, particle]
+
+    fieldset.U.interp_method = NaNInterpolator
+    pset = ParticleSet(fieldset, lon=[0, 2], lat=[0, 0])
+    with pytest.raises(FieldInterpolationError):
+        pset.execute(SampleU, runtime=np.timedelta64(2, "s"), dt=np.timedelta64(1, "s"))
 
 
 def test_execution_check_stopallexecution(fieldset):
@@ -200,7 +329,8 @@ def test_execution_runtime(fieldset, starttime, runtime, dt, npart):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
     runtime = np.timedelta64(runtime, "s")
     sign_dt = 1 if dt is None else np.sign(dt)
-    dt = np.timedelta64(dt, "s")
+    if dt is not None:
+        dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(DoNothing, runtime=runtime, dt=dt)
     assert all([abs(p.time_nextloop - starttime - runtime * sign_dt) < np.timedelta64(1, "ms") for p in pset])
@@ -304,7 +434,7 @@ def test_uxstommelgyre_pset_execute_output():
         time=[0.0],
         pclass=Particle,
     )
-    output_file = pset.ParticleFile(
+    output_file = ParticleFile(
         name="stommel_uxarray_particles.zarr",  # the file name
         outputdt=np.timedelta64(5, "m"),  # the time step of the outputs
     )

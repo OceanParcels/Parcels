@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, TypeVar
 
 import cftime
@@ -118,3 +118,29 @@ def get_datetime_type_calendar(
         # datetime isn't a cftime datetime object
         pass
     return type(example_datetime), calendar
+
+
+_TD_PRECISION_GETTER_FOR_UNIT = (
+    (lambda dt: dt.days, "D"),
+    (lambda dt: dt.seconds, "s"),
+    (lambda dt: dt.microseconds, "us"),
+)
+
+
+def maybe_convert_python_timedelta_to_numpy(dt: timedelta | np.timedelta64) -> np.timedelta64:
+    if isinstance(dt, np.timedelta64):
+        return dt
+
+    try:
+        dts = []
+        for get_value_for_unit, np_unit in _TD_PRECISION_GETTER_FOR_UNIT:
+            value = get_value_for_unit(dt)
+            if value != 0:
+                dts.append(np.timedelta64(value, np_unit))
+
+        if dts:
+            return sum(dts)
+        else:
+            return np.timedelta64(0, "s")
+    except Exception as e:
+        raise ValueError(f"Could not convert {dt!r} to np.timedelta64.") from e

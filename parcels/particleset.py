@@ -1,19 +1,20 @@
+import datetime
 import sys
 import warnings
 from collections.abc import Iterable
+from typing import Literal
 
 import numpy as np
 import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
-from parcels._core.utils.time import TimeInterval
+from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
 from parcels.basegrid import GridType
 from parcels.kernel import Kernel
 from parcels.particle import KernelParticle, Particle, create_particle_data
-from parcels.particlefile import ParticleFile
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
@@ -390,10 +391,6 @@ class ParticleSet:
             return None
         return InteractionKernel(self.fieldset, self._ptype, pyfunc=pyfunc_inter)
 
-    def ParticleFile(self, *args, **kwargs):
-        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile` object from the ParticleSet."""
-        return ParticleFile(*args, particleset=self, **kwargs)
-
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of `variable_name` equals (one of) `compare_values`.
 
@@ -459,8 +456,8 @@ class ParticleSet:
         self,
         pyfunc=AdvectionRK4,
         endtime: np.timedelta64 | np.datetime64 | None = None,
-        runtime: np.timedelta64 | None = None,
-        dt: np.timedelta64 | None = None,
+        runtime: datetime.timedelta | np.timedelta64 | None = None,
+        dt: datetime.timedelta | np.timedelta64 | None = None,
         output_file=None,
         verbose_progress=True,
     ):
@@ -503,62 +500,34 @@ class ParticleSet:
 
         self._kernel = pyfunc
 
-        if output_file:
-            output_file.metadata["parcels_kernels"] = self._kernel.name
+        if output_file is not None:
+            output_file.set_metadata(self.fieldset.gridset[0]._mesh)
+            output_file.metadata["parcels_kernels"] = self._kernel.funcname
 
-        if (dt is not None) and (not isinstance(dt, np.timedelta64)):
-            raise TypeError("dt must be a np.timedelta64 object")
-        if dt is None or np.isnat(dt):
+        if dt is None:
             dt = np.timedelta64(1, "s")
+
+        try:
+            dt = maybe_convert_python_timedelta_to_numpy(dt)
+            assert not np.isnat(dt)
+            sign_dt = np.sign(dt).astype(int)
+            assert sign_dt in [-1, 1]
+        except (ValueError, AssertionError) as e:
+            raise ValueError(f"dt must be a non-zero datetime.timedelta or np.timedelta64 object, got {dt=!r}") from e
+
+        if runtime is not None:
+            try:
+                runtime = maybe_convert_python_timedelta_to_numpy(runtime)
+            except ValueError as e:
+                raise ValueError(
+                    f"The runtime must be a datetime.timedelta or np.timedelta64 object. Got {type(runtime)}"
+                ) from e
+
         self._data["dt"][:] = dt
-        sign_dt = np.sign(dt).astype(int)
-        if sign_dt not in [-1, 1]:
-            raise ValueError("dt must be a positive or negative np.timedelta64 object")
 
-        if self.fieldset.time_interval is None:
-            start_time = np.timedelta64(0, "s")  # For the execution loop, we need a start time as a timedelta object
-            if runtime is None:
-                raise TypeError("The runtime must be provided when the time_interval is not defined for a fieldset.")
-
-            else:
-                if isinstance(runtime, np.timedelta64):
-                    end_time = runtime
-                else:
-                    raise TypeError("The runtime must be a np.timedelta64 object")
-
-        else:
-            if not np.isnat(self.time_nextloop).any():
-                if sign_dt > 0:
-                    start_time = self.time_nextloop.min()
-                else:
-                    start_time = self.time_nextloop.max()
-            else:
-                if sign_dt > 0:
-                    start_time = self.fieldset.time_interval.left
-                else:
-                    start_time = self.fieldset.time_interval.right
-
-            if runtime is None:
-                if endtime is None:
-                    raise ValueError(
-                        "Must provide either runtime or endtime when time_interval is defined for a fieldset."
-                    )
-                # Ensure that the endtime uses the same type as the start_time
-                if isinstance(endtime, self.fieldset.time_interval.left.__class__):
-                    if sign_dt > 0:
-                        if endtime < self.fieldset.time_interval.left:
-                            raise ValueError("The endtime must be after the start time of the fieldset.time_interval")
-                        end_time = min(endtime, self.fieldset.time_interval.right)
-                    else:
-                        if endtime > self.fieldset.time_interval.right:
-                            raise ValueError(
-                                "The endtime must be before the end time of the fieldset.time_interval when dt < 0"
-                            )
-                        end_time = max(endtime, self.fieldset.time_interval.left)
-                else:
-                    raise TypeError("The endtime must be of the same type as the fieldset.time_interval start time.")
-            else:
-                end_time = start_time + runtime * sign_dt
+        start_time, end_time = _get_simulation_start_and_end_times(
+            self.fieldset.time_interval, self._data["time_nextloop"], runtime, endtime, sign_dt
+        )
 
         # Set the time of the particles if it hadn't been set on initialisation
         if np.isnat(self._data["time"]).any():
@@ -569,27 +538,30 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            logger.info(f"Output files are stored in {output_file.fname}.")
+            logger.info(f"Output files are stored in {output_file.store}.")
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
 
-        next_output = outputdt if output_file else None
+        next_output = start_time + sign_dt * outputdt if output_file else None
 
         time = start_time
         while sign_dt * (time - end_time) < 0:
             # Load the appropriate timesteps of the fieldset
             next_load_time = self.fieldset._load_timesteps(time)
 
-            if sign_dt > 0:
-                next_time = end_time if next_load_time is None else min(next_load_time, end_time)
-            else:
-                next_time = end_time if next_load_time is None else max(next_load_time, end_time)
+            possible_next_time = [end_time]
+            if next_load_time is not None:
+                possible_next_time.append(next_load_time)
+            if next_output is not None:
+                possible_next_time.append(next_output)
+            f = min if sign_dt > 0 else max
+            next_time = f(possible_next_time)
+
             self._kernel.execute(self, endtime=next_time, dt=dt)
 
-            # TODO: Handle IO timing based of timedelta or datetime objects
             if next_output:
-                if abs(next_time - next_output) < 1e-12:
+                if np.abs(next_time - next_output) < np.timedelta64(1000, "ns"):
                     if output_file:
                         output_file.write(self, next_output)
                     if np.isfinite(outputdt):
@@ -622,15 +594,66 @@ def _warn_particle_times_outside_fieldset_time_bounds(release_times: np.ndarray,
 
     if isinstance(time.left, np.datetime64) and isinstance(release_times[0], np.timedelta64):
         release_times = np.array([t + time.left for t in release_times])
-    if np.any(release_times < time.left):
+    if np.any(release_times < time.left) or np.any(release_times > time.right):
         warnings.warn(
             "Some particles are set to be released outside the FieldSet's executable time domain.",
             ParticleSetWarning,
             stacklevel=2,
         )
-    if np.any(release_times > time.right):
-        warnings.warn(
-            "Some particles are set to be released after the fieldset's last time and the fields are not constant in time.",
-            ParticleSetWarning,
-            stacklevel=2,
+
+
+def _get_simulation_start_and_end_times(
+    time_interval: TimeInterval,
+    particle_release_times: np.ndarray,
+    runtime: np.timedelta64 | None,
+    endtime: np.datetime64 | None,
+    sign_dt: Literal[-1, 1],
+) -> tuple[np.datetime64, np.datetime64]:
+    if runtime is not None and endtime is not None:
+        raise ValueError(
+            f"runtime and endtime are mutually exclusive - provide one or the other. Got {runtime=!r}, {endtime=!r}"
         )
+
+    if runtime is None and time_interval is None:
+        raise ValueError("The runtime must be provided when the time_interval is not defined for a fieldset.")
+
+    if sign_dt == 1:
+        first_release_time = particle_release_times.min()
+    else:
+        first_release_time = particle_release_times.max()
+
+    start_time = _get_start_time(first_release_time, time_interval, sign_dt, runtime)
+
+    if endtime is None:
+        endtime = start_time + sign_dt * runtime
+
+    if time_interval is not None:
+        if type(endtime) != type(time_interval.left):  # noqa: E721
+            raise ValueError(
+                f"The endtime must be of the same type as the fieldset.time_interval start time. Got {endtime=!r} with {time_interval=!r}"
+            )
+        if endtime not in time_interval:
+            msg = (
+                f"Calculated/provided end time of {endtime!r} is not in fieldset time interval {time_interval!r}. Either reduce your runtime, modify your "
+                "provided endtime, or change your release timing."
+                "Important info:\n"
+                f"    First particle release: {first_release_time!r}\n"
+                f"    runtime: {runtime!r}\n"
+                f"    (calculated) endtime: {endtime!r}"
+            )
+            raise ValueError(msg)
+
+    return start_time, endtime
+
+
+def _get_start_time(first_release_time, time_interval, sign_dt, runtime):
+    if time_interval is None:
+        time_interval = TimeInterval(left=np.timedelta64(0, "s"), right=runtime)
+
+    if sign_dt == 1:
+        fieldset_start = time_interval.left
+    else:
+        fieldset_start = time_interval.right
+
+    start_time = first_release_time if not np.isnat(first_release_time) else fieldset_start
+    return start_time
