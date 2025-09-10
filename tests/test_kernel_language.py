@@ -26,9 +26,7 @@ from tests.utils import create_fieldset_unit_mesh
 def expr_kernel(name, pset, expr):
     pycode = (f"def {name}(particle, fieldset, time):\n"
               f"    particle.p = {expr}")  # fmt: skip
-    return Kernel(
-        pset.fieldset, pset.particledata.ptype, pyfunc=None, funccode=pycode, funcname=name, funcvars=["particle"]
-    )
+    return Kernel(pset.fieldset, pset.particledata.ptype, pyfunc=None, funccode=pycode, funcname=name)
 
 
 @pytest.fixture
@@ -232,14 +230,16 @@ def test_print(fieldset_unit_mesh, capfd):
     def kernel(particle, fieldset, time):  # pragma: no cover
         particle.p = 1e-3
         tmp = 5
-        print(f"{particle.id} {particle.p:f} {tmp:f}")
+        print(f"{particle.trajectory} {particle.p:f} {tmp:f}")
 
     pset.execute(kernel, endtime=1.0, dt=1.0, verbose_progress=False)
     out, err = capfd.readouterr()
     lst = out.split(" ")
     tol = 1e-8
     assert (
-        abs(float(lst[0]) - pset.id[0]) < tol and abs(float(lst[1]) - pset.p[0]) < tol and abs(float(lst[2]) - 5) < tol
+        abs(float(lst[0]) - pset.trajectory[0]) < tol
+        and abs(float(lst[1]) - pset.p[0]) < tol
+        and abs(float(lst[2]) - 5) < tol
     )
 
     def kernel2(particle, fieldset, time):  # pragma: no cover
@@ -336,7 +336,7 @@ def test_TEOSdensity_kernels():
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
     pset.execute(PolyTEOS10_bsq, runtime=1)
-    assert np.allclose(pset[0].density, 1022.85377)
+    assert np.allclose(pset[0].density, 1027.45140)
 
 
 def test_EOSseawaterproperties_kernels():

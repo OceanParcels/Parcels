@@ -60,8 +60,8 @@ def parse_requirements(fname) -> Iterator[tuple[str, int, int, int | None]]:
 
         try:
             version_tup = tuple(int(x) for x in version.split("."))
-        except ValueError:
-            raise ValueError("non-numerical version: " + row)
+        except ValueError as e:
+            raise ValueError("non-numerical version: " + row) from e
 
         if len(version_tup) == 2:
             yield (pkg, *version_tup, None)  # type: ignore[misc]
@@ -193,7 +193,7 @@ def main() -> None:
         print("\nErrors:")
         print("-------")
         for i, e in enumerate(errors):
-            print(f"{i+1}. {e}")
+            print(f"{i + 1}. {e}")
         sys.exit(1)
 
 

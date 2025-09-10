@@ -22,9 +22,9 @@ from tests.common_kernels import DoNothing
 @pytest.fixture
 def fieldset() -> FieldSet:
     ds = datasets_structured["ds_2d_left"]
-    grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["U (A grid)"], grid, mesh_type="flat")
-    V = Field("V", ds["V (A grid)"], grid, mesh_type="flat")
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = Field("U", ds["U (A grid)"], grid)
+    V = Field("V", ds["V (A grid)"], grid)
     return FieldSet([U, V])
 
 
@@ -35,19 +35,6 @@ def test_pset_create_lon_lat(fieldset):
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=Particle)
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
-
-
-@pytest.mark.parametrize("lonlatdepth_dtype", [np.float64, np.float32])
-def test_pset_create_line(fieldset, lonlatdepth_dtype):
-    npart = 100
-    lon = np.linspace(0, 1, npart, dtype=lonlatdepth_dtype)
-    lat = np.linspace(1, 0, npart, dtype=lonlatdepth_dtype)
-    pset = ParticleSet.from_line(
-        fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=Particle, lonlatdepth_dtype=lonlatdepth_dtype
-    )
-    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
-    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
-    assert isinstance(pset[0].lat, lonlatdepth_dtype)
 
 
 def test_create_empty_pset(fieldset):
@@ -127,63 +114,16 @@ def test_pset_create_outside_time(fieldset):
         ParticleSet(fieldset, pclass=Particle, lon=[0] * len(time), lat=[0] * len(time), time=time)
 
 
-@pytest.mark.parametrize(
-    "dt, expectation",
-    [
-        (np.timedelta64(5, "s"), does_not_raise()),
-        (5.0, pytest.raises(TypeError)),
-        (np.datetime64("2000-01-02T00:00:00"), pytest.raises(TypeError)),
-        (timedelta(seconds=2), pytest.raises(TypeError)),
-    ],
-)
-def test_particleset_dt_type(fieldset, dt, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
-    with expectation:
-        pset.execute(runtime=np.timedelta64(10, "s"), dt=dt, pyfunc=DoNothing)
-
-
 def test_pset_starttime_not_multiple_dt(fieldset):
     times = [0, 1, 2]
     datetimes = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in times]
     pset = ParticleSet(fieldset, lon=[0] * len(times), lat=[0] * len(times), pclass=Particle, time=datetimes)
 
     def Addlon(particle, fieldset, time):  # pragma: no cover
-        particle_dlon += particle.dt / np.timedelta64(1, "s")  # noqa
+        particle.dlon += particle.dt / np.timedelta64(1, "s")
 
     pset.execute(Addlon, dt=np.timedelta64(2, "s"), runtime=np.timedelta64(8, "s"), verbose_progress=False)
     assert np.allclose([p.lon_nextloop for p in pset], [8 - t for t in times])
-
-
-@pytest.mark.parametrize(
-    "runtime, expectation",
-    [
-        (np.timedelta64(5, "s"), does_not_raise()),
-        (5.0, pytest.raises(TypeError)),
-        (timedelta(seconds=2), pytest.raises(TypeError)),
-        (np.datetime64("2001-01-02T00:00:00"), pytest.raises(TypeError)),
-        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(TypeError)),
-    ],
-)
-def test_particleset_runtime_type(fieldset, runtime, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
-    with expectation:
-        pset.execute(runtime=runtime, dt=np.timedelta64(10, "s"), pyfunc=DoNothing)
-
-
-@pytest.mark.parametrize(
-    "endtime, expectation",
-    [
-        (np.datetime64("2000-01-02T00:00:00"), does_not_raise()),
-        (5.0, pytest.raises(TypeError)),
-        (np.timedelta64(5, "s"), pytest.raises(TypeError)),
-        (timedelta(seconds=2), pytest.raises(TypeError)),
-        (datetime(2000, 1, 2, 0, 0, 0), pytest.raises(TypeError)),
-    ],
-)
-def test_particleset_endtime_type(fieldset, endtime, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
-    with expectation:
-        pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
 
 
 def test_pset_add_explicit(fieldset):
@@ -226,7 +166,7 @@ def test_pset_merge_inplace(fieldset, npart=100):
 def test_pset_remove_index(fieldset, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, lonlatdepth_dtype=np.float64)
+    pset = ParticleSet(fieldset, lon=lon, lat=lat)
     indices_to_remove = [0, 10, 20]
     pset.remove_indices(indices_to_remove)
     assert pset.size == 97

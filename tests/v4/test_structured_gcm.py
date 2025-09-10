@@ -12,6 +12,6 @@ def test_fieldset_frompop():
     # dimensions = {"lon": "lon", "lat": "lat", "time": "time"}
 
     # fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh="flat")
-    # pset = ParticleSet.from_list(fieldset, Particle, lon=[3, 5, 1], lat=[3, 5, 1])
+    # pset = ParticleSet(fieldset, Particle, lon=[3, 5, 1], lat=[3, 5, 1])
     # pset.execute(AdvectionRK4, runtime=3, dt=1)
     pass

@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import uxarray as ux
 
@@ -115,10 +116,26 @@ def test_fesom2_square_delaunay_uniform_z_coordinate_eval():
         V=Field(name="V", data=ds.V, grid=UxGrid(ds.uxgrid, z=ds.coords["nz"]), interp_method=UXPiecewiseConstantFace),
         W=Field(name="W", data=ds.W, grid=UxGrid(ds.uxgrid, z=ds.coords["nz"]), interp_method=UXPiecewiseLinearNode),
     )
-    P = Field(name="p", data=ds.p, grid=UxGrid(ds.uxgrid, z=ds.coords["nz"]), interp_method=UXPiecewiseConstantFace)
+    P = Field(name="p", data=ds.p, grid=UxGrid(ds.uxgrid, z=ds.coords["nz"]), interp_method=UXPiecewiseLinearNode)
     fieldset = FieldSet([UVW, P, UVW.U, UVW.V, UVW.W])
 
     assert fieldset.U.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
     assert fieldset.V.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
     assert fieldset.W.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 0.0
     assert fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=30.0, applyConversion=False) == 1.0
+
+
+def test_fesom2_square_delaunay_antimeridian_eval():
+    """
+    Test the evaluation of a fieldset with a FESOM2 square Delaunay grid that crosses the antimeridian.
+    Ensures that the fieldset can be created and evaluated correctly.
+    Since the underlying data is constant, we can check that the values are as expected.
+    """
+    ds = datasets_unstructured["fesom2_square_delaunay_antimeridian"]
+    P = Field(name="p", data=ds.p, grid=UxGrid(ds.uxgrid, z=ds.coords["nz"]), interp_method=UXPiecewiseLinearNode)
+    fieldset = FieldSet([P])
+
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=-170.0, applyConversion=False), 1.0)
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=-180.0, applyConversion=False), 1.0)
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=180.0, applyConversion=False), 1.0)
+    assert np.isclose(fieldset.p.eval(time=ds.time[0].values, z=1.0, y=30.0, x=170.0, applyConversion=False), 1.0)

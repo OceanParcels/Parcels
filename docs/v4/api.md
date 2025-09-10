@@ -35,7 +35,6 @@ classDiagram
 Here, important things to note are:
 
 - Interpolators (which would implement the `Interpolator` protocol) are responsible for the actual interpolation of the data, and performance considerations. There will be interpolation and indexing utilities that can be made available to the interpolators, allowing for code re-use.
-
   - Interpolators of the data should handle spatial periodicity and, for the case of rectilinear structured grids, without pre-computing a halo for the FieldSet and Grid ([issue](https://github.com/OceanParcels/Parcels/issues/1898)).
 
 - In the `Field` class, not all combinations of `data`, `grid`, and `interpolator` will logically make sense (e.g., a `xr.DataArray` on a `ux.Grid`, or `ux.DataArray` on a `parcels.Grid`). It's up to the `Interpolator.assert_is_compatible(Field)` to define what is and is not compatible, and raise `ValueError` / `TypeError` on incompatible data types. The `.assert_is_compatible()` method also acts as developer documentation, defining clearly for the `.interpolate()` method what assumptions it is working on. The `.assert_is_compatible()` method should be lightweight as it will be called on `Field` initialisation.

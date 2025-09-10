@@ -25,12 +25,12 @@ def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
         # undesirable results.
         if dist < min_dist or min_dist < 0:
             min_dist = dist
-            neighbor_id = n.id
+            neighbor_id = n.trajectory
 
     def f(p, neighbor):
         p.nearest_neighbor = neighbor
 
-    mutator[particle.id].append((f, [neighbor_id]))
+    mutator[particle.trajectory].append((f, [neighbor_id]))
 
     return StatusCode.Success
 
@@ -54,14 +54,14 @@ def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
         p.mass = p.mass + nmass
 
     for n in neighbors:
-        if n.id == particle.nearest_neighbor:
-            if n.nearest_neighbor == particle.id and particle.id < n.id:
+        if n.trajectory == particle.nearest_neighbor:
+            if n.nearest_neighbor == particle.trajectory and particle.trajectory < n.trajectory:
                 # Merge particles:
                 # Delete neighbor
-                mutator[n.id].append((delete_particle, ()))
+                mutator[n.trajectory].append((delete_particle, ()))
                 # Take position at the mid point and sum of masses
                 args = np.array([n.lat, n.lon, n.depth, n.mass])
-                mutator[particle.id].append((merge_with_neighbor, args))
+                mutator[particle.trajectory].append((merge_with_neighbor, args))
 
                 return StatusCode.Success
             else:
@@ -101,6 +101,6 @@ def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
             n.lon_nextloop += dlon
             n.depth_nextloop += ddepth
 
-        mutator[n.id].append((f, d_vec))
+        mutator[n.trajectory].append((f, d_vec))
 
     return StatusCode.Success

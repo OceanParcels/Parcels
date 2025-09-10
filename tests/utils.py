@@ -4,17 +4,16 @@ from __future__ import annotations
 
 import struct
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import numpy as np
 import xarray as xr
 
 import parcels
-from parcels import FieldSet
-from parcels.xgrid import _FIELD_DATA_ORDERING, get_axis_from_dim_name
-
-if TYPE_CHECKING:
-    from parcels.xgrid import XGrid
+from parcels._datasets.structured.generated import simple_UV_dataset
+from parcels.application_kernels.interpolation import XLinear
+from parcels.field import Field, VectorField
+from parcels.fieldset import FieldSet
+from parcels.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TEST_ROOT = PROJECT_ROOT / "tests"
@@ -69,13 +68,18 @@ def create_fieldset_global(xdim=200, ydim=100):
     return FieldSet.from_data(data, dimensions, mesh="flat")
 
 
-def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100, mesh_conversion=1) -> FieldSet:
+def create_fieldset_zeros_conversion(mesh="spherical", xdim=200, ydim=100) -> FieldSet:
     """Zero velocity field with lat and lon determined by a conversion factor."""
-    lon = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, xdim, dtype=np.float32)
-    lat = np.linspace(-1e5 * mesh_conversion, 1e5 * mesh_conversion, ydim, dtype=np.float32)
-    dimensions = {"lon": lon, "lat": lat}
-    data = {"U": np.zeros((ydim, xdim), dtype=np.float32), "V": np.zeros((ydim, xdim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh=mesh)
+    mesh_conversion = 1 / 1852.0 / 60 if mesh == "spherical" else 1
+    ds = simple_UV_dataset(dims=(2, 1, ydim, xdim), mesh=mesh)
+    ds["lon"].data = np.linspace(-1e6 * mesh_conversion, 1e6 * mesh_conversion, xdim)
+    ds["lat"].data = np.linspace(-1e6 * mesh_conversion, 1e6 * mesh_conversion, ydim)
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+
+    UV = VectorField("UV", U, V)
+    return FieldSet([U, V, UV])
 
 
 def create_simple_pset(n=1):
@@ -136,7 +140,9 @@ def assert_valid_field_data(data: xr.DataArray, grid: XGrid):
         assert ax_actual == ax_expected, f"Expected axis {ax_expected} for dimension '{dim}', got {ax_actual}"
 
 
-def hash_float_array(arr):
+def round_and_hash_float_array(arr, decimals=6):
+    arr = np.round(arr, decimals=decimals)
+
     # Adapted from https://cs.stackexchange.com/a/37965
     h = 1
     for f in arr:

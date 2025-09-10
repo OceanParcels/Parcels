@@ -29,9 +29,6 @@ def test_field_init_param_types():
     with pytest.raises(ValueError, match="Expected `grid` to be a parcels UxGrid, or parcels XGrid"):
         Field(name="test", data=data["data_g"], grid=123)
 
-    with pytest.raises(ValueError, match="Invalid value 'invalid'. Valid options are.*"):
-        Field(name="test", data=data["data_g"], grid=grid, mesh_type="invalid")
-
 
 @pytest.mark.parametrize(
     "data,grid",
@@ -111,7 +108,7 @@ def test_field_init_fail_on_float_time_dim():
 )
 def test_field_time_interval(data, grid):
     """Test creating a field."""
-    field = Field(name="test_field", data=data, grid=grid, mesh_type="flat")
+    field = Field(name="test_field", data=data, grid=grid)
     assert field.time_interval.left == np.datetime64("2000-01-01")
     assert field.time_interval.right == np.datetime64("2001-01-01")
 
@@ -137,7 +134,7 @@ def test_vectorfield_invalid_interpolator():
     ds = datasets_structured["ds_2d_left"]
     grid = XGrid.from_dataset(ds)
 
-    def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, invalid):
+    def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, applyConversion, invalid):
         return 0.0
 
     # Create component fields

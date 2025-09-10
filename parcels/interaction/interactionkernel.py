@@ -27,9 +27,7 @@ class InteractionKernel(BaseKernel):
         ptype,
         pyfunc=None,
         funcname=None,
-        funccode=None,
         py_ast=None,
-        funcvars=None,
     ):
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
             raise NotImplementedError(
@@ -52,9 +50,7 @@ class InteractionKernel(BaseKernel):
             ptype=ptype,
             pyfunc=pyfunc,
             funcname=funcname,
-            funccode=funccode,
             py_ast=py_ast,
-            funcvars=funcvars,
         )
 
         if pyfunc is not None:
@@ -74,9 +70,9 @@ class InteractionKernel(BaseKernel):
 
         numkernelargs = self.check_kernel_signature_on_version()
 
-        assert numkernelargs[0] == 5 and numkernelargs.count(numkernelargs[0]) == len(
-            numkernelargs
-        ), "Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator"
+        assert numkernelargs[0] == 5 and numkernelargs.count(numkernelargs[0]) == len(numkernelargs), (
+            "Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator"
+        )
 
     def check_fieldsets_in_kernels(self, pyfunc):
         # Currently, the implemented interaction kernels do not impose
@@ -161,7 +157,7 @@ class InteractionKernel(BaseKernel):
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 try:
-                    for mutator_func, args in mutator[p.id]:
+                    for mutator_func, args in mutator[p.trajectory]:
                         mutator_func(p, *args)
                 except KeyError:
                     pass
@@ -205,7 +201,7 @@ class InteractionKernel(BaseKernel):
                     pass
                 else:
                     warnings.warn(
-                        f"Deleting particle {p.id} because of non-recoverable error",
+                        f"Deleting particle {p.trajectory} because of non-recoverable error",
                         RuntimeWarning,
                         stacklevel=2,
                     )
