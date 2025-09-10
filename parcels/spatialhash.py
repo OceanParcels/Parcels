@@ -1,6 +1,7 @@
 import numpy as np
 
-from parcels._index_search import GRID_SEARCH_ERROR
+import parcels
+from parcels._index_search import GRID_SEARCH_ERROR, curvilinear_point_in_cell
 
 
 class SpatialHash:
@@ -24,8 +25,10 @@ class SpatialHash:
         grid,
         bitwidth=1023,
     ):
-        # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid
-        # Currently, this is not done due to circular import with parcels.xgrid
+        if isinstance(grid, parcels.xgrid.XGrid):
+            self._point_in_cell = curvilinear_point_in_cell
+        else:
+            raise NotImplementedError("SpatialHash only supports parcels.xgrid.XGrid grids at this time.")
 
         self._source_grid = grid
         self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
@@ -235,7 +238,7 @@ class SpatialHash:
         }
         return hash_table
 
-    def query(self, y, x, point_in_cell):
+    def query(self, y, x):
         """
         Queries the hash table and finds the closes face in the source grid for each coordinate pair.
 
@@ -342,7 +345,7 @@ class SpatialHash:
         x_rep = np.repeat(x, hit_counts)  # shape (hit_counts.sum(),)
 
         # For each query we perform a point in cell check.
-        is_in_face, coordinates = point_in_cell(self._source_grid, y_rep, x_rep, j_all, i_all)
+        is_in_face, coordinates = self._point_in_cell(self._source_grid, y_rep, x_rep, j_all, i_all)
 
         coords_best = np.full((num_queries, coordinates.shape[1]), -1.0, dtype=np.float32)
 

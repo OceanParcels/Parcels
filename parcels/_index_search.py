@@ -96,7 +96,7 @@ def _search_indices_curvilinear_2d(
 
     # If there are any points that were not found in the first step, we query the spatial hash for those points
     if len(zero_indices) > 0:
-        yi_q, xi_q, coords_q = grid.get_spatial_hash().query(y_check, x_check, curvilinear_point_in_cell)
+        yi_q, xi_q, coords_q = grid.get_spatial_hash().query(y_check, x_check)
         # Only those points that were not found in the first step are updated
         coords[zero_indices, :] = coords_q
         yi[zero_indices] = yi_q
