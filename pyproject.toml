@@ -62,7 +62,6 @@ tests-exclude-v4 = "pytest -m 'not v4alpha and not v4future and not v4remove'"
 
 [tool.pixi.dependencies] #! Keep in sync with environment.yml
 python = ">=3.11"
-parcels = { path = "."}
 ffmpeg = ">=3.2.3"
 jupyter = "*"
 matplotlib-base = ">=2.0.2"
@@ -111,6 +110,17 @@ sphinxcontrib-mermaid = "*"
 
 [tool.pixi.pypi-dependencies]
 parcels = { path = ".", editable = true }
+
+[tool.pixi.package]
+name = "parcels"
+version = "3.2.1" # There is no support yet for dynamic versioning in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . This is only used for packaging and uploading to a nightly channel (i.e., we don't use pixi for publishing to conda)
+
+[tool.pixi.package.build]
+backend = { name = "pixi-build-python", version = "==0.3.2" }
+
+[tool.pixi.package.host-dependencies]
+setuptools = "*"
+setuptools_scm = "*"
 
 [tool.setuptools]
 packages = ["parcels"]
