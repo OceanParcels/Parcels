@@ -13,8 +13,6 @@ class SpatialHash:
     ----------
     grid : parcels.xgrid.XGrid
         Source grid used to construct the hash grid and hash table
-    reconstruct : bool, default=False
-        If true, reconstructs the spatial hash
 
     Note
     ----
@@ -24,14 +22,12 @@ class SpatialHash:
     def __init__(
         self,
         grid,
-        reconstruct=False,
         bitwidth=1023,
     ):
         # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid
         # Currently, this is not done due to circular import with parcels.xgrid
 
         self._source_grid = grid
-        self.reconstruct = reconstruct
         self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
 
         if self._source_grid._mesh == "spherical":
@@ -126,121 +122,118 @@ class SpatialHash:
         """Create a mapping that relates unstructured grid faces to hash indices by determining
         which faces overlap with which hash cells
         """
-        if self._hash_table is None or self.reconstruct:
-            # j, i = np.indices(self._xlow.shape)  # Get the indices of the curvilinear grid
+        # Quantize the bounding box in each direction
+        xqlow, yqlow, zqlow = quantize_coordinates(
+            self._xlow,
+            self._ylow,
+            self._zlow,
+            self._xmin,
+            self._xmax,
+            self._ymin,
+            self._ymax,
+            self._zmin,
+            self._zmax,
+            self._bitwidth,
+        )
 
-            # Quantize the bounding box in each direction
-            xqlow, yqlow, zqlow = quantize_coordinates(
-                self._xlow,
-                self._ylow,
-                self._zlow,
-                self._xmin,
-                self._xmax,
-                self._ymin,
-                self._ymax,
-                self._zmin,
-                self._zmax,
-                self._bitwidth,
-            )
+        xqhigh, yqhigh, zqhigh = quantize_coordinates(
+            self._xhigh,
+            self._yhigh,
+            self._zhigh,
+            self._xmin,
+            self._xmax,
+            self._ymin,
+            self._ymax,
+            self._zmin,
+            self._zmax,
+            self._bitwidth,
+        )
+        xqlow = xqlow.ravel()
+        yqlow = yqlow.ravel()
+        zqlow = zqlow.ravel()
+        xqhigh = xqhigh.ravel()
+        yqhigh = yqhigh.ravel()
+        zqhigh = zqhigh.ravel()
+        nx = xqhigh - xqlow + 1
+        ny = yqhigh - yqlow + 1
+        nz = zqhigh - zqlow + 1
+        num_hash_per_face = nx * ny * nz
+        total_hash_entries = np.sum(num_hash_per_face)
+        morton_codes = np.zeros(total_hash_entries, dtype=np.uint32)
 
-            xqhigh, yqhigh, zqhigh = quantize_coordinates(
-                self._xhigh,
-                self._yhigh,
-                self._zhigh,
-                self._xmin,
-                self._xmax,
-                self._ymin,
-                self._ymax,
-                self._zmin,
-                self._zmax,
-                self._bitwidth,
-            )
-            xqlow = xqlow.ravel()
-            yqlow = yqlow.ravel()
-            zqlow = zqlow.ravel()
-            xqhigh = xqhigh.ravel()
-            yqhigh = yqhigh.ravel()
-            zqhigh = zqhigh.ravel()
-            nx = xqhigh - xqlow + 1
-            ny = yqhigh - yqlow + 1
-            nz = zqhigh - zqlow + 1
-            num_hash_per_face = nx * ny * nz
-            total_hash_entries = np.sum(num_hash_per_face)
-            morton_codes = np.zeros(total_hash_entries, dtype=np.uint32)
+        # Compute the j, i indices corresponding to each hash entry
+        nface = np.size(self._xlow)
+        face_ids = np.repeat(np.arange(nface, dtype=np.int32), num_hash_per_face)
+        offsets = np.concatenate(([0], np.cumsum(num_hash_per_face))).astype(np.int32)[:-1]
 
-            # Compute the j, i indices corresponding to each hash entry
-            nface = np.size(self._xlow)
-            face_ids = np.repeat(np.arange(nface, dtype=np.int32), num_hash_per_face)
-            offsets = np.concatenate(([0], np.cumsum(num_hash_per_face))).astype(np.int32)[:-1]
+        valid = num_hash_per_face != 0
+        if not np.any(valid):
+            # nothing to do
+            pass
+        else:
+            # Grab only valid faces to avoid empty arrays
+            nx_v = np.asarray(nx[valid], dtype=np.int32)
+            ny_v = np.asarray(ny[valid], dtype=np.int32)
+            nz_v = np.asarray(nz[valid], dtype=np.int32)
+            xlow_v = np.asarray(xqlow[valid], dtype=np.int32)
+            ylow_v = np.asarray(yqlow[valid], dtype=np.int32)
+            zlow_v = np.asarray(zqlow[valid], dtype=np.int32)
+            starts_v = np.asarray(offsets[valid], dtype=np.int32)
 
-            valid = num_hash_per_face != 0
-            if not np.any(valid):
-                # nothing to do
-                pass
-            else:
-                # Grab only valid faces to avoid empty arrays
-                nx_v = np.asarray(nx[valid], dtype=np.int32)
-                ny_v = np.asarray(ny[valid], dtype=np.int32)
-                nz_v = np.asarray(nz[valid], dtype=np.int32)
-                xlow_v = np.asarray(xqlow[valid], dtype=np.int32)
-                ylow_v = np.asarray(yqlow[valid], dtype=np.int32)
-                zlow_v = np.asarray(zqlow[valid], dtype=np.int32)
-                starts_v = np.asarray(offsets[valid], dtype=np.int32)
+            # Count of elements per valid face (should match num_hash_per_face[valid])
+            counts = (nx_v * ny_v * nz_v).astype(np.int32)
+            total = int(counts.sum())
 
-                # Count of elements per valid face (should match num_hash_per_face[valid])
-                counts = (nx_v * ny_v * nz_v).astype(np.int32)
-                total = int(counts.sum())
+            # Map each global element to its face and output position
+            start_for_elem = np.repeat(starts_v, counts)  # shape (total,)
 
-                # Map each global element to its face and output position
-                start_for_elem = np.repeat(starts_v, counts)  # shape (total,)
+            # Intra-face linear index for each element (0..counts_i-1)
+            # Offsets per face within the concatenation of valid faces:
+            face_starts_local = np.cumsum(np.r_[0, counts[:-1]])
+            intra = np.arange(total, dtype=np.int32) - np.repeat(face_starts_local, counts)
 
-                # Intra-face linear index for each element (0..counts_i-1)
-                # Offsets per face within the concatenation of valid faces:
-                face_starts_local = np.cumsum(np.r_[0, counts[:-1]])
-                intra = np.arange(total, dtype=np.int32) - np.repeat(face_starts_local, counts)
+            # Derive (zi, yi, xi) from intra using per-face sizes
+            ny_nz = np.repeat(ny_v * nz_v, counts)
+            nz_rep = np.repeat(nz_v, counts)
 
-                # Derive (zi, yi, xi) from intra using per-face sizes
-                ny_nz = np.repeat(ny_v * nz_v, counts)
-                nz_rep = np.repeat(nz_v, counts)
+            xi = intra // ny_nz
+            rem = intra % ny_nz
+            yi = rem // nz_rep
+            zi = rem % nz_rep
 
-                xi = intra // ny_nz
-                rem = intra % ny_nz
-                yi = rem // nz_rep
-                zi = rem % nz_rep
+            # Add per-face lows
+            x0 = np.repeat(xlow_v, counts)
+            y0 = np.repeat(ylow_v, counts)
+            z0 = np.repeat(zlow_v, counts)
 
-                # Add per-face lows
-                x0 = np.repeat(xlow_v, counts)
-                y0 = np.repeat(ylow_v, counts)
-                z0 = np.repeat(zlow_v, counts)
+            xq = x0 + xi
+            yq = y0 + yi
+            zq = z0 + zi
 
-                xq = x0 + xi
-                yq = y0 + yi
-                zq = z0 + zi
+            # Vectorized morton encode for all elements at once
+            codes_all = _encode_quantized_morton3d(xq, yq, zq)
 
-                # Vectorized morton encode for all elements at once
-                codes_all = _encode_quantized_morton3d(xq, yq, zq)
+            # Scatter into the preallocated output using computed absolute indices
+            out_idx = start_for_elem + intra
+            morton_codes[out_idx] = codes_all
 
-                # Scatter into the preallocated output using computed absolute indices
-                out_idx = start_for_elem + intra
-                morton_codes[out_idx] = codes_all
+        # Sort face indices by morton code
+        order = np.argsort(morton_codes)
+        morton_codes_sorted = morton_codes[order]
+        face_sorted = face_ids[order]
+        j_sorted, i_sorted = np.unravel_index(face_sorted, self._xlow.shape)
 
-            # Sort face indices by morton code
-            order = np.argsort(morton_codes)
-            morton_codes_sorted = morton_codes[order]
-            face_sorted = face_ids[order]
-            j_sorted, i_sorted = np.unravel_index(face_sorted, self._xlow.shape)
+        # Get a list of unique morton codes and their corresponding starts and counts (CSR format)
+        keys, starts, counts = np.unique(morton_codes_sorted, return_index=True, return_counts=True)
 
-            # Get a list of unique morton codes and their corresponding starts and counts (CSR format)
-            keys, starts, counts = np.unique(morton_codes_sorted, return_index=True, return_counts=True)
-
-            hash_table = {
-                "keys": keys,
-                "starts": starts,
-                "counts": counts,
-                "i": i_sorted,
-                "j": j_sorted,
-            }
-            return hash_table
+        hash_table = {
+            "keys": keys,
+            "starts": starts,
+            "counts": counts,
+            "i": i_sorted,
+            "j": j_sorted,
+        }
+        return hash_table
 
     def query(self, y, x, point_in_cell):
         """
