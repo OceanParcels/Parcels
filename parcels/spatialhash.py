@@ -1,5 +1,7 @@
 import numpy as np
 
+from parcels._index_search import GRID_SEARCH_ERROR
+
 
 class SpatialHash:
     """Custom data structure that is used for performing grid searches using Spatial Hashing. This class constructs an overlying
@@ -253,9 +255,13 @@ class SpatialHash:
 
         Returns
         -------
-        faces : ndarray of shape (N,2), dtype=np.int32
-            For each coordinate pair, returns the (j,i) indices of the closest face in the hash grid.
-            If no face is found, returns (-1,-1) for that query.
+        j : ndarray, shape (N,)
+            j-indices of the located face in the source grid for each query. If no face was found, GRID_SEARCH_ERROR is returned.
+        i : ndarray, shape (N,)
+            i-indices of the located face in the source grid for each query. If no face was found, GRID_SEARCH_ERROR is returned.
+        coords : ndarray, shape (N, 2)
+            The local coordinates (xsi, eta) of the located face in the source grid for each query.
+            If no face was found, (-1.0, -1.0)
         """
         keys = self._hash_table["keys"]
         starts = self._hash_table["starts"]
@@ -289,8 +295,8 @@ class SpatialHash:
 
         # Pre-allocate i and j indices of the best match for each query
         # Default values to -1 (no match case)
-        j_best = np.full(num_queries, -1, dtype=np.int32)
-        i_best = np.full(num_queries, -1, dtype=np.int32)
+        j_best = np.full(num_queries, GRID_SEARCH_ERROR, dtype=np.int32)
+        i_best = np.full(num_queries, GRID_SEARCH_ERROR, dtype=np.int32)
 
         # How many matches each query has; hit_counts[i] is the number of hits for query i
         hit_counts = np.where(valid, counts[pos], 0).astype(np.int32)  # has shape (num_queries,)

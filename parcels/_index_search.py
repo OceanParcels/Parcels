@@ -105,8 +105,4 @@ def _search_indices_curvilinear_2d(
     xsi = coords[:, 0]
     eta = coords[:, 1]
 
-    # checking if xsi or eta is outside [0, 1]
-    xi = np.where(xsi < 0, GRID_SEARCH_ERROR, np.where(xsi > 1, GRID_SEARCH_ERROR, xi))
-    yi = np.where(eta < 0, GRID_SEARCH_ERROR, np.where(eta > 1, GRID_SEARCH_ERROR, yi))
-
     return (yi, eta, xi, xsi)
