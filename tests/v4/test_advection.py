@@ -462,7 +462,7 @@ def test_nemo_curvilinear_fieldset():
     latp = np.linspace(-70, 88, npart)
     runtime = np.timedelta64(12, "h")  # TODO increase to 160 days
 
-    def periodicBC(particle, fieldSet, time):  # pragma: no cover
+    def periodicBC(particle, fieldset, time):  # pragma: no cover
         particle.dlon = np.where(particle.lon > 180, particle.dlon - 360, particle.dlon)
 
     pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)

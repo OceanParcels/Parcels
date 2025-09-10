@@ -13,6 +13,7 @@ from parcels.application_kernels.advection import (
     AdvectionRK45,
 )
 from parcels.basegrid import GridType
+from parcels.tools._helpers import _assert_same_function_signature
 from parcels.tools.statuscodes import (
     StatusCode,
     _raise_field_interpolation_error,
@@ -23,6 +24,7 @@ from parcels.tools.statuscodes import (
     _raise_time_extrapolation_error,
 )
 from parcels.tools.warnings import KernelWarning
+from tests.common_kernels import DoNothing
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -67,6 +69,7 @@ class Kernel:
         for f in pyfuncs:
             if not isinstance(f, types.FunctionType):
                 raise TypeError(f"Argument pyfunc should be a function or list of functions. Got {type(f)}")
+            _assert_same_function_signature(f, ref=DoNothing, context="Kernel")
 
         if len(pyfuncs) == 0:
             raise ValueError("List of `pyfuncs` should have at least one function.")
