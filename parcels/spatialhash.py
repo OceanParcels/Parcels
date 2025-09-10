@@ -295,7 +295,11 @@ class SpatialHash:
         # How many matches each query has; hit_counts[i] is the number of hits for query i
         hit_counts = np.where(valid, counts[pos], 0).astype(np.int32)  # has shape (num_queries,)
         if hit_counts.sum() == 0:
-            return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
+            return (
+                j_best.reshape(query_codes.shape),
+                i_best.reshape(query_codes.shape),
+                np.full((num_queries, 2), -1.0, dtype=np.float32),
+            )
 
         # Now, for each query, we need to gather the candidate (j,i) indices from the hash table
         # Each j,i pair needs to be repeated hit_counts[i] times, only when there are hits.
@@ -339,7 +343,9 @@ class SpatialHash:
         x_rep = np.repeat(x, hit_counts)  # shape (hit_counts.sum(),)
 
         # For each query we perform a point in cell check.
-        is_in_face = point_in_cell(self._source_grid, y_rep, x_rep, j_all, i_all)
+        is_in_face, coordinates = point_in_cell(self._source_grid, y_rep, x_rep, j_all, i_all)
+
+        coords_best = np.full((num_queries, coordinates.shape[1]), -1.0, dtype=np.float32)
 
         # For each query that has hits, we need to find the first candidate that was inside the face
         f_indices = np.flatnonzero(is_in_face)  # Indices of all faces that contained the point
@@ -357,8 +363,13 @@ class SpatialHash:
             # Directly scatter: the code wants the first True inside each slice
             j_best[uniq_q] = j_all[pos_first]
             i_best[uniq_q] = i_all[pos_first]
+            coords_best[uniq_q] = coordinates[pos_first]
 
-        return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
+        return (
+            j_best.reshape(query_codes.shape),
+            i_best.reshape(query_codes.shape),
+            coords_best.reshape((num_queries, coordinates.shape[1])),
+        )
 
 
 def _latlon_rad_to_xyz(lat, lon):

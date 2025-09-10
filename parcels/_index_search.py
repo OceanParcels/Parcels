@@ -72,44 +72,18 @@ def curvilinear_point_in_cell(grid, y: np.ndarray, x: np.ndarray, yi: np.ndarray
 
     is_in_cell = np.where((xsi >= 0) & (xsi <= 1) & (eta >= 0) & (eta <= 1), 1, 0)
 
-    return is_in_cell
+    return is_in_cell, np.column_stack((xsi, eta))
 
 
 def _search_indices_curvilinear_2d(
-    grid: XGrid, y: float, x: float, yi_guess: int | None = None, xi_guess: int | None = None
-):  # TODO fix typing instructions to make clear that y, x etc need to be ndarrays
+    grid: XGrid, y: np.ndarray, x: np.ndarray, yi_guess: np.ndarray | None = None, xi_guess: np.ndarray | None = None
+):
     yi, xi = yi_guess, xi_guess
     if yi is None or xi is None:
-        yi, xi = grid.get_spatial_hash().query(y, x, curvilinear_point_in_cell)
+        yi, xi, coords = grid.get_spatial_hash().query(y, x, curvilinear_point_in_cell)
 
-    xsi = eta = -1.0 * np.ones(len(x), dtype=float)
-    invA = np.array(
-        [
-            [1, 0, 0, 0],
-            [-1, 1, 0, 0],
-            [-1, 0, 0, 1],
-            [1, -1, 1, -1],
-        ]
-    )
-
-    px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
-    py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
-
-    a, b = np.dot(invA, px), np.dot(invA, py)
-    aa = a[3] * b[2] - a[2] * b[3]
-    bb = a[3] * b[0] - a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + x * b[3] - y * a[3]
-    cc = a[1] * b[0] - a[0] * b[1] + x * b[1] - y * a[1]
-    det2 = bb * bb - 4 * aa * cc
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        det = np.where(det2 > 0, np.sqrt(det2), eta)
-        eta = np.where(abs(aa) < 1e-12, -cc / bb, np.where(det2 > 0, (-bb + det) / (2 * aa), eta))
-
-        xsi = np.where(
-            abs(a[1] + a[3] * eta) < 1e-12,
-            ((y - py[0]) / (py[1] - py[0]) + (y - py[3]) / (py[2] - py[3])) * 0.5,
-            (x - a[0] - a[2] * eta) / (a[1] + a[3] * eta),
-        )
+    xsi = coords[:, 0]
+    eta = coords[:, 1]
 
     (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid._mesh)
 
