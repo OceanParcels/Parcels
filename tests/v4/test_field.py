@@ -11,7 +11,7 @@ from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, Vecto
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
-from parcels.application_kernels.interpolation import XBiLinear, XTriLinear
+from parcels.application_kernels.interpolation import XLinear
 from parcels.fieldset import FieldSet
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
@@ -221,14 +221,14 @@ def test_conversion_3DCROCO():
     ds = xr.open_dataset(file).rename({"x_rho": "lon", "y_rho": "lat", "s_w": "depth"})
 
     grid = XGrid.from_dataset(ds)
-    U = Field("U", ds["u"], grid, mesh_type="flat", interp_method=XTriLinear)
-    V = Field("V", ds["v"], grid, mesh_type="flat", interp_method=XTriLinear)
-    W = Field("W", ds["w"], grid, mesh_type="flat", interp_method=XTriLinear)
+    U = Field("U", ds["u"], grid, mesh_type="flat", interp_method=XLinear)
+    V = Field("V", ds["v"], grid, mesh_type="flat", interp_method=XLinear)
+    W = Field("W", ds["w"], grid, mesh_type="flat", interp_method=XLinear)
     UVW = VectorField("UVW", U, V, W)
 
-    H = Field("H", ds["h"], grid, mesh_type="flat", interp_method=XBiLinear)
-    Zeta = Field("Zeta", ds["zeta"], grid, mesh_type="flat", interp_method=XBiLinear)
-    Cs_w = Field("Cs_w", ds["Cs_w"], grid, mesh_type="flat", interp_method=XBiLinear)
+    H = Field("H", ds["h"], grid, mesh_type="flat", interp_method=XLinear)
+    Zeta = Field("Zeta", ds["zeta"], grid, mesh_type="flat", interp_method=XLinear)
+    Cs_w = Field("Cs_w", ds["Cs_w"], grid, mesh_type="flat", interp_method=XLinear)
 
     fieldset = FieldSet([U, V, W, UVW, H, Zeta, Cs_w])
 
