@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from parcels._typing import Mesh
 from parcels.tools.statuscodes import _raise_time_extrapolation_error
 
 if TYPE_CHECKING:
@@ -78,29 +77,36 @@ def curvilinear_point_in_cell(grid, y: np.ndarray, x: np.ndarray, yi: np.ndarray
 def _search_indices_curvilinear_2d(
     grid: XGrid, y: np.ndarray, x: np.ndarray, yi_guess: np.ndarray | None = None, xi_guess: np.ndarray | None = None
 ):
-    yi, xi = yi_guess, xi_guess
-    if yi is None or xi is None:
-        yi, xi, coords = grid.get_spatial_hash().query(y, x, curvilinear_point_in_cell)
+    yi_guess = np.array(yi_guess)
+    xi_guess = np.array(xi_guess)
+    xi = np.full(len(x), GRID_SEARCH_ERROR, dtype=np.int32)
+    yi = np.full(len(y), GRID_SEARCH_ERROR, dtype=np.int32)
+    if np.any(xi_guess):
+        # If an initial guess is provided, we first perform a point in cell check for all guessed indices
+        is_in_cell, coords = curvilinear_point_in_cell(grid, y, x, yi_guess, xi_guess)
+        y_check = y[is_in_cell == 0]
+        x_check = x[is_in_cell == 0]
+        zero_indices = np.where(is_in_cell == 0)[0]
+    else:
+        # Otherwise, we need to check all points
+        y_check = y
+        x_check = x
+        coords = -1.0 * np.ones((len(y), 2), dtype=np.float32)
+        zero_indices = np.arange(len(y))
+
+    # If there are any points that were not found in the first step, we query the spatial hash for those points
+    if len(zero_indices) > 0:
+        yi_q, xi_q, coords_q = grid.get_spatial_hash().query(y_check, x_check, curvilinear_point_in_cell)
+        # Only those points that were not found in the first step are updated
+        coords[zero_indices, :] = coords_q
+        yi[zero_indices] = yi_q
+        xi[zero_indices] = xi_q
 
     xsi = coords[:, 0]
     eta = coords[:, 1]
-
-    (yi, xi) = _reconnect_bnd_indices(yi, xi, grid.ydim, grid.xdim, grid._mesh)
 
     # checking if xsi or eta is outside [0, 1]
     xi = np.where(xsi < 0, GRID_SEARCH_ERROR, np.where(xsi > 1, GRID_SEARCH_ERROR, xi))
     yi = np.where(eta < 0, GRID_SEARCH_ERROR, np.where(eta > 1, GRID_SEARCH_ERROR, yi))
 
     return (yi, eta, xi, xsi)
-
-
-def _reconnect_bnd_indices(yi: int, xi: int, ydim: int, xdim: int, mesh: Mesh):
-    xi = np.where(xi < 0, (xdim - 2) if mesh == "spherical" else 0, xi)
-    xi = np.where(xi > xdim - 2, 0 if mesh == "spherical" else (xdim - 2), xi)
-
-    xi = np.where(yi > ydim - 2, xdim - xi if mesh == "spherical" else xi, xi)
-
-    yi = np.where(yi < 0, 0, yi)
-    yi = np.where(yi > ydim - 2, ydim - 2, yi)
-
-    return yi, xi
