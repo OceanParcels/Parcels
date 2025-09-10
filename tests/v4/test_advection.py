@@ -74,9 +74,9 @@ def test_advection_zonal_with_particlefile(tmp_store):
     np.testing.assert_allclose(ds.isel(obs=-1).lon.values, pset.lon)
 
 
-def periodicBC(particle, fieldset, time):
-    particle.total_dlon += particle.dlon
-    particle.lon = np.fmod(particle.lon, 2)
+def periodicBC(particles, fieldset):
+    particles.total_dlon += particles.dlon
+    particles.lon = np.fmod(particles.lon, 2)
 
 
 def test_advection_zonal_periodic():
@@ -138,23 +138,25 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, W, UVW, UV])
 
-    def DeleteParticle(particle, fieldset, time):  # pragma: no cover
-        particle.state = np.where(particle.state == StatusCode.ErrorOutOfBounds, StatusCode.Delete, particle.state)
-        particle.state = np.where(particle.state == StatusCode.ErrorThroughSurface, StatusCode.Delete, particle.state)
+    def DeleteParticle(particles, fieldset):  # pragma: no cover
+        particles.state = np.where(particles.state == StatusCode.ErrorOutOfBounds, StatusCode.Delete, particles.state)
+        particles.state = np.where(
+            particles.state == StatusCode.ErrorThroughSurface, StatusCode.Delete, particles.state
+        )
 
-    def SubmergeParticle(particle, fieldset, time):  # pragma: no cover
-        if len(particle.state) == 0:
+    def SubmergeParticle(particles, fieldset):  # pragma: no cover
+        if len(particles.state) == 0:
             return
-        inds = np.argwhere(particle.state == StatusCode.ErrorThroughSurface).flatten()
+        inds = np.argwhere(particles.state == StatusCode.ErrorThroughSurface).flatten()
         if len(inds) == 0:
             return
-        dt = particle.dt / np.timedelta64(1, "s")
-        (u, v) = fieldset.UV[particle[inds]]
-        particle[inds].dlon = u * dt
-        particle[inds].dlat = v * dt
-        particle[inds].ddepth = 0.0
-        particle[inds].depth = 0
-        particle[inds].state = StatusCode.Evaluate
+        dt = particles.dt / np.timedelta64(1, "s")
+        (u, v) = fieldset.UV[particles[inds]]
+        particles[inds].dlon = u * dt
+        particles[inds].dlat = v * dt
+        particles[inds].ddepth = 0.0
+        particles[inds].depth = 0
+        particles[inds].state = StatusCode.Evaluate
 
     kernels = [AdvectionRK4_3D]
     if wErrorThroughSurface:
@@ -381,9 +383,9 @@ def test_stommelgyre_fieldset(method, rtol, grid_type):
         [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
     )
 
-    def UpdateP(particle, fieldset, time):  # pragma: no cover
-        particle.p = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]
-        particle.p_start = np.where(particle.time == 0, particle.p, particle.p_start)
+    def UpdateP(particles, fieldset):  # pragma: no cover
+        particles.p = fieldset.P[particles.time, particles.depth, particles.lat, particles.lon]
+        particles.p_start = np.where(particles.time == 0, particles.p, particles.p_start)
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
@@ -420,9 +422,9 @@ def test_peninsula_fieldset(method, rtol, grid_type):
         [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
     )
 
-    def UpdateP(particle, fieldset, time):  # pragma: no cover
-        particle.p = fieldset.P[particle.time, particle.depth, particle.lat, particle.lon]
-        particle.p_start = np.where(particle.time == 0, particle.p, particle.p_start)
+    def UpdateP(particles, fieldset):  # pragma: no cover
+        particles.p = fieldset.P[particles.time, particles.depth, particles.lat, particles.lon]
+        particles.p_start = np.where(particles.time == 0, particles.p, particles.p_start)
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
     pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
@@ -462,8 +464,8 @@ def test_nemo_curvilinear_fieldset():
     latp = np.linspace(-70, 88, npart)
     runtime = np.timedelta64(12, "h")  # TODO increase to 160 days
 
-    def periodicBC(particle, fieldset, time):  # pragma: no cover
-        particle.dlon = np.where(particle.lon > 180, particle.dlon - 360, particle.dlon)
+    def periodicBC(particles, fieldset):  # pragma: no cover
+        particles.dlon = np.where(particles.lon > 180, particles.dlon - 360, particles.dlon)
 
     pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)
     pset.execute([AdvectionEE, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))

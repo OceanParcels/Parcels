@@ -8,7 +8,7 @@ import numpy as np
 __all__ = ["AdvectionDiffusionEM", "AdvectionDiffusionM1", "DiffusionUniformKh"]
 
 
-def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
+def AdvectionDiffusionM1(particles, fieldset):  # pragma: no cover
     """Kernel for 2D advection-diffusion, solved using the Milstein scheme at first order (M1).
 
     Assumes that fieldset has fields `Kh_zonal` and `Kh_meridional`
@@ -23,30 +23,34 @@ def AdvectionDiffusionM1(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
+    dt = particles.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
     # Wiener increment with zero mean and std of sqrt(dt)
     dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
     dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    Kxp1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon + fieldset.dres, particle]
-    Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres, particle]
+    Kxp1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon + fieldset.dres, particles]
+    Kxm1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon - fieldset.dres, particles]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
 
-    u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon, particle]
-    bx = np.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon, particle])
+    u, v = fieldset.UV[particles.time, particles.depth, particles.lat, particles.lon, particles]
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon, particles])
 
-    Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon, particle]
-    Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon, particle]
+    Kyp1 = fieldset.Kh_meridional[
+        particles.time, particles.depth, particles.lat + fieldset.dres, particles.lon, particles
+    ]
+    Kym1 = fieldset.Kh_meridional[
+        particles.time, particles.depth, particles.lat - fieldset.dres, particles.lon, particles
+    ]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
 
-    by = np.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon, particle])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particles.time, particles.depth, particles.lat, particles.lon, particles])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx
-    particle.dlat += v * dt + 0.5 * dKdy * (dWy**2 + dt) + by * dWy
+    particles.dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx
+    particles.dlat += v * dt + 0.5 * dKdy * (dWy**2 + dt) + by * dWy
 
 
-def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
+def AdvectionDiffusionEM(particles, fieldset):  # pragma: no cover
     """Kernel for 2D advection-diffusion, solved using the Euler-Maruyama scheme (EM).
 
     Assumes that fieldset has fields `Kh_zonal` and `Kh_meridional`
@@ -59,31 +63,35 @@ def AdvectionDiffusionEM(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")
+    dt = particles.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
     dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
     dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    u, v = fieldset.UV[particle.time, particle.depth, particle.lat, particle.lon, particle]
+    u, v = fieldset.UV[particles.time, particles.depth, particles.lat, particles.lon, particles]
 
-    Kxp1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon + fieldset.dres, particle]
-    Kxm1 = fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon - fieldset.dres, particle]
+    Kxp1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon + fieldset.dres, particles]
+    Kxm1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon - fieldset.dres, particles]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
     ax = u + dKdx
-    bx = np.sqrt(2 * fieldset.Kh_zonal[particle.time, particle.depth, particle.lat, particle.lon, particle])
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon, particles])
 
-    Kyp1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat + fieldset.dres, particle.lon, particle]
-    Kym1 = fieldset.Kh_meridional[particle.time, particle.depth, particle.lat - fieldset.dres, particle.lon, particle]
+    Kyp1 = fieldset.Kh_meridional[
+        particles.time, particles.depth, particles.lat + fieldset.dres, particles.lon, particles
+    ]
+    Kym1 = fieldset.Kh_meridional[
+        particles.time, particles.depth, particles.lat - fieldset.dres, particles.lon, particles
+    ]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
     ay = v + dKdy
-    by = np.sqrt(2 * fieldset.Kh_meridional[particle.time, particle.depth, particle.lat, particle.lon, particle])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particles.time, particles.depth, particles.lat, particles.lon, particles])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.dlon += ax * dt + bx * dWx
-    particle.dlat += ay * dt + by * dWy
+    particles.dlon += ax * dt + bx * dWx
+    particles.dlat += ay * dt + by * dWy
 
 
-def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
+def DiffusionUniformKh(particles, fieldset):  # pragma: no cover
     """Kernel for simple 2D diffusion where diffusivity (Kh) is assumed uniform.
 
     Assumes that fieldset has constant fields `Kh_zonal` and `Kh_meridional`.
@@ -101,15 +109,13 @@ def DiffusionUniformKh(particle, fieldset, time):  # pragma: no cover
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
-    dt = particle.dt / np.timedelta64(1, "s")
+    dt = particles.dt / np.timedelta64(1, "s")
     # Wiener increment with zero mean and std of sqrt(dt)
     dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
     dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    print(particle)
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particles])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particles])
 
-    bx = np.sqrt(2 * fieldset.Kh_zonal[particle])
-    by = np.sqrt(2 * fieldset.Kh_meridional[particle])
-
-    particle.dlon += bx * dWx
-    particle.dlat += by * dWy
+    particles.dlon += bx * dWx
+    particles.dlat += by * dWy
