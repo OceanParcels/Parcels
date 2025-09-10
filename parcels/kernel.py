@@ -92,10 +92,6 @@ class Kernel:
             ret += f.__name__
         return ret
 
-    @property  #! Ported from v3. To be removed in v4? (/find another way to name kernels in output file)
-    def name(self):
-        return f"{self._ptype.name}{self.funcname}"
-
     @property
     def ptype(self):
         return self._ptype

@@ -6,10 +6,18 @@ from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels._index_search import _search_time_index
 from parcels.application_kernels.advection import AdvectionRK4_3D
-from parcels.application_kernels.interpolation import UXPiecewiseLinearNode, XLinear, XNearest, ZeroInterpolator
+from parcels.application_kernels.interpolation import (
+    UXPiecewiseLinearNode,
+    XFreeslip,
+    XLinear,
+    XNearest,
+    XPartialslip,
+    ZeroInterpolator,
+)
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
+from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels.tools.statuscodes import StatusCode
 from parcels.uxgrid import UxGrid
@@ -77,6 +85,36 @@ def test_raw_2d_interpolation(field, func, t, z, y, x, expected):
 
     value = func(field, ti, position, tau, 0, 0, y, x)
     np.testing.assert_equal(value, expected)
+
+
+@pytest.mark.parametrize(
+    "func, t, z, y, x, expected",
+    [
+        (XPartialslip, np.timedelta64(1, "s"), 0, 0, 0.0, [[1], [1]]),
+        (XFreeslip, np.timedelta64(1, "s"), 0, 0.5, 1.5, [[1], [0.5]]),
+        (XPartialslip, np.timedelta64(1, "s"), 0, 2.5, 1.5, [[0.75], [0.5]]),
+        (XFreeslip, np.timedelta64(1, "s"), 0, 2.5, 1.5, [[1], [0.5]]),
+        (XPartialslip, np.timedelta64(1, "s"), 0, 1.5, 0.5, [[0.5], [0.75]]),
+        (XFreeslip, np.timedelta64(1, "s"), 0, 1.5, 0.5, [[0.5], [1]]),
+        (
+            XFreeslip,
+            [np.timedelta64(1, "s"), np.timedelta64(0, "s")],
+            [0, 2],
+            [1.5, 1.5],
+            [2.5, 0.5],
+            [[0.5, 0.5], [1, 1]],
+        ),
+    ],
+)
+def test_spatial_slip_interpolation(field, func, t, z, y, x, expected):
+    field.data[:] = 1.0
+    field.data[:, :, 1:3, 1:3] = 0.0  # Set zero land value to test spatial slip
+    U = field
+    V = field
+    UV = VectorField("UV", U, V, vector_interp_method=func)
+
+    velocities = UV[t, z, y, x]
+    np.testing.assert_array_almost_equal(velocities, expected)
 
 
 @pytest.mark.parametrize("mesh", ["spherical", "flat"])
@@ -169,7 +207,7 @@ def test_interp_regression_v3(interp_name):
         if particle.state >= 50:
             particle.state = StatusCode.Delete
 
-    outfile = pset.ParticleFile(f"test_interpolation_v4_{interp_name}", outputdt=np.timedelta64(1, "s"))
+    outfile = ParticleFile(f"test_interpolation_v4_{interp_name}", outputdt=np.timedelta64(1, "s"))
     pset.execute(
         [AdvectionRK4_3D, DeleteParticle],
         runtime=np.timedelta64(4, "s"),

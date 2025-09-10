@@ -22,6 +22,5 @@ If you need more help with Parcels, try the `Discussions page on GitHub <https:/
    Installation <installation>
    Tutorials & Documentation <documentation/index>
    API reference <reference>
-   Release Notes <https://github.com/OceanParcels/Parcels/releases>
-   Contributing <community/index>
+   Contributing, Release Notes and more <community/index>
    OceanParcels website <https://oceanparcels.org/>
