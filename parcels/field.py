@@ -76,6 +76,26 @@ def _assert_same_function_signature(f: Callable, *, ref: Callable) -> None:
             raise ValueError(f"Parameter '{_name2}' has incorrect name. Expected '{param1.name}', got '{param2.name}'")
 
 
+def _croco_from_z_to_sigma_scipy(fieldset, time, z, y, x, particle):
+    """Calculate local sigma level of the particle, by linearly interpolating the
+    scaling function that maps sigma to depth (using local ocean depth H,
+    sea-surface Zeta and stretching parameters Cs_w and hc).
+    See also https://croco-ocean.gitlabpages.inria.fr/croco_doc/model/model.grid.html#vertical-grid-parameters
+    """
+    h = fieldset.H.eval(time, 0, y, x, particle=particle, applyConversion=False)
+    zeta = fieldset.Zeta.eval(time, 0, y, x, particle=particle, applyConversion=False)
+    sigma_levels = fieldset.U.grid.depth
+    z0 = fieldset.hc * sigma_levels + (h - fieldset.hc) * fieldset.Cs_w.data[0, :, 0, 0]
+    zvec = z0 + zeta * (1 + (z0 / h))
+    zinds = zvec <= z
+    if z >= zvec[-1]:
+        zi = len(zvec) - 2
+    else:
+        zi = zinds.argmin() - 1 if z >= zvec[0] else 0
+
+    return sigma_levels[zi] + (z - zvec[zi]) * (sigma_levels[zi + 1] - sigma_levels[zi]) / (zvec[zi + 1] - zvec[zi])
+
+
 class Field:
     """The Field class that holds scalar field data.
     The `Field` object is a wrapper around a xarray.DataArray or uxarray.UxDataArray object.

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import pytest
 import uxarray as ux
 import xarray as xr
 
-from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, VectorField
+from parcels import Field, UXPiecewiseConstantFace, UXPiecewiseLinearNode, VectorField, download_example_dataset
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
+from parcels.application_kernels.interpolation import XLinear
+from parcels.fieldset import FieldSet
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
 
@@ -198,3 +202,59 @@ def test_field_interpolation_out_of_spatial_bounds(): ...
 
 
 def test_field_interpolation_out_of_time_bounds(): ...
+
+
+def test_conversion_3DCROCO():
+    """Test of the (SciPy) version of the conversion from depth to sigma in CROCO
+
+    Values below are retrieved using xroms and hardcoded in the method (to avoid dependency on xroms):
+    ```py
+    x, y = 10, 20
+    s_xroms = ds.s_w.values
+    z_xroms = ds.z_w.isel(time=0).isel(eta_rho=y).isel(xi_rho=x).values
+    lat, lon = ds.y_rho.values[y, x], ds.x_rho.values[y, x]
+    ```
+    """
+    example_dataset_folder = download_example_dataset("CROCOidealized_data")
+    file = os.path.join(example_dataset_folder, "CROCO_idealized.nc")
+
+    ds = xr.open_dataset(file).rename({"x_rho": "lon", "y_rho": "lat", "s_w": "depth"})
+
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["u"], grid, mesh_type="flat", interp_method=XLinear)
+    V = Field("V", ds["v"], grid, mesh_type="flat", interp_method=XLinear)
+    W = Field("W", ds["w"], grid, mesh_type="flat", interp_method=XLinear)
+    UVW = VectorField("UVW", U, V, W)
+
+    H = Field("H", ds["h"], grid, mesh_type="flat", interp_method=XLinear)
+    Zeta = Field("Zeta", ds["zeta"], grid, mesh_type="flat", interp_method=XLinear)
+    Cs_w = Field("Cs_w", ds["Cs_w"], grid, mesh_type="flat", interp_method=XLinear)
+
+    fieldset = FieldSet([U, V, W, UVW, H, Zeta, Cs_w])
+
+    lat, lon = 78000.0, 38000.0
+    s_xroms = np.array([-1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0], dtype=np.float32)
+    z_xroms = np.array(
+        [
+            -1.26000000e02,
+            -1.10585846e02,
+            -9.60985413e01,
+            -8.24131317e01,
+            -6.94126511e01,
+            -5.69870148e01,
+            -4.50318756e01,
+            -3.34476166e01,
+            -2.21383114e01,
+            -1.10107975e01,
+            2.62768921e-02,
+        ],
+        dtype=np.float32,
+    )
+
+    sigma = np.zeros_like(z_xroms)
+    from parcels.field import _croco_from_z_to_sigma_scipy
+
+    for zi, z in enumerate(z_xroms):
+        sigma[zi] = _croco_from_z_to_sigma_scipy(fieldset, 0, z, lat, lon, None)
+
+    assert np.allclose(sigma, s_xroms, atol=1e-3)

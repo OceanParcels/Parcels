@@ -46,49 +46,6 @@ def depth():
 
 
 @pytest.mark.v4alpha
-@pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
-def test_conversion_3DCROCO():
-    """Test of the (SciPy) version of the conversion from depth to sigma in CROCO
-
-    Values below are retrieved using xroms and hardcoded in the method (to avoid dependency on xroms):
-    ```py
-    x, y = 10, 20
-    s_xroms = ds.s_w.values
-    z_xroms = ds.z_w.isel(time=0).isel(eta_rho=y).isel(xi_rho=x).values
-    lat, lon = ds.y_rho.values[y, x], ds.x_rho.values[y, x]
-    ```
-    """
-    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
-
-    lat, lon = 78000.0, 38000.0
-    s_xroms = np.array([-1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0], dtype=np.float32)
-    z_xroms = np.array(
-        [
-            -1.26000000e02,
-            -1.10585846e02,
-            -9.60985413e01,
-            -8.24131317e01,
-            -6.94126511e01,
-            -5.69870148e01,
-            -4.50318756e01,
-            -3.34476166e01,
-            -2.21383114e01,
-            -1.10107975e01,
-            2.62768921e-02,
-        ],
-        dtype=np.float32,
-    )
-
-    sigma = np.zeros_like(z_xroms)
-    from parcels.field import _croco_from_z_to_sigma_scipy
-
-    for zi, z in enumerate(z_xroms):
-        sigma[zi] = _croco_from_z_to_sigma_scipy(fieldset, 0, z, lat, lon, None)
-
-    assert np.allclose(sigma, s_xroms, atol=1e-3)
-
-
-@pytest.mark.v4alpha
 @pytest.mark.xfail(reason="CROCO 3D interpolation is not yet implemented correctly in v4. ")
 def test_advection_3DCROCO():
     fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
