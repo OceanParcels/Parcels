@@ -88,10 +88,12 @@ def _assert_same_function_signature(f: Callable, *, ref: Callable, context: str)
             f"{context} function must have {len(sig_ref.parameters)} parameters, got {len(sig.parameters)}"
         )
 
-    for (_name1, param1), (_name2, param2) in zip(sig_ref.parameters.items(), sig.parameters.items(), strict=False):
+    for param1, param2 in zip(sig_ref.parameters.values(), sig.parameters.values(), strict=False):
         if param1.kind != param2.kind:
             raise ValueError(
-                f"Parameter '{_name2}' has incorrect parameter kind. Expected {param1.kind}, got {param2.kind}"
+                f"Parameter '{param2.name}' has incorrect parameter kind. Expected {param1.kind}, got {param2.kind}"
             )
         if param1.name != param2.name:
-            raise ValueError(f"Parameter '{_name2}' has incorrect name. Expected '{param1.name}', got '{param2.name}'")
+            raise ValueError(
+                f"Parameter '{param2.name}' has incorrect name. Expected '{param1.name}', got '{param2.name}'"
+            )
