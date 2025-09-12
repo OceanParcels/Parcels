@@ -364,6 +364,49 @@ def test_execution_fail_python_exception(fieldset, npart):
     assert all(pset.time == fieldset.time_interval.left + np.timedelta64(10, "s"))
 
 
+@pytest.mark.parametrize(
+    "kernel_names, expected", [("Lat1", [0, 1]), ("Lat2", [2, 0]), ("Lat1and2", [2, 1]), ("Lat1then2", [2, 1])]
+)
+def test_execution_update_particle_in_kernel_function(fieldset, kernel_names, expected):
+    npart = 2
+
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
+
+    def Lat1(particles, fieldset):  # pragma: no cover
+        def SetLat1(p):
+            p.lat = 1
+
+        SetLat1(particles[(particles.lat == 0) & (particles.lon > 0.5)])
+
+    def Lat2(particles, fieldset):  # pragma: no cover
+        def SetLat2(p):
+            p.lat = 2
+
+        SetLat2(particles[(particles.lat == 0) & (particles.lon < 0.5)])
+
+    def Lat1and2(particles, fieldset):  # pragma: no cover
+        def SetLat1(p):
+            p.lat = 1
+
+        def SetLat2(p):
+            p.lat = 2
+
+        SetLat1(particles[(particles.lat == 0) & (particles.lon > 0.5)])
+        SetLat2(particles[(particles.lat == 0) & (particles.lon < 0.5)])
+
+    if kernel_names == "Lat1":
+        kernels = [Lat1]
+    elif kernel_names == "Lat2":
+        kernels = [Lat2]
+    elif kernel_names == "Lat1and2":
+        kernels = [Lat1and2]
+    elif kernel_names == "Lat1then2":
+        kernels = [Lat1, Lat2]
+
+    pset.execute(kernels, runtime=np.timedelta64(2, "s"), dt=np.timedelta64(1, "s"))
+    np.testing.assert_allclose(pset.lat, expected, rtol=1e-5)
+
+
 def test_uxstommelgyre_pset_execute():
     ds = datasets_unstructured["stommel_gyre_delaunay"]
     grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh="spherical")
