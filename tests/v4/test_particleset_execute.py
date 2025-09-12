@@ -154,8 +154,8 @@ def test_pset_remove_particle_in_kernel(fieldset):
     npart = 100
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
-    def DeleteKernel(particle, fieldset, time):  # pragma: no cover
-        particle.state = np.where((particle.lon >= 0.4) & (particle.lon <= 0.6), StatusCode.Delete, particle.state)
+    def DeleteKernel(particles, fieldset):  # pragma: no cover
+        particles.state = np.where((particles.lon >= 0.4) & (particles.lon <= 0.6), StatusCode.Delete, particles.state)
 
     pset.execute(pset.Kernel(DeleteKernel), runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
     indices = [i for i in range(npart) if not (40 <= i < 60)]
@@ -169,8 +169,10 @@ def test_pset_remove_particle_in_kernel(fieldset):
 def test_pset_stop_simulation(fieldset, npart):
     pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart), pclass=Particle)
 
-    def Delete(particle, fieldset, time):  # pragma: no cover
-        particle[particle.time >= fieldset.time_interval.left + np.timedelta64(4, "s")].state = StatusCode.StopExecution
+    def Delete(particles, fieldset):  # pragma: no cover
+        particles[
+            particles.time >= fieldset.time_interval.left + np.timedelta64(4, "s")
+        ].state = StatusCode.StopExecution
 
     pset.execute(Delete, dt=np.timedelta64(1, "s"), runtime=np.timedelta64(21, "s"))
     assert pset[0].time == fieldset.time_interval.left + np.timedelta64(4, "s")
@@ -180,8 +182,8 @@ def test_pset_stop_simulation(fieldset, npart):
 def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
 
-    def AddLat(particle, fieldset, time):  # pragma: no cover
-        particle.dlat += 0.1
+    def AddLat(particles, fieldset):  # pragma: no cover
+        particles.dlat += 0.1
 
     k_add = pset.Kernel(AddLat)
     for _ in range(n + 1):
@@ -213,8 +215,8 @@ def test_dont_run_particles_outside_starttime(fieldset):
     start_times = [fieldset.time_interval.left + np.timedelta64(t, "s") for t in [0, 2, 10]]
     endtime = fieldset.time_interval.left + np.timedelta64(8, "s")
 
-    def AddLon(particle, fieldset, time):  # pragma: no cover
-        particle.lon += 1
+    def AddLon(particles, fieldset):  # pragma: no cover
+        particles.lon += 1
 
     pset = ParticleSet(fieldset, lon=np.zeros(len(start_times)), lat=np.zeros(len(start_times)), time=start_times)
     pset.execute(AddLon, dt=np.timedelta64(1, "s"), endtime=endtime)
@@ -245,12 +247,12 @@ def test_some_particles_throw_outofbounds(zonal_flow_fieldset):
 
 
 def test_delete_on_all_errors(fieldset):
-    def MoveRight(particle, fieldset, time):  # pragma: no cover
-        particle.dlon += 1
-        fieldset.U[particle.time, particle.depth, particle.lat, particle.lon, particle]
+    def MoveRight(particles, fieldset):  # pragma: no cover
+        particles.dlon += 1
+        fieldset.U[particles.time, particles.depth, particles.lat, particles.lon, particles]
 
-    def DeleteAllErrorParticles(particle, fieldset, time):  # pragma: no cover
-        particle[particle.state > 20].state = StatusCode.Delete
+    def DeleteAllErrorParticles(particles, fieldset):  # pragma: no cover
+        particles[particles.state > 20].state = StatusCode.Delete
 
     pset = ParticleSet(fieldset, lon=[1e5, 2], lat=[0, 0])
     pset.execute([MoveRight, DeleteAllErrorParticles], runtime=np.timedelta64(10, "s"), dt=np.timedelta64(1, "s"))
@@ -261,8 +263,8 @@ def test_some_particles_throw_outoftime(fieldset):
     time = [fieldset.time_interval.left + np.timedelta64(t, "D") for t in [0, 350]]
     pset = ParticleSet(fieldset, lon=np.zeros_like(time), lat=np.zeros_like(time), time=time)
 
-    def FieldAccessOutsideTime(particle, fieldset, time):  # pragma: no cover
-        fieldset.U[particle.time + np.timedelta64(400, "D"), particle.depth, particle.lat, particle.lon, particle]
+    def FieldAccessOutsideTime(particles, fieldset):  # pragma: no cover
+        fieldset.U[particles.time + np.timedelta64(400, "D"), particles.depth, particles.lat, particles.lon, particles]
 
     with pytest.raises(TimeExtrapolationError):
         pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(1, "D"), dt=np.timedelta64(10, "D"))
@@ -278,8 +280,8 @@ def test_errorinterpolation(fieldset):
     def NaNInterpolator(field, ti, position, tau, t, z, y, x):  # pragma: no cover
         return np.nan * np.zeros_like(x)
 
-    def SampleU(particle, fieldset, time):  # pragma: no cover
-        fieldset.U[particle.time, particle.depth, particle.lat, particle.lon, particle]
+    def SampleU(particles, fieldset):  # pragma: no cover
+        fieldset.U[particles.time, particles.depth, particles.lat, particles.lon, particles]
 
     fieldset.U.interp_method = NaNInterpolator
     pset = ParticleSet(fieldset, lon=[0, 2], lat=[0, 0])
@@ -288,9 +290,9 @@ def test_errorinterpolation(fieldset):
 
 
 def test_execution_check_stopallexecution(fieldset):
-    def addoneLon(particle, fieldset, time):  # pragma: no cover
-        particle.dlon += 1
-        particle[particle.lon + particle.dlon >= 10].state = StatusCode.StopAllExecution
+    def addoneLon(particles, fieldset):  # pragma: no cover
+        particles.dlon += 1
+        particles[particles.lon + particles.dlon >= 10].state = StatusCode.StopAllExecution
 
     pset = ParticleSet(fieldset, lon=[0, 0], lat=[0, 0])
     pset.execute(addoneLon, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(1, "s"))
@@ -301,15 +303,15 @@ def test_execution_check_stopallexecution(fieldset):
 def test_execution_recover_out_of_bounds(fieldset):
     npart = 2
 
-    def MoveRight(particle, fieldset, time):  # pragma: no cover
-        fieldset.U[particle.time, particle.depth, particle.lat, particle.lon + 0.1, particle]
-        particle.dlon += 0.1
+    def MoveRight(particles, fieldset):  # pragma: no cover
+        fieldset.U[particles.time, particles.depth, particles.lat, particles.lon + 0.1, particles]
+        particles.dlon += 0.1
 
-    def MoveLeft(particle, fieldset, time):  # pragma: no cover
-        inds = np.where(particle.state == StatusCode.ErrorOutOfBounds)
-        print(inds, particle.state)
-        particle[inds].dlon -= 1.0
-        particle[inds].state = StatusCode.Success
+    def MoveLeft(particles, fieldset):  # pragma: no cover
+        inds = np.where(particles.state == StatusCode.ErrorOutOfBounds)
+        print(inds, particles.state)
+        particles[inds].dlon -= 1.0
+        particles[inds].state = StatusCode.Success
 
     lon = np.linspace(0.05, 6.95, npart)
     lat = np.linspace(1, 0, npart)
@@ -337,8 +339,8 @@ def test_execution_runtime(fieldset, starttime, runtime, dt, npart):
 
 
 def test_changing_dt_in_kernel(fieldset):
-    def KernelCounter(particle, fieldset, time):  # pragma: no cover
-        particle.lon += 1
+    def KernelCounter(particles, fieldset):  # pragma: no cover
+        particles.lon += 1
 
     pset = ParticleSet(fieldset, lon=np.zeros(1), lat=np.zeros(1))
     pset.execute(KernelCounter, dt=np.timedelta64(2, "s"), runtime=np.timedelta64(5, "s"))
@@ -351,8 +353,8 @@ def test_changing_dt_in_kernel(fieldset):
 def test_execution_fail_python_exception(fieldset, npart):
     pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
 
-    def PythonFail(particle, fieldset, time):  # pragma: no cover
-        inds = np.argwhere(particle.time >= fieldset.time_interval.left + np.timedelta64(10, "s"))
+    def PythonFail(particles, fieldset):  # pragma: no cover
+        inds = np.argwhere(particles.time >= fieldset.time_interval.left + np.timedelta64(10, "s"))
         if inds.size > 0:
             raise RuntimeError("Enough is enough!")
 
