@@ -134,7 +134,7 @@ class Field:
 
         self.name = name
         self.grid = grid
-        if is_dask_collection(data):
+        if is_dask_collection(data) and ("time" in data.dims):
             self.data = None
             self.data_full = data
         else:
