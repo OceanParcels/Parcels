@@ -118,7 +118,6 @@ class SpatialHash:
             self._zhigh = np.zeros_like(self._xlow)
 
         # Generate the mapping from the hash indices to unstructured grid elements
-        self._hash_table = None
         self._hash_table = self._initialize_hash_table()
 
     def _initialize_hash_table(self):
