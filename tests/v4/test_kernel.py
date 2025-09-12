@@ -26,8 +26,8 @@ def fieldset() -> FieldSet:
 def test_unknown_var_in_kernel(fieldset):
     pset = ParticleSet(fieldset, lon=[0.5], lat=[0.5])
 
-    def ErrorKernel(particle, fieldset, time):  # pragma: no cover
-        particle.unknown_varname += 0.2
+    def ErrorKernel(particles, fieldset):  # pragma: no cover
+        particles.unknown_varname += 0.2
 
     with pytest.raises(KeyError, match="'unknown_varname'"):
         pset.execute(ErrorKernel, runtime=np.timedelta64(2, "s"))
@@ -85,3 +85,43 @@ def test_kernel_from_list_error_checking(fieldset):
     with pytest.raises(ValueError, match="Argument `pyfunc_list` should be a list of functions."):
         kernels_mixed = pset.Kernel([pset.Kernel(AdvectionRK4), MoveEast, MoveNorth])
         assert kernels_mixed.funcname == "AdvectionRK4MoveEastMoveNorth"
+
+
+def test_kernel_signature(fieldset):
+    pset = ParticleSet(fieldset, lon=[0.5], lat=[0.5])
+
+    def good_kernel(particles, fieldset):
+        pass
+
+    def version_3_kernel(particle, fieldset, time):
+        pass
+
+    def version_3_kernel_without_time(particle, fieldset):
+        pass
+
+    def kernel_switched_args(fieldset, particle):
+        pass
+
+    def kernel_with_forced_kwarg(particles, *, fieldset=0):
+        pass
+
+    pset.Kernel(good_kernel)
+
+    with pytest.raises(ValueError, match="Kernel function must have 2 parameters, got 3"):
+        pset.Kernel(version_3_kernel)
+
+    with pytest.raises(
+        ValueError, match="Parameter 'particle' has incorrect name. Expected 'particles', got 'particle'"
+    ):
+        pset.Kernel(version_3_kernel_without_time)
+
+    with pytest.raises(
+        ValueError, match="Parameter 'fieldset' has incorrect name. Expected 'particles', got 'fieldset'"
+    ):
+        pset.Kernel(kernel_switched_args)
+
+    with pytest.raises(
+        ValueError,
+        match="Parameter 'fieldset' has incorrect parameter kind. Expected POSITIONAL_OR_KEYWORD, got KEYWORD_ONLY",
+    ):
+        pset.Kernel(kernel_with_forced_kwarg)

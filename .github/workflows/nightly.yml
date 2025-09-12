@@ -1,0 +1,28 @@
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build conda package
+        uses: prefix-dev/rattler-build-action@v0.2.19
+        with:
+          recipe-path: .github/ci/recipe.yaml
+
+      - name: Upload all packages
+        shell: bash
+        run: |
+          shopt -s nullglob
+          EXIT_CODE=0
+          for pkg in $(find output -type f \( -name "*.conda" -o -name "*.tar.bz2" \) ); do
+            if ! rattler-build upload prefix -c parcels "${pkg}"; then
+              EXIT_CODE=1
+            fi
+          done
+          exit $EXIT_CODE

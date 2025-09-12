@@ -1,0 +1,71 @@
+# Recipe for https://github.com/prefix-dev/rattler-build used for nightly releases of Parcels
+# during version 4 alpha development
+#
+# Adapted from the conda forge recipe
+context:
+  name: parcels
+  version: 4.0.0alpha0 # The last number here needs to be bumped for each new alpha release
+
+package:
+  name: ${{ name|lower }}
+  version: ${{ version }}
+
+source:
+  path: ../..
+
+build:
+  number: 0
+  noarch: python
+  script:
+    - python -m pip install . -vv --no-deps --no-build-isolation
+
+requirements:
+  host:
+    - python 3.11.*
+    - pip
+    - setuptools
+    - setuptools_scm
+    - setuptools_scm_git_archive
+    - wheel
+  run:
+    - python >=3.11
+    - cftime
+    - dask
+    - matplotlib-base >=2.0.2
+    - netcdf4 >=1.1.9
+    - numpy >=1.11
+    - platformdirs
+    - psutil
+    - pymbolic
+    - pytest
+    - scipy >=0.16.0
+    - trajan
+    - tqdm
+    - xarray >=0.10.8
+    - zarr >=2.11.0,!=2.18.0,<3
+    - uxarray>=2025.3.0
+    - pyogrio # needed for geopandas (uxarray -> geoviews -> geopandas -> pyogrio, but for some reason conda doesn't pick it up automatically)
+    - pooch
+
+tests:
+  - python:
+      imports:
+        - parcels
+
+about:
+  homepage: https://github.com/OceanParcels/parcels
+  license: MIT
+  license_file: LICENSE.md
+  summary: Probably A Really Computationally Efficient Lagrangian Simulator
+  description: |
+    Parcels (Probably A Really Computationally Efficient Lagrangian Simulator)
+    is a set of Python classes and methods to create customisable particle
+    tracking simulations using output from Ocean Circulation models.
+    Parcels can be used to track passive and active particulates such as
+    water, nutrients, plankton, plastic and fish.
+  documentation: https://oceanparcels.org/
+  repository: https://github.com/OceanParcels/parcels
+
+extra:
+  recipe-maintainers:
+    - VeckoTheGecko

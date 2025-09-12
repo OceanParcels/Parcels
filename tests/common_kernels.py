@@ -1,18 +1,21 @@
 """Shared kernels between tests."""
 
+import numpy as np
 
-def DoNothing(particle, fieldset, time):  # pragma: no cover
+from parcels.tools.statuscodes import StatusCode
+
+
+def DoNothing(particles, fieldset):  # pragma: no cover
     pass
 
 
-def DeleteParticle(particle, fieldset, time):  # pragma: no cover
-    if particle.state >= 50:  # This captures all Errors
-        particle.delete()
+def DeleteParticle(particles, fieldset):  # pragma: no cover
+    particles.state = np.where(particles.state >= 50, StatusCode.Delete, particles.state)
 
 
-def MoveEast(particle, fieldset, time):  # pragma: no cover
-    particle.dlon += 0.1
+def MoveEast(particles, fieldset):  # pragma: no cover
+    particles.dlon += 0.1
 
 
-def MoveNorth(particle, fieldset, time):  # pragma: no cover
-    particle.dlat += 0.1
+def MoveNorth(particles, fieldset):  # pragma: no cover
+    particles.dlat += 0.1

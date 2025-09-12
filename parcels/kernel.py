@@ -13,6 +13,7 @@ from parcels.application_kernels.advection import (
     AdvectionRK45,
 )
 from parcels.basegrid import GridType
+from parcels.tools._helpers import _assert_same_function_signature
 from parcels.tools.statuscodes import (
     StatusCode,
     _raise_field_interpolation_error,
@@ -23,6 +24,7 @@ from parcels.tools.statuscodes import (
     _raise_time_extrapolation_error,
 )
 from parcels.tools.warnings import KernelWarning
+from tests.common_kernels import DoNothing
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -67,6 +69,7 @@ class Kernel:
         for f in pyfuncs:
             if not isinstance(f, types.FunctionType):
                 raise TypeError(f"Argument pyfunc should be a function or list of functions. Got {type(f)}")
+            _assert_same_function_signature(f, ref=DoNothing, context="Kernel")
 
         if len(pyfuncs) == 0:
             raise ValueError("List of `pyfuncs` should have at least one function.")
@@ -112,22 +115,22 @@ class Kernel:
 
     def add_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
-        def Setcoords(particle, fieldset, time):  # pragma: no cover
+        def Setcoords(particles, fieldset):  # pragma: no cover
             import numpy as np  # noqa
 
-            particle.dlon = 0
-            particle.dlat = 0
-            particle.ddepth = 0
-            particle.lon = particle.lon_nextloop
-            particle.lat = particle.lat_nextloop
-            particle.depth = particle.depth_nextloop
-            particle.time = particle.time_nextloop
+            particles.dlon = 0
+            particles.dlat = 0
+            particles.ddepth = 0
+            particles.lon = particles.lon_nextloop
+            particles.lat = particles.lat_nextloop
+            particles.depth = particles.depth_nextloop
+            particles.time = particles.time_nextloop
 
-        def Updatecoords(particle, fieldset, time):  # pragma: no cover
-            particle.lon_nextloop = particle.lon + particle.dlon
-            particle.lat_nextloop = particle.lat + particle.dlat
-            particle.depth_nextloop = particle.depth + particle.ddepth
-            particle.time_nextloop = particle.time + particle.dt
+        def Updatecoords(particles, fieldset):  # pragma: no cover
+            particles.lon_nextloop = particles.lon + particles.dlon
+            particles.lat_nextloop = particles.lat + particles.dlat
+            particles.depth_nextloop = particles.depth + particles.ddepth
+            particles.time_nextloop = particles.time + particles.dt
 
         self._pyfuncs = (Setcoords + self + Updatecoords)._pyfuncs
 
@@ -255,12 +258,12 @@ class Kernel:
             # run kernels for all particles that need to be evaluated
             evaluate_particles = (pset.state == StatusCode.Evaluate) & (pset.dt != 0)
             for f in self._pyfuncs:
-                f(pset[evaluate_particles], self._fieldset, None)
+                f(pset[evaluate_particles], self._fieldset)
 
                 # check for particles that have to be repeated
                 repeat_particles = pset.state == StatusCode.Repeat
                 while np.any(repeat_particles):
-                    f(pset[repeat_particles], self._fieldset, None)
+                    f(pset[repeat_particles], self._fieldset)
                     repeat_particles = pset.state == StatusCode.Repeat
 
             # revert to original dt (unless in RK45 mode)
