@@ -10,6 +10,9 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/main?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
 
+> [!WARNING]
+> This branch is `v4-dev` - version 4 of Parcels which is in active development. See `main` (or the tags) to browse stable versions of Parcels.
+
 **Parcels** (**P**robably **A** **R**eally **C**omputationally **E**fficient **L**agrangian **S**imulator) is a set of Python classes and methods to create customisable particle tracking simulations using output from Ocean Circulation models. Parcels can be used to track passive and active particulates such as water, plankton, [plastic](http://www.topios.org/) and [fish](https://github.com/Jacketless/IKAMOANA).
 
 ![Arctic-SO-medusaParticles](https://github.com/OceanParcels/oceanparcels_website/blob/main/images/homepage.gif)

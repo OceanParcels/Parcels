@@ -1,6 +1,7 @@
 build/*
 docs/_build/*
 docs/_downloads
+output
 
 *.log
 *.nc

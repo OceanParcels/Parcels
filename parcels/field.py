@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import warnings
 from collections.abc import Callable
 from datetime import datetime
@@ -19,6 +18,7 @@ from parcels.application_kernels.interpolation import (
     ZeroInterpolator_Vector,
 )
 from parcels.particle import KernelParticle
+from parcels.tools._helpers import _assert_same_function_signature
 from parcels.tools.converters import (
     UnitConverter,
     unitconverters_map,
@@ -55,25 +55,6 @@ _DEFAULT_INTERPOLATOR_MAPPING = {
     XGrid: XLinear,
     UxGrid: UXPiecewiseLinearNode,
 }
-
-
-def _assert_same_function_signature(f: Callable, *, ref: Callable) -> None:
-    """Ensures a function `f` has the same signature as the reference function `ref`."""
-    sig_ref = inspect.signature(ref)
-    sig = inspect.signature(f)
-
-    if len(sig_ref.parameters) != len(sig.parameters):
-        raise ValueError(
-            f"Interpolation function must have {len(sig_ref.parameters)} parameters, got {len(sig.parameters)}"
-        )
-
-    for (_name1, param1), (_name2, param2) in zip(sig_ref.parameters.items(), sig.parameters.items(), strict=False):
-        if param1.kind != param2.kind:
-            raise ValueError(
-                f"Parameter '{_name2}' has incorrect parameter kind. Expected {param1.kind}, got {param2.kind}"
-            )
-        if param1.name != param2.name:
-            raise ValueError(f"Parameter '{_name2}' has incorrect name. Expected '{param1.name}', got '{param2.name}'")
 
 
 class Field:
@@ -157,7 +138,7 @@ class Field:
         if interp_method is None:
             self._interp_method = _DEFAULT_INTERPOLATOR_MAPPING[type(self.grid)]
         else:
-            _assert_same_function_signature(interp_method, ref=ZeroInterpolator)
+            _assert_same_function_signature(interp_method, ref=ZeroInterpolator, context="Interpolation")
             self._interp_method = interp_method
 
         self.igrid = -1  # Default the grid index to -1
@@ -213,7 +194,7 @@ class Field:
 
     @interp_method.setter
     def interp_method(self, method: Callable):
-        _assert_same_function_signature(method, ref=ZeroInterpolator)
+        _assert_same_function_signature(method, ref=ZeroInterpolator, context="Interpolation")
         self._interp_method = method
 
     def _check_velocitysampling(self):
@@ -287,7 +268,7 @@ class VectorField:
         if vector_interp_method is None:
             self._vector_interp_method = None
         else:
-            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator_Vector)
+            _assert_same_function_signature(vector_interp_method, ref=ZeroInterpolator_Vector, context="Interpolation")
             self._vector_interp_method = vector_interp_method
 
     def __repr__(self):
@@ -303,7 +284,7 @@ class VectorField:
 
     @vector_interp_method.setter
     def vector_interp_method(self, method: Callable):
-        _assert_same_function_signature(method, ref=ZeroInterpolator_Vector)
+        _assert_same_function_signature(method, ref=ZeroInterpolator_Vector, context="Interpolation")
         self._vector_interp_method = method
 
     def eval(self, time: datetime, z, y, x, particle=None, applyConversion=True):

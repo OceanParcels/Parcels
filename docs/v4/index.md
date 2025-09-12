@@ -17,7 +17,7 @@ Collaboration on v4 development is happening on the [Parcels v4 Project Board](h
 The pages below provide further background on the development of Parcels v4. You can think of this page as a "living" document as we work towards the release of v4.
 
 ```{toctree}
-
+installation
 api
 nojit
 TODO
