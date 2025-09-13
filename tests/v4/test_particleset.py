@@ -17,6 +17,7 @@ from parcels import (
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.xgrid import XGrid
 from tests.common_kernels import DoNothing
+from tests.utils import round_and_hash_float_array
 
 
 @pytest.fixture
@@ -124,6 +125,13 @@ def test_pset_starttime_not_multiple_dt(fieldset):
 
     pset.execute(Addlon, dt=np.timedelta64(2, "s"), runtime=np.timedelta64(8, "s"), verbose_progress=False)
     assert np.allclose([p.lon_nextloop for p in pset], [8 - t for t in times])
+
+
+def test_populate_indices(fieldset):
+    npart = 11
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart))
+    pset.populate_indices()
+    np.testing.assert_equal(round_and_hash_float_array(pset.ei, decimals=0), 935996932384571063274191)
 
 
 def test_pset_add_explicit(fieldset):
