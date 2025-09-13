@@ -262,9 +262,9 @@ class ParticleFile:
         time :
             Time at which to write ParticleSet. Note that typically this would be pset.time_nextloop
         """
-        for var in ["lon", "lat", "depth", "time"]:
-            pset._data[f"{var}"] = pset._data[f"{var}_nextloop"]
-
+        for var in ["lon", "lat", "depth"]:
+            pset._data[f"{var}"] += pset._data[f"d{var}"]
+        pset._data["time"] = pset._data["time_nextloop"]
         self.write(pset, time)
 
 
