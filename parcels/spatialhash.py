@@ -1,5 +1,8 @@
 import numpy as np
 
+import parcels
+from parcels._index_search import GRID_SEARCH_ERROR, curvilinear_point_in_cell
+
 
 class SpatialHash:
     """Custom data structure that is used for performing grid searches using Spatial Hashing. This class constructs an overlying
@@ -11,8 +14,6 @@ class SpatialHash:
     ----------
     grid : parcels.xgrid.XGrid
         Source grid used to construct the hash grid and hash table
-    reconstruct : bool, default=False
-        If true, reconstructs the spatial hash
 
     Note
     ----
@@ -22,13 +23,15 @@ class SpatialHash:
     def __init__(
         self,
         grid,
-        reconstruct=False,
+        bitwidth=1023,
     ):
-        # TODO : Enforce grid to be an instance of parcels.xgrid.XGrid
-        # Currently, this is not done due to circular import with parcels.xgrid
+        if isinstance(grid, parcels.xgrid.XGrid):
+            self._point_in_cell = curvilinear_point_in_cell
+        else:
+            raise NotImplementedError("SpatialHash only supports parcels.xgrid.XGrid grids at this time.")
 
         self._source_grid = grid
-        self.reconstruct = reconstruct
+        self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
 
         if self._source_grid._mesh == "spherical":
             # Boundaries of the hash grid are the unit cube
@@ -69,9 +72,12 @@ class SpatialHash:
                 axis=-1,
             )
             # Compute centroid locations of each cells
-            self._xc = np.mean(_xbound, axis=-1)
-            self._yc = np.mean(_ybound, axis=-1)
-            self._zc = np.mean(_zbound, axis=-1)
+            self._xlow = np.min(_xbound, axis=-1)
+            self._xhigh = np.max(_xbound, axis=-1)
+            self._ylow = np.min(_ybound, axis=-1)
+            self._yhigh = np.max(_ybound, axis=-1)
+            self._zlow = np.min(_zbound, axis=-1)
+            self._zhigh = np.max(_zbound, axis=-1)
 
         else:
             # Boundaries of the hash grid are the bounding box of the source grid
@@ -104,47 +110,134 @@ class SpatialHash:
                 axis=-1,
             )
             # Compute centroid locations of each cells
-            self._xc = np.mean(_xbound, axis=-1)
-            self._yc = np.mean(_ybound, axis=-1)
-            self._zc = np.zeros_like(self._xc)
+            self._xlow = np.min(_xbound, axis=-1)
+            self._xhigh = np.max(_xbound, axis=-1)
+            self._ylow = np.min(_ybound, axis=-1)
+            self._yhigh = np.max(_ybound, axis=-1)
+            self._zlow = np.zeros_like(self._xlow)
+            self._zhigh = np.zeros_like(self._xlow)
 
         # Generate the mapping from the hash indices to unstructured grid elements
-        self._hash_table = None
         self._hash_table = self._initialize_hash_table()
 
     def _initialize_hash_table(self):
         """Create a mapping that relates unstructured grid faces to hash indices by determining
         which faces overlap with which hash cells
         """
-        if self._hash_table is None or self.reconstruct:
-            j, i = np.indices(self._xc.shape)  # Get the indices of the curvilinear grid
+        # Quantize the bounding box in each direction
+        xqlow, yqlow, zqlow = quantize_coordinates(
+            self._xlow,
+            self._ylow,
+            self._zlow,
+            self._xmin,
+            self._xmax,
+            self._ymin,
+            self._ymax,
+            self._zmin,
+            self._zmax,
+            self._bitwidth,
+        )
 
-            morton_codes = _encode_morton3d(
-                self._xc, self._yc, self._zc, self._xmin, self._xmax, self._ymin, self._ymax, self._zmin, self._zmax
-            )
-            ## Prepare quick lookup (hash) table for relating i,j indices to morton codes
-            # Sort i,j indices by morton code
-            order = np.argsort(morton_codes.ravel())
-            morton_codes_sorted = morton_codes.ravel()[order]
-            i_sorted = i.ravel()[order]
-            j_sorted = j.ravel()[order]
+        xqhigh, yqhigh, zqhigh = quantize_coordinates(
+            self._xhigh,
+            self._yhigh,
+            self._zhigh,
+            self._xmin,
+            self._xmax,
+            self._ymin,
+            self._ymax,
+            self._zmin,
+            self._zmax,
+            self._bitwidth,
+        )
+        xqlow = xqlow.ravel()
+        yqlow = yqlow.ravel()
+        zqlow = zqlow.ravel()
+        xqhigh = xqhigh.ravel()
+        yqhigh = yqhigh.ravel()
+        zqhigh = zqhigh.ravel()
+        nx = xqhigh - xqlow + 1
+        ny = yqhigh - yqlow + 1
+        nz = zqhigh - zqlow + 1
+        num_hash_per_face = nx * ny * nz
+        total_hash_entries = np.sum(num_hash_per_face)
+        morton_codes = np.zeros(total_hash_entries, dtype=np.uint32)
 
-            # Get a list of unique morton codes and their corresponding starts and counts (CSR format)
-            keys, starts, counts = np.unique(morton_codes_sorted, return_index=True, return_counts=True)
-            hash_table = {
-                "keys": keys,
-                "starts": starts,
-                "counts": counts,
-                "i": i_sorted,
-                "j": j_sorted,
-            }
-            return hash_table
+        # Compute the j, i indices corresponding to each hash entry
+        nface = np.size(self._xlow)
+        face_ids = np.repeat(np.arange(nface, dtype=np.int32), num_hash_per_face)
+        offsets = np.concatenate(([0], np.cumsum(num_hash_per_face))).astype(np.int32)[:-1]
 
-    def query(
-        self,
-        y,
-        x,
-    ):
+        valid = num_hash_per_face != 0
+        if not np.any(valid):
+            # nothing to do
+            pass
+        else:
+            # Grab only valid faces to avoid empty arrays
+            nx_v = np.asarray(nx[valid], dtype=np.int32)
+            ny_v = np.asarray(ny[valid], dtype=np.int32)
+            nz_v = np.asarray(nz[valid], dtype=np.int32)
+            xlow_v = np.asarray(xqlow[valid], dtype=np.int32)
+            ylow_v = np.asarray(yqlow[valid], dtype=np.int32)
+            zlow_v = np.asarray(zqlow[valid], dtype=np.int32)
+            starts_v = np.asarray(offsets[valid], dtype=np.int32)
+
+            # Count of elements per valid face (should match num_hash_per_face[valid])
+            counts = (nx_v * ny_v * nz_v).astype(np.int32)
+            total = int(counts.sum())
+
+            # Map each global element to its face and output position
+            start_for_elem = np.repeat(starts_v, counts)  # shape (total,)
+
+            # Intra-face linear index for each element (0..counts_i-1)
+            # Offsets per face within the concatenation of valid faces:
+            face_starts_local = np.cumsum(np.r_[0, counts[:-1]])
+            intra = np.arange(total, dtype=np.int32) - np.repeat(face_starts_local, counts)
+
+            # Derive (zi, yi, xi) from intra using per-face sizes
+            ny_nz = np.repeat(ny_v * nz_v, counts)
+            nz_rep = np.repeat(nz_v, counts)
+
+            xi = intra // ny_nz
+            rem = intra % ny_nz
+            yi = rem // nz_rep
+            zi = rem % nz_rep
+
+            # Add per-face lows
+            x0 = np.repeat(xlow_v, counts)
+            y0 = np.repeat(ylow_v, counts)
+            z0 = np.repeat(zlow_v, counts)
+
+            xq = x0 + xi
+            yq = y0 + yi
+            zq = z0 + zi
+
+            # Vectorized morton encode for all elements at once
+            codes_all = _encode_quantized_morton3d(xq, yq, zq)
+
+            # Scatter into the preallocated output using computed absolute indices
+            out_idx = start_for_elem + intra
+            morton_codes[out_idx] = codes_all
+
+        # Sort face indices by morton code
+        order = np.argsort(morton_codes)
+        morton_codes_sorted = morton_codes[order]
+        face_sorted = face_ids[order]
+        j_sorted, i_sorted = np.unravel_index(face_sorted, self._xlow.shape)
+
+        # Get a list of unique morton codes and their corresponding starts and counts (CSR format)
+        keys, starts, counts = np.unique(morton_codes_sorted, return_index=True, return_counts=True)
+
+        hash_table = {
+            "keys": keys,
+            "starts": starts,
+            "counts": counts,
+            "i": i_sorted,
+            "j": j_sorted,
+        }
+        return hash_table
+
+    def query(self, y, x):
         """
         Queries the hash table and finds the closes face in the source grid for each coordinate pair.
 
@@ -157,19 +250,19 @@ class SpatialHash:
 
         Returns
         -------
-        faces : ndarray of shape (N,2), dtype=np.int32
-            For each coordinate pair, returns the (j,i) indices of the closest face in the hash grid.
-            If no face is found, returns (-1,-1) for that query.
+        j : ndarray, shape (N,)
+            j-indices of the located face in the source grid for each query. If no face was found, GRID_SEARCH_ERROR is returned.
+        i : ndarray, shape (N,)
+            i-indices of the located face in the source grid for each query. If no face was found, GRID_SEARCH_ERROR is returned.
+        coords : ndarray, shape (N, 2)
+            The local coordinates (xsi, eta) of the located face in the source grid for each query.
+            If no face was found, (-1.0, -1.0)
         """
         keys = self._hash_table["keys"]
         starts = self._hash_table["starts"]
         counts = self._hash_table["counts"]
         i = self._hash_table["i"]
         j = self._hash_table["j"]
-
-        xc = self._xc
-        yc = self._yc
-        zc = self._zc
 
         y = np.asarray(y)
         x = np.asarray(x)
@@ -190,127 +283,94 @@ class SpatialHash:
         num_queries = query_codes.size
 
         # Locate each query in the unique key array
-        pos = np.searchsorted(keys, query_codes)  # pos is shape (N,)
+        pos = np.searchsorted(keys, query_codes)  # pos is shape (num_queries,)
 
-        # Valid hits: inside range with finite query coordinates
-        valid = (pos < len(keys)) & np.isfinite(x) & np.isfinite(y)
+        # Valid hits: inside range with finite query coordinates and query codes give exact morton code match.
+        valid = (pos < len(keys)) & np.isfinite(x) & np.isfinite(y) & (query_codes == keys[pos])
 
         # Pre-allocate i and j indices of the best match for each query
         # Default values to -1 (no match case)
-        j_best = np.full(num_queries, -1, dtype=np.int64)
-        i_best = np.full(num_queries, -1, dtype=np.int64)
+        j_best = np.full(num_queries, GRID_SEARCH_ERROR, dtype=np.int32)
+        i_best = np.full(num_queries, GRID_SEARCH_ERROR, dtype=np.int32)
 
         # How many matches each query has; hit_counts[i] is the number of hits for query i
-        hit_counts = np.where(valid, counts[pos], 0).astype(np.int64)  # has shape (N,)
+        hit_counts = np.where(valid, counts[pos], 0).astype(np.int32)  # has shape (num_queries,)
         if hit_counts.sum() == 0:
-            return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
+            return (
+                j_best.reshape(query_codes.shape),
+                i_best.reshape(query_codes.shape),
+                np.full((num_queries, 2), -1.0, dtype=np.float32),
+            )
 
-        # CSR-style offsets (prefix sum), total number of hits
-        offsets = np.empty(hit_counts.size + 1, dtype=np.int64)
-        offsets[0] = 0
-        np.cumsum(hit_counts, out=offsets[1:])
-        total = int(offsets[-1])
+        # Now, for each query, we need to gather the candidate (j,i) indices from the hash table
+        # Each j,i pair needs to be repeated hit_counts[i] times, only when there are hits.
 
-        # Now, we need to create some quick lookup arrays that give us the list of positions in the hash table
-        # that correspond to each query.
-        # Create a quick lookup array that maps each element of all the valid queries (with repeats) to its query index
-        q_index_for_elem = np.repeat(np.arange(num_queries, dtype=np.int64), hit_counts)  # This has shape (total,)
+        # Boolean array for keeping track of which queries have candidates
+        has_hits = hit_counts > 0  # shape (num_queries,), True for queries that had candidates
 
-        # For each element, compute its "intra-group" offset (0..hits_i-1).
-        intra = np.arange(total, dtype=np.int64) - np.repeat(offsets[:-1], hit_counts)
+        # A quick lookup array that maps all candindates back to its query index
+        q_index_for_candidate = np.repeat(
+            np.arange(num_queries, dtype=np.int32), hit_counts
+        )  # shape (hit_counts.sum(),)
+        # Map all candidates to positions in the hash table
+        hash_positions = pos[q_index_for_candidate]  # shape (hit_counts.sum(),)
 
-        # starts[pos[q_index_for_elem]] + intra gives a list of positions in the hash table that we can
+        # Now that we have the positions in the hash table for each table, we can gather the (j,i) pairs for each candidate
+        # We do this in a vectorized way by using a CSR-like approach
+        # starts[pos[q_index_for_candidate]] gives the starting point in the hash table for each candidate
+        # hit_counts gives the number of candidates for each query
+
+        # We need to build an array that gives the offset within each query's candidates
+        offsets = np.concatenate(([0], np.cumsum(hit_counts))).astype(np.int32)  # shape (num_queries+1,)
+        total = int(offsets[-1])  # total number of candidates across all queries
+
+        # Now, for each candidate, we need a simple array that tells us its "local candidate id" within its query
+        # This way, we can easily take the starts[pos[q_index_for_candidate]] and add this local id to get the absolute index
+        # We calculate this by computing the "global candidate number" (0..total-1) and subtracting the offsets of the corresponding query
+        # This gives us an array that goes from 0..hit_counts[i]-1 for each query i
+        intra = np.arange(total, dtype=np.int32) - np.repeat(offsets[:-1], hit_counts)  # shape (hit_counts.sum(),)
+
+        # starts[pos[q_index_for_candidate]] + intra gives a list of positions in the hash table that we can
         # use to quickly gather the (i,j) pairs for each query
-        source_idx = starts[pos[q_index_for_elem]].astype(np.int64) + intra
+        source_idx = starts[hash_positions].astype(np.int32) + intra
 
-        # Gather all (j,i) pairs in one shot
+        # Gather all candidate (j,i) pairs in one shot
         j_all = j[source_idx]
         i_all = i[source_idx]
 
-        # Segment-wise minima per query using reduceat
-        # For each query, we need to find the minimum distance.
-        if total == 1:
-            # Build absolute source index for the winning candidate in each query
-            start_for_q = np.where(valid, starts[pos], 0)  # 0 is dummy for invalid queries
-            src_best = (start_for_q).astype(np.int64)
-        else:
-            # Gather centroid coordinates at those (j,i)
-            xc_all = xc[j_all, i_all]
-            yc_all = yc[j_all, i_all]
-            zc_all = zc[j_all, i_all]
+        # Now we need to construct arrays that repeats the y and x coordinates for each candidate
+        # to enable vectorized point-in-cell checks
+        y_rep = np.repeat(y, hit_counts)  # shape (hit_counts.sum(),)
+        x_rep = np.repeat(x, hit_counts)  # shape (hit_counts.sum(),)
 
-            # Broadcast to flat (same as q_flat), then repeat per candidate
-            # This makes it easy to compute distances from the query points
-            # to the candidate points for minimization.
-            qx_all = np.repeat(qx.ravel(), hit_counts)
-            qy_all = np.repeat(qy.ravel(), hit_counts)
-            qz_all = np.repeat(qz.ravel(), hit_counts)
+        # For each query we perform a point in cell check.
+        is_in_face, coordinates = self._point_in_cell(self._source_grid, y_rep, x_rep, j_all, i_all)
 
-            # Squared distances for all candidates
-            dist_all = (xc_all - qx_all) ** 2 + (yc_all - qy_all) ** 2 + (zc_all - qz_all) ** 2
+        coords_best = np.full((num_queries, coordinates.shape[1]), -1.0, dtype=np.float32)
 
-            dmin_per_q = np.minimum.reduceat(dist_all, offsets[:-1])
-            # To get argmin indices per query (without loops):
-            # Build a masked "within-index" array that is large unless it equals the segment-min.
-            big = np.iinfo(np.int64).max
-            within_masked = np.where(dist_all == np.repeat(dmin_per_q, hit_counts), intra, big)
-            argmin_within = np.minimum.reduceat(within_masked, offsets[:-1])  # first occurrence in ties
+        # For each query that has hits, we need to find the first candidate that was inside the face
+        f_indices = np.flatnonzero(is_in_face)  # Indices of all faces that contained the point
+        # For each true position, find which query it belongs to by searching offsets
+        # Query index q satisfies offsets[q] <= pos < offsets[q+1].
+        q = np.searchsorted(offsets[1:], f_indices, side="right")
 
-            # Build absolute source index for the winning candidate in each query
-            start_for_q = np.where(valid, starts[pos], 0)  # 0 is dummy for invalid queries
-            src_best = (start_for_q + argmin_within).astype(np.int64)
+        uniq_q, q_idx = np.unique(q, return_index=True)
+        keep = has_hits[uniq_q]
 
-        # Write outputs only for queries that had candidates
-        has_hits = hit_counts > 0
-        j_best[has_hits] = j[src_best[has_hits]]
-        i_best[has_hits] = i[src_best[has_hits]]
+        if keep.any():
+            uniq_q = uniq_q[keep]
+            pos_first = f_indices[q_idx[keep]]
 
-        return (j_best.reshape(query_codes.shape), i_best.reshape(query_codes.shape))
+            # Directly scatter: the code wants the first True inside each slice
+            j_best[uniq_q] = j_all[pos_first]
+            i_best[uniq_q] = i_all[pos_first]
+            coords_best[uniq_q] = coordinates[pos_first]
 
-
-def _triangle_area(A, B, C):
-    """Compute the area of a triangle given by three points."""
-    d1 = B - A
-    d2 = C - A
-    d3 = np.cross(d1, d2)
-    return 0.5 * np.linalg.norm(d3)
-
-
-def _barycentric_coordinates(nodes, point, min_area=1e-8):
-    """
-    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
-    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
-    barycentric coordinates, which is only valid for convex polygons.
-
-    Parameters
-    ----------
-        nodes : numpy.ndarray
-            Spherical coordinates (lat,lon) of each corner node of a face
-        point : numpy.ndarray
-            Spherical coordinates (lat,lon) of the point
-
-    Returns
-    -------
-    numpy.ndarray
-        Barycentric coordinates corresponding to each vertex.
-
-    """
-    n = len(nodes)
-    sum_wi = 0
-    w = []
-
-    for i in range(0, n):
-        vim1 = nodes[i - 1]
-        vi = nodes[i]
-        vi1 = nodes[(i + 1) % n]
-        a0 = _triangle_area(vim1, vi, vi1)
-        a1 = max(_triangle_area(point, vim1, vi), min_area)
-        a2 = max(_triangle_area(point, vi, vi1), min_area)
-        sum_wi += a0 / (a1 * a2)
-        w.append(a0 / (a1 * a2))
-    barycentric_coords = [w_i / sum_wi for w_i in w]
-
-    return barycentric_coords
+        return (
+            j_best.reshape(query_codes.shape),
+            i_best.reshape(query_codes.shape),
+            coords_best.reshape((num_queries, coordinates.shape[1])),
+        )
 
 
 def _latlon_rad_to_xyz(lat, lon):
@@ -370,7 +430,74 @@ def _dilate_bits(n):
     return n
 
 
-def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
+def quantize_coordinates(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax, bitwidth=1023):
+    """
+    Normalize (x, y, z) to [0, 1] over their bounding box, then quantize to 10 bits each (0..1023).
+
+    Parameters
+    ----------
+    x, y, z : array_like
+        Input coordinates to quantize. Can be scalars or arrays (broadcasting applies).
+    xmin, xmax : float
+        Minimum and maximum bounds for x coordinate.
+    ymin, ymax : float
+        Minimum and maximum bounds for y coordinate.
+    zmin, zmax : float
+        Minimum and maximum bounds for z coordinate.
+
+    Returns
+    -------
+    xq, yq, zq : ndarray, dtype=uint32
+        The quantized coordinates, each in range [0, 1023], same shape as the broadcasted input coordinates.
+    """
+    # Convert inputs to ndarray for consistent dtype/ufunc behavior.
+    x = np.asarray(x)
+    y = np.asarray(y)
+    z = np.asarray(z)
+
+    # --- 1) Normalize each coordinate to [0, 1] over its bounding box. ---
+    # Compute denominators once (avoid division by zero if bounds equal).
+    dx = xmax - xmin
+    dy = ymax - ymin
+    dz = zmax - zmin
+
+    # Normalize to [0,1]; if a range is degenerate, map to 0 to avoid NaN/inf.
+    with np.errstate(invalid="ignore"):
+        xn = np.where(dx != 0, (x - xmin) / dx, 0.0)
+        yn = np.where(dy != 0, (y - ymin) / dy, 0.0)
+        zn = np.where(dz != 0, (z - zmin) / dz, 0.0)
+
+    # --- 2) Quantize to (0..bitwidth). ---
+    # Multiply by bitwidth, round down, and clip to be safe against slight overshoot.
+    xq = np.clip((xn * bitwidth).astype(np.uint32), 0, bitwidth)
+    yq = np.clip((yn * bitwidth).astype(np.uint32), 0, bitwidth)
+    zq = np.clip((zn * bitwidth).astype(np.uint32), 0, bitwidth)
+
+    return xq, yq, zq
+
+
+def _encode_quantized_morton3d(xq, yq, zq):
+    xq = np.asarray(xq)
+    yq = np.asarray(yq)
+    zq = np.asarray(zq)
+
+    # --- 3) Bit-dilate each 10-bit number so each bit is separated by two zeros. ---
+    # _dilate_bits maps:  b9..b0  ->  b9 0 0 b8 0 0 ... b0 0 0
+    dx3 = _dilate_bits(xq).astype(np.uint32)
+    dy3 = _dilate_bits(yq).astype(np.uint32)
+    dz3 = _dilate_bits(zq).astype(np.uint32)
+
+    # --- 4) Interleave the dilated bits into a single Morton code. ---
+    # Bit layout (from LSB upward): x0,y0,z0, x1,y1,z1, ..., x9,y9,z9
+    # We shift z's bits by 2, y's by 1, x stays at 0, then OR them together.
+    # Cast to a wide type before shifting/OR to be safe when arrays are used.
+    code = (dz3 << 2) | (dy3 << 1) | dx3
+
+    # Since our compact type fits in 30 bits, uint32 is enough.
+    return code.astype(np.uint32)
+
+
+def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax, bitwidth=1023):
     """
     Quantize (x, y, z) to 10 bits each (0..1023), dilate the bits so there are
     two zeros between successive bits, and interleave them into a 3D Morton code.
@@ -401,29 +528,13 @@ def _encode_morton3d(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax):
     y = np.asarray(y)
     z = np.asarray(z)
 
-    # --- 1) Normalize each coordinate to [0, 1] over its bounding box. ---
-    # Compute denominators once (avoid division by zero if bounds equal).
-    dx = xmax - xmin
-    dy = ymax - ymin
-    dz = zmax - zmin
-
-    # Normalize to [0,1]; if a range is degenerate, map to 0 to avoid NaN/inf.
-    with np.errstate(invalid="ignore"):
-        xn = np.where(dx != 0, (x - xmin) / dx, 0.0)
-        yn = np.where(dy != 0, (y - ymin) / dy, 0.0)
-        zn = np.where(dz != 0, (z - zmin) / dz, 0.0)
-
-    # --- 2) Quantize to 10 bits (0..1023). ---
-    # Multiply by 1023, round down, and clip to be safe against slight overshoot.
-    xq = np.clip((xn * 1023.0).astype(np.uint32), 0, 1023)
-    yq = np.clip((yn * 1023.0).astype(np.uint32), 0, 1023)
-    zq = np.clip((zn * 1023.0).astype(np.uint32), 0, 1023)
+    xq, yq, zq = quantize_coordinates(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax, bitwidth)
 
     # --- 3) Bit-dilate each 10-bit number so each bit is separated by two zeros. ---
     # _dilate_bits maps:  b9..b0  ->  b9 0 0 b8 0 0 ... b0 0 0
-    dx3 = _dilate_bits(xq).astype(np.uint64)
-    dy3 = _dilate_bits(yq).astype(np.uint64)
-    dz3 = _dilate_bits(zq).astype(np.uint64)
+    dx3 = _dilate_bits(xq).astype(np.uint32)
+    dy3 = _dilate_bits(yq).astype(np.uint32)
+    dz3 = _dilate_bits(zq).astype(np.uint32)
 
     # --- 4) Interleave the dilated bits into a single Morton code. ---
     # Bit layout (from LSB upward): x0,y0,z0, x1,y1,z1, ..., x9,y9,z9

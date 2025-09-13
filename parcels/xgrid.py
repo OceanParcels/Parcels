@@ -375,7 +375,7 @@ class XGrid(BaseGrid):
 
         """
         if self._spatialhash is None or reconstruct:
-            self._spatialhash = SpatialHash(self, reconstruct)
+            self._spatialhash = SpatialHash(self)
 
         return self._spatialhash
 
