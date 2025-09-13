@@ -204,13 +204,13 @@ def _unravel(dims, ei):
     """
     strides = np.cumprod(dims[::-1])[::-1]
 
-    indices = np.empty(len(dims), dtype=int)
+    indices = np.empty((len(dims), len(ei)), dtype=int)
 
     for i in range(len(dims) - 1):
-        indices[i] = ei // strides[i + 1]
+        indices[i, :] = ei // strides[i + 1]
         ei = ei % strides[i + 1]
 
-    indices[-1] = ei
+    indices[-1, :] = ei
     return indices
 
 
