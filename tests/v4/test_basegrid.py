@@ -26,26 +26,26 @@ class TestGrid(BaseGrid):
 @pytest.mark.parametrize(
     "grid",
     [
-        TestGrid({"Z": 10, "Y": 20, "X": 30}),
-        TestGrid({"Z": 5, "Y": 15}),
-        TestGrid({"Z": 8}),
-        TestGrid({"Z": 12, "FACE": 25}),
+        TestGrid({"Z": [10], "Y": [20], "X": [30]}),
+        TestGrid({"Z": [5], "Y": [15]}),
+        TestGrid({"Z": [8]}),
+        TestGrid({"Z": [12], "FACE": [25]}),
     ],
 )
 def test_basegrid_ravel_unravel_index(grid):
     axes = grid.axes
     dimensionalities = (grid.get_axis_dim(axis) for axis in axes)
-    all_possible_axis_indices = itertools.product(*[range(dim) for dim in dimensionalities])
+    all_possible_axis_indices = itertools.product(*[range(dim[0]) for dim in dimensionalities])
 
     encountered_eis = []
 
     for axis_indices_numeric in all_possible_axis_indices:
-        axis_indices = dict(zip(axes, axis_indices_numeric, strict=True))
+        axis_indices = {axis: [index] for axis, index in zip(axes, axis_indices_numeric, strict=True)}
 
         ei = grid.ravel_index(axis_indices)
         axis_indices_test = grid.unravel_index(ei)
         assert axis_indices_test == axis_indices
-        encountered_eis.append(ei)
+        encountered_eis.append(ei[0])
 
     encountered_eis = sorted(encountered_eis)
     assert len(set(encountered_eis)) == len(encountered_eis), "Raveled indices are not unique."

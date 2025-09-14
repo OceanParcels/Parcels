@@ -69,7 +69,7 @@ class BaseGrid(ABC):
         """
         ...
 
-    def ravel_index(self, axis_indices: dict[str, int]) -> int:
+    def ravel_index(self, axis_indices: dict[str, np.ndarray]) -> np.ndarray:
         """
         Convert a dictionary of axis indices to a single encoded index (ei).
 
@@ -79,7 +79,7 @@ class BaseGrid(ABC):
 
         Parameters
         ----------
-        axis_indices : dict[str, int]
+        axis_indices : dict[str, np.ndarray(int)]
             A dictionary mapping axis names to their corresponding indices.
             The expected keys depend on the grid dimensionality and type:
 
@@ -90,8 +90,8 @@ class BaseGrid(ABC):
 
         Returns
         -------
-        int
-            The encoded index (ei) representing the unique grid cell or face.
+        np.ndarray(int)
+            The encoded indices (ei) representing the unique grid cells or faces.
 
         Raises
         ------
