@@ -10,6 +10,7 @@ import numpy as np
 
 from parcels.application_kernels.advection import (
     AdvectionAnalytical,
+    AdvectionRK4,
     AdvectionRK45,
 )
 from parcels.basegrid import GridType
@@ -24,7 +25,6 @@ from parcels.tools.statuscodes import (
     _raise_time_extrapolation_error,
 )
 from parcels.tools.warnings import KernelWarning
-from tests.common_kernels import DoNothing
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -69,7 +69,7 @@ class Kernel:
         for f in pyfuncs:
             if not isinstance(f, types.FunctionType):
                 raise TypeError(f"Argument pyfunc should be a function or list of functions. Got {type(f)}")
-            _assert_same_function_signature(f, ref=DoNothing, context="Kernel")
+            _assert_same_function_signature(f, ref=AdvectionRK4, context="Kernel")
 
         if len(pyfuncs) == 0:
             raise ValueError("List of `pyfuncs` should have at least one function.")
@@ -118,21 +118,20 @@ class Kernel:
         def Setcoords(particles, fieldset):  # pragma: no cover
             import numpy as np  # noqa
 
+            particles.lon += particles.dlon
+            particles.lat += particles.dlat
+            particles.depth += particles.ddepth
+
             particles.dlon = 0
             particles.dlat = 0
             particles.ddepth = 0
-            particles.lon = particles.lon_nextloop
-            particles.lat = particles.lat_nextloop
-            particles.depth = particles.depth_nextloop
+
             particles.time = particles.time_nextloop
 
-        def Updatecoords(particles, fieldset):  # pragma: no cover
-            particles.lon_nextloop = particles.lon + particles.dlon
-            particles.lat_nextloop = particles.lat + particles.dlat
-            particles.depth_nextloop = particles.depth + particles.ddepth
+        def UpdateTime(particles, fieldset):  # pragma: no cover
             particles.time_nextloop = particles.time + particles.dt
 
-        self._pyfuncs = (Setcoords + self + Updatecoords)._pyfuncs
+        self._pyfuncs = (Setcoords + self + UpdateTime)._pyfuncs
 
     def check_fieldsets_in_kernels(self, pyfunc):  # TODO v4: this can go into another method? assert_is_compatible()?
         """
