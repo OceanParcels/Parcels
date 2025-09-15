@@ -535,7 +535,11 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            logger.info(f"Output files are stored in {output_file.store.path}")
+            if hasattr(output_file.store, "path"):
+                zarr_path = output_file.store.path
+            else:
+                zarr_path = output_file.store
+            logger.info(f"Output files are stored in {zarr_path}")
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
