@@ -345,13 +345,21 @@ class VectorField:
 def _update_particles_ei(particles, position, field):
     """Update the element index (ei) of the particles"""
     if particles is not None:
-        particles.ei[:, field.igrid] = field.grid.ravel_index(
-            {
-                "X": position["X"][0],
-                "Y": position["Y"][0],
-                "Z": position["Z"][0],
-            }
-        )
+        if isinstance(field.grid, XGrid):
+            particles.ei[:, field.igrid] = field.grid.ravel_index(
+                {
+                    "X": position["X"][0],
+                    "Y": position["Y"][0],
+                    "Z": position["Z"][0],
+                }
+            )
+        elif isinstance(field.grid, UxGrid):
+            particles.ei[:, field.igrid] = field.grid.ravel_index(
+                {
+                    "Z": position["Z"][0],
+                    "FACE": position["FACE"][0],
+                }
+            )
 
 
 def _update_particle_states_position(particle, position):
