@@ -87,17 +87,18 @@ class UxGrid(BaseGrid):
         zi, zeta = _search_1d_array(self.z.values, z)
 
         if ei is not None:
-            _, fi = self.unravel_index(ei)
+            indices = self.unravel_index(ei)
+            fi = indices["FACE"][0]
             bcoords = try_face(fi)
             if bcoords is not None:
-                return bcoords, self.ravel_index(zi, fi)
+                return {"Z": (zi, zeta), "FACE": (np.asarray([fi]), bcoords)}
             # Try neighbors of current face
             for neighbor in self.uxgrid.face_face_connectivity[fi, :]:
                 if neighbor == -1:
                     continue
                 bcoords = try_face(neighbor)
                 if bcoords is not None:
-                    return bcoords, self.ravel_index(zi, neighbor)
+                    return {"Z": (zi, zeta), "FACE": (np.asarray([neighbor]), bcoords)}
 
         # Global fallback as last ditch effort
         points = np.column_stack((x, y))
@@ -113,7 +114,6 @@ class UxGrid(BaseGrid):
     def _get_barycentric_coordinates_latlon(self, y, x, fi):
         """Checks if a point is inside a given face id on a UxGrid."""
         # Check if particle is in the same face, otherwise search again.
-
         n_nodes = self.uxgrid.n_nodes_per_face[fi].to_numpy()
         node_ids = self.uxgrid.face_node_connectivity[fi, 0:n_nodes]
         nodes = np.column_stack(
