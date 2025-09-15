@@ -170,13 +170,11 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
                 dtype=spatial_dtype,
                 attrs={"standard_name": "longitude", "units": "degrees_east", "axis": "X"},
             ),
-            Variable("lon_nextloop", dtype=spatial_dtype, to_write=False),
             Variable(
                 "lat",
                 dtype=spatial_dtype,
                 attrs={"standard_name": "latitude", "units": "degrees_north", "axis": "Y"},
             ),
-            Variable("lat_nextloop", dtype=spatial_dtype, to_write=False),
             Variable(
                 "depth",
                 dtype=spatial_dtype,
@@ -185,7 +183,6 @@ def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClas
             Variable("dlon", dtype=spatial_dtype, to_write=False),
             Variable("dlat", dtype=spatial_dtype, to_write=False),
             Variable("ddepth", dtype=spatial_dtype, to_write=False),
-            Variable("depth_nextloop", dtype=spatial_dtype, to_write=False),
             Variable(
                 "time",
                 dtype=_SAME_AS_FIELDSET_TIME_INTERVAL.VALUE,

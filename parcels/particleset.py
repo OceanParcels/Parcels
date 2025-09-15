@@ -24,12 +24,12 @@ __all__ = ["ParticleSet"]
 
 
 class ParticleSet:
-    """Class for storing particle and executing kernel over them.
+    """Class for storing particles and executing kernel over them.
 
     Please note that this currently only supports fixed size particle sets, meaning that the particle set only
     holds the particles defined on construction. Individual particles can neither be added nor deleted individually,
-    and individual particles can only be deleted as a set procedurally (i.e. by 'particle.delete()'-call during
-    kernel execution).
+    and individual particles can only be deleted as a set procedurally (i.e. by changing their state to 'StatusCode.Delete'
+    during kernel execution).
 
     Parameters
     ----------
@@ -130,9 +130,6 @@ class ParticleSet:
                 lat=lat,
                 depth=depth,
                 time=time,
-                lon_nextloop=lon,
-                lat_nextloop=lat,
-                depth_nextloop=depth,
                 time_nextloop=time,
                 trajectory=trajectory_ids,
             ),

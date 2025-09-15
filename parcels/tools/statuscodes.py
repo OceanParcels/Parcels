@@ -110,10 +110,10 @@ def _raise_time_extrapolation_error(time: float, field=None):
 
 
 class KernelError(RuntimeError):
-    """General particle kernel error with optional custom message."""
+    """General particles kernel error with optional custom message."""
 
-    def __init__(self, particle, fieldset=None, msg=None):
-        message = f"{particle.state}\nParticle {particle}\nTime: {particle.time}\ntimestep dt: {particle.dt}\n"
+    def __init__(self, particles, fieldset=None, msg=None):
+        message = f"{particles.state}\nParticle {particles}\nTime: {particles.time}\ntimestep dt: {particles.dt}\n"
         if msg:
             message += msg
         super().__init__(message)

@@ -375,7 +375,7 @@ class XGrid(BaseGrid):
 
         """
         if self._spatialhash is None or reconstruct:
-            self._spatialhash = SpatialHash(self, reconstruct)
+            self._spatialhash = SpatialHash(self)
 
         return self._spatialhash
 
@@ -508,7 +508,7 @@ def _search_1d_array(
     x: float,
 ) -> tuple[int, int]:
     """
-    Searches for the particle location in a 1D array and returns barycentric coordinate along dimension.
+    Searches for particle locations in a 1D array and returns barycentric coordinate along dimension.
 
     Assumptions:
     - array is strictly monotonically increasing.
