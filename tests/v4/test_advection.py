@@ -102,8 +102,8 @@ def test_advection_zonal_periodic():
     pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=startlon, lat=[0.5, 0.5])
     pset.execute([AdvectionEE, periodicBC], runtime=np.timedelta64(40, "s"), dt=np.timedelta64(1, "s"))
     np.testing.assert_allclose(pset.total_dlon, 4, atol=1e-5)
-    np.testing.assert_allclose(pset.lon_nextloop, startlon, atol=1e-5)
-    np.testing.assert_allclose(pset.lat_nextloop, 0.5, atol=1e-5)
+    np.testing.assert_allclose(pset.lon + pset.dlon, startlon, atol=1e-5)
+    np.testing.assert_allclose(pset.lat, 0.5, atol=1e-5)
 
 
 def test_horizontal_advection_in_3D_flow(npart=10):
@@ -246,7 +246,7 @@ def test_radialrotation(npart=10):
     pset = parcels.ParticleSet(fieldset, lon=lon, lat=lat, time=starttime)
     pset.execute(parcels.AdvectionRK4, endtime=np.timedelta64(10, "m"), dt=dt)
 
-    theta = 2 * np.pi * (pset.time_nextloop - starttime) / np.timedelta64(24 * 3600, "s")
+    theta = 2 * np.pi * (pset.time - starttime) / np.timedelta64(24 * 3600, "s")
     true_lon = (lon - 30.0) * np.cos(theta) + 30.0
     true_lat = -(lon - 30.0) * np.sin(theta) + 30.0
 
@@ -300,11 +300,11 @@ def test_moving_eddy(method, rtol):
         lon = x_0 + ds.u_g * t + (ds.u_0 - ds.u_g) / ds.f * np.sin(ds.f * t)
         return lon, lat
 
-    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
-    np.testing.assert_allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
-    np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
+    np.testing.assert_allclose(pset.lon, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat, exp_lat, rtol=rtol)
     if method == "RK4_3D":
-        np.testing.assert_allclose(pset.depth_nextloop, exp_lat, rtol=rtol)
+        np.testing.assert_allclose(pset.depth, exp_lat, rtol=rtol)
 
 
 @pytest.mark.parametrize(
@@ -347,9 +347,9 @@ def test_decaying_moving_eddy(method, rtol):
         )
         return lon, lat
 
-    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time_nextloop[0])
-    np.testing.assert_allclose(pset.lon_nextloop, exp_lon, rtol=rtol)
-    np.testing.assert_allclose(pset.lat_nextloop, exp_lat, rtol=rtol)
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
+    np.testing.assert_allclose(pset.lon, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat, exp_lat, rtol=rtol)
 
 
 @pytest.mark.parametrize(
@@ -469,7 +469,7 @@ def test_nemo_curvilinear_fieldset():
 
     pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)
     pset.execute([AdvectionEE, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))
-    np.testing.assert_allclose(pset.lat_nextloop, latp, atol=1e-1)
+    np.testing.assert_allclose(pset.lat, latp, atol=1e-1)
 
 
 @pytest.mark.parametrize("method", ["RK4", "RK4_3D"])
