@@ -8,6 +8,7 @@ import numpy as np
 import xarray as xr
 from scipy.spatial import KDTree
 from tqdm import tqdm
+from zarr.storage import DirectoryStore
 
 from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
 from parcels._reprs import particleset_repr
@@ -535,11 +536,7 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            if hasattr(output_file.store, "path"):
-                zarr_path = output_file.store.path
-            else:
-                zarr_path = output_file.store
-            logger.info(f"Output files are stored in {zarr_path}")
+            logger.info(f"Output files are stored in {_format_output_location(output_file.store)}")
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
@@ -653,3 +650,9 @@ def _get_start_time(first_release_time, time_interval, sign_dt, runtime):
 
     start_time = first_release_time if not np.isnat(first_release_time) else fieldset_start
     return start_time
+
+
+def _format_output_location(zarr_obj):
+    if isinstance(zarr_obj, DirectoryStore):
+        return zarr_obj.path
+    return repr(zarr_obj)
