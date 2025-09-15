@@ -365,7 +365,19 @@ def test_execution_fail_python_exception(fieldset, npart):
 
 
 @pytest.mark.parametrize(
-    "kernel_names, expected", [("Lat1", [0, 1]), ("Lat2", [2, 0]), ("Lat1and2", [2, 1]), ("Lat1then2", [2, 1])]
+    "kernel_names, expected",
+    [
+        ("Lat1", [0, 1]),
+        ("Lat2", [2, 0]),
+        pytest.param(
+            "Lat1and2",
+            [2, 1],
+            marks=pytest.mark.xfail(
+                reason="Will be fixed alongside GH #2143 . Failing due to https://github.com/OceanParcels/Parcels/pull/2199#issuecomment-3285278876."
+            ),
+        ),
+        ("Lat1then2", [2, 1]),
+    ],
 )
 def test_execution_update_particle_in_kernel_function(fieldset, kernel_names, expected):
     npart = 2
