@@ -5,8 +5,8 @@ from typing import Literal, cast
 import numpy as np
 import numpy.typing as npt
 import xarray as xr
+import xgcm
 
-from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels._typing import assert_valid_mesh
 from parcels.basegrid import BaseGrid
@@ -27,15 +27,15 @@ LEFT_OUT_OF_BOUNDS = -2
 RIGHT_OUT_OF_BOUNDS = -1
 
 
-def get_cell_count_along_dim(axis: xgcm.Axis) -> int:
+def get_cell_count_along_dim(ds: xr.Dataset, axis: xgcm.Axis) -> int:
     first_coord = list(axis.coords.items())[0]
     _, coord_var = first_coord
 
-    return axis._ds[coord_var].size - 1
+    return ds[coord_var].size - 1
 
 
-def get_time(axis: xgcm.Axis) -> npt.NDArray:
-    return axis._ds[axis.coords["center"]].values
+def get_time(ds: xr.Dataset, axis: xgcm.Axis) -> npt.NDArray:
+    return ds[axis.coords["center"]].values
 
 
 def _get_xgrid_axes(grid: xgcm.Grid) -> list[_XGRID_AXES]:
@@ -112,6 +112,7 @@ class XGrid(BaseGrid):
             assert_valid_lat_lon(ds["lat"], ds["lon"], grid.axes)
 
         assert_valid_mesh(mesh)
+        self._ds = ds
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset, mesh="flat", xgcm_kwargs=None):
@@ -141,7 +142,7 @@ class XGrid(BaseGrid):
             _ = self.xgcm_grid.axes["X"]
         except KeyError:
             return np.zeros(1)
-        return self.xgcm_grid._ds["lon"].values
+        return self._ds["lon"].values
 
     @property
     def lat(self):
@@ -155,7 +156,7 @@ class XGrid(BaseGrid):
             _ = self.xgcm_grid.axes["Y"]
         except KeyError:
             return np.zeros(1)
-        return self.xgcm_grid._ds["lat"].values
+        return self._ds["lat"].values
 
     @property
     def depth(self):
@@ -169,7 +170,7 @@ class XGrid(BaseGrid):
             _ = self.xgcm_grid.axes["Z"]
         except KeyError:
             return np.zeros(1)
-        return self.xgcm_grid._ds["depth"].values
+        return self._ds["depth"].values
 
     @property
     def _datetimes(self):
@@ -177,7 +178,7 @@ class XGrid(BaseGrid):
             axis = self.xgcm_grid.axes["T"]
         except KeyError:
             return np.zeros(1)
-        return get_time(axis)
+        return get_time(self._ds, axis)
 
     @property
     def time(self):
@@ -199,7 +200,7 @@ class XGrid(BaseGrid):
         if axis not in self.axes:
             raise ValueError(f"Axis {axis!r} is not part of this grid. Available axes: {self.axes}")
 
-        return get_cell_count_along_dim(self.xgcm_grid.axes[axis])
+        return get_cell_count_along_dim(self._ds, self.xgcm_grid.axes[axis])
 
     def localize(self, position: dict[_XGRID_AXES, tuple[int, float]], dims: list[str]) -> dict[str, tuple[int, float]]:
         """
@@ -282,7 +283,7 @@ class XGrid(BaseGrid):
                 return GridType.CurvilinearSGrid
 
     def search(self, z, y, x, ei=None):
-        ds = self.xgcm_grid._ds
+        ds = self._ds
 
         if "Z" in self.axes:
             zi, zeta = _search_1d_array(ds.depth.values, z)
