@@ -5,8 +5,8 @@ from typing import Literal, cast
 import numpy as np
 import numpy.typing as npt
 import xarray as xr
+import xgcm
 
-from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels._typing import assert_valid_mesh
 from parcels.basegrid import BaseGrid

@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import xarray as xr
+import xgcm
 
-from parcels import xgcm
 from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
 from parcels._typing import Mesh

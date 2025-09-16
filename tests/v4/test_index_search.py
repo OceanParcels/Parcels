@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 import xarray as xr
+from xgcm import Grid
 
 from parcels._datasets.structured.generic import datasets
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.field import Field
 from parcels.tools.exampledata_utils import download_example_dataset
-from parcels.xgcm import Grid
 from parcels.xgrid import XGrid
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import xarray as xr
+import xgcm
 
 import parcels
 from parcels._datasets.structured.generated import (
@@ -442,7 +443,7 @@ def test_nemo_curvilinear_fieldset():
         .rename({"glamf": "lon", "gphif": "lat", "z": "depth"})
     )
 
-    xgcm_grid = parcels.xgcm.Grid(
+    xgcm_grid = xgcm.Grid(
         ds,
         coords={
             "X": {"left": "x"},
@@ -524,7 +525,7 @@ def test_nemo_3D_curvilinear_fieldset(method):
 
     ds["W"] *= -1  # Invert W velocity
 
-    xgcm_grid = parcels.xgcm.Grid(
+    xgcm_grid = xgcm.Grid(
         ds,
         coords={
             "X": {"left": "x"},
