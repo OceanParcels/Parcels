@@ -10,7 +10,6 @@ from parcels import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels._typing import assert_valid_mesh
 from parcels.basegrid import BaseGrid
-from parcels.spatialhash import SpatialHash
 
 _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"
@@ -352,32 +351,6 @@ class XGrid(BaseGrid):
             if axis in self.axes:  # Only include spatial axes (X, Y, Z)
                 result[cast(_XGRID_AXES, axis)] = dim
         return result
-
-    def get_spatial_hash(
-        self,
-        reconstruct=False,
-    ):
-        """Get the SpatialHash data structure of this Grid that allows for
-        fast face search queries. Face searches are used to find the faces that
-        a list of points, in spherical coordinates, are contained within.
-
-        Parameters
-        ----------
-        global_grid : bool, default=False
-            If true, the hash grid is constructed using the domain [-pi,pi] x [-pi,pi]
-        reconstruct : bool, default=False
-            If true, reconstructs the spatial hash
-
-        Returns
-        -------
-        self._spatialhash : parcels.spatialhash.SpatialHash
-            SpatialHash instance
-
-        """
-        if self._spatialhash is None or reconstruct:
-            self._spatialhash = SpatialHash(self)
-
-        return self._spatialhash
 
 
 def get_axis_from_dim_name(axes: _XGCM_AXES, dim: str) -> _XGCM_AXIS_DIRECTION | None:

@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from parcels.spatialhash import SpatialHash
+
 if TYPE_CHECKING:
     import numpy as np
 
@@ -177,6 +179,32 @@ class BaseGrid(ABC):
             If the specified axis is not part of this grid.
         """
         ...
+
+    def get_spatial_hash(
+        self,
+        reconstruct=False,
+    ):
+        """Get the SpatialHash data structure of this Grid that allows for
+        fast face search queries. Face searches are used to find the faces that
+        a list of points, in spherical coordinates, are contained within.
+
+        Parameters
+        ----------
+        global_grid : bool, default=False
+            If true, the hash grid is constructed using the domain [-pi,pi] x [-pi,pi]
+        reconstruct : bool, default=False
+            If true, reconstructs the spatial hash
+
+        Returns
+        -------
+        self._spatialhash : parcels.spatialhash.SpatialHash
+            SpatialHash instance
+
+        """
+        if self._spatialhash is None or reconstruct:
+            self._spatialhash = SpatialHash(self)
+
+        return self._spatialhash
 
 
 def _unravel(dims, ei):

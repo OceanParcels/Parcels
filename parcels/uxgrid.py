@@ -5,7 +5,7 @@ from typing import Literal
 import numpy as np
 import uxarray as ux
 
-from parcels._index_search import GRID_SEARCH_ERROR
+from parcels._index_search import GRID_SEARCH_ERROR, uxgrid_point_in_cell
 from parcels._typing import assert_valid_mesh
 from parcels.xgrid import _search_1d_array
 
@@ -94,11 +94,15 @@ class UxGrid(BaseGrid):
         tol : float, optional
             Tolerance for barycentric coordinate checks. Default is 1e-6.
         """
-        indices = self.unravel_index(ei)
-        fi = indices["FACE"]
-        zi = indices["Z"]
+        x = np.asarray(x, dtype=np.float32)
+        y = np.asarray(y, dtype=np.float32)
+        z = np.asarray(z, dtype=np.float32)
+
         zi, zeta = _search_1d_array(self.z.values, z)
+
         if np.any(ei):
+            indices = self.unravel_index(ei)
+            fi = indices.get("FACE")
             is_in_cell, coords = uxgrid_point_in_cell(self.uxgrid, y, x, fi, fi)
             y_check = y[is_in_cell == 0]
             x_check = x[is_in_cell == 0]
@@ -108,137 +112,12 @@ class UxGrid(BaseGrid):
             fi = np.full(len(y), GRID_SEARCH_ERROR, dtype=np.int32)
             y_check = y
             x_check = x
-            coords = -1.0 * np.ones((len(y), 2), dtype=np.float32)
+            coords = -1.0 * np.ones((len(y), 3), dtype=np.float32)
             zero_indices = np.arange(len(y))
 
         if len(zero_indices) > 0:
-            face_ids_q, _, coords_q = self.uxgrid.get_spatial_hash().query(y_check, x_check)
+            _, face_ids_q, coords_q = self.get_spatial_hash().query(y_check, x_check)
             coords[zero_indices, :] = coords_q
             fi[zero_indices] = face_ids_q
 
         return {"Z": (zi, zeta), "FACE": (fi, coords)}
-
-
-def uxgrid_point_in_cell(grid, y: np.ndarray, x: np.ndarray, yi: np.ndarray, xi: np.ndarray):
-    """Check if points are inside the grid cells defined by the given face indices.
-
-    Parameters
-    ----------
-    grid : ux.grid.Grid
-        The uxarray grid object containing the unstructured grid data.
-    y : np.ndarray
-        Array of latitudes of the points to check.
-    x : np.ndarray
-        Array of longitudes of the points to check.
-    yi : np.ndarray
-        Array of face indices corresponding to the points.
-    xi : np.ndarray
-        Not used, but included for compatibility with other search functions.
-
-    Returns
-    -------
-    is_in_cell : np.ndarray
-        An array indicating whether each point is inside (1) or outside (0) the corresponding cell.
-    coords : np.ndarray
-        Barycentric coordinates of the points within their respective cells.
-    """
-    if grid.mesh == "spherical":
-        lon_rad = np.deg2rad(grid.lon.values)
-        lat_rad = np.deg2rad(grid.lat.values)
-        x_cart, y_cart, z_cart = _lonlat_rad_to_xyz(lon_rad, lat_rad)
-        points = np.column_stack((x_cart.flatten(), y_cart.flatten(), z_cart.flatten()))
-
-        # Get the vertex indices for each face
-        nodeids = grid.face_node_connectivity[yi, :].values
-        face_vertices = np.column_stack(
-            (grid.node_x[nodeids].values, grid.node_y[nodeids].values, grid.node_z[nodeids].values)
-        )
-    else:
-        nodeids = grid.face_node_connectivity[yi, :].values
-        face_vertices = np.column_stack(
-            (grid.node_lon[nodeids].values.flatten(), grid.node_lat[nodeids].values.flatten())
-        )
-        points = np.column_stack((x, y))
-
-    M = len(points)
-
-    is_in_cell = np.zeros(M, dtype=np.int32)
-
-    coords = _barycentric_coordinates(face_vertices, points)
-    is_in_cell = np.where(np.all((coords >= -1e-6) & (coords <= 1 + 1e-6), axis=1), 1, 0)
-
-    return is_in_cell, coords
-
-
-def _triangle_area(A, B, C):
-    """Compute the area of a triangle given by three points."""
-    d1 = B - A
-    d2 = C - A
-    d3 = np.cross(d1, d2)
-    return 0.5 * np.linalg.norm(d3)
-
-
-def _barycentric_coordinates(nodes, points, min_area=1e-8):
-    """
-    Compute the barycentric coordinates of a point P inside a convex polygon using area-based weights.
-    So that this method generalizes to n-sided polygons, we use the Waschpress points as the generalized
-    barycentric coordinates, which is only valid for convex polygons.
-
-    Parameters
-    ----------
-        nodes : numpy.ndarray
-            Polygon verties per query of shape (M, 3, 2/3) where M is the number of query points. The second dimension corresponds to the number
-            of vertices
-            The last dimension can be either 2 or 3, where 3 corresponds to the (z, y, x) coordinates of each vertex and 2 corresponds to the
-            (lat, lon) coordinates of each vertex.
-
-        points : numpy.ndarray
-            Spherical coordinates of the point (M,2/3) where M is the number of query points.
-
-    Returns
-    -------
-    numpy.ndarray
-        Barycentric coordinates corresponding to each vertex.
-
-    """
-    M, K = nodes.shape[:2]
-
-    # roll(-1) to get vi+1, roll(+1) to get vi-1
-    vi = nodes  # (M,K,2)
-    vi1 = np.roll(nodes, shift=-1, axis=1)  # (M,K,2)
-    vim1 = np.roll(nodes, shift=+1, axis=1)  # (M,K,2)
-
-    # a0 = area(v_{i-1}, v_i, v_{i+1})
-    a0 = _triangle_area(vim1, vi, vi1)  # (M,K)
-
-    # a1 = area(P, v_{i-1}, v_i); a2 = area(P, v_i, v_{i+1})
-    P = points[:, None, :]  # (M,1,2) -> (M,K,2)
-    a1 = _triangle_area(P, vim1, vi)
-    a2 = _triangle_area(P, vi, vi1)
-
-    # clamp tiny denominators for stability
-    a1c = np.maximum(a1, min_area)
-    a2c = np.maximum(a2, min_area)
-
-    wi = a0 / (a1c * a2c)  # (M,K)
-
-    sum_wi = wi.sum(axis=1, keepdims=True)  # (M,1)
-    # Avoid 0/0: if sum_wi==0 (degenerate), keep zeros
-    with np.errstate(invalid="ignore", divide="ignore"):
-        bcoords = wi / sum_wi
-
-    return bcoords
-
-
-def _lonlat_rad_to_xyz(
-    lon,
-    lat,
-):
-    """Converts Spherical latitude and longitude coordinates into Cartesian x,
-    y, z coordinates.
-    """
-    x = np.cos(lon) * np.cos(lat)
-    y = np.sin(lon) * np.cos(lat)
-    z = np.sin(lat)
-
-    return x, y, z

@@ -1,7 +1,7 @@
 import numpy as np
 
 import parcels
-from parcels._index_search import GRID_SEARCH_ERROR, curvilinear_point_in_cell
+from parcels._index_search import GRID_SEARCH_ERROR, _latlon_rad_to_xyz, curvilinear_point_in_cell, uxgrid_point_in_cell
 
 
 class SpatialHash:
@@ -27,95 +27,145 @@ class SpatialHash:
     ):
         if isinstance(grid, parcels.xgrid.XGrid):
             self._point_in_cell = curvilinear_point_in_cell
+        elif isinstance(grid, parcels.uxgrid.UxGrid):
+            self._point_in_cell = uxgrid_point_in_cell
         else:
-            raise NotImplementedError("SpatialHash only supports parcels.xgrid.XGrid grids at this time.")
+            raise ValueError("Expected `grid` to be a parcels.xgrid.XGrid or parcels.uxgrid.UxGrid")
 
         self._source_grid = grid
         self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
 
-        if self._source_grid._mesh == "spherical":
-            # Boundaries of the hash grid are the unit cube
-            self._xmin = -1.0
-            self._ymin = -1.0
-            self._zmin = -1.0
-            self._xmax = 1.0
-            self._ymax = 1.0
-            self._zmax = 1.0  # Compute the cell centers of the source grid (for now, assuming Xgrid)
-            lon = np.deg2rad(self._source_grid.lon)
-            lat = np.deg2rad(self._source_grid.lat)
-            x, y, z = _latlon_rad_to_xyz(lat, lon)
-            _xbound = np.stack(
-                (
-                    x[:-1, :-1],
-                    x[:-1, 1:],
-                    x[1:, 1:],
-                    x[1:, :-1],
-                ),
-                axis=-1,
-            )
-            _ybound = np.stack(
-                (
-                    y[:-1, :-1],
-                    y[:-1, 1:],
-                    y[1:, 1:],
-                    y[1:, :-1],
-                ),
-                axis=-1,
-            )
-            _zbound = np.stack(
-                (
-                    z[:-1, :-1],
-                    z[:-1, 1:],
-                    z[1:, 1:],
-                    z[1:, :-1],
-                ),
-                axis=-1,
-            )
-            # Compute centroid locations of each cells
-            self._xlow = np.min(_xbound, axis=-1)
-            self._xhigh = np.max(_xbound, axis=-1)
-            self._ylow = np.min(_ybound, axis=-1)
-            self._yhigh = np.max(_ybound, axis=-1)
-            self._zlow = np.min(_zbound, axis=-1)
-            self._zhigh = np.max(_zbound, axis=-1)
+        if isinstance(grid, parcels.xgrid.XGrid):
+            if self._source_grid._mesh == "spherical":
+                # Boundaries of the hash grid are the unit cube
+                self._xmin = -1.0
+                self._ymin = -1.0
+                self._zmin = -1.0
+                self._xmax = 1.0
+                self._ymax = 1.0
+                self._zmax = 1.0  # Compute the cell centers of the source grid (for now, assuming Xgrid)
+                lon = np.deg2rad(self._source_grid.lon)
+                lat = np.deg2rad(self._source_grid.lat)
+                x, y, z = _latlon_rad_to_xyz(lat, lon)
+                _xbound = np.stack(
+                    (
+                        x[:-1, :-1],
+                        x[:-1, 1:],
+                        x[1:, 1:],
+                        x[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                _ybound = np.stack(
+                    (
+                        y[:-1, :-1],
+                        y[:-1, 1:],
+                        y[1:, 1:],
+                        y[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                _zbound = np.stack(
+                    (
+                        z[:-1, :-1],
+                        z[:-1, 1:],
+                        z[1:, 1:],
+                        z[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                # Compute centroid locations of each cells
+                self._xlow = np.min(_xbound, axis=-1)
+                self._xhigh = np.max(_xbound, axis=-1)
+                self._ylow = np.min(_ybound, axis=-1)
+                self._yhigh = np.max(_ybound, axis=-1)
+                self._zlow = np.min(_zbound, axis=-1)
+                self._zhigh = np.max(_zbound, axis=-1)
 
-        else:
-            # Boundaries of the hash grid are the bounding box of the source grid
-            self._xmin = self._source_grid.lon.min()
-            self._xmax = self._source_grid.lon.max()
-            self._ymin = self._source_grid.lat.min()
-            self._ymax = self._source_grid.lat.max()
-            # setting min and max below is needed for mesh="flat"
-            self._zmin = 0.0
-            self._zmax = 0.0
-            x = self._source_grid.lon
-            y = self._source_grid.lat
+            else:
+                # Boundaries of the hash grid are the bounding box of the source grid
+                self._xmin = self._source_grid.lon.min()
+                self._xmax = self._source_grid.lon.max()
+                self._ymin = self._source_grid.lat.min()
+                self._ymax = self._source_grid.lat.max()
+                # setting min and max below is needed for mesh="flat"
+                self._zmin = 0.0
+                self._zmax = 0.0
+                x = self._source_grid.lon
+                y = self._source_grid.lat
 
-            _xbound = np.stack(
-                (
-                    x[:-1, :-1],
-                    x[:-1, 1:],
-                    x[1:, 1:],
-                    x[1:, :-1],
-                ),
-                axis=-1,
-            )
-            _ybound = np.stack(
-                (
-                    y[:-1, :-1],
-                    y[:-1, 1:],
-                    y[1:, 1:],
-                    y[1:, :-1],
-                ),
-                axis=-1,
-            )
-            # Compute centroid locations of each cells
-            self._xlow = np.min(_xbound, axis=-1)
-            self._xhigh = np.max(_xbound, axis=-1)
-            self._ylow = np.min(_ybound, axis=-1)
-            self._yhigh = np.max(_ybound, axis=-1)
-            self._zlow = np.zeros_like(self._xlow)
-            self._zhigh = np.zeros_like(self._xlow)
+                _xbound = np.stack(
+                    (
+                        x[:-1, :-1],
+                        x[:-1, 1:],
+                        x[1:, 1:],
+                        x[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                _ybound = np.stack(
+                    (
+                        y[:-1, :-1],
+                        y[:-1, 1:],
+                        y[1:, 1:],
+                        y[1:, :-1],
+                    ),
+                    axis=-1,
+                )
+                # Compute bounding box of each face
+                self._xlow = np.min(_xbound, axis=-1)
+                self._xhigh = np.max(_xbound, axis=-1)
+                self._ylow = np.min(_ybound, axis=-1)
+                self._yhigh = np.max(_ybound, axis=-1)
+                self._zlow = np.zeros_like(self._xlow)
+                self._zhigh = np.zeros_like(self._xlow)
+
+        elif isinstance(grid, parcels.uxgrid.UxGrid):
+            if self._source_grid._mesh == "spherical":
+                # Boundaries of the hash grid are the unit cube
+                self._xmin = -1.0
+                self._ymin = -1.0
+                self._zmin = -1.0
+                self._xmax = 1.0
+                self._ymax = 1.0
+                self._zmax = 1.0  # Compute the cell centers of the source grid (for now, assuming Xgrid)
+
+                # Reshape node coordinates to (nfaces, nnodes_per_face)
+                nids = self._source_grid.uxgrid.face_node_connectivity.values
+                lon = self._source_grid.uxgrid.node_lon[nids.ravel()].values.reshape(nids.shape)
+                lat = self._source_grid.uxgrid.node_lat[nids.ravel()].values.reshape(nids.shape)
+                x, y, z = _latlon_rad_to_xyz(np.deg2rad(lat), np.deg2rad(lon))
+                _xbound, _ybound, _zbound = _latlon_rad_to_xyz(np.deg2rad(lat), np.deg2rad(lon))
+
+                # Compute bounding box of each face
+                self._xlow = np.min(_xbound, axis=-1)
+                self._xhigh = np.max(_xbound, axis=-1)
+                self._ylow = np.min(_ybound, axis=-1)
+                self._yhigh = np.max(_ybound, axis=-1)
+                self._zlow = np.min(_zbound, axis=-1)
+                self._zhigh = np.max(_zbound, axis=-1)
+
+            else:
+                # Boundaries of the hash grid are the bounding box of the source grid
+                self._xmin = self._source_grid.uxgrid.node_lon.min().values
+                self._xmax = self._source_grid.uxgrid.node_lon.max().values
+                self._ymin = self._source_grid.uxgrid.node_lat.min().values
+                self._ymax = self._source_grid.uxgrid.node_lat.max().values
+                # setting min and max below is needed for mesh="flat"
+                self._zmin = 0.0
+                self._zmax = 0.0
+                # Reshape node coordinates to (nfaces, nnodes_per_face)
+                nids = self._source_grid.uxgrid.face_node_connectivity.values
+                lon = self._source_grid.uxgrid.node_lon[nids.ravel()].values.reshape(nids.shape)
+                lat = self._source_grid.uxgrid.node_lat[nids.ravel()].values.reshape(nids.shape)
+
+                # Compute bounding box of each face
+                self._xlow = np.atleast_2d(np.min(lon, axis=-1))
+                self._xhigh = np.atleast_2d(np.max(lon, axis=-1))
+                self._ylow = np.atleast_2d(np.min(lat, axis=-1))
+                self._yhigh = np.atleast_2d(np.max(lat, axis=-1))
+                self._zlow = np.zeros_like(self._xlow)
+                self._zhigh = np.zeros_like(self._xlow)
 
         # Generate the mapping from the hash indices to unstructured grid elements
         self._hash_table = self._initialize_hash_table()
@@ -371,17 +421,6 @@ class SpatialHash:
             i_best.reshape(query_codes.shape),
             coords_best.reshape((num_queries, coordinates.shape[1])),
         )
-
-
-def _latlon_rad_to_xyz(lat, lon):
-    """Converts Spherical latitude and longitude coordinates into Cartesian x,
-    y, z coordinates.
-    """
-    x = np.cos(lon) * np.cos(lat)
-    y = np.sin(lon) * np.cos(lat)
-    z = np.sin(lat)
-
-    return x, y, z
 
 
 def _dilate_bits(n):
