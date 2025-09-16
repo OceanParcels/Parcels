@@ -450,6 +450,7 @@ def test_nemo_curvilinear_fieldset():
             "Y": {"left": "y"},
         },
         periodic=False,
+        autoparse_metadata=False,
     )
     grid = XGrid(xgcm_grid, mesh="spherical")
 
@@ -534,6 +535,7 @@ def test_nemo_3D_curvilinear_fieldset(method):
             "T": {"center": "time"},
         },
         periodic=False,
+        autoparse_metadata=False,
     )
     grid = XGrid(xgcm_grid, mesh="spherical")
 

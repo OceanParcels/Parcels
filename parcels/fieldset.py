@@ -130,14 +130,12 @@ class FieldSet:
                correction for zonal velocity U near the poles.
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
-        da = xr.DataArray(
-            data=np.full((1, 1, 1, 1), value),
-        )
-        grid = XGrid(xgcm.Grid(da))
+        ds = xr.Dataset({name: (["time", "lat", "lon", "depth"], np.full((1, 1, 1, 1), value))})
+        grid = XGrid(xgcm.Grid(ds))
         self.add_field(
             Field(
                 name,
-                da,
+                ds[name],
                 grid,
                 interp_method=None,  # TODO : Need to define an interpolation method for constants
             )

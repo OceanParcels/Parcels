@@ -62,7 +62,7 @@ def test_indexing_nemo_curvilinear():
     ds = ds.isel({"time_counter": 0, "time": 0, "z_a": 0}, drop=True).rename(
         {"glamf": "lon", "gphif": "lat", "z": "depth"}
     )
-    xgcm_grid = xgcm.Grid(ds, coords={"X": {"left": "x"}, "Y": {"left": "y"}}, periodic=False)
+    xgcm_grid = xgcm.Grid(ds, coords={"X": {"left": "x"}, "Y": {"left": "y"}}, periodic=False, autoparse_metadata=False)
     grid = XGrid(xgcm_grid, mesh="spherical")
 
     # Test points on the NEMO 1/4 degree curvilinear grid
