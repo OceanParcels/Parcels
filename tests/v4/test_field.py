@@ -185,8 +185,8 @@ def test_field_constant_in_time():
 
     # Assert that the field can be evaluated at any time, and returns the same value
     time = np.datetime64("2000-01-01T00:00:00")
-    P1 = P.eval(time=time, z=10.0, y=30.0, x=30.0, applyConversion=False)
-    P2 = P.eval(time=time + np.timedelta64(1, "D"), z=10.0, y=30.0, x=30.0, applyConversion=False)
+    P1 = P.eval(time=time, z=[10.0], y=[30.0], x=[30.0], applyConversion=False)
+    P2 = P.eval(time=time + np.timedelta64(1, "D"), z=[10.0], y=[30.0], x=[30.0], applyConversion=False)
     assert np.isclose(P1, P2)
 
 

@@ -138,12 +138,12 @@ class SpatialHash:
                 _xbound, _ybound, _zbound = _latlon_rad_to_xyz(np.deg2rad(lat), np.deg2rad(lon))
 
                 # Compute bounding box of each face
-                self._xlow = np.min(_xbound, axis=-1)
-                self._xhigh = np.max(_xbound, axis=-1)
-                self._ylow = np.min(_ybound, axis=-1)
-                self._yhigh = np.max(_ybound, axis=-1)
-                self._zlow = np.min(_zbound, axis=-1)
-                self._zhigh = np.max(_zbound, axis=-1)
+                self._xlow = np.atleast_2d(np.min(_xbound, axis=-1))
+                self._xhigh = np.atleast_2d(np.max(_xbound, axis=-1))
+                self._ylow = np.atleast_2d(np.min(_ybound, axis=-1))
+                self._yhigh = np.atleast_2d(np.max(_ybound, axis=-1))
+                self._zlow = np.atleast_2d(np.min(_zbound, axis=-1))
+                self._zhigh = np.atleast_2d(np.max(_zbound, axis=-1))
 
             else:
                 # Boundaries of the hash grid are the bounding box of the source grid
