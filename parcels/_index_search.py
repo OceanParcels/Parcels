@@ -154,10 +154,10 @@ def uxgrid_point_in_cell(grid, y: np.ndarray, x: np.ndarray, yi: np.ndarray, xi:
         Barycentric coordinates of the points within their respective cells.
     """
     if grid._mesh == "spherical":
-        # lon_rad = np.deg2rad(grid.lon.values)
-        # lat_rad = np.deg2rad(grid.lat.values)
-        # x_cart, y_cart, z_cart = _latlon_rad_to_xyz(lat_rad, lon_rad)
-        # points = np.column_stack((x_cart.flatten(), y_cart.flatten(), z_cart.flatten()))
+        lon_rad = np.deg2rad(x)
+        lat_rad = np.deg2rad(y)
+        x_cart, y_cart, z_cart = _latlon_rad_to_xyz(lat_rad, lon_rad)
+        points = np.column_stack((x_cart.flatten(), y_cart.flatten(), z_cart.flatten()))
 
         # Get the vertex indices for each face
         nids = grid.uxgrid.face_node_connectivity[yi].values
@@ -178,7 +178,7 @@ def uxgrid_point_in_cell(grid, y: np.ndarray, x: np.ndarray, yi: np.ndarray, xi:
             ),
             axis=-1,
         )
-    points = np.stack((x, y))
+        points = np.stack((x, y))
 
     M = len(points)
 
