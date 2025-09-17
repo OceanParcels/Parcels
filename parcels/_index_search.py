@@ -77,6 +77,30 @@ def curvilinear_point_in_cell(grid, y: np.ndarray, x: np.ndarray, yi: np.ndarray
 def _search_indices_curvilinear_2d(
     grid: XGrid, y: np.ndarray, x: np.ndarray, yi: np.ndarray | None = None, xi: np.ndarray | None = None
 ):
+    """Searches a grid for particle locations in 2D curvilinear coordinates.
+
+    Parameters
+    ----------
+    grid : XGrid
+        The curvilinear grid to search within.
+    y : np.ndarray
+        Array of latitude-coordinates of the points to locate.
+    x : np.ndarray
+        Array of longitude-coordinates of the points to locate.
+    yi : np.ndarray | None, optional
+        Array of initial guesses for the j indices of the points to locate.
+    xi : np.ndarray | None, optional
+        Array of initial guesses for the i indices of the points to locate.
+
+    Returns
+    -------
+    tuple
+        A tuple containing four elements:
+        - yi (np.ndarray): Array of found j-indices corresponding to the input coordinates.
+        - eta (np.ndarray): Array of barycentric coordinates in the j-direction within the found grid cells.
+        - xi (np.ndarray): Array of found i-indices corresponding to the input cooordinates.
+        - xsi (np.ndarray): Array of barycentric coordinates in the i-direction within the found grid cells.
+    """
     if np.any(xi):
         # If an initial guess is provided, we first perform a point in cell check for all guessed indices
         is_in_cell, coords = curvilinear_point_in_cell(grid, y, x, yi, xi)
