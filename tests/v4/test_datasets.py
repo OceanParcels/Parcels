@@ -1,4 +1,5 @@
-from parcels import xgcm
+import xgcm
+
 from parcels._datasets.structured.generic import datasets
 
 

@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 import xarray as xr
+import xgcm
 
 from parcels._datasets.structured.generic import datasets
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels.field import Field
 from parcels.tools.exampledata_utils import download_example_dataset
-from parcels.xgcm import Grid
 from parcels.xgrid import XGrid
 
 
@@ -62,7 +62,7 @@ def test_indexing_nemo_curvilinear():
     ds = ds.isel({"time_counter": 0, "time": 0, "z_a": 0}, drop=True).rename(
         {"glamf": "lon", "gphif": "lat", "z": "depth"}
     )
-    xgcm_grid = Grid(ds, coords={"X": {"left": "x"}, "Y": {"left": "y"}}, periodic=False)
+    xgcm_grid = xgcm.Grid(ds, coords={"X": {"left": "x"}, "Y": {"left": "y"}}, periodic=False, autoparse_metadata=False)
     grid = XGrid(xgcm_grid, mesh="spherical")
 
     # Test points on the NEMO 1/4 degree curvilinear grid
