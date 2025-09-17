@@ -212,13 +212,14 @@ class Field:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        # if particle is None:
-        _ei = None
-        # else:
-        #    _ei = particle.ei[self.igrid]
+        if particles is None:
+            _ei = None
+        else:
+            _ei = particles.ei[:, self.igrid]
 
         tau, ti = _search_time_index(self, time)
         position = self.grid.search(z, y, x, ei=_ei)
+        _update_particles_ei(particles, position, self)
         _update_particle_states_position(particles, position)
 
         value = self._interp_method(self, ti, position, tau, time, z, y, x)
@@ -251,6 +252,7 @@ class VectorField:
         self.V = V
         self.W = W
         self.grid = U.grid
+        self.igrid = U.igrid
 
         if W is None:
             _assert_same_time_interval((U, V))
@@ -294,13 +296,14 @@ class VectorField:
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        # if particle is None:
-        _ei = None
-        # else:
-        #    _ei = particle.ei[self.igrid]
+        if particles is None:
+            _ei = None
+        else:
+            _ei = particles.ei[:, self.igrid]
 
         tau, ti = _search_time_index(self.U, time)
         position = self.grid.search(z, y, x, ei=_ei)
+        _update_particles_ei(particles, position, self)
         _update_particle_states_position(particles, position)
 
         if self._vector_interp_method is None:
@@ -337,6 +340,26 @@ class VectorField:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
             return _deal_with_errors(error, key, vector_type=self.vector_type)
+
+
+def _update_particles_ei(particles, position, field):
+    """Update the element index (ei) of the particles"""
+    if particles is not None:
+        if isinstance(field.grid, XGrid):
+            particles.ei[:, field.igrid] = field.grid.ravel_index(
+                {
+                    "X": position["X"][0],
+                    "Y": position["Y"][0],
+                    "Z": position["Z"][0],
+                }
+            )
+        elif isinstance(field.grid, UxGrid):
+            particles.ei[:, field.igrid] = field.grid.ravel_index(
+                {
+                    "Z": position["Z"][0],
+                    "FACE": position["FACE"][0],
+                }
+            )
 
 
 def _update_particle_states_position(particles, position):

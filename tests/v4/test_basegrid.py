@@ -35,7 +35,7 @@ class TestGrid(BaseGrid):
 def test_basegrid_ravel_unravel_index(grid):
     axes = grid.axes
     dimensionalities = (grid.get_axis_dim(axis) for axis in axes)
-    all_possible_axis_indices = itertools.product(*[range(dim) for dim in dimensionalities])
+    all_possible_axis_indices = itertools.product(*[np.arange(dim)[:, np.newaxis] for dim in dimensionalities])
 
     encountered_eis = []
 
@@ -45,7 +45,7 @@ def test_basegrid_ravel_unravel_index(grid):
         ei = grid.ravel_index(axis_indices)
         axis_indices_test = grid.unravel_index(ei)
         assert axis_indices_test == axis_indices
-        encountered_eis.append(ei)
+        encountered_eis.append(ei[0])
 
     encountered_eis = sorted(encountered_eis)
     assert len(set(encountered_eis)) == len(encountered_eis), "Raveled indices are not unique."

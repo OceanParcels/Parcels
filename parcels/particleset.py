@@ -6,13 +6,11 @@ from typing import Literal
 
 import numpy as np
 import xarray as xr
-from scipy.spatial import KDTree
 from tqdm import tqdm
 
 from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
 from parcels._reprs import particleset_repr
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.basegrid import GridType
 from parcels.kernel import Kernel
 from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.tools.converters import convert_to_flat_array
@@ -305,28 +303,17 @@ class ParticleSet:
         neighbor_ids = self._data["trajectory"][neighbor_idx]
         return neighbor_ids
 
-    # TODO: This method is only tested in tutorial notebook. Add unit test?
     def populate_indices(self):
-        """Pre-populate guesses of particle ei (element id) indices using a kdtree.
-
-        This is only intended for curvilinear grids, where the initial index search
-        may be quite expensive.
-        """
+        """Pre-populate guesses of particle ei (element id) indices"""
         for i, grid in enumerate(self.fieldset.gridset):
-            if grid._gtype not in [GridType.CurvilinearZGrid, GridType.CurvilinearSGrid]:
-                continue
-
-            tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
-            IN = np.all(~np.isnan(tree_data), axis=1)
-            tree = KDTree(tree_data[IN, :])
-            # stack all the particle positions for a single query
-            pts = np.stack((self._data["lon"], self._data["lat"]), axis=-1)
-            # query datatype needs to match tree datatype
-            _, idx_nan = tree.query(pts.astype(tree_data.dtype))
-
-            idx = np.where(IN)[0][idx_nan]
-
-            self._data["ei"][:, i] = idx  # assumes that we are in the surface layer (zi=0)
+            position = grid.search(self.depth, self.lat, self.lon)
+            self._data["ei"][:, i] = grid.ravel_index(
+                {
+                    "X": position["X"][0],
+                    "Y": position["Y"][0],
+                    "Z": position["Z"][0],
+                }
+            )
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, **kwargs):
