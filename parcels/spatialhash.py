@@ -123,17 +123,17 @@ class SpatialHash:
         elif isinstance(grid, parcels.uxgrid.UxGrid):
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
-                self._xmin = -1.0
-                self._ymin = -1.0
-                self._zmin = -1.0
-                self._xmax = 1.0
-                self._ymax = 1.0
-                self._zmax = 1.0  # Compute the cell centers of the source grid (for now, assuming Xgrid)
+                self._xmin = self._source_grid.uxgrid.node_x.min().values
+                self._xmax = self._source_grid.uxgrid.node_x.max().values
+                self._ymin = self._source_grid.uxgrid.node_y.min().values
+                self._ymax = self._source_grid.uxgrid.node_y.max().values
+                self._zmin = self._source_grid.uxgrid.node_z.min().values
+                self._zmax = self._source_grid.uxgrid.node_z.max().values
 
                 # Reshape node coordinates to (nfaces, nnodes_per_face)
                 nids = self._source_grid.uxgrid.face_node_connectivity.values
-                lon = self._source_grid.uxgrid.node_lon[nids.ravel()].values.reshape(nids.shape)
-                lat = self._source_grid.uxgrid.node_lat[nids.ravel()].values.reshape(nids.shape)
+                lon = self._source_grid.uxgrid.node_lon.values[nids]
+                lat = self._source_grid.uxgrid.node_lat.values[nids]
                 x, y, z = _latlon_rad_to_xyz(np.deg2rad(lat), np.deg2rad(lon))
                 _xbound, _ybound, _zbound = _latlon_rad_to_xyz(np.deg2rad(lat), np.deg2rad(lon))
 
@@ -156,8 +156,8 @@ class SpatialHash:
                 self._zmax = 0.0
                 # Reshape node coordinates to (nfaces, nnodes_per_face)
                 nids = self._source_grid.uxgrid.face_node_connectivity.values
-                lon = self._source_grid.uxgrid.node_lon[nids.ravel()].values.reshape(nids.shape)
-                lat = self._source_grid.uxgrid.node_lat[nids.ravel()].values.reshape(nids.shape)
+                lon = self._source_grid.uxgrid.node_lon.values[nids]
+                lat = self._source_grid.uxgrid.node_lat.values[nids]
 
                 # Compute bounding box of each face
                 self._xlow = np.atleast_2d(np.min(lon, axis=-1))
@@ -211,6 +211,7 @@ class SpatialHash:
         nz = zqhigh - zqlow + 1
         num_hash_per_face = nx * ny * nz
         total_hash_entries = np.sum(num_hash_per_face)
+        # Preallocate output arrays
         morton_codes = np.zeros(total_hash_entries, dtype=np.uint32)
 
         # Compute the j, i indices corresponding to each hash entry
