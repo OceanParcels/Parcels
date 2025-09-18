@@ -1,3 +1,4 @@
+import copy
 from typing import Any
 
 import numpy as np
@@ -183,3 +184,34 @@ def compare_datasets(ds1, ds2, ds1_name="Dataset 1", ds2_name="Dataset 2", verbo
             print(f"      {ds1_name}: {var1.dims}")
             print(f"      {ds2_name}: {var2.dims}")
     verbose_print("=" * 30 + " End of Comparison " + "=" * 30)
+
+
+def from_xarray_dataset_dict(d) -> xr.Dataset:
+    """Reconstruct a dataset with zero data from the output of ``xarray.Dataset.to_dict(data=False)``.
+
+    Useful in issues helping users debug fieldsets - sharing dataset schemas with associated metadata
+    without sharing the data itself.
+
+    Example
+    -------
+    >>> import xarray as xr
+    >>> from parcels._datasets.structured.generic import datasets
+    >>> ds = datasets['ds_2d_left']
+    >>> d = ds.to_dict(data=False)
+    >>> ds2 = from_xarray_dataset_dict(d)
+    """
+    return xr.Dataset.from_dict(_fill_with_dummy_data(copy.deepcopy(d)))
+
+
+def _fill_with_dummy_data(d: dict[str, dict]):
+    assert isinstance(d, dict)
+    if "dtype" in d:
+        d["data"] = np.zeros(d["shape"], dtype=d["dtype"])
+        del d["dtype"]
+        del d["shape"]
+
+    for k in d:
+        if isinstance(d[k], dict):
+            d[k] = _fill_with_dummy_data(d[k])
+
+    return d
