@@ -123,13 +123,12 @@ class SpatialHash:
         elif isinstance(grid, parcels.uxgrid.UxGrid):
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
-                self._xmin = self._source_grid.uxgrid.node_x.min().values
-                self._xmax = self._source_grid.uxgrid.node_x.max().values
-                self._ymin = self._source_grid.uxgrid.node_y.min().values
-                self._ymax = self._source_grid.uxgrid.node_y.max().values
-                self._zmin = self._source_grid.uxgrid.node_z.min().values
-                self._zmax = self._source_grid.uxgrid.node_z.max().values
-
+                self._xmin = -1.0
+                self._ymin = -1.0
+                self._zmin = -1.0
+                self._xmax = 1.0
+                self._ymax = 1.0
+                self._zmax = 1.0  # Compute the cell centers of the source grid (for now, assuming Xgrid)
                 # Reshape node coordinates to (nfaces, nnodes_per_face)
                 nids = self._source_grid.uxgrid.face_node_connectivity.values
                 lon = self._source_grid.uxgrid.node_lon.values[nids]
@@ -200,17 +199,20 @@ class SpatialHash:
             self._zmax,
             self._bitwidth,
         )
-        xqlow = xqlow.ravel()
-        yqlow = yqlow.ravel()
-        zqlow = zqlow.ravel()
-        xqhigh = xqhigh.ravel()
-        yqhigh = yqhigh.ravel()
-        zqhigh = zqhigh.ravel()
-        nx = xqhigh - xqlow + 1
-        ny = yqhigh - yqlow + 1
-        nz = zqhigh - zqlow + 1
-        num_hash_per_face = nx * ny * nz
-        total_hash_entries = np.sum(num_hash_per_face)
+        xqlow = xqlow.ravel().astype(np.int32, copy=False)
+        yqlow = yqlow.ravel().astype(np.int32, copy=False)
+        zqlow = zqlow.ravel().astype(np.int32, copy=False)
+        xqhigh = xqhigh.ravel().astype(np.int32, copy=False)
+        yqhigh = yqhigh.ravel().astype(np.int32, copy=False)
+        zqhigh = zqhigh.ravel().astype(np.int32, copy=False)
+        nx = (xqhigh - xqlow + 1).astype(np.int32, copy=False)
+        ny = (yqhigh - yqlow + 1).astype(np.int32, copy=False)
+        nz = (zqhigh - zqlow + 1).astype(np.int32, copy=False)
+        num_hash_per_face = (nx * ny * nz).astype(
+            np.int32, copy=False
+        )  # Since nx, ny, nz are in the 10-bit range, their product fits in int32
+        total_hash_entries = int(num_hash_per_face.sum())
+
         # Preallocate output arrays
         morton_codes = np.zeros(total_hash_entries, dtype=np.uint32)
 
