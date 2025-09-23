@@ -4,6 +4,7 @@ import functools
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+import cf_xarray  # noqa: F401
 import numpy as np
 import xarray as xr
 import xgcm
@@ -174,6 +175,47 @@ class FieldSet:
                 grids.append(field.grid)
         return grids
 
+    def from_copernicusmarine(ds: xr.Dataset):
+        ds = ds.copy()
+
+        expected_axes = set("XYZT")  # TODO: Update after we have support for 2D spatial fields
+        if missing_axes := (expected_axes - set(ds.cf.axes)):
+            raise ValueError(
+                f"Dataset missing axes {missing_axes} to have coordinates for all {expected_axes} axes according to CF conventions."
+            )
+
+        ds = _rename_coords_copernicusmarine(ds)
+        grid = XGrid(
+            xgcm.Grid(
+                ds,
+                coords={
+                    "X": {
+                        "left": "lon",
+                    },
+                    "Y": {
+                        "left": "lat",
+                    },
+                    "Z": {
+                        "left": "depth",
+                    },
+                    "T": {
+                        "center": "time",
+                    },
+                },
+                autoparse_metadata=False,
+            )
+        )
+        fields = {}
+        for varname in ds.data_vars:
+            fields[varname] = Field(varname, ds[varname], grid)
+
+        if "U" in fields and "V" in fields:
+            if "W" in fields:
+                fields["UVW"] = VectorField("UVW", fields["U"], fields["V"], fields["W"])
+            else:
+                fields["UV"] = VectorField("UV", fields["U"], fields["V"])
+        return FieldSet(list(fields.values()))
+
 
 class CalendarError(Exception):  # TODO: Move to a parcels errors module
     """Exception raised when the calendar of a field is not compatible with the rest of the Fields. The user should ensure that they only add fields to a FieldSet that have compatible CFtime calendars."""
@@ -206,3 +248,20 @@ def _datetime_to_msg(example_datetime: TimeLike) -> str:
 
 def _format_calendar_error_message(field: Field, reference_datetime: TimeLike) -> str:
     return f"Expected field {field.name!r} to have calendar compatible with datetime object {_datetime_to_msg(reference_datetime)}. Got field with calendar {_datetime_to_msg(field.time_interval.left)}. Have you considered using xarray to update the time dimension of the dataset to have a compatible calendar?"
+
+
+_COPERNICUS_MARINE_AXIS_VARNAMES = {
+    "X": "lon",
+    "Y": "lat",
+    "Z": "depth",
+    "T": "time",
+}
+
+
+def _rename_coords_copernicusmarine(ds):
+    try:
+        for axis, [coord] in ds.cf.axes.items():
+            ds = ds.rename({coord: _COPERNICUS_MARINE_AXIS_VARNAMES[axis]})
+    except ValueError as e:
+        raise ValueError(f"Multiple coordinates found for Copernicus dataset on axis '{axis}'. Check your data.") from e
+    return ds

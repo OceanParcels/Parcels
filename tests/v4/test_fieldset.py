@@ -5,9 +5,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels._datasets.structured.circulation_models import (
-    datasets as datasets_circulation_models,  # noqa: F401
-)  # just making sure the import works. Will eventually be used in tests
+from parcels._datasets.structured.circulation_models import datasets as datasets_circulation_models
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
@@ -216,3 +214,11 @@ def test_fieldset_grid_deduplication():
 def test_fieldset_add_field_after_pset():
     # ? Should it be allowed to add fields (normal or vector) after a ParticleSet has been initialized?
     ...
+
+
+def test_fieldset_from_copernicusmarine():
+    ds = datasets_circulation_models["ds_copernicusmarine_globcurrent"]
+    fieldset = FieldSet.from_copernicusmarine(ds.rename({"ve": "V", "ue": "U"}))
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "UV" in fieldset.fields
