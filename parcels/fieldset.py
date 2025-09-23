@@ -178,6 +178,27 @@ class FieldSet:
         return grids
 
     def from_copernicusmarine(ds: xr.Dataset):
+        """Create a FieldSet from a Copernicus Marine Service xarray.Dataset.
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+            xarray.Dataset as obtained from the copernicusmarine toolbox.
+
+        Returns
+        -------
+        FieldSet
+            FieldSet object containing the fields from the dataset that can be used for a Parcels simulation.
+
+        Notes
+        -----
+        See https://help.marine.copernicus.eu/en/collections/9080063-copernicus-marine-toolbox for more information on the copernicusmarine toolbox.
+        The toolbox to ingest data from most of the products on the Copernicus Marine Service (https://data.marine.copernicus.eu/products) into an xarray.Dataset.
+        You can use indexing and slicing to select a subset of the data before passing it to this function.
+        Note that most Parcels uses will require both U and V fields to be present in the dataset. This function will try to find out which variables in the dataset correspond to U and V.
+        To override the automatic detection, rename the appropriate variables in your dataset to 'U' and 'V' before passing it to this function.
+
+        """
         ds = ds.copy()
         ds = _discover_copernicusmarine_U_and_V(ds)
         expected_axes = set("XYZT")  # TODO: Update after we have support for 2D spatial fields
