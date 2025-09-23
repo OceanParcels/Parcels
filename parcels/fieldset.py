@@ -13,6 +13,7 @@ from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
+from parcels.tools.converters import Geographic, GeographicPolar
 from parcels.tools.loggers import logger
 from parcels.xgrid import XGrid
 
@@ -206,8 +207,15 @@ class FieldSet:
                 autoparse_metadata=False,
             )
         )
-        fields = {}
-        for varname in ds.data_vars:
+
+        U = Field("U", ds["U"], grid)
+        V = Field("V", ds["V"], grid)
+
+        U.units = GeographicPolar()
+        V.units = Geographic()
+
+        fields = {"U": U, "V": V}
+        for varname in set(ds.data_vars) - set(fields.keys()):
             fields[varname] = Field(varname, ds[varname], grid)
 
         if "U" in fields and "V" in fields:
