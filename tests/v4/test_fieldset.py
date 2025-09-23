@@ -216,8 +216,14 @@ def test_fieldset_add_field_after_pset():
     ...
 
 
-def test_fieldset_from_copernicusmarine(caplog):
-    ds = datasets_circulation_models["ds_copernicusmarine_globcurrent"]
+_COPERNICUS_DATASETS = [
+    datasets_circulation_models["ds_copernicusmarine"],
+    datasets_circulation_models["ds_copernicusmarine_globcurrent"],
+]
+
+
+@pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
+def test_fieldset_from_copernicusmarine(ds, caplog):
     fieldset = FieldSet.from_copernicusmarine(ds)
     assert "U" in fieldset.fields
     assert "V" in fieldset.fields
@@ -226,9 +232,14 @@ def test_fieldset_from_copernicusmarine(caplog):
     assert "renamed it to 'V'" in caplog.text
 
 
-def test_fieldset_from_copernicusmarine_no_logs(caplog):
-    ds = datasets_circulation_models["ds_copernicusmarine_globcurrent"]
-    fieldset = FieldSet.from_copernicusmarine(ds.rename({"ve": "V", "ue": "U"}))
+@pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
+def test_fieldset_from_copernicusmarine_no_logs(ds, caplog):
+    ds = ds.copy()
+    zeros = xr.zeros_like(list(ds.data_vars.values())[0])
+    ds["U"] = zeros
+    ds["V"] = zeros
+
+    fieldset = FieldSet.from_copernicusmarine(ds)
     assert "U" in fieldset.fields
     assert "V" in fieldset.fields
     assert "UV" in fieldset.fields
