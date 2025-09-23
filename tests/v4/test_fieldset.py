@@ -216,9 +216,20 @@ def test_fieldset_add_field_after_pset():
     ...
 
 
-def test_fieldset_from_copernicusmarine():
+def test_fieldset_from_copernicusmarine(caplog):
+    ds = datasets_circulation_models["ds_copernicusmarine_globcurrent"]
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "UV" in fieldset.fields
+    assert "renamed it to 'U'" in caplog.text
+    assert "renamed it to 'V'" in caplog.text
+
+
+def test_fieldset_from_copernicusmarine_no_logs(caplog):
     ds = datasets_circulation_models["ds_copernicusmarine_globcurrent"]
     fieldset = FieldSet.from_copernicusmarine(ds.rename({"ve": "V", "ue": "U"}))
     assert "U" in fieldset.fields
     assert "V" in fieldset.fields
     assert "UV" in fieldset.fields
+    assert caplog.text == ""

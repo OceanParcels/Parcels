@@ -13,6 +13,7 @@ from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
+from parcels.tools.loggers import logger
 from parcels.xgrid import XGrid
 
 if TYPE_CHECKING:
@@ -177,7 +178,7 @@ class FieldSet:
 
     def from_copernicusmarine(ds: xr.Dataset):
         ds = ds.copy()
-
+        ds = _discover_copernicusmarine_U_and_V(ds)
         expected_axes = set("XYZT")  # TODO: Update after we have support for 2D spatial fields
         if missing_axes := (expected_axes - set(ds.cf.axes)):
             raise ValueError(
@@ -264,4 +265,31 @@ def _rename_coords_copernicusmarine(ds):
             ds = ds.rename({coord: _COPERNICUS_MARINE_AXIS_VARNAMES[axis]})
     except ValueError as e:
         raise ValueError(f"Multiple coordinates found for Copernicus dataset on axis '{axis}'. Check your data.") from e
+    return ds
+
+
+def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
+    # Assumes that the dataset has U and V data
+
+    cf_standard_name_fallbacks = {
+        "U": ["eastward_sea_water_velocity_due_to_ekman_drift"],
+        "V": ["northward_sea_water_velocity_due_to_ekman_drift"],
+    }
+
+    for parcels_varname, fallbacks in cf_standard_name_fallbacks.items():
+        if parcels_varname in ds:
+            continue
+
+        for cf_standard_name in fallbacks:
+            if cf_standard_name in ds.cf.standard_names:
+                name = ds.cf[cf_standard_name].name
+                ds = ds.rename({name: parcels_varname})
+                logger.info(
+                    f"Found variable {name!r} with CF standard name {cf_standard_name!r} in dataset, renamed it to {parcels_varname!r} for Parcels simulation."
+                )
+                break
+        else:
+            raise ValueError(
+                f"Could not find variable {parcels_varname!r} in dataset, nor any of the fallback CF standard names {fallbacks}. Please rename the appropriate variables in your dataset to {parcels_varname!r} for Parcels simulation."
+            )
     return ds
