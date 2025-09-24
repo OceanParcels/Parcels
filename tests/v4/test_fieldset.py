@@ -218,7 +218,7 @@ def test_fieldset_add_field_after_pset():
 
 _COPERNICUS_DATASETS = [
     datasets_circulation_models["ds_copernicusmarine"],
-    datasets_circulation_models["ds_copernicusmarine_globcurrent"],
+    datasets_circulation_models["ds_copernicusmarine_waves"],
 ]
 
 

@@ -88,28 +88,34 @@ def _copernicusmarine():
     )
 
 
-def _copernicusmarine_globcurrent():
+def _copernicusmarine_waves():
     """Copernicus Marine Service GlobCurrent dataset (MULTIOBS_GLO_PHY_MYNRT_015_003)"""
     return xr.Dataset(
         {
-            "ue": (
+            "VSDX": (
                 ["time", "depth", "latitude", "longitude"],
                 np.random.rand(T, Z, Y, X),
                 {
-                    "units": "m/s",
-                    "standard_name": "eastward_sea_water_velocity_due_to_ekman_drift",
-                    "long_name": "Depth Ekman driven velocity : zonal component",
-                    "grid_mapping": "crs",
+                    "units": "m s-1",
+                    "standard_name": "sea_surface_wave_stokes_drift_x_velocity",
+                    "long_name": "Stokes drift U",
+                    "WMO_code": 215,
+                    "cell_methods": "time:point area:mean",
+                    "missing_value": -32767,
+                    "type_of_analysis": "spectral analysis",
                 },
             ),
-            "ve": (
+            "VSDY": (
                 ["time", "depth", "latitude", "longitude"],
                 np.random.rand(T, Z, Y, X),
                 {
-                    "units": "m/s",
-                    "standard_name": "northward_sea_water_velocity_due_to_ekman_drift",
-                    "long_name": "Depth Ekman driven velocity : meridional component",
-                    "grid_mapping": "crs",
+                    "units": "m s-1",
+                    "standard_name": "sea_surface_wave_stokes_drift_y_velocity",
+                    "long_name": "Stokes drift V",
+                    "WMO_code": 216,
+                    "cell_methods": "time:point area:mean",
+                    "missing_value": -32767,
+                    "type_of_analysis": "spectral analysis",
                 },
             ),
         },
@@ -1244,7 +1250,7 @@ def _CROCO_idealized():
 
 datasets = {
     "ds_copernicusmarine": _copernicusmarine(),
-    "ds_copernicusmarine_globcurrent": _copernicusmarine_globcurrent(),
+    "ds_copernicusmarine_waves": _copernicusmarine_waves(),
     "ds_NEMO_MOI_U": _NEMO_MOI_U(),
     "ds_NEMO_MOI_V": _NEMO_MOI_V(),
     "ds_CESM": _CESM(),
