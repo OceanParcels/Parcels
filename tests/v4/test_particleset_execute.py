@@ -13,6 +13,7 @@ from parcels import (
     StatusCode,
     UXPiecewiseConstantFace,
     VectorField,
+    particle,
 )
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
@@ -347,6 +348,21 @@ def test_changing_dt_in_kernel(fieldset):
     assert pset.lon == 3
     print(pset.dt)
     assert pset.dt == np.timedelta64(2, "s")
+
+
+def test_millisecond_dt_with_lorenz(fieldset):
+    def LorenzKernel(particles, fieldset): # pragma: no cover
+        sigma = 10.
+        rho = 28.
+        beta = 8./3.
+        particles.dlon += sigma * (particles.lat - particles.lon) * particles.dt
+        particles.dlat += (particles.lon * (rho - particles.depth) - particles.lat) * particles.dt
+        particles.ddepth += (particles.lon * particles.lat - beta * particles.depth) * particles.dt
+
+    pset = ParticleSet(fieldset, lon=np.zeros(1), lat=np.ones(1), depth=1.05 * np.ones(1))
+    pset.execute(LorenzKernel, dt=np.timedelta64(10, "ms"), runtime=np.timedelta64(10000, "ms"))
+
+    assert ... #assert some sort of test
 
 
 @pytest.mark.parametrize("npart", [1, 100])
