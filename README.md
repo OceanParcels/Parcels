@@ -9,6 +9,7 @@
 [![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/main/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/main?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
+[![LinkedIn](https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff)](https://www.linkedin.com/company/parcelscode/)
 
 > [!WARNING]
 > This branch is `v4-dev` - version 4 of Parcels which is in active development. See `main` (or the tags) to browse stable versions of Parcels.
