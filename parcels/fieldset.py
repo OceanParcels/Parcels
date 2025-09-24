@@ -300,39 +300,64 @@ def _rename_coords_copernicusmarine(ds):
 def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
     # Assumes that the dataset has U and V data
 
-    cf_standard_name_fallbacks = {
-        "U": [
-            "eastward_sea_water_velocity",  # GLOBAL_ANALYSISFORECAST_PHY_001_024, MEDSEA_ANALYSISFORECAST_PHY_006_013, BALTICSEA_ANALYSISFORECAST_PHY_003_006, BLKSEA_ANALYSISFORECAST_PHY_007_001, IBI_ANALYSISFORECAST_PHY_005_001, NWSHELF_ANALYSISFORECAST_PHY_004_013, MULTIOBS_GLO_PHY_MYNRT_015_003, MULTIOBS_GLO_PHY_W_3D_REP_015_007
-            "surface_geostrophic_eastward_sea_water_velocity",  # SEALEVEL_GLO_PHY_L4_MY_008_047, SEALEVEL_EUR_PHY_L4_NRT_008_060
-            "geostrophic_eastward_sea_water_velocity",  # MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012
-            "sea_surface_wave_stokes_drift_x_velocity",  # GLOBAL_ANALYSISFORECAST_WAV_001_027, MEDSEA_MULTIYEAR_WAV_006_012, ARCTIC_ANALYSIS_FORECAST_WAV_002_014, BLKSEA_ANALYSISFORECAST_WAV_007_003, IBI_ANALYSISFORECAST_WAV_005_005, NWSHELF_ANALYSISFORECAST_WAV_004_014
-            "sea_water_x_velocity",  # ARCTIC_ANALYSISFORECAST_PHY_002_001
-            "eastward_sea_water_velocity_vertical_mean_over_pelagic_layer",  # GLOBAL_MULTIYEAR_BGC_001_033
-        ],
-        "V": [
+    cf_UV_standard_name_fallbacks = [
+        (
+            "eastward_sea_water_velocity",
             "northward_sea_water_velocity",
+        ),  # GLOBAL_ANALYSISFORECAST_PHY_001_024, MEDSEA_ANALYSISFORECAST_PHY_006_013, BALTICSEA_ANALYSISFORECAST_PHY_003_006, BLKSEA_ANALYSISFORECAST_PHY_007_001, IBI_ANALYSISFORECAST_PHY_005_001, NWSHELF_ANALYSISFORECAST_PHY_004_013, MULTIOBS_GLO_PHY_MYNRT_015_003, MULTIOBS_GLO_PHY_W_3D_REP_015_007
+        (
+            "surface_geostrophic_eastward_sea_water_velocity",
             "surface_geostrophic_northward_sea_water_velocity",
+        ),  # SEALEVEL_GLO_PHY_L4_MY_008_047, SEALEVEL_EUR_PHY_L4_NRT_008_060
+        (
+            "geostrophic_eastward_sea_water_velocity",
             "geostrophic_northward_sea_water_velocity",
+        ),  # MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012
+        (
+            "sea_surface_wave_stokes_drift_x_velocity",
             "sea_surface_wave_stokes_drift_y_velocity",
-            "sea_water_y_velocity",
+        ),  # GLOBAL_ANALYSISFORECAST_WAV_001_027, MEDSEA_MULTIYEAR_WAV_006_012, ARCTIC_ANALYSIS_FORECAST_WAV_002_014, BLKSEA_ANALYSISFORECAST_WAV_007_003, IBI_ANALYSISFORECAST_WAV_005_005, NWSHELF_ANALYSISFORECAST_WAV_004_014
+        ("sea_water_x_velocity", "sea_water_y_velocity"),  # ARCTIC_ANALYSISFORECAST_PHY_002_001
+        (
+            "eastward_sea_water_velocity_vertical_mean_over_pelagic_layer",
             "northward_sea_water_velocity_vertical_mean_over_pelagic_layer",
-        ],
-    }
+        ),  # GLOBAL_MULTIYEAR_BGC_001_033
+    ]
 
-    for parcels_varname, fallbacks in cf_standard_name_fallbacks.items():
-        if parcels_varname in ds:
+    if "U" in ds and "V" in ds:
+        return ds  # U and V already present
+    elif "U" in ds or "V" in ds:
+        raise ValueError(
+            "Dataset has only one of the two variables 'U' and 'V'. Please rename the appropriate variable in your dataset to have both 'U' and 'V' for Parcels simulation."
+        )
+
+    for cf_standard_name_U, cf_standard_name_V in cf_UV_standard_name_fallbacks:
+        if cf_standard_name_U in ds.cf.standard_names:
+            if cf_standard_name_V not in ds.cf.standard_names:
+                raise ValueError(
+                    f"Dataset has variable with CF standard name {cf_standard_name_U!r}, "
+                    f"but not the matching variable with CF standard name {cf_standard_name_V!r}. "
+                    "Please rename the appropriate variables in your dataset to have both 'U' and 'V' for Parcels simulation."
+                )
+        else:
             continue
 
-        for cf_standard_name in fallbacks:
-            if cf_standard_name in ds.cf.standard_names:
-                name = ds.cf[cf_standard_name].name
-                ds = ds.rename({name: parcels_varname})
-                logger.info(
-                    f"Found variable {name!r} with CF standard name {cf_standard_name!r} in dataset, renamed it to {parcels_varname!r} for Parcels simulation."
-                )
-                break
-        else:
-            raise ValueError(
-                f"Could not find variable {parcels_varname!r} in dataset, nor any of the fallback CF standard names {fallbacks}. Please rename the appropriate variables in your dataset to {parcels_varname!r} for Parcels simulation."
-            )
+        ds = _ds_rename_using_standard_names(ds, {cf_standard_name_U: "U", cf_standard_name_V: "V"})
+        break
+    else:
+        raise ValueError(
+            f"Could not find variables 'U' and 'V' in dataset, nor any of the fallback CF standard names "
+            f"{cf_UV_standard_name_fallbacks}. Please rename the appropriate variables to 'U' and 'V' in "
+            "your dataset for the Parcels simulation."
+        )
+    return ds
+
+
+def _ds_rename_using_standard_names(ds: xr.Dataset, name_dict: dict[str, str]) -> xr.Dataset:
+    for standard_name, rename_to in name_dict.items():
+        name = ds.cf[standard_name].name
+        ds = ds.rename({name: rename_to})
+        logger.info(
+            f"cf_xarray found variable {name!r} with CF standard name {standard_name!r} in dataset, renamed it to {rename_to!r} for Parcels simulation."
+        )
     return ds
