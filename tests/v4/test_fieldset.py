@@ -5,9 +5,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from parcels._datasets.structured.circulation_models import (
-    datasets as datasets_circulation_models,  # noqa: F401
-)  # just making sure the import works. Will eventually be used in tests
+from parcels._datasets.structured.circulation_models import datasets as datasets_circulation_models
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
@@ -216,3 +214,33 @@ def test_fieldset_grid_deduplication():
 def test_fieldset_add_field_after_pset():
     # ? Should it be allowed to add fields (normal or vector) after a ParticleSet has been initialized?
     ...
+
+
+_COPERNICUS_DATASETS = [
+    datasets_circulation_models["ds_copernicusmarine"],
+    datasets_circulation_models["ds_copernicusmarine_waves"],
+]
+
+
+@pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
+def test_fieldset_from_copernicusmarine(ds, caplog):
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "UV" in fieldset.fields
+    assert "renamed it to 'U'" in caplog.text
+    assert "renamed it to 'V'" in caplog.text
+
+
+@pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
+def test_fieldset_from_copernicusmarine_no_logs(ds, caplog):
+    ds = ds.copy()
+    zeros = xr.zeros_like(list(ds.data_vars.values())[0])
+    ds["U"] = zeros
+    ds["V"] = zeros
+
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "UV" in fieldset.fields
+    assert caplog.text == ""
