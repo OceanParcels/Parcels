@@ -301,8 +301,22 @@ def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
     # Assumes that the dataset has U and V data
 
     cf_standard_name_fallbacks = {
-        "U": ["eastward_sea_water_velocity_due_to_ekman_drift"],
-        "V": ["northward_sea_water_velocity_due_to_ekman_drift"],
+        "U": [
+            "eastward_sea_water_velocity",  # GLOBAL_ANALYSISFORECAST_PHY_001_024, MEDSEA_ANALYSISFORECAST_PHY_006_013, BALTICSEA_ANALYSISFORECAST_PHY_003_006, BLKSEA_ANALYSISFORECAST_PHY_007_001, IBI_ANALYSISFORECAST_PHY_005_001, NWSHELF_ANALYSISFORECAST_PHY_004_013, MULTIOBS_GLO_PHY_MYNRT_015_003, MULTIOBS_GLO_PHY_W_3D_REP_015_007
+            "surface_geostrophic_eastward_sea_water_velocity",  # SEALEVEL_GLO_PHY_L4_MY_008_047, SEALEVEL_EUR_PHY_L4_NRT_008_060
+            "geostrophic_eastward_sea_water_velocity",  # MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012
+            "sea_surface_wave_stokes_drift_x_velocity",  # GLOBAL_ANALYSISFORECAST_WAV_001_027, MEDSEA_MULTIYEAR_WAV_006_012, ARCTIC_ANALYSIS_FORECAST_WAV_002_014, BLKSEA_ANALYSISFORECAST_WAV_007_003, IBI_ANALYSISFORECAST_WAV_005_005, NWSHELF_ANALYSISFORECAST_WAV_004_014
+            "sea_water_x_velocity",  # ARCTIC_ANALYSISFORECAST_PHY_002_001
+            "eastward_sea_water_velocity_vertical_mean_over_pelagic_layer",  # GLOBAL_MULTIYEAR_BGC_001_033
+        ],
+        "V": [
+            "northward_sea_water_velocity",
+            "surface_geostrophic_northward_sea_water_velocity",
+            "geostrophic_northward_sea_water_velocity",
+            "sea_surface_wave_stokes_drift_y_velocity",
+            "sea_water_y_velocity",
+            "northward_sea_water_velocity_vertical_mean_over_pelagic_layer",
+        ],
     }
 
     for parcels_varname, fallbacks in cf_standard_name_fallbacks.items():
