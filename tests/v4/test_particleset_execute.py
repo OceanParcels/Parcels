@@ -12,6 +12,7 @@ from parcels import (
     ParticleSet,
     StatusCode,
     UXPiecewiseConstantFace,
+    Variable,
     VectorField,
 )
 from parcels._datasets.structured.generated import simple_UV_dataset
@@ -148,6 +149,20 @@ def test_particleset_endtime_type(fieldset, endtime, expectation):
     pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
     with expectation:
         pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
+
+
+@pytest.mark.parametrize(
+    "dt", [np.timedelta64(1, "s"), np.timedelta64(1, "ms"), np.timedelta64(10, "ms"), np.timedelta64(1, "ns")]
+)
+def test_pset_execute_subsecond_dt(fieldset, dt):
+    def AddDt(particles, fieldset):  # pragma: no cover
+        dt = particles.dt / np.timedelta64(1, "s")
+        particles.added_dt += dt
+
+    pclass = Particle.add_variable(Variable("added_dt", dtype=np.float32, initial=0))
+    pset = ParticleSet(fieldset, pclass=pclass, lon=0, lat=0)
+    pset.execute(AddDt, runtime=dt * 10, dt=dt)
+    np.testing.assert_allclose(pset[0].added_dt, 10.0 * dt / np.timedelta64(1, "s"), atol=1e-5)
 
 
 def test_pset_remove_particle_in_kernel(fieldset):
