@@ -8,7 +8,7 @@ import pytest
 from parcels.basegrid import BaseGrid
 
 
-class TestGrid(BaseGrid):
+class MockGrid(BaseGrid):
     def __init__(self, axis_dim: dict[str, int]):
         self.axis_dim = axis_dim
 
@@ -26,16 +26,16 @@ class TestGrid(BaseGrid):
 @pytest.mark.parametrize(
     "grid",
     [
-        TestGrid({"Z": 10, "Y": 20, "X": 30}),
-        TestGrid({"Z": 5, "Y": 15}),
-        TestGrid({"Z": 8}),
-        TestGrid({"Z": 12, "FACE": 25}),
+        MockGrid({"Z": 10, "Y": 20, "X": 30}),
+        MockGrid({"Z": 5, "Y": 15}),
+        MockGrid({"Z": 8}),
+        MockGrid({"Z": 12, "FACE": 25}),
     ],
 )
 def test_basegrid_ravel_unravel_index(grid):
     axes = grid.axes
     dimensionalities = (grid.get_axis_dim(axis) for axis in axes)
-    all_possible_axis_indices = itertools.product(*[range(dim) for dim in dimensionalities])
+    all_possible_axis_indices = itertools.product(*[np.arange(dim)[:, np.newaxis] for dim in dimensionalities])
 
     encountered_eis = []
 
@@ -45,7 +45,7 @@ def test_basegrid_ravel_unravel_index(grid):
         ei = grid.ravel_index(axis_indices)
         axis_indices_test = grid.unravel_index(ei)
         assert axis_indices_test == axis_indices
-        encountered_eis.append(ei)
+        encountered_eis.append(ei[0])
 
     encountered_eis = sorted(encountered_eis)
     assert len(set(encountered_eis)) == len(encountered_eis), "Raveled indices are not unique."

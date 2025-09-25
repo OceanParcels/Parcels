@@ -162,16 +162,18 @@ def test_field_unstructured_z_linear():
     P = Field(name="p", data=ds.p, grid=grid, interp_method=UXPiecewiseConstantFace)
 
     # Test above first cell center - for piecewise constant, should return the depth of the first cell center
-    assert np.isclose(P.eval(time=ds.time[0].values, z=10.0, y=30.0, x=30.0, applyConversion=False), 55.555557)
+    assert np.isclose(P.eval(time=ds.time[0].values, z=[10.0], y=[30.0], x=[30.0], applyConversion=False), 55.555557)
     # Test below first cell center, but in the first layer  - for piecewise constant, should return the depth of the first cell center
-    assert np.isclose(P.eval(time=ds.time[0].values, z=65.0, y=30.0, x=30.0, applyConversion=False), 55.555557)
+    assert np.isclose(P.eval(time=ds.time[0].values, z=[65.0], y=[30.0], x=[30.0], applyConversion=False), 55.555557)
     # Test bottom layer  - for piecewise constant, should return the depth of the of the bottom layer cell center
-    assert np.isclose(P.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 944.44445801)
+    assert np.isclose(
+        P.eval(time=ds.time[0].values, z=[900.0], y=[30.0], x=[30.0], applyConversion=False), 944.44445801
+    )
 
     W = Field(name="W", data=ds.W, grid=grid, interp_method=UXPiecewiseLinearNode)
-    assert np.isclose(W.eval(time=ds.time[0].values, z=10.0, y=30.0, x=30.0, applyConversion=False), 10.0)
-    assert np.isclose(W.eval(time=ds.time[0].values, z=65.0, y=30.0, x=30.0, applyConversion=False), 65.0)
-    assert np.isclose(W.eval(time=ds.time[0].values, z=900.0, y=30.0, x=30.0, applyConversion=False), 900.0)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=[10.0], y=[30.0], x=[30.0], applyConversion=False), 10.0)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=[65.0], y=[30.0], x=[30.0], applyConversion=False), 65.0)
+    assert np.isclose(W.eval(time=ds.time[0].values, z=[900.0], y=[30.0], x=[30.0], applyConversion=False), 900.0)
 
 
 def test_field_constant_in_time():
@@ -183,8 +185,8 @@ def test_field_constant_in_time():
 
     # Assert that the field can be evaluated at any time, and returns the same value
     time = np.datetime64("2000-01-01T00:00:00")
-    P1 = P.eval(time=time, z=10.0, y=30.0, x=30.0, applyConversion=False)
-    P2 = P.eval(time=time + np.timedelta64(1, "D"), z=10.0, y=30.0, x=30.0, applyConversion=False)
+    P1 = P.eval(time=time, z=[10.0], y=[30.0], x=[30.0], applyConversion=False)
+    P2 = P.eval(time=time + np.timedelta64(1, "D"), z=[10.0], y=[30.0], x=[30.0], applyConversion=False)
     assert np.isclose(P1, P2)
 
 

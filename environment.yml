@@ -18,7 +18,9 @@ dependencies: #! Keep in sync with [tool.pixi.dependencies] in pyproject.toml
   - scikit-learn
   - zarr>=2.11.0,!=2.18.0,<3
   - uxarray>=2025.3.0
+  - xgcm>=0.9.0
   - pooch
+  - cf_xarray
 
   # Notebooks
   - trajan

@@ -218,10 +218,9 @@ def _fesom2_square_delaunay_antimeridian():
     All fields are placed on location consistent with FESOM2 variable placement conventions
     """
     lon, lat = np.meshgrid(
-        np.linspace(-210.0, -150.0, Nx, dtype=np.float32), np.linspace(0, 60.0, Nx, dtype=np.float32)
+        np.linspace(-210.0, -150.0, Nx, dtype=np.float32), np.linspace(-40.0, 40.0, Nx, dtype=np.float32)
     )
     # wrap longitude from [-180,180]
-    lon = np.where(lon < -180, lon + 360, lon)
     lon_flat = lon.ravel()
     lat_flat = lat.ravel()
     zf = np.linspace(0.0, 1000.0, 10, endpoint=True, dtype=np.float32)  # Vertical element faces
@@ -231,7 +230,10 @@ def _fesom2_square_delaunay_antimeridian():
 
     # mask any point on one of the boundaries
     mask = (
-        np.isclose(lon_flat, 0.0) | np.isclose(lon_flat, 60.0) | np.isclose(lat_flat, 0.0) | np.isclose(lat_flat, 60.0)
+        np.isclose(lon_flat, -210.0)
+        | np.isclose(lon_flat, -150.0)
+        | np.isclose(lat_flat, -40.0)
+        | np.isclose(lat_flat, 40.0)
     )
 
     boundary_points = np.flatnonzero(mask)

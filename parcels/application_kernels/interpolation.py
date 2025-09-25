@@ -657,8 +657,8 @@ def UXPiecewiseLinearNode(
     # The zi refers to the vertical layer index. The field in this routine are assumed to be defined at the vertical interface levels.
     # For interface zi, the interface indices are [zi, zi+1], so we need to use the values at zi and zi+1.
     # First, do barycentric interpolation in the lateral direction for each interface level
-    fzk = np.dot(field.data.values[ti, k, node_ids], bcoords)
-    fzkp1 = np.dot(field.data.values[ti, k + 1, node_ids], bcoords)
+    fzk = np.sum(field.data.values[ti, k, node_ids] * bcoords, axis=-1)
+    fzkp1 = np.sum(field.data.values[ti, k + 1, node_ids] * bcoords, axis=-1)
 
     # Then, do piecewise linear interpolation in the vertical direction
     zk = field.grid.z.values[k]

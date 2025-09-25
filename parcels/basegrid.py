@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from parcels.spatialhash import SpatialHash
+
 if TYPE_CHECKING:
     import numpy as np
 
@@ -69,7 +71,7 @@ class BaseGrid(ABC):
         """
         ...
 
-    def ravel_index(self, axis_indices: dict[str, int]) -> int:
+    def ravel_index(self, axis_indices: dict[str, np.ndarray]) -> np.ndarray:
         """
         Convert a dictionary of axis indices to a single encoded index (ei).
 
@@ -79,7 +81,7 @@ class BaseGrid(ABC):
 
         Parameters
         ----------
-        axis_indices : dict[str, int]
+        axis_indices : dict[str, np.ndarray(int)]
             A dictionary mapping axis names to their corresponding indices.
             The expected keys depend on the grid dimensionality and type:
 
@@ -90,8 +92,8 @@ class BaseGrid(ABC):
 
         Returns
         -------
-        int
-            The encoded index (ei) representing the unique grid cell or face.
+        np.ndarray(int)
+            The encoded indices (ei) representing the unique grid cells or faces.
 
         Raises
         ------
@@ -178,6 +180,32 @@ class BaseGrid(ABC):
         """
         ...
 
+    def get_spatial_hash(
+        self,
+        reconstruct=False,
+    ):
+        """Get the SpatialHash data structure of this Grid that allows for
+        fast face search queries. Face searches are used to find the faces that
+        a list of points, in spherical coordinates, are contained within.
+
+        Parameters
+        ----------
+        global_grid : bool, default=False
+            If true, the hash grid is constructed using the domain [-pi,pi] x [-pi,pi]
+        reconstruct : bool, default=False
+            If true, reconstructs the spatial hash
+
+        Returns
+        -------
+        self._spatialhash : parcels.spatialhash.SpatialHash
+            SpatialHash instance
+
+        """
+        if self._spatialhash is None or reconstruct:
+            self._spatialhash = SpatialHash(self)
+
+        return self._spatialhash
+
 
 def _unravel(dims, ei):
     """
@@ -204,13 +232,13 @@ def _unravel(dims, ei):
     """
     strides = np.cumprod(dims[::-1])[::-1]
 
-    indices = np.empty(len(dims), dtype=int)
+    indices = np.empty((len(dims), len(ei)), dtype=int)
 
     for i in range(len(dims) - 1):
-        indices[i] = ei // strides[i + 1]
+        indices[i, :] = ei // strides[i + 1]
         ei = ei % strides[i + 1]
 
-    indices[-1] = ei
+    indices[-1, :] = ei
     return indices
 
 
