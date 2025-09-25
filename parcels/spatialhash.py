@@ -339,7 +339,11 @@ class SpatialHash:
         pos = np.searchsorted(keys, query_codes)  # pos is shape (num_queries,)
 
         # Valid hits: inside range with finite query coordinates and query codes give exact morton code match.
-        valid = (pos < len(keys)) & np.isfinite(x) & np.isfinite(y) & (query_codes == keys[pos])
+        valid = (pos < len(keys)) & np.isfinite(x) & np.isfinite(y)
+        # Clip pos to valid range to avoid out-of-bounds indexing
+        pos = np.clip(pos, 0, len(keys) - 1)
+        # Further filter out false positives from searchsorted by checking for exact code match
+        valid[valid] &= query_codes[valid] == keys[pos[valid]]
 
         # Pre-allocate i and j indices of the best match for each query
         # Default values to -1 (no match case)
