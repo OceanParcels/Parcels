@@ -178,7 +178,7 @@ def test_pset_remove_index(fieldset, npart=100):
     indices_to_remove = [0, 10, 20]
     pset.remove_indices(indices_to_remove)
     assert pset.size == 97
-    assert not np.any(np.in1d(pset.trajectory, indices_to_remove))
+    assert not np.any(np.isin(pset.trajectory, indices_to_remove))
 
 
 def test_pset_iterator(fieldset):

@@ -38,7 +38,7 @@ def fieldset() -> FieldSet:
 @pytest.fixture
 def fieldset_no_time_interval() -> FieldSet:
     # i.e., no time variation
-    ds = datasets_structured["ds_2d_left"].isel(time=0).drop("time")
+    ds = datasets_structured["ds_2d_left"].isel(time=0).drop_vars("time")
 
     grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U (A grid)"], grid)
