@@ -45,6 +45,10 @@ EXAMPLE_DATA_FILES: dict[str, list[str]] = {
         f"{date.strftime('%Y%m%d')}000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc"
         for date in ([datetime(2002, 1, 1) + timedelta(days=x) for x in range(0, 365)] + [datetime(2003, 1, 1)])
     ],
+    "CopernicusMarine_data_for_Argo_tutorial": [
+        "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m_uo-vo_31.00E-33.00E_33.00S-30.00S_0.49-2225.08m_2024-01-01-2024-02-01.nc",
+        "cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m_thetao_31.00E-33.00E_33.00S-30.00S_0.49-2225.08m_2024-01-01-2024-02-01.nc",
+    ],
     "DecayingMovingEddy_data": [
         "decaying_moving_eddyU.nc",
         "decaying_moving_eddyV.nc",
