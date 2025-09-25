@@ -236,7 +236,8 @@ class FieldSet:
             fields["U"].units = GeographicPolar()
             fields["V"].units = Geographic()
 
-            if "W" in fields:
+            if "W" in ds.data_vars:
+                fields["W"] = Field("W", ds["W"], grid)
                 fields["UVW"] = VectorField("UVW", fields["U"], fields["V"], fields["W"])
             else:
                 fields["UV"] = VectorField("UV", fields["U"], fields["V"])
@@ -323,6 +324,13 @@ def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
             "northward_sea_water_velocity_vertical_mean_over_pelagic_layer",
         ),  # GLOBAL_MULTIYEAR_BGC_001_033
     ]
+    cf_W_standard_name_fallbacks = ["vertical_sea_water_velocity"]
+
+    if "W" not in ds:
+        for cf_standard_name_W in cf_W_standard_name_fallbacks:
+            if cf_standard_name_W in ds.cf.standard_names:
+                ds = _ds_rename_using_standard_names(ds, {cf_standard_name_W: "W"})
+                break
 
     if "U" in ds and "V" in ds:
         return ds  # U and V already present
