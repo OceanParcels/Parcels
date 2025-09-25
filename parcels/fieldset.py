@@ -15,7 +15,7 @@ from parcels._typing import Mesh
 from parcels.field import Field, VectorField
 from parcels.tools.converters import Geographic, GeographicPolar
 from parcels.tools.loggers import logger
-from parcels.xgrid import XGrid
+from parcels.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
 
 if TYPE_CHECKING:
     from parcels._typing import TimeLike
@@ -134,7 +134,7 @@ class FieldSet:
             2. flat: No conversion, lat/lon are assumed to be in m.
         """
         ds = xr.Dataset({name: (["time", "lat", "lon", "depth"], np.full((1, 1, 1, 1), value))})
-        grid = XGrid(xgcm.Grid(ds))
+        grid = XGrid(xgcm.Grid(ds, **_DEFAULT_XGCM_KWARGS))
         self.add_field(
             Field(
                 name,
@@ -226,6 +226,7 @@ class FieldSet:
                     },
                 },
                 autoparse_metadata=False,
+                **_DEFAULT_XGCM_KWARGS,
             )
         )
 
