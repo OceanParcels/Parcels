@@ -229,21 +229,21 @@ class FieldSet:
             )
         )
 
-        U = Field("U", ds["U"], grid)
-        V = Field("V", ds["V"], grid)
+        fields = {}
+        if "U" in ds.data_vars and "V" in ds.data_vars:
+            fields["U"] = Field("U", ds["U"], grid)
+            fields["V"] = Field("V", ds["V"], grid)
+            fields["U"].units = GeographicPolar()
+            fields["V"].units = Geographic()
 
-        U.units = GeographicPolar()
-        V.units = Geographic()
-
-        fields = {"U": U, "V": V}
-        for varname in set(ds.data_vars) - set(fields.keys()):
-            fields[varname] = Field(varname, ds[varname], grid)
-
-        if "U" in fields and "V" in fields:
             if "W" in fields:
                 fields["UVW"] = VectorField("UVW", fields["U"], fields["V"], fields["W"])
             else:
                 fields["UV"] = VectorField("UV", fields["U"], fields["V"])
+
+        for varname in set(ds.data_vars) - set(fields.keys()):
+            fields[varname] = Field(varname, ds[varname], grid)
+
         return FieldSet(list(fields.values()))
 
 
@@ -344,12 +344,6 @@ def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
 
         ds = _ds_rename_using_standard_names(ds, {cf_standard_name_U: "U", cf_standard_name_V: "V"})
         break
-    else:
-        raise ValueError(
-            f"Could not find variables 'U' and 'V' in dataset, nor any of the fallback CF standard names "
-            f"{cf_UV_standard_name_fallbacks}. Please rename the appropriate variables to 'U' and 'V' in "
-            "your dataset for the Parcels simulation."
-        )
     return ds
 
 

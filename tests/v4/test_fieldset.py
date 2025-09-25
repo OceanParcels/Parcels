@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import cf_xarray  # noqa: F401
 import cftime
 import numpy as np
 import pytest
@@ -230,6 +231,17 @@ def test_fieldset_from_copernicusmarine(ds, caplog):
     assert "UV" in fieldset.fields
     assert "renamed it to 'U'" in caplog.text
     assert "renamed it to 'V'" in caplog.text
+
+
+def test_fieldset_from_copernicusmarine_no_currents(caplog):
+    ds = datasets_circulation_models["ds_copernicusmarine"].cf.drop_vars(
+        ["eastward_sea_water_velocity", "northward_sea_water_velocity"]
+    )
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" not in fieldset.fields
+    assert "V" not in fieldset.fields
+    assert "UV" not in fieldset.fields
+    assert caplog.text == ""
 
 
 @pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
