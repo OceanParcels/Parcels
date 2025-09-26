@@ -21,6 +21,7 @@ from parcels._warnings import (
 )
 from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
+from parcels._logger import logger
 from parcels.tools import *
 
 _stdlib_warnings.warn(
