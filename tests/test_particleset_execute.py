@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 from parcels import (
-    AdvectionEE,
     Field,
     FieldSet,
     Particle,
@@ -14,6 +13,7 @@ from parcels import (
     Variable,
     VectorField,
 )
+from parcels.kernels import AdvectionEE
 from parcels.interpolators import UXPiecewiseConstantFace
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured

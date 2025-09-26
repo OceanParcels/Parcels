@@ -245,7 +245,7 @@ def test_radialrotation(npart=10):
     starttime = np.arange(np.timedelta64(0, "s"), npart * dt, dt)
 
     pset = parcels.ParticleSet(fieldset, lon=lon, lat=lat, time=starttime)
-    pset.execute(parcels.AdvectionRK4, endtime=np.timedelta64(10, "m"), dt=dt)
+    pset.execute(parcels.kernels.AdvectionRK4, endtime=np.timedelta64(10, "m"), dt=dt)
 
     theta = 2 * np.pi * (pset.time - starttime) / np.timedelta64(24 * 3600, "s")
     true_lon = (lon - 30.0) * np.cos(theta) + 30.0

@@ -7,7 +7,6 @@ import warnings as _warnings
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.kernel import Kernel
-from parcels.kernels import *
 from parcels.particle import (
     KernelParticle,  # ? remove?
     Particle,

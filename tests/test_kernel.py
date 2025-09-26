@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
+from parcels.kernels import AdvectionRK4
 from parcels import (
-    AdvectionRK4,
     Field,
     FieldSet,
     ParticleSet,
