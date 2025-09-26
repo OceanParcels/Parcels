@@ -180,12 +180,12 @@ def download_example_dataset(dataset: str, data_home=None):
     for file_name in odie.registry:
         if file_name.startswith(dataset):
             should_patch = dataset == "GlobCurrent_example_data"
-            odie.fetch(file_name, processor=v4_compat_patch if should_patch else None)
+            odie.fetch(file_name, processor=_v4_compat_patch if should_patch else None)
 
     return dataset_folder
 
 
-def v4_compat_patch(fname, action, pup):
+def _v4_compat_patch(fname, action, pup):
     """
     Patch the GlobCurrent example dataset to be compatible with v4.
 
