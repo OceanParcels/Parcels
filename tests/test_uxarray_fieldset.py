@@ -7,10 +7,12 @@ from parcels import (
     FieldSet,
     Particle,
     ParticleSet,
-    UXPiecewiseConstantFace,
-    UXPiecewiseLinearNode,
     VectorField,
     download_example_dataset,
+)
+from parcels.interpolators import (
+    UXPiecewiseConstantFace,
+    UXPiecewiseLinearNode,
 )
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid

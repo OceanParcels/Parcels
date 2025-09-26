@@ -11,7 +11,7 @@ import xarray as xr
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import default_repr
 from parcels._typing import VectorType
-from parcels.kernels.interpolation import (
+from parcels.interpolators import (
     UXPiecewiseLinearNode,
     XLinear,
     ZeroInterpolator,

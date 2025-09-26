@@ -8,7 +8,7 @@ from parcels._index_search import _search_time_index
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.kernels import AdvectionRK4_3D
-from parcels.kernels.interpolation import (
+from parcels.interpolators import (
     UXPiecewiseLinearNode,
     XFreeslip,
     XLinear,

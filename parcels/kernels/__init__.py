@@ -16,40 +16,22 @@ from .interaction import (
     MergeWithNearestNeighbor,
     AsymmetricAttraction,
 )
-from .interpolation import (
-    ZeroInterpolator,
-    ZeroInterpolator_Vector,
-    XLinear,
-    CGrid_Velocity,
-    CGrid_Tracer,
-    XFreeslip,
-    XPartialslip,
-    XNearest,
-    UXPiecewiseConstantFace,
-    UXPiecewiseLinearNode,
-)
 
-__all__ = [
-    "AdvectionRK4",
-    "AdvectionRK4_3D",
-    "AdvectionRK4_3D_CROCO",
-    "AdvectionEE",
-    "AdvectionRK45",
+
+__all__ = [  # noqa: RUF022
+    # advection
     "AdvectionAnalytical",
-    "AdvectionDiffusionM1",
+    "AdvectionEE",
+    "AdvectionRK4_3D_CROCO",
+    "AdvectionRK4_3D",
+    "AdvectionRK4",
+    "AdvectionRK45",
+    # advectiondiffusion
     "AdvectionDiffusionEM",
+    "AdvectionDiffusionM1",
     "DiffusionUniformKh",
-    "NearestNeighborWithinRange",
-    "MergeWithNearestNeighbor",
+    # interaction
     "AsymmetricAttraction",
-    "ZeroInterpolator",
-    "ZeroInterpolator_Vector",
-    "XLinear",
-    "CGrid_Velocity",
-    "CGrid_Tracer",
-    "XFreeslip",
-    "XPartialslip",
-    "XNearest",
-    "UXPiecewiseConstantFace",
-    "UXPiecewiseLinearNode",
+    "MergeWithNearestNeighbor",
+    "NearestNeighborWithinRange",
 ]

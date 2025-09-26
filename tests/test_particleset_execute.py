@@ -11,10 +11,10 @@ from parcels import (
     Particle,
     ParticleSet,
     StatusCode,
-    UXPiecewiseConstantFace,
     Variable,
     VectorField,
 )
+from parcels.interpolators import UXPiecewiseConstantFace
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
