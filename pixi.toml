@@ -16,7 +16,7 @@ docs = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
 tests-short = "pytest tests/test_advection.py"
 tests-exclude-v4 = "pytest -m 'not v4alpha and not v4future and not v4remove'"
 
-[dependencies]
+[dependencies] # keep section in sync with pyproject.toml dependencies
 python = ">=3.11"
 netcdf4 = ">=1.1.9"
 numpy = ">=1.9.1"
@@ -30,7 +30,7 @@ xgcm = ">=0.9.0"
 cf_xarray = "*"
 cftime = ">=1.3.1"
 scipy = ">=0.16.0" #? Not sure if we rely on scipy internally anymore...
-
+pooch = "*"
 
 [pypi-dependencies]
 parcels = { path = ".", editable = true }
