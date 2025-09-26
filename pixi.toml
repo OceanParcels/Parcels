@@ -1,8 +1,16 @@
-
-[project]
+[workspace]
 channels = ["conda-forge"]
-name = "parcels-dev"
+name = "Parcels"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+[environments]
+test-latest = { features = ["test"], solve-group = "test" }
+test-py311 = { features = ["test", "py311"] }
+test-py312 = { features = ["test", "py312"] }
+test-notebooks = { features = ["test", "notebooks"], solve-group = "test" }
+docs = { features = ["docs"], solve-group = "docs" }
+typing = { features = ["typing"], solve-group = "typing" }
+pre-commit = { features = ["pre-commit"], no-default-feature = true }
 
 [dependencies] # keep section in sync with pyproject.toml dependencies
 python = ">=3.11,<3.13"
@@ -29,14 +37,14 @@ python = "3.11.*"
 [feature.py312.dependencies]
 python = "3.12.*"
 
-[feature.tests.dependencies]
+[feature.test.dependencies]
 nbval = "*"
 pytest = "*"
 hypothesis = "*"
 pytest-html = "*"
 coverage = "*"
 
-[feature.tests.tasks]
+[feature.test.tasks]
 tests = "pytest"
 tests-notebooks = "pytest -v -s --nbval-lax -k 'argo' docs/examples"
 
@@ -65,7 +73,7 @@ docs-watch = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
 pre_commit = "*"
 
 [feature.pre-commit.tasks]
-pre-commit = "pre-commit"
+lint = "pre-commit run --all-files"
 
 [feature.typing.dependencies]
 mypy = "*"
@@ -73,4 +81,4 @@ lxml = "*" # in CI
 types-tqdm = "*"
 
 [feature.typing.tasks]
-mypy = "mypy parcels"
+typing = "mypy parcels"
