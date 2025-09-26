@@ -324,7 +324,7 @@ def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
             "northward_sea_water_velocity_vertical_mean_over_pelagic_layer",
         ),  # GLOBAL_MULTIYEAR_BGC_001_033
     ]
-    cf_W_standard_name_fallbacks = ["vertical_sea_water_velocity"]
+    cf_W_standard_name_fallbacks = ["upward_sea_water_velocity", "vertical_sea_water_velocity"]
 
     if "W" not in ds:
         for cf_standard_name_W in cf_W_standard_name_fallbacks:
