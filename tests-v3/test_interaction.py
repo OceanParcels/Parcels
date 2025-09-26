@@ -10,7 +10,7 @@ from parcels.interaction.neighborsearch import (
     KDTreeFlatNeighborSearch,
 )
 from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
-from parcels.kernels.advection import AdvectionRK4
+from parcels.kernels import AdvectionRK4
 from parcels.kernels.interaction import (
     AsymmetricAttraction,
     MergeWithNearestNeighbor,

@@ -12,13 +12,13 @@ from parcels import (
     ParticleSet,
     Variable,
 )
-from parcels.kernels.EOSseawaterproperties import (
+from parcels.kernels import (
     PressureFromLatDepth,
     PtempFromTemp,
     TempFromPtemp,
     UNESCODensity,
 )
-from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
+from parcels.kernels import PolyTEOS10_bsq
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh
 

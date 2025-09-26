@@ -7,7 +7,7 @@ from parcels._datasets.unstructured.generic import datasets as datasets_unstruct
 from parcels._index_search import _search_time_index
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
-from parcels.kernels.advection import AdvectionRK4_3D
+from parcels.kernels import AdvectionRK4_3D
 from parcels.kernels.interpolation import (
     UXPiecewiseLinearNode,
     XFreeslip,

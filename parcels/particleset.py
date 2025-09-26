@@ -12,7 +12,7 @@ from zarr.storage import DirectoryStore
 from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
 from parcels._reprs import particleset_repr
 from parcels.kernel import Kernel
-from parcels.kernels.advection import AdvectionRK4
+from parcels.kernels import AdvectionRK4
 from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
