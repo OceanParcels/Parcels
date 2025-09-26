@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from parcels.application_kernels.advection import (
+from parcels.basegrid import GridType
+from parcels.kernels.advection import (
     AdvectionAnalytical,
     AdvectionRK4,
     AdvectionRK45,
 )
-from parcels.basegrid import GridType
 from parcels.tools._helpers import _assert_same_function_signature
 from parcels.tools.statuscodes import (
     StatusCode,

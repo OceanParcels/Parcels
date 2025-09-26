@@ -5,8 +5,10 @@ import xarray as xr
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels._index_search import _search_time_index
-from parcels.application_kernels.advection import AdvectionRK4_3D
-from parcels.application_kernels.interpolation import (
+from parcels.field import Field, VectorField
+from parcels.fieldset import FieldSet
+from parcels.kernels.advection import AdvectionRK4_3D
+from parcels.kernels.interpolation import (
     UXPiecewiseLinearNode,
     XFreeslip,
     XLinear,
@@ -14,8 +16,6 @@ from parcels.application_kernels.interpolation import (
     XPartialslip,
     ZeroInterpolator,
 )
-from parcels.field import Field, VectorField
-from parcels.fieldset import FieldSet
 from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet

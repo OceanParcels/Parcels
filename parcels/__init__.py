@@ -4,11 +4,11 @@ __version__ = version
 
 import warnings as _warnings
 
-from parcels.application_kernels import *
 from parcels.field import *
 from parcels.fieldset import *
 from parcels.interaction import *
 from parcels.kernel import *
+from parcels.kernels import *
 from parcels.particle import *
 from parcels.particlefile import *
 from parcels.particleset import *

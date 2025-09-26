@@ -5,10 +5,10 @@ import pytest
 from scipy import stats
 
 from parcels._datasets.structured.generated import simple_UV_dataset
-from parcels.application_kernels import AdvectionDiffusionEM, AdvectionDiffusionM1, DiffusionUniformKh
-from parcels.application_kernels.interpolation import XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
+from parcels.kernels import AdvectionDiffusionEM, AdvectionDiffusionM1, DiffusionUniformKh
+from parcels.kernels.interpolation import XLinear
 from parcels.particle import Particle, Variable
 from parcels.particleset import ParticleSet
 from parcels.xgrid import XGrid

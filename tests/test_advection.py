@@ -12,11 +12,11 @@ from parcels._datasets.structured.generated import (
     simple_UV_dataset,
     stommel_gyre_dataset,
 )
-from parcels.application_kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
-from parcels.application_kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
-from parcels.application_kernels.interpolation import CGrid_Velocity, XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
+from parcels.kernels.advection import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
+from parcels.kernels.advectiondiffusion import AdvectionDiffusionEM, AdvectionDiffusionM1
+from parcels.kernels.interpolation import CGrid_Velocity, XLinear
 from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet

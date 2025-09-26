@@ -10,9 +10,9 @@ import xarray as xr
 
 import parcels
 from parcels._datasets.structured.generated import simple_UV_dataset
-from parcels.application_kernels.interpolation import XLinear
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
+from parcels.kernels.interpolation import XLinear
 from parcels.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
