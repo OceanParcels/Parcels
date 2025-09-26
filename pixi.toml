@@ -42,7 +42,7 @@ nbval = "*"
 pytest = "*"
 hypothesis = "*"
 pytest-html = "*"
-coverage = "*"
+pytest-cov = "*"
 
 [feature.test.tasks]
 tests = "pytest"
