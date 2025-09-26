@@ -16,45 +16,39 @@ docs = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
 tests-short = "pytest tests/test_advection.py"
 tests-exclude-v4 = "pytest -m 'not v4alpha and not v4future and not v4remove'"
 
-[dependencies] #! Keep in sync with environment.yml
+[dependencies]
 python = ">=3.11"
-ffmpeg = ">=3.2.3"
-jupyter = "*"
-matplotlib-base = ">=2.0.2"
 netcdf4 = ">=1.1.9"
 numpy = ">=1.9.1"
-psutil = "*"
-scipy = ">=0.16.0"
 tqdm = "*"
 xarray = ">=0.10.8"
 uxarray = ">=2025.3.0"
-cftime = ">=1.3.1"
 dask = ">=2.0"
 scikit-learn = "*"
 zarr = ">=2.11.0,!=2.18.0,<3"
 xgcm = ">=0.9.0"
+cf_xarray = "*"
+cftime = ">=1.3.1"
+scipy = ">=0.16.0" #? Not sure if we rely on scipy internally anymore...
 
-# Notebooks
-trajan = "*"
 
-# Testing
+[pypi-dependencies]
+parcels = { path = ".", editable = true }
+
+[feature.tests.dependencies]
 nbval = "*"
 pytest = "*"
 hypothesis = "*"
 pytest-html = "*"
 coverage = "*"
 
-# Typing
-mypy = "*"
-lxml = "*" # in CI
-types-tqdm = "*"
-types-psutil = "*"
+[feature.notebooks.dependencies]
+jupyter = "*"
+trajan = "*"
+matplotlib-base = ">=2.0.2"
 
-# Linting
-pre_commit = "*"
-
-# Docs
-ipython = "*"
+[feature.docs.dependencies]
+ipython = "*" #???
 numpydoc = "!=1.9.0"
 nbsphinx = "*"
 sphinx = "*"
@@ -63,7 +57,16 @@ pydata-sphinx-theme = "*"
 sphinx-autobuild = "*"
 myst-parser = "*"
 sphinxcontrib-mermaid = "*"
-cf_xarray = "*"
 
-[pypi-dependencies]
-parcels = { path = ".", editable = true }
+[feature.extra.dependencies]
+ffmpeg = ">=3.2.3" #??
+psutil = "*" #??
+
+[feature.pre-commit.dependencies]
+pre_commit = "*"
+
+[feature.typing.dependencies]
+mypy = "*"
+lxml = "*" # in CI
+types-tqdm = "*"
+types-psutil = "*"
