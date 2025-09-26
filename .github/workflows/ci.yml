@@ -17,28 +17,36 @@ defaults:
     shell: bash -el {0}
 
 jobs:
+  cache-pixi-lock:
+    uses: ./.github/workflows/cache-pixi-lock.yml
   unit-test:
-    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | unit tests"
+    name: "${{ matrix.os }} | pixi run -e ${{ matrix.environment }} tests"
     runs-on: ${{ matrix.os }}-latest
+    needs: [cache-pixi-lock]
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
-        python-version: ["3.12"]
+        environment: [test-latest, test-py311]
         include:
           - os: ubuntu
-            python-version: "3.11"
+            environment: "3.11"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Conda and parcels
-        uses: ./.github/actions/install-parcels
+      - uses: actions/checkout@v4
+      - name: Restore cached pixi lockfile
+        uses: actions/cache/restore@v4
+        id: restore-pixi-lock
         with:
-          environment-file: environment.yml
-          python-version: ${{ matrix.python-version }}
+          path: |
+            pixi.lock
+          key: ${{ needs.cache-pixi-lock.outputs.cache-id }}
+      - uses: prefix-dev/setup-pixi@v0.9.0
+        with:
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       - name: Unit test
         run: |
-          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html
+          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.environment }}_unit_test_report.html --self-contained-html
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1

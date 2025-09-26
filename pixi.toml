@@ -55,9 +55,9 @@ trajan = "*"
 matplotlib-base = ">=2.0.2"
 
 [feature.docs.dependencies]
-ipython = "*" #???
 numpydoc = "!=1.9.0"
 nbsphinx = "*"
+ipython = "*"
 sphinx = "*"
 pandoc = "*"
 pydata-sphinx-theme = "*"
