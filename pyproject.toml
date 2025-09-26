@@ -7,9 +7,9 @@ name = "parcels"
 description = "Framework for Lagrangian tracking of virtual ocean particles in the petascale age."
 readme = "README.md"
 dynamic = ["version"]
-authors = [{name = "oceanparcels.org team"}]
+authors = [{ name = "oceanparcels.org team" }]
 requires-python = ">=3.11,<3.13"
-license = {file = "LICENSE.md"}
+license = { file = "LICENSE.md" }
 classifiers = [
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3.11",
@@ -72,58 +72,58 @@ line-length = 120
 
 [tool.ruff.lint]
 select = [
-    "D",  # pydocstyle
-    "E",  # Error
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # Bugbear
-    "UP", # pyupgrade
-    "LOG", # logging
-    "ICN", # import conventions
-    "G", # logging-format
-    "RUF", # ruff
-    "ISC001", # single-line-implicit-string-concatenation
-    "TID", # flake8-tidy-imports
-    "T100", # Checks for the presence of debugger calls and imports
+  "D", # pydocstyle
+  "E", # Error
+  "F", # pyflakes
+  "I", # isort
+  "B", # Bugbear
+  "UP", # pyupgrade
+  "LOG", # logging
+  "ICN", # import conventions
+  "G", # logging-format
+  "RUF", # ruff
+  "ISC001", # single-line-implicit-string-concatenation
+  "TID", # flake8-tidy-imports
+  "T100", # Checks for the presence of debugger calls and imports
 ]
 
 ignore = [
-    # line too long (82 > 79 characters)
-    "E501",
-    # ‘from module import *’ used; unable to detect undefined names
-    "F403",
-    # Mutable class attributes should be annotated with `typing.ClassVar`
-    "RUF012",
-    # Consider `(slice(2), *block)` instead of concatenation
-    "RUF005",
-    # Prefer `next(iter(variable.items()))` over single element slice
-    "RUF015",
-    # Use `X | Y` in `isinstance` (see https://github.com/home-assistant/core/issues/123850)
-    "UP038",
-    "RUF046", # Value being cast to `int` is already an integer
+  # line too long (82 > 79 characters)
+  "E501",
+  # ‘from module import *’ used; unable to detect undefined names
+  "F403",
+  # Mutable class attributes should be annotated with `typing.ClassVar`
+  "RUF012",
+  # Consider `(slice(2), *block)` instead of concatenation
+  "RUF005",
+  # Prefer `next(iter(variable.items()))` over single element slice
+  "RUF015",
+  # Use `X | Y` in `isinstance` (see https://github.com/home-assistant/core/issues/123850)
+  "UP038",
+  "RUF046", # Value being cast to `int` is already an integer
 
-    # TODO: ignore for now (requires more work). Remove ignore once fixed
-    # Missing docstring in public module
-    "D100",
-    # Missing docstring in public class
-    "D101",
-    # Missing docstring in public method
-    "D102",
-    # Missing docstring in public function
-    "D103",
-    # Missing docstring in public package
-    "D104",
-    # Missing docstring in magic method
-    "D105",
-    # Missing docstring in __init__
-    "D400",
-    # First line should be in imperative mood (requires writing of summaries)
-    "D401",
-    # First word of the docstring should not be `This`
-    "D404",
-    # 1 blank line required between summary line and description (requires writing of summaries)
-    "D205",
-    "F811",
+  # TODO: ignore for now (requires more work). Remove ignore once fixed
+  # Missing docstring in public module
+  "D100",
+  # Missing docstring in public class
+  "D101",
+  # Missing docstring in public method
+  "D102",
+  # Missing docstring in public function
+  "D103",
+  # Missing docstring in public package
+  "D104",
+  # Missing docstring in magic method
+  "D105",
+  # Missing docstring in __init__
+  "D400",
+  # First line should be in imperative mood (requires writing of summaries)
+  "D401",
+  # First word of the docstring should not be `This`
+  "D404",
+  # 1 blank line required between summary line and description (requires writing of summaries)
+  "D205",
+  "F811",
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -143,14 +143,14 @@ files = [
 
 [[tool.mypy.overrides]]
 module = [
-    "parcels._version_setup",
-    "mpi4py",
-    "scipy.spatial",
-    "sklearn.cluster",
-    "zarr",
-    "cftime",
-    "pykdtree.kdtree",
-    "netCDF4",
-    "pooch",
+  "parcels._version_setup",
+  "mpi4py",
+  "scipy.spatial",
+  "sklearn.cluster",
+  "zarr",
+  "cftime",
+  "pykdtree.kdtree",
+  "netCDF4",
+  "pooch",
 ]
 ignore_missing_imports = true
