@@ -4,14 +4,18 @@ __version__ = version
 
 import warnings as _warnings
 
-from parcels.field import *
-from parcels.fieldset import *
-from parcels.interaction import *
-from parcels.kernel import *
+from parcels.field import Field, VectorField
+from parcels.fieldset import FieldSet
+from parcels.kernel import Kernel
 from parcels.kernels import *
-from parcels.particle import *
-from parcels.particlefile import *
-from parcels.particleset import *
+from parcels.particle import (
+    KernelParticle,  # ? remove?
+    Particle,
+    ParticleClass,
+    Variable,
+)
+from parcels.particlefile import ParticleFile
+from parcels.particleset import ParticleSet
 from parcels.tools import *
 
 _warnings.warn(
