@@ -48,7 +48,7 @@ jobs:
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'v4-dev' }} # TODO: Update v4-dev to main when v4 is released
       - name: Unit test
         run: |
-          pytest -v -s --cov=parcels --cov-report=xml --html="${{ env.COVERAGE_REPORT }}" --self-contained-html
+          pixi run -e ${{ matrix.pixi-environment }} tests -v -s --cov=parcels --cov-report=xml --html="${{ env.COVERAGE_REPORT }}" --self-contained-html
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
         env:
@@ -97,7 +97,7 @@ jobs:
         # TODO v4: Re-enable `tutorial_nemo_3D` (https://github.com/OceanParcels/Parcels/pull/1936#issuecomment-2717666705)
         # TODO v4: Re-enable `tutorial_analyticaladvection`
         run: |
-          pytest -v -s --cov=parcels --cov-report=xml --nbval-lax -k "not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_particle_field_interaction and not tutorial_croco_3D and not tutorial_nemo_3D and not tutorial_analyticaladvection" --html="${{ env.COVERAGE_REPORT }}" --self-contained-html docs/examples
+          pixi run test-notebooks -v -s --html="${{ env.COVERAGE_REPORT }}" --self-contained-html --cov=parcels --cov-report=xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
         env:
