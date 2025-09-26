@@ -66,6 +66,7 @@ jobs:
     if: false
     name: "Integration: ${{ matrix.os }} | pixi run -e ${{ matrix.pixi-environment }} tests-notebooks"
     runs-on: ${{ matrix.os }}-latest
+    needs: [cache-pixi-lock]
     env:
       COVERAGE_REPORT: "${{ matrix.os }}_${{ matrix.pixi-environment }}_integration_test_report.html"
     strategy:
