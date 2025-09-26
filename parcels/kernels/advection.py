@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from parcels.utils.statuscodes import StatusCode
+from parcels.statuscodes import StatusCode
 
 __all__ = [
     "AdvectionAnalytical",

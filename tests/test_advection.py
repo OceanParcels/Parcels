@@ -20,7 +20,7 @@ from parcels.interpolators import CGrid_Velocity, XLinear
 from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
-from parcels.utils.statuscodes import StatusCode
+from parcels.statuscodes import StatusCode
 from parcels.xgrid import XGrid
 from tests.utils import round_and_hash_float_array
 

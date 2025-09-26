@@ -23,7 +23,7 @@ from parcels.utils.converters import (
     UnitConverter,
     unitconverters_map,
 )
-from parcels.utils.statuscodes import (
+from parcels.statuscodes import (
     AllParcelsErrorCodes,
     StatusCode,
 )
