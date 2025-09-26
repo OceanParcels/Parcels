@@ -17,7 +17,7 @@ from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StatusCode
-from parcels.tools.warnings import ParticleSetWarning
+from parcels._warnings import ParticleSetWarning
 
 __all__ = ["ParticleSet"]
 

@@ -24,7 +24,7 @@ from parcels.tools.statuscodes import (
     _raise_grid_searching_error,
     _raise_time_extrapolation_error,
 )
-from parcels.tools.warnings import KernelWarning
+from parcels._warnings import KernelWarning
 
 if TYPE_CHECKING:
     from collections.abc import Callable
