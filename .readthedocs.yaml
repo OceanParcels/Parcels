@@ -8,5 +8,7 @@ build:
       - asdf global pixi latest
     install:
       - pixi install -e docs
+    html:
+      - pixi run docs
 sphinx:
   configuration: docs/conf.py
