@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 import parcels.utils._helpers as helpers
-from parcels.utils._helpers import deprecated, deprecated_made_private, timedelta_to_float
+from parcels.utils._helpers import timedelta_to_float
+from parcels.utils._decorators import deprecated, deprecated_made_private
 
 
 def test_format_list_items_multiline():
