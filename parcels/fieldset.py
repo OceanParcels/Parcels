@@ -237,6 +237,7 @@ class FieldSet:
             fields["V"].units = Geographic()
 
             if "W" in ds.data_vars:
+                ds["W"] -= ds["W"]  # Negate W to convert from up positive to down positive (as that's the direction of positive depth)
                 fields["W"] = Field("W", ds["W"], grid)
                 fields["UVW"] = VectorField("UVW", fields["U"], fields["V"], fields["W"])
             else:
