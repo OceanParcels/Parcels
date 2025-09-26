@@ -5,7 +5,7 @@ from pathlib import Path
 import pooch
 import xarray as xr
 
-from parcels.tools._v3to4 import patch_dataset_v4_compat
+from parcels._v3to4 import patch_dataset_v4_compat
 
 __all__ = ["download_example_dataset", "list_example_datasets"]
 

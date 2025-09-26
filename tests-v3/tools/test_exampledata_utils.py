@@ -1,7 +1,7 @@
 import pytest
 import requests
 
-from parcels.tools.exampledata_utils import (
+from parcels.tutorial import (
     _get_pooch,
     download_example_dataset,
     list_example_datasets,
