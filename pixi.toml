@@ -55,7 +55,7 @@ pytest-cov = "*"
 
 [feature.test.tasks]
 tests = "pytest"
-tests-notebooks = "pytest -v -s --nbval-lax -k 'argo' docs/examples"
+tests-notebooks = "pytest --nbval-lax -k 'argo' docs/examples"
 
 
 [feature.notebooks.dependencies]
@@ -77,6 +77,7 @@ sphinxcontrib-mermaid = "*"
 [feature.docs.tasks]
 docs = "sphinx-build docs docs/_build"
 docs-watch = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
+docs-linkcheck = "sphinx-build -b linkcheck docs/ docs/_build/linkcheck"
 
 [feature.pre-commit.dependencies]
 pre_commit = "*"
