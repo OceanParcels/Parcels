@@ -23,6 +23,7 @@ from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels._logger import logger
 from parcels.tools import *
+from parcels._tutorial import download_example_dataset, list_example_datasets
 
 _stdlib_warnings.warn(
     "This is an alpha version of Parcels v4. The API is not stable and may change without deprecation warnings.",

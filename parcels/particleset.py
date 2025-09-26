@@ -15,7 +15,7 @@ from parcels.kernel import Kernel
 from parcels.kernels import AdvectionRK4
 from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.tools.converters import convert_to_flat_array
-from parcels import logger
+from parcels._logger import logger
 from parcels.tools.statuscodes import StatusCode
 from parcels._warnings import ParticleSetWarning
 
