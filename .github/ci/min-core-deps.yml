@@ -15,7 +15,6 @@ dependencies:
   - netcdf4=1.6
   - numpy=1.23
   - psutil=5.9
-  - pymbolic=2022.1
   - pytest=7.1
   - scipy=1.9
   - tqdm=4.64

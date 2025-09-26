@@ -27,7 +27,6 @@ dependencies = [
   "netCDF4 >=1.1.9",
   "zarr >=2.11.0,!=2.18.0,<3",
   "tqdm",
-  "pymbolic",
   "pytest",
   "scipy >=0.16.0",
   "xarray >=0.10.8",
@@ -67,7 +66,6 @@ matplotlib-base = ">=2.0.2"
 netcdf4 = ">=1.1.9"
 numpy = ">=1.9.1"
 psutil = "*"
-pymbolic = "*"
 scipy = ">=0.16.0"
 tqdm = "*"
 xarray = ">=0.10.8"
