@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from parcels._warnings import KernelWarning
 from parcels.basegrid import GridType
 from parcels.kernels import (
     AdvectionAnalytical,
     AdvectionRK4,
     AdvectionRK45,
 )
-from parcels.utils._helpers import _assert_same_function_signature
 from parcels.statuscodes import (
     StatusCode,
     _raise_field_interpolation_error,
@@ -24,7 +24,7 @@ from parcels.statuscodes import (
     _raise_grid_searching_error,
     _raise_time_extrapolation_error,
 )
-from parcels._warnings import KernelWarning
+from parcels.utils._helpers import _assert_same_function_signature
 
 if TYPE_CHECKING:
     from collections.abc import Callable

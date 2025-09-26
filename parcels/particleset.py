@@ -10,14 +10,14 @@ from tqdm import tqdm
 from zarr.storage import DirectoryStore
 
 from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
+from parcels._logger import logger
 from parcels._reprs import particleset_repr
+from parcels._warnings import ParticleSetWarning
 from parcels.kernel import Kernel
 from parcels.kernels import AdvectionRK4
 from parcels.particle import KernelParticle, Particle, create_particle_data
-from parcels.utils.converters import convert_to_flat_array
-from parcels._logger import logger
 from parcels.statuscodes import StatusCode
-from parcels._warnings import ParticleSetWarning
+from parcels.utils.converters import convert_to_flat_array
 
 __all__ = ["ParticleSet"]
 

@@ -9,9 +9,9 @@ from zarr.storage import MemoryStore
 
 import parcels
 from parcels import Field, FieldSet, Particle, ParticleSet, Variable, VectorField
-from parcels.kernels import AdvectionRK4
 from parcels._core.utils.time import TimeInterval
 from parcels._datasets.structured.generic import datasets
+from parcels.kernels import AdvectionRK4
 from parcels.particle import Particle, create_particle_data, get_default_particle
 from parcels.particlefile import ParticleFile
 from parcels.statuscodes import StatusCode

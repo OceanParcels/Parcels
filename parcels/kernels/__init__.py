@@ -1,22 +1,21 @@
 from .advection import (
+    AdvectionAnalytical,
+    AdvectionEE,
     AdvectionRK4,
     AdvectionRK4_3D,
     AdvectionRK4_3D_CROCO,
-    AdvectionEE,
     AdvectionRK45,
-    AdvectionAnalytical,
 )
 from .advectiondiffusion import (
-    AdvectionDiffusionM1,
     AdvectionDiffusionEM,
+    AdvectionDiffusionM1,
     DiffusionUniformKh,
 )
 from .interaction import (
-    NearestNeighborWithinRange,
-    MergeWithNearestNeighbor,
     AsymmetricAttraction,
+    MergeWithNearestNeighbor,
+    NearestNeighborWithinRange,
 )
-
 
 __all__ = [  # noqa: RUF022
     # advection

@@ -10,11 +10,11 @@ from parcels import (
     VectorField,
     download_example_dataset,
 )
+from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.interpolators import (
     UXPiecewiseConstantFace,
     UXPiecewiseLinearNode,
 )
-from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.uxgrid import UxGrid
 
 

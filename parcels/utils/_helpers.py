@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import functools
 import inspect
-import warnings
 from collections.abc import Callable
 from datetime import timedelta
 

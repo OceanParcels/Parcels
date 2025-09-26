@@ -18,14 +18,14 @@ from parcels.interpolators import (
     ZeroInterpolator_Vector,
 )
 from parcels.particle import KernelParticle
+from parcels.statuscodes import (
+    AllParcelsErrorCodes,
+    StatusCode,
+)
 from parcels.utils._helpers import _assert_same_function_signature
 from parcels.utils.converters import (
     UnitConverter,
     unitconverters_map,
-)
-from parcels.statuscodes import (
-    AllParcelsErrorCodes,
-    StatusCode,
 )
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS, XGrid, _transpose_xfield_data_to_tzyx

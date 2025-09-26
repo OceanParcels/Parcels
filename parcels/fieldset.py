@@ -11,10 +11,10 @@ import xgcm
 
 from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
+from parcels._logger import logger
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
 from parcels.utils.converters import Geographic, GeographicPolar
-from parcels._logger import logger
 from parcels.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
 
 if TYPE_CHECKING:

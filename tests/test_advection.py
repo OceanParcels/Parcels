@@ -14,9 +14,15 @@ from parcels._datasets.structured.generated import (
 )
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
-from parcels.kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D, AdvectionRK45
-from parcels.kernels import AdvectionDiffusionEM, AdvectionDiffusionM1
 from parcels.interpolators import CGrid_Velocity, XLinear
+from parcels.kernels import (
+    AdvectionDiffusionEM,
+    AdvectionDiffusionM1,
+    AdvectionEE,
+    AdvectionRK4,
+    AdvectionRK4_3D,
+    AdvectionRK45,
+)
 from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet

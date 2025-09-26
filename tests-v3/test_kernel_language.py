@@ -13,12 +13,12 @@ from parcels import (
     Variable,
 )
 from parcels.kernels import (
+    PolyTEOS10_bsq,
     PressureFromLatDepth,
     PtempFromTemp,
     TempFromPtemp,
     UNESCODensity,
 )
-from parcels.kernels import PolyTEOS10_bsq
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh
 
