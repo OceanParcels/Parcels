@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from parcels.tools.statuscodes import StatusCode
+from parcels.utils.statuscodes import StatusCode
 
 __all__ = [
     "AdvectionAnalytical",
@@ -193,7 +193,7 @@ def AdvectionAnalytical(particles, fieldset):  # pragma: no cover
     """
     import numpy as np
 
-    import parcels.tools.interpolation_utils as i_u
+    import parcels.utils.interpolation_utils as i_u
 
     tol = 1e-10
     I_s = 10  # number of intermediate time steps

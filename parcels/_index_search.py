@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from parcels.tools.statuscodes import _raise_time_extrapolation_error
+from parcels.utils.statuscodes import _raise_time_extrapolation_error
 
 if TYPE_CHECKING:
     from parcels.xgrid import XGrid

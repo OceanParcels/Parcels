@@ -14,7 +14,7 @@ from parcels._core.utils.time import TimeInterval
 from parcels._datasets.structured.generic import datasets
 from parcels.particle import Particle, create_particle_data, get_default_particle
 from parcels.particlefile import ParticleFile
-from parcels.tools.statuscodes import StatusCode
+from parcels.utils.statuscodes import StatusCode
 from parcels.xgrid import XGrid
 from tests.common_kernels import DoNothing
 

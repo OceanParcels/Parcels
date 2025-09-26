@@ -18,12 +18,12 @@ from parcels.interpolators import (
     ZeroInterpolator_Vector,
 )
 from parcels.particle import KernelParticle
-from parcels.tools._helpers import _assert_same_function_signature
-from parcels.tools.converters import (
+from parcels.utils._helpers import _assert_same_function_signature
+from parcels.utils.converters import (
     UnitConverter,
     unitconverters_map,
 )
-from parcels.tools.statuscodes import (
+from parcels.utils.statuscodes import (
     AllParcelsErrorCodes,
     StatusCode,
 )

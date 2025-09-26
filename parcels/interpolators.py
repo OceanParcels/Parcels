@@ -8,7 +8,7 @@ import numpy as np
 import xarray as xr
 from dask import is_dask_collection
 
-import parcels.tools.interpolation_utils as i_u
+import parcels.utils.interpolation_utils as i_u
 
 if TYPE_CHECKING:
     from parcels.field import Field, VectorField

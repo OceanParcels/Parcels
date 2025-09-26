@@ -14,8 +14,8 @@ from parcels.kernels import (
     AdvectionRK4,
     AdvectionRK45,
 )
-from parcels.tools._helpers import _assert_same_function_signature
-from parcels.tools.statuscodes import (
+from parcels.utils._helpers import _assert_same_function_signature
+from parcels.utils.statuscodes import (
     StatusCode,
     _raise_field_interpolation_error,
     _raise_field_out_of_bound_error,

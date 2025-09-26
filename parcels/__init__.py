@@ -22,7 +22,7 @@ from parcels._warnings import (
 from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels._logger import logger
-from parcels.tools import *
+from parcels.utils import *
 from parcels._tutorial import download_example_dataset, list_example_datasets
 
 _stdlib_warnings.warn(
