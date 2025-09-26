@@ -5,7 +5,7 @@ name = "parcels-dev"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
 [dependencies] # keep section in sync with pyproject.toml dependencies
-python = ">=3.11"
+python = ">=3.11,<3.13"
 netcdf4 = ">=1.1.9"
 numpy = ">=1.9.1"
 tqdm = "*"
@@ -22,6 +22,12 @@ pooch = "*"
 
 [pypi-dependencies]
 parcels = { path = ".", editable = true }
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
 
 [feature.tests.dependencies]
 nbval = "*"
