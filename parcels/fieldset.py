@@ -230,21 +230,25 @@ class FieldSet:
             )
         )
 
-        U = Field("U", ds["U"], grid)
-        V = Field("V", ds["V"], grid)
+        fields = {}
+        if "U" in ds.data_vars and "V" in ds.data_vars:
+            fields["U"] = Field("U", ds["U"], grid)
+            fields["V"] = Field("V", ds["V"], grid)
+            fields["U"].units = GeographicPolar()
+            fields["V"].units = Geographic()
 
-        U.units = GeographicPolar()
-        V.units = Geographic()
-
-        fields = {"U": U, "V": V}
-        for varname in set(ds.data_vars) - set(fields.keys()):
-            fields[varname] = Field(varname, ds[varname], grid)
-
-        if "U" in fields and "V" in fields:
-            if "W" in fields:
+            if "W" in ds.data_vars:
+                ds["W"] -= ds[
+                    "W"
+                ]  # Negate W to convert from up positive to down positive (as that's the direction of positive depth)
+                fields["W"] = Field("W", ds["W"], grid)
                 fields["UVW"] = VectorField("UVW", fields["U"], fields["V"], fields["W"])
             else:
                 fields["UV"] = VectorField("UV", fields["U"], fields["V"])
+
+        for varname in set(ds.data_vars) - set(fields.keys()):
+            fields[varname] = Field(varname, ds[varname], grid)
+
         return FieldSet(list(fields.values()))
 
 
@@ -324,6 +328,13 @@ def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
             "northward_sea_water_velocity_vertical_mean_over_pelagic_layer",
         ),  # GLOBAL_MULTIYEAR_BGC_001_033
     ]
+    cf_W_standard_name_fallbacks = ["upward_sea_water_velocity", "vertical_sea_water_velocity"]
+
+    if "W" not in ds:
+        for cf_standard_name_W in cf_W_standard_name_fallbacks:
+            if cf_standard_name_W in ds.cf.standard_names:
+                ds = _ds_rename_using_standard_names(ds, {cf_standard_name_W: "W"})
+                break
 
     if "U" in ds and "V" in ds:
         return ds  # U and V already present
@@ -345,12 +356,6 @@ def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
 
         ds = _ds_rename_using_standard_names(ds, {cf_standard_name_U: "U", cf_standard_name_V: "V"})
         break
-    else:
-        raise ValueError(
-            f"Could not find variables 'U' and 'V' in dataset, nor any of the fallback CF standard names "
-            f"{cf_UV_standard_name_fallbacks}. Please rename the appropriate variables to 'U' and 'V' in "
-            "your dataset for the Parcels simulation."
-        )
     return ds
 
 

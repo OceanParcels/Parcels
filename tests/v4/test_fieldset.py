@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import cf_xarray  # noqa: F401
 import cftime
 import numpy as np
 import pytest
@@ -232,6 +233,17 @@ def test_fieldset_from_copernicusmarine(ds, caplog):
     assert "renamed it to 'V'" in caplog.text
 
 
+def test_fieldset_from_copernicusmarine_no_currents(caplog):
+    ds = datasets_circulation_models["ds_copernicusmarine"].cf.drop_vars(
+        ["eastward_sea_water_velocity", "northward_sea_water_velocity"]
+    )
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" not in fieldset.fields
+    assert "V" not in fieldset.fields
+    assert "UV" not in fieldset.fields
+    assert caplog.text == ""
+
+
 @pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
 def test_fieldset_from_copernicusmarine_no_logs(ds, caplog):
     ds = ds.copy()
@@ -244,3 +256,18 @@ def test_fieldset_from_copernicusmarine_no_logs(ds, caplog):
     assert "V" in fieldset.fields
     assert "UV" in fieldset.fields
     assert caplog.text == ""
+
+
+def test_fieldset_from_copernicusmarine_with_W(caplog):
+    ds = datasets_circulation_models["ds_copernicusmarine"]
+    ds = ds.copy()
+    ds["wo"] = ds["uo"]
+    ds["wo"].attrs["standard_name"] = "vertical_sea_water_velocity"
+
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "W" in fieldset.fields
+    assert "UV" not in fieldset.fields
+    assert "UVW" in fieldset.fields
+    assert "renamed it to 'W'" in caplog.text
