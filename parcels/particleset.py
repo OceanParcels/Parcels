@@ -425,6 +425,19 @@ class ParticleSet:
         """
         return np.sum(np.isin(self._data["state"], [StatusCode.Success, StatusCode.Evaluate], invert=True))
 
+    def update_dt_dtype(self, dt_dtype: np.dtype):
+        """Update the dtype of dt
+
+        Parameters
+        ----------
+        dt_dtype : np.dtype
+            New dtype for dt.
+        """
+        if dt_dtype not in [np.timedelta64, "timedelta64[ns]", "timedelta64[ms]", "timedelta64[s]"]:
+            raise ValueError(f"dt_dtype must be a numpy timedelta64 dtype. Got {dt_dtype=!r}")
+
+        self._data["dt"] = self._data["dt"].astype(dt_dtype)
+
     def set_variable_write_status(self, var, write_status):
         """Method to set the write status of a Variable.
 
@@ -500,6 +513,17 @@ class ParticleSet:
         except (ValueError, AssertionError) as e:
             raise ValueError(f"dt must be a non-zero datetime.timedelta or np.timedelta64 object, got {dt=!r}") from e
 
+        # Check if particle dt has finer resolution than input dt
+        particle_resolution = np.timedelta64(1, np.datetime_data(self._data["dt"].dtype))
+        input_resolution = np.timedelta64(1, np.datetime_data(dt.dtype))
+
+        if input_resolution >= particle_resolution:
+            self._data["dt"][:] = dt
+        else:
+            raise ValueError(
+                f"The dtype of dt ({dt.dtype}) is coarser than the dtype of the particle dt ({self._data['dt'].dtype}). Please use Particle.set_dt_dtype() to provide a dt with at least the same precision as the particle dt."
+            )
+
         if runtime is not None:
             try:
                 runtime = maybe_convert_python_timedelta_to_numpy(runtime)
@@ -507,8 +531,6 @@ class ParticleSet:
                 raise ValueError(
                     f"The runtime must be a datetime.timedelta or np.timedelta64 object. Got {type(runtime)}"
                 ) from e
-
-        self._data["dt"][:] = dt
 
         start_time, end_time = _get_simulation_start_and_end_times(
             self.fieldset.time_interval, self._data["time_nextloop"], runtime, endtime, sign_dt

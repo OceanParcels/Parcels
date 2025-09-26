@@ -161,8 +161,15 @@ def test_pset_execute_subsecond_dt(fieldset, dt):
 
     pclass = Particle.add_variable(Variable("added_dt", dtype=np.float32, initial=0))
     pset = ParticleSet(fieldset, pclass=pclass, lon=0, lat=0)
+    pset.update_dt_dtype(dt.dtype)
     pset.execute(AddDt, runtime=dt * 10, dt=dt)
     np.testing.assert_allclose(pset[0].added_dt, 10.0 * dt / np.timedelta64(1, "s"), atol=1e-5)
+
+
+def test_pset_execute_subsecond_dt_error(fieldset):
+    pset = ParticleSet(fieldset, lon=0, lat=0)
+    with pytest.raises(ValueError, match="The dtype of dt"):
+        pset.execute(DoNothing, runtime=np.timedelta64(10, "ms"), dt=np.timedelta64(1, "ms"))
 
 
 def test_pset_remove_particle_in_kernel(fieldset):
