@@ -1,7 +1,19 @@
 [workspace]
-channels = ["conda-forge"]
 name = "Parcels"
+preview = ["pixi-build"]
+channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+[package]
+name = "parcels"
+version = "dynamic" # dynamic versioning needs better support in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . Putting `version = "dynamic"` here for now until pixi recommends something else.
+
+[package.build]
+backend = { name = "pixi-build-python", version = "==0.3.2" }
+
+[package.host-dependencies]
+setuptools = "*"
+setuptools_scm = "*"
 
 [environments]
 test-latest = { features = ["test"], solve-group = "test" }
@@ -27,9 +39,6 @@ cf_xarray = "*"
 cftime = ">=1.3.1"
 scipy = ">=0.16.0" #? Not sure if we rely on scipy internally anymore...
 pooch = "*"
-
-[pypi-dependencies]
-parcels = { path = ".", editable = true }
 
 [feature.py311.dependencies]
 python = "3.11.*"
