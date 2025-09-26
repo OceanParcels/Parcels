@@ -90,12 +90,6 @@ jobs:
           cache: true
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'v4-dev' }} # TODO: Update v4-dev to main when v4 is released
       - name: Integration test
-        # TODO v4: Re-enable `tutorial_periodic_boundaries`
-        # TODO v4: Re-enable `tutorial_timevaryingdepthdimensions`
-        # TODO v4: Re-enable `tutorial_particle_field_interaction`
-        # TODO v4: Re-enable `tutorial_croco_3D`
-        # TODO v4: Re-enable `tutorial_nemo_3D` (https://github.com/OceanParcels/Parcels/pull/1936#issuecomment-2717666705)
-        # TODO v4: Re-enable `tutorial_analyticaladvection`
         run: |
           pixi run test-notebooks -v -s --html="${{ env.COVERAGE_REPORT }}" --self-contained-html --cov=parcels --cov-report=xml
       - name: Codecov
