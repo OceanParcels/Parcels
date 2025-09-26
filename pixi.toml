@@ -4,18 +4,6 @@ channels = ["conda-forge"]
 name = "parcels-dev"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
-[tasks]
-tests = "pytest"
-tests-notebooks = "pytest -v -s --nbval-lax -k 'not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_particle_field_interaction and not tutorial_croco_3D and not tutorial_nemo_3D and not tutorial_analyticaladvection' docs/examples" # TODO v4: Mirror ci.yml for notebooks being run
-coverage = "coverage run -m pytest && coverage html"
-typing = "mypy parcels"
-pre-commit = "pre-commit run --all-files"
-docs = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
-
-# TODO v4: Remove v4 specific tasks
-tests-short = "pytest tests/test_advection.py"
-tests-exclude-v4 = "pytest -m 'not v4alpha and not v4future and not v4remove'"
-
 [dependencies] # keep section in sync with pyproject.toml dependencies
 python = ">=3.11"
 netcdf4 = ">=1.1.9"
@@ -42,6 +30,11 @@ hypothesis = "*"
 pytest-html = "*"
 coverage = "*"
 
+[feature.tests.tasks]
+tests = "pytest"
+tests-notebooks = "pytest -v -s --nbval-lax -k 'argo' docs/examples"
+
+
 [feature.notebooks.dependencies]
 jupyter = "*"
 trajan = "*"
@@ -58,10 +51,20 @@ sphinx-autobuild = "*"
 myst-parser = "*"
 sphinxcontrib-mermaid = "*"
 
+[feature.docs.tasks]
+docs = "sphinx-build docs docs/_build"
+docs-watch = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
+
 [feature.pre-commit.dependencies]
 pre_commit = "*"
+
+[feature.pre-commit.tasks]
+pre-commit = "pre-commit"
 
 [feature.typing.dependencies]
 mypy = "*"
 lxml = "*" # in CI
 types-tqdm = "*"
+
+[feature.typing.tasks]
+mypy = "mypy parcels"
