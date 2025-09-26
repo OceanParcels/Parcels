@@ -36,7 +36,6 @@ requirements:
     - numpy >=1.11
     - platformdirs
     - psutil
-    - pymbolic
     - pytest
     - scipy >=0.16.0
     - trajan
