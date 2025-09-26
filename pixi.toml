@@ -58,10 +58,6 @@ sphinx-autobuild = "*"
 myst-parser = "*"
 sphinxcontrib-mermaid = "*"
 
-[feature.extra.dependencies]
-ffmpeg = ">=3.2.3" #??
-psutil = "*" #??
-
 [feature.pre-commit.dependencies]
 pre_commit = "*"
 
@@ -69,4 +65,3 @@ pre_commit = "*"
 mypy = "*"
 lxml = "*" # in CI
 types-tqdm = "*"
-types-psutil = "*"
