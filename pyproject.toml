@@ -7,7 +7,7 @@ name = "parcels"
 description = "Framework for Lagrangian tracking of virtual ocean particles in the petascale age."
 readme = "README.md"
 dynamic = ["version"]
-authors = [{ name = "oceanparcels.org team" }]
+authors = [{ name = "Parcels team" }]
 requires-python = ">=3.11,<3.13"
 license = { file = "LICENSE.md" }
 classifiers = [
