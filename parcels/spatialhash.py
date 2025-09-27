@@ -36,6 +36,7 @@ class SpatialHash:
         self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
 
         if isinstance(grid, parcels.xgrid.XGrid):
+            self._coord_dim = 2  # Number of computational coordinates is 2 (bilinear interpolation)
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0
@@ -121,6 +122,7 @@ class SpatialHash:
                 self._zhigh = np.zeros_like(self._xlow)
 
         elif isinstance(grid, parcels.uxgrid.UxGrid):
+            self._coord_dim = grid.uxgrid.n_max_face_nodes  # Number of barycentric coordinates
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0
@@ -356,7 +358,7 @@ class SpatialHash:
             return (
                 j_best.reshape(query_codes.shape),
                 i_best.reshape(query_codes.shape),
-                np.full((num_queries, 2), -1.0, dtype=np.float32),
+                np.full((num_queries, self._coord_dim), -1.0, dtype=np.float32),
             )
 
         # Now, for each query, we need to gather the candidate (j,i) indices from the hash table
