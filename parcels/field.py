@@ -28,7 +28,7 @@ from parcels.converters import (
     _unitconverters_map,
 )
 from parcels._core.uxgrid import UxGrid
-from parcels._core.xgrid import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS, XGrid, _transpose_xfield_data_to_tzyx
+from parcels._core.xgrid import XGrid, _transpose_xfield_data_to_tzyx
 
 from ._index_search import GRID_SEARCH_ERROR, _search_time_index
 

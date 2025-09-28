@@ -10,6 +10,7 @@ import xgcm
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels._typing import assert_valid_mesh
 from parcels._core.basegrid import BaseGrid
+from parcels._core.utils.array import _search_1d_array
 
 _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"
@@ -21,9 +22,6 @@ _XGCM_AXES = Mapping[_XGCM_AXIS_DIRECTION, xgcm.Axis]
 _FIELD_DATA_ORDERING: Sequence[_XGCM_AXIS_DIRECTION] = "TZYX"
 
 _DEFAULT_XGCM_KWARGS = {"periodic": False}
-
-LEFT_OUT_OF_BOUNDS = -2
-RIGHT_OUT_OF_BOUNDS = -1
 
 
 def get_cell_count_along_dim(ds: xr.Dataset, axis: xgcm.Axis) -> int:
@@ -475,51 +473,6 @@ def assert_valid_lat_lon(da_lat, da_lon, axes: _XGCM_AXES):
             raise ValueError(
                 f"Longitude DataArray {da_lon.name!r} with dims {da_lon.dims} and Latitude DataArray {da_lat.name!r} with dims {da_lat.dims} must be defined on the X and Y axes and transposed to have dimensions in order of Y, X."
             )
-
-
-def _search_1d_array(
-    arr: np.array,
-    x: float,
-) -> tuple[int, int]:
-    """
-    Searches for particle locations in a 1D array and returns barycentric coordinate along dimension.
-
-    Assumptions:
-    - array is strictly monotonically increasing.
-
-    Parameters
-    ----------
-    arr : np.array
-        1D array to search in.
-    x : float
-        Position in the 1D array to search for.
-
-    Returns
-    -------
-    array of int
-        Index of the element just before the position x in the array. Note that this index is -2 if the index is left out of bounds and -1 if the index is right out of bounds.
-    array of float
-        Barycentric coordinate.
-    """
-    # TODO v4: We probably rework this to deal with 0D arrays before this point (as we already know field dimensionality)
-    if len(arr) < 2:
-        return np.zeros(shape=x.shape, dtype=np.int32), np.zeros_like(x)
-    index = np.searchsorted(arr, x, side="right") - 1
-    # Use broadcasting to avoid repeated array access
-    arr_index = arr[index]
-    arr_next = arr[np.clip(index + 1, 1, len(arr) - 1)]  # Ensure we don't go out of bounds
-    bcoord = (x - arr_index) / (arr_next - arr_index)
-
-    # TODO check how we can avoid searchsorted when grid spacing is uniform
-    # dx = arr[1] - arr[0]
-    # index = ((x - arr[0]) / dx).astype(int)
-    # index = np.clip(index, 0, len(arr) - 2)
-    # bcoord = (x - arr[index]) / dx
-
-    index = np.where(x < arr[0], LEFT_OUT_OF_BOUNDS, index)
-    index = np.where(x >= arr[-1], RIGHT_OUT_OF_BOUNDS, index)
-
-    return np.atleast_1d(index), np.atleast_1d(bcoord)
 
 
 def _convert_center_pos_to_fpoint(

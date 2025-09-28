@@ -8,12 +8,11 @@ from numpy.testing import assert_allclose
 
 from parcels._datasets.structured.generic import X, Y, Z, datasets
 from parcels._core.xgrid import (
-    LEFT_OUT_OF_BOUNDS,
-    RIGHT_OUT_OF_BOUNDS,
     XGrid,
-    _search_1d_array,
     _transpose_xfield_data_to_tzyx,
 )
+from parcels._core.constants import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS
+from parcels._core.utils.array import _search_1d_array
 from tests import utils
 
 GridTestCase = namedtuple("GridTestCase", ["ds", "attr", "expected"])
