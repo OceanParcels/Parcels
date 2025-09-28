@@ -6,7 +6,7 @@ import warnings as _stdlib_warnings
 
 from parcels._logger import logger
 from parcels._tutorial import download_example_dataset, list_example_datasets
-from parcels._warnings import (
+from parcels._core.warnings import (
     FieldSetWarning,
     FileWarning,
     KernelWarning,
