@@ -10,7 +10,7 @@ from parcels._datasets.structured.circulation_models import datasets as datasets
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels import Field, VectorField
-from parcels.fieldset import CalendarError, FieldSet, _datetime_to_msg
+from parcels._core.fieldset import CalendarError, FieldSet, _datetime_to_msg
 from parcels import XGrid
 from tests import utils
 

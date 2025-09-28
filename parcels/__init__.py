@@ -13,7 +13,7 @@ from parcels._warnings import (
     ParticleSetWarning,
 )
 from parcels._core.field import Field, VectorField
-from parcels.fieldset import FieldSet
+from parcels._core.fieldset import FieldSet
 from parcels.kernel import Kernel
 from parcels.particle import (
     KernelParticle,  # ? remove?

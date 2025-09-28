@@ -13,7 +13,7 @@ from parcels._datasets.structured.generated import (
     stommel_gyre_dataset,
 )
 from parcels import Field, VectorField
-from parcels.fieldset import FieldSet
+from parcels import FieldSet
 from parcels.interpolators import CGrid_Velocity, XLinear
 from parcels.kernels import (
     AdvectionDiffusionEM,
