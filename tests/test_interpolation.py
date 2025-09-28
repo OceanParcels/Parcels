@@ -19,7 +19,7 @@ from parcels.kernels import AdvectionRK4_3D
 from parcels import Particle, Variable
 from parcels import ParticleFile
 from parcels import ParticleSet
-from parcels.statuscodes import StatusCode
+from parcels import StatusCode
 from parcels import UxGrid
 from parcels import XGrid
 from tests.utils import TEST_DATA

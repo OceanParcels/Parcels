@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from parcels.statuscodes import StatusCode
+from parcels import StatusCode
 
 
 def DoNothing(particles, fieldset):  # pragma: no cover

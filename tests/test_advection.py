@@ -26,7 +26,7 @@ from parcels.kernels import (
 from parcels import Particle, Variable
 from parcels import ParticleFile
 from parcels import ParticleSet
-from parcels.statuscodes import StatusCode
+from parcels import StatusCode
 from parcels import XGrid
 from tests.utils import round_and_hash_float_array
 

@@ -19,7 +19,7 @@ from parcels._datasets.unstructured.generic import datasets as datasets_unstruct
 from parcels.interpolators import UXPiecewiseConstantFace
 from parcels.kernels import AdvectionEE
 from parcels import ParticleFile
-from parcels.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
+from parcels import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
 from parcels import UxGrid
 from parcels import XGrid
 from tests import utils

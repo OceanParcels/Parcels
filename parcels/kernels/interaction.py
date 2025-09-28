@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from parcels.statuscodes import StatusCode
+from parcels._core.statuscodes import StatusCode
 
 __all__ = ["AsymmetricAttraction", "MergeWithNearestNeighbor", "NearestNeighborWithinRange"]
 

@@ -23,7 +23,15 @@ from parcels._core.particle import (
 )
 from parcels._core.particlefile import ParticleFile
 from parcels._core.particleset import ParticleSet
-from parcels.statuscodes import StatusCode
+from parcels._core.statuscodes import (
+    AllParcelsErrorCodes,
+    FieldOutOfBoundError,
+    FieldSamplingError,
+    KernelError,
+    StatusCode,
+    FieldInterpolationError,
+    TimeExtrapolationError,
+)
 from parcels.utils import *
 
 from parcels.converters import (

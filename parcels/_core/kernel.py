@@ -15,7 +15,7 @@ from parcels.kernels import (
     AdvectionRK4,
     AdvectionRK45,
 )
-from parcels.statuscodes import (
+from parcels._core.statuscodes import (
     StatusCode,
     _raise_field_interpolation_error,
     _raise_field_out_of_bound_error,
