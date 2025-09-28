@@ -29,6 +29,7 @@ from parcels.converters import (
 )
 from parcels._core.uxgrid import UxGrid
 from parcels._core.xgrid import XGrid, _transpose_xfield_data_to_tzyx
+from parcels._core.constants import RIGHT_OUT_OF_BOUNDS, LEFT_OUT_OF_BOUNDS
 
 from ._index_search import GRID_SEARCH_ERROR, _search_time_index
 
