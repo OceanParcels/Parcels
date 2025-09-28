@@ -14,12 +14,12 @@ import zarr
 from zarr.storage import DirectoryStore
 
 import parcels
-from parcels.particle import _SAME_AS_FIELDSET_TIME_INTERVAL, ParticleClass
+from parcels._core.particle import _SAME_AS_FIELDSET_TIME_INTERVAL, ParticleClass
 from parcels.utils._helpers import timedelta_to_float
 
 if TYPE_CHECKING:
     from parcels._core.utils.time import TimeInterval
-    from parcels.particle import Variable
+    from parcels._core.particle import Variable
     from parcels._core.particleset import ParticleSet
 
 __all__ = ["ParticleFile"]

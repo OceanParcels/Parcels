@@ -9,7 +9,7 @@ from parcels import (
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.kernel import Kernel
 from parcels.kernels import AdvectionRK4
-from parcels.particle import Particle
+from parcels import Particle
 from parcels import XGrid
 from tests.common_kernels import MoveEast, MoveNorth
 

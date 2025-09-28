@@ -15,7 +15,7 @@ from parcels._warnings import (
 from parcels._core.field import Field, VectorField
 from parcels._core.fieldset import FieldSet
 from parcels.kernel import Kernel
-from parcels.particle import (
+from parcels._core.particle import (
     KernelParticle,  # ? remove?
     Particle,
     ParticleClass,

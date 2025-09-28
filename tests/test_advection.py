@@ -23,7 +23,7 @@ from parcels.kernels import (
     AdvectionRK4_3D,
     AdvectionRK45,
 )
-from parcels.particle import Particle, Variable
+from parcels import Particle, Variable
 from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels.statuscodes import StatusCode

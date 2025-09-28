@@ -17,7 +17,7 @@ from parcels.interpolators import (
     ZeroInterpolator,
     ZeroInterpolator_Vector,
 )
-from parcels.particle import KernelParticle
+from parcels._core.particle import KernelParticle
 from parcels.statuscodes import (
     AllParcelsErrorCodes,
     StatusCode,

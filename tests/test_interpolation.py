@@ -16,7 +16,7 @@ from parcels.interpolators import (
     ZeroInterpolator,
 )
 from parcels.kernels import AdvectionRK4_3D
-from parcels.particle import Particle, Variable
+from parcels import Particle, Variable
 from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels.statuscodes import StatusCode

@@ -12,7 +12,7 @@ from parcels import Field, FieldSet, Particle, ParticleSet, Variable, VectorFiel
 from parcels._core.utils.time import TimeInterval
 from parcels._datasets.structured.generic import datasets
 from parcels.kernels import AdvectionRK4
-from parcels.particle import Particle, create_particle_data, get_default_particle
+from parcels._core.particle import Particle, create_particle_data, get_default_particle
 from parcels import ParticleFile
 from parcels.statuscodes import StatusCode
 from parcels import XGrid

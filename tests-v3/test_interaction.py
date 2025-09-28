@@ -16,7 +16,7 @@ from parcels.kernels.interaction import (
     MergeWithNearestNeighbor,
     NearestNeighborWithinRange,
 )
-from parcels.particle import InteractionParticle, Variable
+from parcels._core.particle import InteractionParticle, Variable
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh, create_flat_positions, create_spherical_positions
 
