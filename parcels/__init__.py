@@ -22,7 +22,7 @@ from parcels.particle import (
     Variable,
 )
 from parcels.particlefile import ParticleFile
-from parcels.particleset import ParticleSet
+from parcels._core.particleset import ParticleSet
 from parcels.statuscodes import StatusCode
 from parcels.utils import *
 

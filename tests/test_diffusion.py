@@ -10,7 +10,7 @@ from parcels import FieldSet
 from parcels.interpolators import XLinear
 from parcels.kernels import AdvectionDiffusionEM, AdvectionDiffusionM1, DiffusionUniformKh
 from parcels.particle import Particle, Variable
-from parcels.particleset import ParticleSet
+from parcels import ParticleSet
 from parcels import XGrid
 from tests.utils import create_fieldset_zeros_conversion
 
