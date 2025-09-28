@@ -2,8 +2,7 @@ import numpy as np
 
 import parcels
 from parcels._index_search import GRID_SEARCH_ERROR, _latlon_rad_to_xyz, curvilinear_point_in_cell, uxgrid_point_in_cell
-from parcels._core.uxgrid import UxGrid
-from parcels._core.xgrid import XGrid
+from parcels._python import isinstance_noimport
 
 
 class SpatialHash:
@@ -27,9 +26,9 @@ class SpatialHash:
         grid,
         bitwidth=1023,
     ):
-        if isinstance(grid, XGrid):
+        if isinstance_noimport(grid, "XGrid"):
             self._point_in_cell = curvilinear_point_in_cell
-        elif isinstance(grid, UxGrid):
+        elif isinstance_noimport(grid, "UxGrid"):
             self._point_in_cell = uxgrid_point_in_cell
         else:
             raise ValueError("Expected `grid` to be a parcels.XGrid or parcels.UxGrid")
@@ -37,7 +36,7 @@ class SpatialHash:
         self._source_grid = grid
         self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
 
-        if isinstance(grid, XGrid):
+        if isinstance_noimport(grid, "XGrid"):
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0
@@ -122,7 +121,7 @@ class SpatialHash:
                 self._zlow = np.zeros_like(self._xlow)
                 self._zhigh = np.zeros_like(self._xlow)
 
-        elif isinstance(grid, UxGrid):
+        elif isinstance_noimport(grid, "UxGrid"):
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0
