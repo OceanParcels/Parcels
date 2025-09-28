@@ -42,7 +42,6 @@ from parcels._core.warnings import (
 from parcels._core.xgrid import XGrid
 from parcels._logger import logger
 from parcels._tutorial import download_example_dataset, list_example_datasets
-from parcels.utils import *
 
 _stdlib_warnings.warn(
     "This is an alpha version of Parcels v4. The API is not stable and may change without deprecation warnings.",
