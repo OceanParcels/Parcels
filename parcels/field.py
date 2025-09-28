@@ -25,7 +25,7 @@ from parcels.statuscodes import (
 from parcels.utils._helpers import _assert_same_function_signature
 from parcels.converters import (
     UnitConverter,
-    unitconverters_map,
+    _unitconverters_map,
 )
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS, XGrid, _transpose_xfield_data_to_tzyx
@@ -143,10 +143,10 @@ class Field:
 
         self.igrid = -1  # Default the grid index to -1
 
-        if self.grid._mesh == "flat" or (self.name not in unitconverters_map.keys()):
+        if self.grid._mesh == "flat" or (self.name not in _unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid._mesh == "spherical":
-            self.units = unitconverters_map[self.name]
+            self.units = _unitconverters_map[self.name]
 
         if self.data.shape[0] > 1:
             if "time" not in self.data.coords:

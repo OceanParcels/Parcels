@@ -11,12 +11,12 @@ __all__ = [
     "GeographicPolarSquare",
     "GeographicSquare",
     "UnitConverter",
-    "convert_to_flat_array",
-    "unitconverters_map",
+    "_convert_to_flat_array",
+    "_unitconverters_map",
 ]
 
 
-def convert_to_flat_array(var: npt.ArrayLike) -> npt.NDArray:
+def _convert_to_flat_array(var: npt.ArrayLike) -> npt.NDArray:
     """Convert lists and single integers/floats to one-dimensional numpy arrays
 
     Parameters
@@ -96,7 +96,7 @@ class GeographicPolarSquare(UnitConverter):
         return value * pow(1000.0 * 1.852 * 60.0 * np.cos(y * pi / 180), 2)
 
 
-unitconverters_map = {
+_unitconverters_map = {
     "U": GeographicPolar(),
     "V": Geographic(),
     "Kh_zonal": GeographicPolarSquare(),

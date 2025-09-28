@@ -17,7 +17,7 @@ from parcels.kernel import Kernel
 from parcels.kernels import AdvectionRK4
 from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.statuscodes import StatusCode
-from parcels.converters import convert_to_flat_array
+from parcels.converters import _convert_to_flat_array
 
 __all__ = ["ParticleSet"]
 
@@ -78,9 +78,9 @@ class ParticleSet:
         self._interaction_kernel = None
 
         self.fieldset = fieldset
-        lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)
-        lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)
-        time = np.empty(shape=0) if time is None else convert_to_flat_array(time)
+        lon = np.empty(shape=0) if lon is None else _convert_to_flat_array(lon)
+        lat = np.empty(shape=0) if lat is None else _convert_to_flat_array(lat)
+        time = np.empty(shape=0) if time is None else _convert_to_flat_array(time)
 
         if trajectory_ids is None:
             trajectory_ids = np.arange(lon.size)
@@ -92,7 +92,7 @@ class ParticleSet:
                     mindepth = min(mindepth, field.grid.depth[0])
             depth = np.ones(lon.size) * mindepth
         else:
-            depth = convert_to_flat_array(depth)
+            depth = _convert_to_flat_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
 
         if time is None or len(time) == 0:
@@ -114,7 +114,7 @@ class ParticleSet:
 
         for kwvar in kwargs:
             if kwvar not in ["partition_function"]:
-                kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])
+                kwargs[kwvar] = _convert_to_flat_array(kwargs[kwvar])
                 assert lon.size == kwargs[kwvar].size, (
                     f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
                 )

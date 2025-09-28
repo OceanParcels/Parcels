@@ -32,8 +32,6 @@ from parcels.converters import (
     GeographicPolarSquare,
     GeographicSquare,
     UnitConverter,
-    convert_to_flat_array,
-    unitconverters_map,
 )
 
 _stdlib_warnings.warn(
