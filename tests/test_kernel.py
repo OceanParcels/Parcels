@@ -7,7 +7,7 @@ from parcels import (
     ParticleSet,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
-from parcels.kernel import Kernel
+from parcels import Kernel
 from parcels.kernels import AdvectionRK4
 from parcels import Particle
 from parcels import XGrid

@@ -13,7 +13,7 @@ from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelt
 from parcels._logger import logger
 from parcels._reprs import particleset_repr
 from parcels._warnings import ParticleSetWarning
-from parcels.kernel import Kernel
+from parcels._core.kernel import Kernel
 from parcels.kernels import AdvectionRK4
 from parcels._core.particle import KernelParticle, Particle, create_particle_data
 from parcels.statuscodes import StatusCode
