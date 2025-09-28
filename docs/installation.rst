@@ -56,41 +56,4 @@ The steps below are the installation instructions for Linux, macOS and Windows.
 Installation for developers
 ===========================
 
-Using Miniconda
----------------
-
-If you would prefer to have a development installation of Parcels (i.e., where the code can be actively edited), you can do so by setting up Miniconda (as detailed in step 1 above), cloning the Parcels repo, installing dependencies using the environment file, and then installing Parcels in an editable mode such that changes to the cloned code can be tested during development.
-
-**Step 1:** Same as `step 1 above`_.
-
-**Step 2:** Clone the Parcels repo and create a new environment with the development dependencies:
-
-.. code-block:: bash
-
-  git clone https://github.com/OceanParcels/parcels.git
-  cd parcels
-  conda env create -n parcels-dev -f environment.yml
-
-**Step 3:** Activate the environment and install Parcels in editable mode:
-
-.. code-block:: bash
-
-  conda activate parcels-dev
-  pip install --no-build-isolation --no-deps -e .
-
-
-Using Pixi
-----------
-For developers who want to use Pixi (a modern alternative to Anaconda - see `"Transitioning from the conda or mamba to pixi" <https://pixi.sh/latest/switching_from/conda/>`_) to manage their development environment, the following steps can be followed:
-
-**Step 1:** `Install Pixi <https://pixi.sh/latest/>`_.
-
-**Step 2:** Clone the Parcels repo and create a new environment with the development dependencies:
-
-.. code-block:: bash
-
-  git clone https://github.com/OceanParcels/parcels.git
-  cd parcels
-  pixi install
-
-Now you can use ``pixi run`` for a list of available tasks useful for development, such as running tests, checking code coverage, and building the documentation. You can also do ``pixi shell`` to "activate" the environment (and do ``exit`` to deactivate it). See `here <https://pixi.sh/latest/switching_from/conda/#key-differences-at-a-glance>`_ for a comparison between Pixi and Conda commands.
+See the `development section in our contributing guide <./community/contributing.rst#development>`_ for development instructions.
