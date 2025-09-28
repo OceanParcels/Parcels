@@ -11,7 +11,7 @@ from parcels import (
     ParticleSet,
     ParticleSetWarning,
 )
-from parcels.particlefile import ParticleFile
+from parcels import ParticleFile
 from tests.utils import TEST_DATA
 
 

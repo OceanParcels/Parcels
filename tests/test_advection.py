@@ -24,7 +24,7 @@ from parcels.kernels import (
     AdvectionRK45,
 )
 from parcels.particle import Particle, Variable
-from parcels.particlefile import ParticleFile
+from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels.statuscodes import StatusCode
 from parcels import XGrid

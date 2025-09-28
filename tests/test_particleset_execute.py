@@ -18,7 +18,7 @@ from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.interpolators import UXPiecewiseConstantFace
 from parcels.kernels import AdvectionEE
-from parcels.particlefile import ParticleFile
+from parcels import ParticleFile
 from parcels.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
 from parcels import UxGrid
 from parcels import XGrid
