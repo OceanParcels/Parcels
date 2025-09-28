@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from parcels._spatialhash import SpatialHash
+from parcels._core.spatialhash import SpatialHash
 
 if TYPE_CHECKING:
     import numpy as np
