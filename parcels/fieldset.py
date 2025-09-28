@@ -15,7 +15,7 @@ from parcels._logger import logger
 from parcels._typing import Mesh
 from parcels.field import Field, VectorField
 from parcels.converters import Geographic, GeographicPolar
-from parcels.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
+from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
 
 if TYPE_CHECKING:
     from parcels._typing import TimeLike
