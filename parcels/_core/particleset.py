@@ -9,15 +9,15 @@ import xarray as xr
 from tqdm import tqdm
 from zarr.storage import DirectoryStore
 
-from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
-from parcels._logger import logger
-from parcels._reprs import particleset_repr
-from parcels._core.warnings import ParticleSetWarning
+from parcels._core.converters import _convert_to_flat_array
 from parcels._core.kernel import Kernel
-from parcels.kernels import AdvectionRK4
 from parcels._core.particle import KernelParticle, Particle, create_particle_data
 from parcels._core.statuscodes import StatusCode
-from parcels._core.converters import _convert_to_flat_array
+from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelta_to_numpy
+from parcels._core.warnings import ParticleSetWarning
+from parcels._logger import logger
+from parcels._reprs import particleset_repr
+from parcels.kernels import AdvectionRK4
 
 __all__ = ["ParticleSet"]
 

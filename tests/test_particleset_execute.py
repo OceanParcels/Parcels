@@ -6,22 +6,24 @@ import pytest
 
 from parcels import (
     Field,
+    FieldInterpolationError,
+    FieldOutOfBoundError,
     FieldSet,
     Particle,
+    ParticleFile,
     ParticleSet,
     StatusCode,
+    TimeExtrapolationError,
+    UxGrid,
     Variable,
     VectorField,
+    XGrid,
 )
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.interpolators import UXPiecewiseConstantFace
 from parcels.kernels import AdvectionEE
-from parcels import ParticleFile
-from parcels import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
-from parcels import UxGrid
-from parcels import XGrid
 from tests import utils
 from tests.common_kernels import DoNothing
 

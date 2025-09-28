@@ -4,13 +4,13 @@ import pytest
 from parcels import (
     Field,
     FieldSet,
+    Kernel,
+    Particle,
     ParticleSet,
+    XGrid,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
-from parcels import Kernel
 from parcels.kernels import AdvectionRK4
-from parcels import Particle
-from parcels import XGrid
 from tests.common_kernels import MoveEast, MoveNorth
 
 

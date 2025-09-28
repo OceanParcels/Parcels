@@ -13,9 +13,9 @@ from parcels import (
     ParticleSet,
     ParticleSetWarning,
     Variable,
+    XGrid,
 )
 from parcels._datasets.structured.generic import datasets as datasets_structured
-from parcels import XGrid
 from tests.common_kernels import DoNothing
 from tests.utils import round_and_hash_float_array
 

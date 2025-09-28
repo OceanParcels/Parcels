@@ -4,14 +4,10 @@ import numpy as np
 import pytest
 from scipy import stats
 
+from parcels import Field, FieldSet, Particle, ParticleSet, Variable, VectorField, XGrid
 from parcels._datasets.structured.generated import simple_UV_dataset
-from parcels import Field, VectorField
-from parcels import FieldSet
 from parcels.interpolators import XLinear
 from parcels.kernels import AdvectionDiffusionEM, AdvectionDiffusionM1, DiffusionUniformKh
-from parcels import Particle, Variable
-from parcels import ParticleSet
-from parcels import XGrid
 from tests.utils import create_fieldset_zeros_conversion
 
 

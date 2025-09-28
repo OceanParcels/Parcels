@@ -1,4 +1,5 @@
 import numpy as np
+
 from parcels._core.constants import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS
 
 

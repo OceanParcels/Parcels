@@ -5,11 +5,10 @@ from typing import Literal
 import numpy as np
 import uxarray as ux
 
-from parcels._core.index_search import GRID_SEARCH_ERROR, uxgrid_point_in_cell
-from parcels._typing import assert_valid_mesh
-from parcels._core.utils.array import _search_1d_array
-
 from parcels._core.basegrid import BaseGrid
+from parcels._core.index_search import GRID_SEARCH_ERROR, uxgrid_point_in_cell
+from parcels._core.utils.array import _search_1d_array
+from parcels._typing import assert_valid_mesh
 
 _UXGRID_AXES = Literal["Z", "FACE"]
 

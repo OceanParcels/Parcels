@@ -1,7 +1,7 @@
 import xgcm
 
-from parcels._datasets.structured.generic import datasets
 from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS
+from parcels._datasets.structured.generic import datasets
 
 
 def test_left_indexed_dataset():

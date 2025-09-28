@@ -9,17 +9,17 @@ import numpy as np
 import xarray as xr
 import xgcm
 
+from parcels._core.converters import Geographic, GeographicPolar
+from parcels._core.field import Field, VectorField
 from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
+from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
 from parcels._logger import logger
 from parcels._typing import Mesh
-from parcels._core.field import Field, VectorField
-from parcels._core.converters import Geographic, GeographicPolar
-from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
 
 if TYPE_CHECKING:
-    from parcels._typing import TimeLike
     from parcels._core.basegrid import BaseGrid
+    from parcels._typing import TimeLike
 __all__ = ["FieldSet"]
 
 

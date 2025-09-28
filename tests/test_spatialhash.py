@@ -1,7 +1,7 @@
 import numpy as np
 
-from parcels._datasets.structured.generic import datasets
 from parcels import XGrid
+from parcels._datasets.structured.generic import datasets
 
 
 def test_spatialhash_init():

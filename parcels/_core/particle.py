@@ -8,9 +8,9 @@ from typing import Literal
 import numpy as np
 
 from parcels._compat import _attrgetter_helper
+from parcels._core.statuscodes import StatusCode
 from parcels._core.utils.time import TimeInterval
 from parcels._reprs import _format_list_items_multiline
-from parcels._core.statuscodes import StatusCode
 
 __all__ = ["KernelParticle", "Particle", "ParticleClass", "Variable"]
 _TO_WRITE_OPTIONS = [True, False, "once"]

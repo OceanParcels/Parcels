@@ -4,6 +4,7 @@ import xarray as xr
 import xgcm
 
 import parcels
+from parcels import Field, FieldSet, Particle, ParticleFile, ParticleSet, StatusCode, Variable, VectorField, XGrid
 from parcels._datasets.structured.generated import (
     decaying_moving_eddy_dataset,
     moving_eddy_dataset,
@@ -12,8 +13,6 @@ from parcels._datasets.structured.generated import (
     simple_UV_dataset,
     stommel_gyre_dataset,
 )
-from parcels import Field, VectorField
-from parcels import FieldSet
 from parcels.interpolators import CGrid_Velocity, XLinear
 from parcels.kernels import (
     AdvectionDiffusionEM,
@@ -23,11 +22,6 @@ from parcels.kernels import (
     AdvectionRK4_3D,
     AdvectionRK45,
 )
-from parcels import Particle, Variable
-from parcels import ParticleFile
-from parcels import ParticleSet
-from parcels import StatusCode
-from parcels import XGrid
 from tests.utils import round_and_hash_float_array
 
 kernel = {

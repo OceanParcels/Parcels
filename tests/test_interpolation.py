@@ -2,11 +2,21 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from parcels import (
+    Field,
+    FieldSet,
+    Particle,
+    ParticleFile,
+    ParticleSet,
+    StatusCode,
+    UxGrid,
+    Variable,
+    VectorField,
+    XGrid,
+)
+from parcels._core.index_search import _search_time_index
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
-from parcels._core.index_search import _search_time_index
-from parcels import Field, VectorField
-from parcels import FieldSet
 from parcels.interpolators import (
     UXPiecewiseLinearNode,
     XFreeslip,
@@ -16,12 +26,6 @@ from parcels.interpolators import (
     ZeroInterpolator,
 )
 from parcels.kernels import AdvectionRK4_3D
-from parcels import Particle, Variable
-from parcels import ParticleFile
-from parcels import ParticleSet
-from parcels import StatusCode
-from parcels import UxGrid
-from parcels import XGrid
 from tests.utils import TEST_DATA
 
 

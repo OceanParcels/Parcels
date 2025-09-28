@@ -8,7 +8,20 @@ import numpy as np
 import uxarray as ux
 import xarray as xr
 
+from parcels._core.constants import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS
+from parcels._core.converters import (
+    UnitConverter,
+    _unitconverters_map,
+)
+from parcels._core.index_search import GRID_SEARCH_ERROR, _search_time_index
+from parcels._core.particle import KernelParticle
+from parcels._core.statuscodes import (
+    AllParcelsErrorCodes,
+    StatusCode,
+)
 from parcels._core.utils.time import TimeInterval
+from parcels._core.uxgrid import UxGrid
+from parcels._core.xgrid import XGrid, _transpose_xfield_data_to_tzyx
 from parcels._reprs import default_repr
 from parcels._typing import VectorType
 from parcels.interpolators import (
@@ -17,21 +30,7 @@ from parcels.interpolators import (
     ZeroInterpolator,
     ZeroInterpolator_Vector,
 )
-from parcels._core.particle import KernelParticle
-from parcels._core.statuscodes import (
-    AllParcelsErrorCodes,
-    StatusCode,
-)
 from parcels.utils._helpers import _assert_same_function_signature
-from parcels._core.converters import (
-    UnitConverter,
-    _unitconverters_map,
-)
-from parcels._core.uxgrid import UxGrid
-from parcels._core.xgrid import XGrid, _transpose_xfield_data_to_tzyx
-from parcels._core.constants import RIGHT_OUT_OF_BOUNDS, LEFT_OUT_OF_BOUNDS
-
-from parcels._core.index_search import GRID_SEARCH_ERROR, _search_time_index
 
 __all__ = ["Field", "VectorField"]
 

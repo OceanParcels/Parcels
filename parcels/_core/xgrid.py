@@ -7,10 +7,10 @@ import numpy.typing as npt
 import xarray as xr
 import xgcm
 
-from parcels._core.index_search import _search_indices_curvilinear_2d
-from parcels._typing import assert_valid_mesh
 from parcels._core.basegrid import BaseGrid
+from parcels._core.index_search import _search_indices_curvilinear_2d
 from parcels._core.utils.array import _search_1d_array
+from parcels._typing import assert_valid_mesh
 
 _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"

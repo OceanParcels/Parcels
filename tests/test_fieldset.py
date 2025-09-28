@@ -6,12 +6,11 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from parcels import Field, VectorField, XGrid
+from parcels._core.fieldset import CalendarError, FieldSet, _datetime_to_msg
 from parcels._datasets.structured.circulation_models import datasets as datasets_circulation_models
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
-from parcels import Field, VectorField
-from parcels._core.fieldset import CalendarError, FieldSet, _datetime_to_msg
-from parcels import XGrid
 from tests import utils
 
 ds = datasets_structured["ds_2d_left"]

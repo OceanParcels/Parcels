@@ -7,6 +7,7 @@ from parcels import (
     FieldSet,
     Particle,
     ParticleSet,
+    UxGrid,
     VectorField,
     download_example_dataset,
 )
@@ -15,7 +16,6 @@ from parcels.interpolators import (
     UXPiecewiseConstantFace,
     UXPiecewiseLinearNode,
 )
-from parcels import UxGrid
 
 
 @pytest.fixture

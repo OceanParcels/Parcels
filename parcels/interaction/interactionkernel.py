@@ -6,8 +6,8 @@ import numpy as np
 
 from parcels._compat import MPI
 from parcels._core.field import VectorField
-from parcels.kernel import BaseKernel
 from parcels._core.statuscodes import StatusCode
+from parcels.kernel import BaseKernel
 
 __all__ = ["InteractionKernel"]
 

@@ -8,13 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from parcels._core.warnings import KernelWarning
 from parcels._core.basegrid import GridType
-from parcels.kernels import (
-    AdvectionAnalytical,
-    AdvectionRK4,
-    AdvectionRK45,
-)
 from parcels._core.statuscodes import (
     StatusCode,
     _raise_field_interpolation_error,
@@ -23,6 +17,12 @@ from parcels._core.statuscodes import (
     _raise_general_error,
     _raise_grid_searching_error,
     _raise_time_extrapolation_error,
+)
+from parcels._core.warnings import KernelWarning
+from parcels.kernels import (
+    AdvectionAnalytical,
+    AdvectionRK4,
+    AdvectionRK45,
 )
 from parcels.utils._helpers import _assert_same_function_signature
 

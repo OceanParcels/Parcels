@@ -8,9 +8,8 @@ import numpy as np
 from parcels._core.statuscodes import _raise_time_extrapolation_error
 
 if TYPE_CHECKING:
-    from parcels.xgrid import XGrid
-
     from parcels._core.field import Field
+    from parcels.xgrid import XGrid
 
 
 GRID_SEARCH_ERROR = -3

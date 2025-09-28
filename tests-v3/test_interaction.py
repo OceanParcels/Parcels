@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from parcels import Field, FieldSet, ParticleSet
+from parcels._core.particle import InteractionParticle, Variable
 from parcels.interaction.neighborsearch import (
     BruteFlatNeighborSearch,
     BruteSphericalNeighborSearch,
@@ -16,7 +17,6 @@ from parcels.kernels.interaction import (
     MergeWithNearestNeighbor,
     NearestNeighborWithinRange,
 )
-from parcels._core.particle import InteractionParticle, Variable
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh, create_flat_positions, create_spherical_positions
 

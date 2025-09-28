@@ -1,8 +1,6 @@
 import numpy as np
 import pytest
 
-from parcels._core.utils.time import TimeInterval
-from parcels._datasets.structured.generic import TIME
 from parcels._core.particle import (
     _SAME_AS_FIELDSET_TIME_INTERVAL,
     Particle,
@@ -10,6 +8,8 @@ from parcels._core.particle import (
     Variable,
     create_particle_data,
 )
+from parcels._core.utils.time import TimeInterval
+from parcels._datasets.structured.generic import TIME
 
 
 def test_variable_init():
