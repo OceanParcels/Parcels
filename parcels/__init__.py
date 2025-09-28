@@ -34,7 +34,7 @@ from parcels._core.statuscodes import (
 )
 from parcels.utils import *
 
-from parcels.converters import (
+from parcels._core.converters import (
     Geographic,
     GeographicPolar,
     GeographicPolarSquare,

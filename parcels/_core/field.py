@@ -23,7 +23,7 @@ from parcels._core.statuscodes import (
     StatusCode,
 )
 from parcels.utils._helpers import _assert_same_function_signature
-from parcels.converters import (
+from parcels._core.converters import (
     UnitConverter,
     _unitconverters_map,
 )
