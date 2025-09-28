@@ -61,8 +61,8 @@ Development
 Environment setup
 ~~~~~~~~~~~~~~~~~
 
-.. note:: 
-   
+.. note::
+
    Parcels, alongside popular projects like `Xarray <https://github.com/pydata/xarray>`_, uses `Pixi <https://pixi.sh>`_ to manage environments and run developer tooling. Pixi is a modern alternative to Conda and also includes other powerful tooling useful for a project like Parcels (`read more <https://github.com/OceanParcels/Parcels/issues/2205>`_). It is our sole development workflow - we do not offer a Conda development workflow. Give Pixi a try, you won't regret it!
 
 To get started contributing to Parcels:
