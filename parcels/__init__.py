@@ -43,6 +43,47 @@ from parcels._core.xgrid import XGrid
 from parcels._logger import logger
 from parcels._tutorial import download_example_dataset, list_example_datasets
 
+__all__ = [  # noqa: RUF022
+    # Core classes
+    "BaseGrid",
+    "Field",
+    "VectorField",
+    "FieldSet",
+    "Kernel",
+    "Particle",
+    "ParticleClass",
+    "ParticleFile",
+    "ParticleSet",
+    "Variable",
+    "XGrid",
+    "UxGrid",
+    # Converters
+    "Geographic",
+    "GeographicPolar",
+    "GeographicPolarSquare",
+    "GeographicSquare",
+    "UnitConverter",
+    # Status codes and errors
+    "AllParcelsErrorCodes",
+    "FieldInterpolationError",
+    "FieldOutOfBoundError",
+    "FieldSamplingError",
+    "KernelError",
+    "StatusCode",
+    "TimeExtrapolationError",
+    # Warnings
+    "FieldSetWarning",
+    "FileWarning",
+    "KernelWarning",
+    "ParticleSetWarning",
+    # Utilities
+    "logger",
+    "download_example_dataset",
+    "list_example_datasets",
+    # (marked for potential removal)
+    "KernelParticle",
+]
+
 _stdlib_warnings.warn(
     "This is an alpha version of Parcels v4. The API is not stable and may change without deprecation warnings.",
     UserWarning,
