@@ -33,7 +33,6 @@ from parcels.converters import (
     GeographicSquare,
     UnitConverter,
 )
-import parcels._core.kernels as kernels
 from parcels._core.xgrid import XGrid
 from parcels._core.uxgrid import UxGrid
 from parcels._core.basegrid import BaseGrid

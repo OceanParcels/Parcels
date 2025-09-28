@@ -10,7 +10,7 @@ import numpy as np
 
 from parcels._warnings import KernelWarning
 from parcels._core.basegrid import GridType
-from parcels._core.kernels import (
+from parcels.kernels import (
     AdvectionAnalytical,
     AdvectionRK4,
     AdvectionRK45,
