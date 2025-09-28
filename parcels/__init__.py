@@ -26,6 +26,16 @@ from parcels.particleset import ParticleSet
 from parcels.statuscodes import StatusCode
 from parcels.utils import *
 
+from parcels.converters import (
+    Geographic,
+    GeographicPolar,
+    GeographicPolarSquare,
+    GeographicSquare,
+    UnitConverter,
+    convert_to_flat_array,
+    unitconverters_map,
+)
+
 _stdlib_warnings.warn(
     "This is an alpha version of Parcels v4. The API is not stable and may change without deprecation warnings.",
     UserWarning,

@@ -17,7 +17,7 @@ from parcels.kernel import Kernel
 from parcels.kernels import AdvectionRK4
 from parcels.particle import KernelParticle, Particle, create_particle_data
 from parcels.statuscodes import StatusCode
-from parcels.utils.converters import convert_to_flat_array
+from parcels.converters import convert_to_flat_array
 
 __all__ = ["ParticleSet"]
 
