@@ -1,7 +1,7 @@
 import numpy as np
 
 import parcels
-from parcels._index_search import GRID_SEARCH_ERROR, _latlon_rad_to_xyz, curvilinear_point_in_cell, uxgrid_point_in_cell
+from parcels._core.index_search import GRID_SEARCH_ERROR, _latlon_rad_to_xyz, curvilinear_point_in_cell, uxgrid_point_in_cell
 from parcels._python import isinstance_noimport
 
 
