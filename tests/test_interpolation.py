@@ -5,7 +5,7 @@ import xarray as xr
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels._index_search import _search_time_index
-from parcels.field import Field, VectorField
+from parcels import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.interpolators import (
     UXPiecewiseLinearNode,

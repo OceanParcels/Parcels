@@ -11,7 +11,7 @@ from dask import is_dask_collection
 import parcels.utils.interpolation_utils as i_u
 
 if TYPE_CHECKING:
-    from parcels.field import Field, VectorField
+    from parcels._core.field import Field, VectorField
     from parcels._core.uxgrid import _UXGRID_AXES
     from parcels._core.xgrid import _XGRID_AXES
 

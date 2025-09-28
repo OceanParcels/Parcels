@@ -6,7 +6,7 @@ import xgcm
 from parcels._datasets.structured.generic import datasets
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels._tutorial import download_example_dataset
-from parcels.field import Field
+from parcels import Field
 from parcels import XGrid
 
 

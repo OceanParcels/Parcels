@@ -9,7 +9,7 @@ import xarray as xr
 from parcels._datasets.structured.circulation_models import datasets as datasets_circulation_models
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
-from parcels.field import Field, VectorField
+from parcels import Field, VectorField
 from parcels.fieldset import CalendarError, FieldSet, _datetime_to_msg
 from parcels import XGrid
 from tests import utils

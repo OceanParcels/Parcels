@@ -12,7 +12,7 @@ from parcels._datasets.structured.generated import (
     simple_UV_dataset,
     stommel_gyre_dataset,
 )
-from parcels.field import Field, VectorField
+from parcels import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.interpolators import CGrid_Velocity, XLinear
 from parcels.kernels import (

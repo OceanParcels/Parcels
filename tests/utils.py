@@ -10,7 +10,7 @@ import xarray as xr
 
 import parcels
 from parcels._datasets.structured.generated import simple_UV_dataset
-from parcels.field import Field, VectorField
+from parcels import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.interpolators import XLinear
 from parcels._core.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
