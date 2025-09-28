@@ -8,10 +8,10 @@ from parcels import (
     FieldSetWarning,
     KernelWarning,
     Particle,
-    ParticleFile,
     ParticleSet,
     ParticleSetWarning,
 )
+from parcels.particlefile import ParticleFile
 from tests.utils import TEST_DATA
 
 

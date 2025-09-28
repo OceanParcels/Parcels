@@ -2,7 +2,12 @@ import numpy as np
 import pytest
 
 from parcels import Field, FieldSet, ParticleSet
-from parcels._core.particle import InteractionParticle, Variable
+from parcels.application_kernels.advection import AdvectionRK4
+from parcels.application_kernels.interaction import (
+    AsymmetricAttraction,
+    MergeWithNearestNeighbor,
+    NearestNeighborWithinRange,
+)
 from parcels.interaction.neighborsearch import (
     BruteFlatNeighborSearch,
     BruteSphericalNeighborSearch,
@@ -11,12 +16,7 @@ from parcels.interaction.neighborsearch import (
     KDTreeFlatNeighborSearch,
 )
 from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
-from parcels.kernels import AdvectionRK4
-from parcels.kernels.interaction import (
-    AsymmetricAttraction,
-    MergeWithNearestNeighbor,
-    NearestNeighborWithinRange,
-)
+from parcels.particle import InteractionParticle, Variable
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh, create_flat_positions, create_spherical_positions
 

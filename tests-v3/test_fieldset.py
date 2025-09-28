@@ -13,7 +13,7 @@ from parcels import (
     Variable,
 )
 from parcels.field import VectorField
-from parcels.utils.converters import GeographicPolar, UnitConverter
+from parcels.tools.converters import GeographicPolar, UnitConverter
 from tests.utils import TEST_DATA
 
 

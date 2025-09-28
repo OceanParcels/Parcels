@@ -5,9 +5,9 @@ from collections import defaultdict
 import numpy as np
 
 from parcels._compat import MPI
-from parcels._core.field import VectorField
-from parcels._core.statuscodes import StatusCode
+from parcels.field import VectorField
 from parcels.kernel import BaseKernel
+from parcels.tools.statuscodes import StatusCode
 
 __all__ = ["InteractionKernel"]
 
