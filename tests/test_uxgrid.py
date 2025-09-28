@@ -1,7 +1,7 @@
 import pytest
 
 from parcels._datasets.unstructured.generic import datasets as uxdatasets
-from parcels.uxgrid import UxGrid
+from parcels import UxGrid
 
 
 @pytest.mark.parametrize("uxds", [pytest.param(uxds, id=key) for key, uxds in uxdatasets.items()])

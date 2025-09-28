@@ -20,8 +20,8 @@ from parcels.interpolators import UXPiecewiseConstantFace
 from parcels.kernels import AdvectionEE
 from parcels.particlefile import ParticleFile
 from parcels.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
-from parcels.uxgrid import UxGrid
-from parcels.xgrid import XGrid
+from parcels import UxGrid
+from parcels import XGrid
 from tests import utils
 from tests.common_kernels import DoNothing
 

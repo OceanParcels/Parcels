@@ -7,7 +7,7 @@ import xarray as xr
 from numpy.testing import assert_allclose
 
 from parcels._datasets.structured.generic import X, Y, Z, datasets
-from parcels.xgrid import (
+from parcels._core.xgrid import (
     LEFT_OUT_OF_BOUNDS,
     RIGHT_OUT_OF_BOUNDS,
     XGrid,

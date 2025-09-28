@@ -9,7 +9,7 @@ import xgcm
 
 from parcels._index_search import _search_indices_curvilinear_2d
 from parcels._typing import assert_valid_mesh
-from parcels.basegrid import BaseGrid
+from parcels._core.basegrid import BaseGrid
 
 _XGRID_AXES = Literal["X", "Y", "Z"]
 _XGRID_AXES_ORDERING: Sequence[_XGRID_AXES] = "ZYX"

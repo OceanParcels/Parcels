@@ -11,7 +11,7 @@ from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
 from parcels.fieldset import CalendarError, FieldSet, _datetime_to_msg
-from parcels.xgrid import XGrid
+from parcels import XGrid
 from tests import utils
 
 ds = datasets_structured["ds_2d_left"]

@@ -34,6 +34,9 @@ from parcels.converters import (
     UnitConverter,
 )
 import parcels._core.kernels as kernels
+from parcels._core.xgrid import XGrid
+from parcels._core.uxgrid import UxGrid
+from parcels._core.basegrid import BaseGrid
 
 _stdlib_warnings.warn(
     "This is an alpha version of Parcels v4. The API is not stable and may change without deprecation warnings.",

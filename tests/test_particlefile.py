@@ -15,7 +15,7 @@ from parcels.kernels import AdvectionRK4
 from parcels.particle import Particle, create_particle_data, get_default_particle
 from parcels.particlefile import ParticleFile
 from parcels.statuscodes import StatusCode
-from parcels.xgrid import XGrid
+from parcels import XGrid
 from tests.common_kernels import DoNothing
 
 

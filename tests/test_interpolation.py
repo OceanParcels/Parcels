@@ -20,8 +20,8 @@ from parcels.particle import Particle, Variable
 from parcels.particlefile import ParticleFile
 from parcels.particleset import ParticleSet
 from parcels.statuscodes import StatusCode
-from parcels.uxgrid import UxGrid
-from parcels.xgrid import XGrid
+from parcels import UxGrid
+from parcels import XGrid
 from tests.utils import TEST_DATA
 
 

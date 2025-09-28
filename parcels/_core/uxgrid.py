@@ -7,9 +7,9 @@ import uxarray as ux
 
 from parcels._index_search import GRID_SEARCH_ERROR, uxgrid_point_in_cell
 from parcels._typing import assert_valid_mesh
-from parcels.xgrid import _search_1d_array
+from parcels._core.xgrid import _search_1d_array
 
-from .basegrid import BaseGrid
+from parcels._core.basegrid import BaseGrid
 
 _UXGRID_AXES = Literal["Z", "FACE"]
 

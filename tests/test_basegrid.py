@@ -5,7 +5,7 @@ import itertools
 import numpy as np
 import pytest
 
-from parcels.basegrid import BaseGrid
+from parcels._core.basegrid import BaseGrid
 
 
 class MockGrid(BaseGrid):

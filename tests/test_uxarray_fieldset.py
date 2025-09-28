@@ -15,7 +15,7 @@ from parcels.interpolators import (
     UXPiecewiseConstantFace,
     UXPiecewiseLinearNode,
 )
-from parcels.uxgrid import UxGrid
+from parcels import UxGrid
 
 
 @pytest.fixture

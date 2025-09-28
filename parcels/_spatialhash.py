@@ -2,17 +2,19 @@ import numpy as np
 
 import parcels
 from parcels._index_search import GRID_SEARCH_ERROR, _latlon_rad_to_xyz, curvilinear_point_in_cell, uxgrid_point_in_cell
+from parcels._core.uxgrid import UxGrid
+from parcels._core.xgrid import XGrid
 
 
 class SpatialHash:
     """Custom data structure that is used for performing grid searches using Spatial Hashing. This class constructs an overlying
-    uniformly spaced rectilinear grid, called the "hash grid" on top parcels.xgrid.XGrid. It is particularly useful for grid searching
+    uniformly spaced rectilinear grid, called the "hash grid" on top parcels.XGrid. It is particularly useful for grid searching
     on curvilinear grids. Faces in the Xgrid are related to the cells in the hash grid by determining the hash cells the bounding box
     of the unstructured face cells overlap with.
 
     Parameters
     ----------
-    grid : parcels.xgrid.XGrid
+    grid : parcels.XGrid
         Source grid used to construct the hash grid and hash table
 
     Note
@@ -25,17 +27,17 @@ class SpatialHash:
         grid,
         bitwidth=1023,
     ):
-        if isinstance(grid, parcels.xgrid.XGrid):
+        if isinstance(grid, XGrid):
             self._point_in_cell = curvilinear_point_in_cell
-        elif isinstance(grid, parcels.uxgrid.UxGrid):
+        elif isinstance(grid, UxGrid):
             self._point_in_cell = uxgrid_point_in_cell
         else:
-            raise ValueError("Expected `grid` to be a parcels.xgrid.XGrid or parcels.uxgrid.UxGrid")
+            raise ValueError("Expected `grid` to be a parcels.XGrid or parcels.UxGrid")
 
         self._source_grid = grid
         self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
 
-        if isinstance(grid, parcels.xgrid.XGrid):
+        if isinstance(grid, XGrid):
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0
@@ -120,7 +122,7 @@ class SpatialHash:
                 self._zlow = np.zeros_like(self._xlow)
                 self._zhigh = np.zeros_like(self._xlow)
 
-        elif isinstance(grid, parcels.uxgrid.UxGrid):
+        elif isinstance(grid, UxGrid):
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0

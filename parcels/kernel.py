@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from parcels._warnings import KernelWarning
-from parcels.basegrid import GridType
+from parcels._core.basegrid import GridType
 from parcels._core.kernels import (
     AdvectionAnalytical,
     AdvectionRK4,

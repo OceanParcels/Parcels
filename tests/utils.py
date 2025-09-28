@@ -13,7 +13,7 @@ from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldSet
 from parcels.interpolators import XLinear
-from parcels.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
+from parcels._core.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TEST_ROOT = PROJECT_ROOT / "tests"

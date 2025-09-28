@@ -19,7 +19,7 @@ from parcels.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
 
 if TYPE_CHECKING:
     from parcels._typing import TimeLike
-    from parcels.basegrid import BaseGrid
+    from parcels._core.basegrid import BaseGrid
 __all__ = ["FieldSet"]
 
 
