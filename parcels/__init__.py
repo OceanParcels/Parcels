@@ -33,6 +33,7 @@ from parcels.converters import (
     GeographicSquare,
     UnitConverter,
 )
+import parcels._core.kernels as kernels
 
 _stdlib_warnings.warn(
     "This is an alpha version of Parcels v4. The API is not stable and may change without deprecation warnings.",
