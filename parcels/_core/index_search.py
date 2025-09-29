@@ -224,7 +224,7 @@ def uxgrid_point_in_cell(grid, y: np.ndarray, x: np.ndarray, yi: np.ndarray, xi:
             ),
             axis=-1,
         )
-        points = np.stack((x, y))
+        points = np.stack((x, y), axis=-1)
 
     M = len(points)
 
@@ -252,9 +252,6 @@ def _triangle_area(A, B, C):
         raise ValueError(f"Expected last dim=2 or 3, got {A.shape[-1]}")
 
     return area
-    # d3 = np.cross(d1, d2, axis=-1)
-    # breakpoint()
-    # return 0.5 * np.linalg.norm(d3, axis=-1)
 
 
 def _barycentric_coordinates(nodes, points, min_area=1e-8):

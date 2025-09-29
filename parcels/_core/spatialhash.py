@@ -41,6 +41,7 @@ class SpatialHash:
         self._bitwidth = bitwidth  # Max integer to use per coordinate in quantization (10 bits = 0..1023)
 
         if isinstance_noimport(grid, "XGrid"):
+            self._coord_dim = 2  # Number of computational coordinates is 2 (bilinear interpolation)
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0
@@ -126,6 +127,7 @@ class SpatialHash:
                 self._zhigh = np.zeros_like(self._xlow)
 
         elif isinstance_noimport(grid, "UxGrid"):
+            self._coord_dim = grid.uxgrid.n_max_face_nodes  # Number of barycentric coordinates
             if self._source_grid._mesh == "spherical":
                 # Boundaries of the hash grid are the unit cube
                 self._xmin = -1.0
@@ -344,7 +346,11 @@ class SpatialHash:
         pos = np.searchsorted(keys, query_codes)  # pos is shape (num_queries,)
 
         # Valid hits: inside range with finite query coordinates and query codes give exact morton code match.
-        valid = (pos < len(keys)) & np.isfinite(x) & np.isfinite(y) & (query_codes == keys[pos])
+        valid = (pos < len(keys)) & np.isfinite(x) & np.isfinite(y)
+        # Clip pos to valid range to avoid out-of-bounds indexing
+        pos = np.clip(pos, 0, len(keys) - 1)
+        # Further filter out false positives from searchsorted by checking for exact code match
+        valid[valid] &= query_codes[valid] == keys[pos[valid]]
 
         # Pre-allocate i and j indices of the best match for each query
         # Default values to -1 (no match case)
@@ -357,7 +363,7 @@ class SpatialHash:
             return (
                 j_best.reshape(query_codes.shape),
                 i_best.reshape(query_codes.shape),
-                np.full((num_queries, 2), -1.0, dtype=np.float32),
+                np.full((num_queries, self._coord_dim), -1.0, dtype=np.float32),
             )
 
         # Now, for each query, we need to gather the candidate (j,i) indices from the hash table
