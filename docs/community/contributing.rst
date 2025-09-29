@@ -18,7 +18,7 @@ There are two primary groups that contribute to Parcels; oceanographers who brin
 
 .. note::
 
-    The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to the `Editing Parcels code`_ section.
+    The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to the `Development`_ section.
 
 What is open source?
 --------------------
@@ -55,26 +55,85 @@ In the `Projects panel <https://github.com/OceanParcels/parcels/projects?query=i
 
 .. _editing-parcels-code:
 
-Editing Parcels code
----------------------
+Development
+-----------
 
-Development environment setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Environment setup
+~~~~~~~~~~~~~~~~~
+
+.. note::
+
+   Parcels, alongside popular projects like `Xarray <https://github.com/pydata/xarray>`_, uses `Pixi <https://pixi.sh>`_ to manage environments and run developer tooling. Pixi is a modern alternative to Conda and also includes other powerful tooling useful for a project like Parcels (`read more <https://github.com/OceanParcels/Parcels/issues/2205>`_). It is our sole development workflow - we do not offer a Conda development workflow. Give Pixi a try, you won't regret it!
 
 To get started contributing to Parcels:
 
-- `fork the repo <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository>`_
-- install the developer version of Parcels following `our developer installation instructions <../installation.rst#installation-for-developers>`_
-    - but instead of cloning the Parcels repo, you should clone your fork
+**Step 1:** `Install Pixi <https://pixi.sh/latest/>`_.
 
-Now you have a cloned repo that you have full control over, and a conda environment where Parcels is installed in an editable mode (i.e., any changes that you make to the Parcels code will take effect when you use that conda environment to run Python code).
+**Step 2:** `Fork the repository <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository>`_
+
+**Step 3:** Clone your fork and ``cd`` into the repository.
+
+**Step 4:** Install the Pixi environment
+
+.. code-block:: bash
+
+  pixi install
+
+Now you have a development installation of Parcels, as well as a bunch of developer tooling to run tests, check code quality, and build the documentation! Simple as that.
+
+Pixi workflows
+~~~~~~~~~~~~~~
+
+You can use the following Pixi commands to run common development tasks.
+
+**Testing**
+
+- ``pixi run tests`` - Run the full test suite using pytest
+- ``pixi run tests-notebooks`` - Run notebook tests (specifically Argo-related examples)
+
+
+**Documentation**
+
+- ``pixi run docs`` - Build the documentation using Sphinx
+- ``pixi run docs-watch`` - Build and auto-rebuild documentation when files change (useful for live editing)
+- ``pixi run docs-linkcheck`` - Check for broken links in the documentation
+
+**Code quality**
+
+- ``pixi run lint`` - Run pre-commit hooks on all files (includes formatting, linting, and other code quality checks)
+- ``pixi run typing`` - Run mypy type checking on the codebase
+
+**Different environments**
+
+Parcels supports testing against different environments (e.g., different Python versions) with different feature sets. In CI we test against these environments, and you can too locally. For example:
+
+- ``pixi run -e test-py311 tests`` - Run tests using Python 3.11
+- ``pixi run -e test-py312 tests`` - Run tests using Python 3.12
+
+The name of the workflow on GitHub contains the command you have to run locally to recreate the workflow - making it super easy to reproduce CI failures locally.
+
+**Typical development workflow**
+
+1. Make your code changes
+2. Run ``pixi run lint`` to ensure code formatting and style compliance
+3. Run ``pixi run tests`` to verify your changes don't break existing functionality
+4. If you've added new features, run ``pixi run typing`` to check type annotations
+5. If you've modified documentation, run ``pixi run docs`` to build and verify the docs
+
+.. tip::
+
+    You can run ``pixi info`` to see all available environments and ``pixi task list`` to see all available tasks across environments.
+
+
+Changing code
+~~~~~~~~~~~~~
 
 From there:
 
 - create a git branch, implement, commit, and push your changes
 - `create a pull request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_ (PR) into ``main`` of the original repo making sure to link to the issue that you are working on. Not yet finished with your feature but still want feedback on how you're going? Then mark it as "draft" and ``@ping`` a maintainer. See our `maintainer notes <maintainer.md>`_ to see our PR review workflow.
 
-Look at the ``[tool.pixi.tasks]`` section of ``pyproject.toml`` for a list of tasks that are useful for development.
+
 
 Code guidelines
 ~~~~~~~~~~~~~~~
@@ -85,10 +144,8 @@ Code guidelines
 
 - Write clear commit messages that explain the changes you've made.
 - Include tests for any new code you write. Tests are implemented using pytest and are located in the ``tests`` directory.
-- Follow the `NumPy docstring conventions <https://numpydoc.readthedocs.io/en/latest/format.html>`_ when adding or modifying docstrings.
-- Follow the `PEP 8 <https://peps.python.org/pep-0008/>`_ style guide when writing code. This codebase also uses `flake8 <https://flake8.pycqa.org/en/latest/>`_ and `isort <https://pycqa.github.io/isort/>`_ to ensure a consistent code style.
-
-If you're comfortable with these code guidelines, and want to enforce them on your local machine before pushing, you can install the Git hooks for the repo by running ``pre-commit install``. This will run tools to check your changes adhere to these guidelines as you make commits.
+- Follow the `NumPy docstring conventions <https://numpydoc.readthedocs.io/en/latest/format.html>`_ when adding or modifying public API docstrings.
+- Follow the `PEP 8 <https://peps.python.org/pep-0008/>`_ style guide when writing code. This codebase also uses additional tooling to enforce additional style guidelines. You can run this tooling with ``pixi run lint``, and see which tooling is run in the ``.pre-commit-config.yaml`` file.
 
 ----
 

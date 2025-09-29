@@ -9,11 +9,10 @@ import numpy as np
 import xarray as xr
 
 import parcels
+from parcels import Field, FieldSet, VectorField
+from parcels._core.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
 from parcels._datasets.structured.generated import simple_UV_dataset
-from parcels.application_kernels.interpolation import XLinear
-from parcels.field import Field, VectorField
-from parcels.fieldset import FieldSet
-from parcels.xgrid import _FIELD_DATA_ORDERING, XGrid, get_axis_from_dim_name
+from parcels.interpolators import XLinear
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TEST_ROOT = PROJECT_ROOT / "tests"
