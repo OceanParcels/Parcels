@@ -8,7 +8,7 @@ import pytest
 from parcels.basegrid import BaseGrid
 
 
-class TestGrid(BaseGrid):
+class MockGrid(BaseGrid):
     def __init__(self, axis_dim: dict[str, int]):
         self.axis_dim = axis_dim
 
@@ -26,10 +26,10 @@ class TestGrid(BaseGrid):
 @pytest.mark.parametrize(
     "grid",
     [
-        TestGrid({"Z": 10, "Y": 20, "X": 30}),
-        TestGrid({"Z": 5, "Y": 15}),
-        TestGrid({"Z": 8}),
-        TestGrid({"Z": 12, "FACE": 25}),
+        MockGrid({"Z": 10, "Y": 20, "X": 30}),
+        MockGrid({"Z": 5, "Y": 15}),
+        MockGrid({"Z": 8}),
+        MockGrid({"Z": 12, "FACE": 25}),
     ],
 )
 def test_basegrid_ravel_unravel_index(grid):

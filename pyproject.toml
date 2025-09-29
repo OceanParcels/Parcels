@@ -7,9 +7,9 @@ name = "parcels"
 description = "Framework for Lagrangian tracking of virtual ocean particles in the petascale age."
 readme = "README.md"
 dynamic = ["version"]
-authors = [{name = "oceanparcels.org team"}]
+authors = [{ name = "Parcels team" }]
 requires-python = ">=3.11,<3.13"
-license = {file = "LICENSE.md"}
+license = { file = "LICENSE.md" }
 classifiers = [
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3.11",
@@ -23,17 +23,16 @@ dependencies = [
   "cftime",
   "numpy >=1.11",
   "dask",
-  "psutil",
   "netCDF4 >=1.1.9",
   "zarr >=2.11.0,!=2.18.0,<3",
   "tqdm",
-  "pymbolic",
   "pytest",
   "scipy >=0.16.0",
   "xarray >=0.10.8",
   "uxarray",
   "pooch",
   "xgcm >=0.9.0",
+  "cf_xarray",
 ]
 
 [project.urls]
@@ -41,74 +40,6 @@ homepage = "https://oceanparcels.org/"
 repository = "https://github.com/OceanParcels/parcels"
 Tracker = "https://github.com/OceanParcels/parcels/issues"
 
-[tool.pixi.project]
-channels = ["conda-forge"]
-name = "parcels-dev"
-platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
-
-[tool.pixi.tasks]
-tests = "pytest"
-tests-notebooks = "pytest -v -s --nbval-lax -k 'not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_particle_field_interaction and not tutorial_croco_3D and not tutorial_nemo_3D and not tutorial_analyticaladvection' docs/examples" # TODO v4: Mirror ci.yml for notebooks being run
-coverage = "coverage run -m pytest && coverage html"
-typing = "mypy parcels"
-pre-commit = "pre-commit run --all-files"
-docs = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
-
-# TODO v4: Remove v4 specific tasks
-tests-short = "pytest tests/test_advection.py"
-tests-exclude-v4 = "pytest -m 'not v4alpha and not v4future and not v4remove'"
-
-[tool.pixi.dependencies] #! Keep in sync with environment.yml
-python = ">=3.11"
-ffmpeg = ">=3.2.3"
-jupyter = "*"
-matplotlib-base = ">=2.0.2"
-netcdf4 = ">=1.1.9"
-numpy = ">=1.9.1"
-psutil = "*"
-pymbolic = "*"
-scipy = ">=0.16.0"
-tqdm = "*"
-xarray = ">=0.10.8"
-uxarray = ">=2025.3.0"
-cftime = ">=1.3.1"
-dask = ">=2.0"
-scikit-learn = "*"
-zarr = ">=2.11.0,!=2.18.0,<3"
-xgcm = ">=0.9.0"
-
-# Notebooks
-trajan = "*"
-
-# Testing
-nbval = "*"
-pytest = "*"
-hypothesis = "*"
-pytest-html = "*"
-coverage = "*"
-
-# Typing
-mypy = "*"
-lxml = "*" # in CI
-types-tqdm = "*"
-types-psutil = "*"
-
-# Linting
-pre_commit = "*"
-
-# Docs
-ipython = "*"
-numpydoc = "!=1.9.0"
-nbsphinx = "*"
-sphinx = "*"
-pandoc = "*"
-pydata-sphinx-theme = "*"
-sphinx-autobuild = "*"
-myst-parser = "*"
-sphinxcontrib-mermaid = "*"
-
-[tool.pixi.pypi-dependencies]
-parcels = { path = ".", editable = true }
 
 [tool.setuptools]
 packages = ["parcels"]
@@ -141,58 +72,58 @@ line-length = 120
 
 [tool.ruff.lint]
 select = [
-    "D",  # pydocstyle
-    "E",  # Error
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # Bugbear
-    "UP", # pyupgrade
-    "LOG", # logging
-    "ICN", # import conventions
-    "G", # logging-format
-    "RUF", # ruff
-    "ISC001", # single-line-implicit-string-concatenation
-    "TID", # flake8-tidy-imports
-    "T100", # Checks for the presence of debugger calls and imports
+  "D", # pydocstyle
+  "E", # Error
+  "F", # pyflakes
+  "I", # isort
+  "B", # Bugbear
+  "UP", # pyupgrade
+  "LOG", # logging
+  "ICN", # import conventions
+  "G", # logging-format
+  "RUF", # ruff
+  "ISC001", # single-line-implicit-string-concatenation
+  "TID", # flake8-tidy-imports
+  "T100", # Checks for the presence of debugger calls and imports
 ]
 
 ignore = [
-    # line too long (82 > 79 characters)
-    "E501",
-    # ‘from module import *’ used; unable to detect undefined names
-    "F403",
-    # Mutable class attributes should be annotated with `typing.ClassVar`
-    "RUF012",
-    # Consider `(slice(2), *block)` instead of concatenation
-    "RUF005",
-    # Prefer `next(iter(variable.items()))` over single element slice
-    "RUF015",
-    # Use `X | Y` in `isinstance` (see https://github.com/home-assistant/core/issues/123850)
-    "UP038",
-    "RUF046", # Value being cast to `int` is already an integer
+  # line too long (82 > 79 characters)
+  "E501",
+  # ‘from module import *’ used; unable to detect undefined names
+  "F403",
+  # Mutable class attributes should be annotated with `typing.ClassVar`
+  "RUF012",
+  # Consider `(slice(2), *block)` instead of concatenation
+  "RUF005",
+  # Prefer `next(iter(variable.items()))` over single element slice
+  "RUF015",
+  # Use `X | Y` in `isinstance` (see https://github.com/home-assistant/core/issues/123850)
+  "UP038",
+  "RUF046", # Value being cast to `int` is already an integer
 
-    # TODO: ignore for now (requires more work). Remove ignore once fixed
-    # Missing docstring in public module
-    "D100",
-    # Missing docstring in public class
-    "D101",
-    # Missing docstring in public method
-    "D102",
-    # Missing docstring in public function
-    "D103",
-    # Missing docstring in public package
-    "D104",
-    # Missing docstring in magic method
-    "D105",
-    # Missing docstring in __init__
-    "D400",
-    # First line should be in imperative mood (requires writing of summaries)
-    "D401",
-    # First word of the docstring should not be `This`
-    "D404",
-    # 1 blank line required between summary line and description (requires writing of summaries)
-    "D205",
-    "F811",
+  # TODO: ignore for now (requires more work). Remove ignore once fixed
+  # Missing docstring in public module
+  "D100",
+  # Missing docstring in public class
+  "D101",
+  # Missing docstring in public method
+  "D102",
+  # Missing docstring in public function
+  "D103",
+  # Missing docstring in public package
+  "D104",
+  # Missing docstring in magic method
+  "D105",
+  # Missing docstring in __init__
+  "D400",
+  # First line should be in imperative mood (requires writing of summaries)
+  "D401",
+  # First word of the docstring should not be `This`
+  "D404",
+  # 1 blank line required between summary line and description (requires writing of summaries)
+  "D205",
+  "F811",
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -212,14 +143,14 @@ files = [
 
 [[tool.mypy.overrides]]
 module = [
-    "parcels._version_setup",
-    "mpi4py",
-    "scipy.spatial",
-    "sklearn.cluster",
-    "zarr",
-    "cftime",
-    "pykdtree.kdtree",
-    "netCDF4",
-    "pooch",
+  "parcels._version_setup",
+  "mpi4py",
+  "scipy.spatial",
+  "sklearn.cluster",
+  "zarr",
+  "cftime",
+  "pykdtree.kdtree",
+  "netCDF4",
+  "pooch",
 ]
 ignore_missing_imports = true

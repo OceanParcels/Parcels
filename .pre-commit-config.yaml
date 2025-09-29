@@ -43,3 +43,14 @@ repos:
     rev: 0.8.1
     hooks:
       - id: nbstripout
+  - repo: https://github.com/ComPWA/taplo-pre-commit
+    rev: v0.9.3
+    hooks:
+      - id: taplo-format
+        args:
+          [
+            "--option",
+            "array_auto_collapse=false",
+            "--option",
+            "align_comments=false",
+          ]

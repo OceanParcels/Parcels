@@ -12,6 +12,7 @@ from parcels import (
     ParticleSet,
     StatusCode,
     UXPiecewiseConstantFace,
+    Variable,
     VectorField,
 )
 from parcels._datasets.structured.generated import simple_UV_dataset
@@ -38,7 +39,7 @@ def fieldset() -> FieldSet:
 @pytest.fixture
 def fieldset_no_time_interval() -> FieldSet:
     # i.e., no time variation
-    ds = datasets_structured["ds_2d_left"].isel(time=0).drop("time")
+    ds = datasets_structured["ds_2d_left"].isel(time=0).drop_vars("time")
 
     grid = XGrid.from_dataset(ds, mesh="flat")
     U = Field("U", ds["U (A grid)"], grid)
@@ -148,6 +149,27 @@ def test_particleset_endtime_type(fieldset, endtime, expectation):
     pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
     with expectation:
         pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
+
+
+@pytest.mark.parametrize(
+    "dt", [np.timedelta64(1, "s"), np.timedelta64(1, "ms"), np.timedelta64(10, "ms"), np.timedelta64(1, "ns")]
+)
+def test_pset_execute_subsecond_dt(fieldset, dt):
+    def AddDt(particles, fieldset):  # pragma: no cover
+        dt = particles.dt / np.timedelta64(1, "s")
+        particles.added_dt += dt
+
+    pclass = Particle.add_variable(Variable("added_dt", dtype=np.float32, initial=0))
+    pset = ParticleSet(fieldset, pclass=pclass, lon=0, lat=0)
+    pset.update_dt_dtype(dt.dtype)
+    pset.execute(AddDt, runtime=dt * 10, dt=dt)
+    np.testing.assert_allclose(pset[0].added_dt, 10.0 * dt / np.timedelta64(1, "s"), atol=1e-5)
+
+
+def test_pset_execute_subsecond_dt_error(fieldset):
+    pset = ParticleSet(fieldset, lon=0, lat=0)
+    with pytest.raises(ValueError, match="The dtype of dt"):
+        pset.execute(DoNothing, runtime=np.timedelta64(10, "ms"), dt=np.timedelta64(1, "ms"))
 
 
 def test_pset_remove_particle_in_kernel(fieldset):
@@ -362,6 +384,61 @@ def test_execution_fail_python_exception(fieldset, npart):
         pset.execute(PythonFail, runtime=np.timedelta64(20, "s"), dt=np.timedelta64(2, "s"))
     assert len(pset) == npart
     assert all(pset.time == fieldset.time_interval.left + np.timedelta64(10, "s"))
+
+
+@pytest.mark.parametrize(
+    "kernel_names, expected",
+    [
+        ("Lat1", [0, 1]),
+        ("Lat2", [2, 0]),
+        pytest.param(
+            "Lat1and2",
+            [2, 1],
+            marks=pytest.mark.xfail(
+                reason="Will be fixed alongside GH #2143 . Failing due to https://github.com/OceanParcels/Parcels/pull/2199#issuecomment-3285278876."
+            ),
+        ),
+        ("Lat1then2", [2, 1]),
+    ],
+)
+def test_execution_update_particle_in_kernel_function(fieldset, kernel_names, expected):
+    npart = 2
+
+    pset = ParticleSet(fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart))
+
+    def Lat1(particles, fieldset):  # pragma: no cover
+        def SetLat1(p):
+            p.lat = 1
+
+        SetLat1(particles[(particles.lat == 0) & (particles.lon > 0.5)])
+
+    def Lat2(particles, fieldset):  # pragma: no cover
+        def SetLat2(p):
+            p.lat = 2
+
+        SetLat2(particles[(particles.lat == 0) & (particles.lon < 0.5)])
+
+    def Lat1and2(particles, fieldset):  # pragma: no cover
+        def SetLat1(p):
+            p.lat = 1
+
+        def SetLat2(p):
+            p.lat = 2
+
+        SetLat1(particles[(particles.lat == 0) & (particles.lon > 0.5)])
+        SetLat2(particles[(particles.lat == 0) & (particles.lon < 0.5)])
+
+    if kernel_names == "Lat1":
+        kernels = [Lat1]
+    elif kernel_names == "Lat2":
+        kernels = [Lat2]
+    elif kernel_names == "Lat1and2":
+        kernels = [Lat1and2]
+    elif kernel_names == "Lat1then2":
+        kernels = [Lat1, Lat2]
+
+    pset.execute(kernels, runtime=np.timedelta64(2, "s"), dt=np.timedelta64(1, "s"))
+    np.testing.assert_allclose(pset.lat, expected, rtol=1e-5)
 
 
 def test_uxstommelgyre_pset_execute():

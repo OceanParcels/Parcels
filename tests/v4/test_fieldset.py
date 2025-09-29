@@ -1,13 +1,12 @@
 from datetime import timedelta
 
+import cf_xarray  # noqa: F401
 import cftime
 import numpy as np
 import pytest
 import xarray as xr
 
-from parcels._datasets.structured.circulation_models import (
-    datasets as datasets_circulation_models,  # noqa: F401
-)  # just making sure the import works. Will eventually be used in tests
+from parcels._datasets.structured.circulation_models import datasets as datasets_circulation_models
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels.field import Field, VectorField
@@ -216,3 +215,59 @@ def test_fieldset_grid_deduplication():
 def test_fieldset_add_field_after_pset():
     # ? Should it be allowed to add fields (normal or vector) after a ParticleSet has been initialized?
     ...
+
+
+_COPERNICUS_DATASETS = [
+    datasets_circulation_models["ds_copernicusmarine"],
+    datasets_circulation_models["ds_copernicusmarine_waves"],
+]
+
+
+@pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
+def test_fieldset_from_copernicusmarine(ds, caplog):
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "UV" in fieldset.fields
+    assert "renamed it to 'U'" in caplog.text
+    assert "renamed it to 'V'" in caplog.text
+
+
+def test_fieldset_from_copernicusmarine_no_currents(caplog):
+    ds = datasets_circulation_models["ds_copernicusmarine"].cf.drop_vars(
+        ["eastward_sea_water_velocity", "northward_sea_water_velocity"]
+    )
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" not in fieldset.fields
+    assert "V" not in fieldset.fields
+    assert "UV" not in fieldset.fields
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize("ds", _COPERNICUS_DATASETS)
+def test_fieldset_from_copernicusmarine_no_logs(ds, caplog):
+    ds = ds.copy()
+    zeros = xr.zeros_like(list(ds.data_vars.values())[0])
+    ds["U"] = zeros
+    ds["V"] = zeros
+
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "UV" in fieldset.fields
+    assert caplog.text == ""
+
+
+def test_fieldset_from_copernicusmarine_with_W(caplog):
+    ds = datasets_circulation_models["ds_copernicusmarine"]
+    ds = ds.copy()
+    ds["wo"] = ds["uo"]
+    ds["wo"].attrs["standard_name"] = "vertical_sea_water_velocity"
+
+    fieldset = FieldSet.from_copernicusmarine(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "W" in fieldset.fields
+    assert "UV" not in fieldset.fields
+    assert "UVW" in fieldset.fields
+    assert "renamed it to 'W'" in caplog.text

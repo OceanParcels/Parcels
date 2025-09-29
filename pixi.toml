@@ -1,0 +1,94 @@
+[workspace]
+name = "Parcels"
+preview = ["pixi-build"]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+[package]
+name = "parcels"
+version = "dynamic" # dynamic versioning needs better support in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . Putting `version = "dynamic"` here for now until pixi recommends something else.
+
+[package.build]
+backend = { name = "pixi-build-python", version = "==0.3.2" }
+
+[package.host-dependencies]
+setuptools = "*"
+setuptools_scm = "*"
+
+[environments]
+test-latest = { features = ["test"], solve-group = "test" }
+test-py311 = { features = ["test", "py311"] }
+test-py312 = { features = ["test", "py312"] }
+test-notebooks = { features = ["test", "notebooks"], solve-group = "test" }
+docs = { features = ["docs"], solve-group = "docs" }
+typing = { features = ["typing"], solve-group = "typing" }
+pre-commit = { features = ["pre-commit"], no-default-feature = true }
+
+[dependencies] # keep section in sync with pyproject.toml dependencies
+python = ">=3.11,<3.13"
+netcdf4 = ">=1.1.9"
+numpy = ">=1.9.1"
+tqdm = "*"
+xarray = ">=0.10.8"
+uxarray = ">=2025.3.0"
+dask = ">=2.0"
+scikit-learn = "*"
+zarr = ">=2.11.0,!=2.18.0,<3"
+xgcm = ">=0.9.0"
+cf_xarray = "*"
+cftime = ">=1.3.1"
+scipy = ">=0.16.0" #? Not sure if we rely on scipy internally anymore...
+pooch = "*"
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.test.dependencies]
+nbval = "*"
+pytest = "*"
+hypothesis = "*"
+pytest-html = "*"
+pytest-cov = "*"
+
+[feature.test.tasks]
+tests = "pytest"
+tests-notebooks = "pytest --nbval-lax -k 'argo' docs/examples"
+
+
+[feature.notebooks.dependencies]
+jupyter = "*"
+trajan = "*"
+matplotlib-base = ">=2.0.2"
+
+[feature.docs.dependencies]
+numpydoc = "!=1.9.0"
+nbsphinx = "*"
+ipython = "*"
+sphinx = "*"
+pandoc = "*"
+pydata-sphinx-theme = "*"
+sphinx-autobuild = "*"
+myst-parser = "*"
+sphinxcontrib-mermaid = "*"
+
+[feature.docs.tasks]
+docs = "sphinx-build docs docs/_build"
+docs-watch = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
+docs-linkcheck = "sphinx-build -b linkcheck docs/ docs/_build/linkcheck"
+
+[feature.pre-commit.dependencies]
+pre_commit = "*"
+
+[feature.pre-commit.tasks]
+lint = "pre-commit run --all-files"
+
+[feature.typing.dependencies]
+mypy = "*"
+lxml = "*" # in CI
+types-tqdm = "*"
+
+[feature.typing.tasks]
+typing = "mypy parcels --install-types"
