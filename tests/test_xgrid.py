@@ -6,8 +6,7 @@ import pytest
 import xarray as xr
 from numpy.testing import assert_allclose
 
-from parcels._core.constants import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS
-from parcels._core.utils.array import _search_1d_array
+from parcels._core.index_search import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS, _search_1d_array
 from parcels._core.xgrid import (
     XGrid,
     _transpose_xfield_data_to_tzyx,

@@ -8,12 +8,11 @@ import numpy as np
 import uxarray as ux
 import xarray as xr
 
-from parcels._core.constants import LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS
 from parcels._core.converters import (
     UnitConverter,
     _unitconverters_map,
 )
-from parcels._core.index_search import GRID_SEARCH_ERROR, _search_time_index
+from parcels._core.index_search import GRID_SEARCH_ERROR, LEFT_OUT_OF_BOUNDS, RIGHT_OUT_OF_BOUNDS, _search_time_index
 from parcels._core.particle import KernelParticle
 from parcels._core.statuscodes import (
     AllParcelsErrorCodes,
