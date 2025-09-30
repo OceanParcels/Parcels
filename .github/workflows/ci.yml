@@ -34,7 +34,7 @@ jobs:
           - os: ubuntu
             pixi-environment: "test-py311"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Restore cached pixi lockfile
         uses: actions/cache/restore@v4
         id: restore-pixi-lock
@@ -78,7 +78,7 @@ jobs:
           - os: ubuntu
             python-version: "3.11"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Restore cached pixi lockfile
         uses: actions/cache/restore@v4
         id: restore-pixi-lock
@@ -125,7 +125,7 @@ jobs:
     needs: [cache-pixi-lock]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Restore cached pixi lockfile
         uses: actions/cache/restore@v4
         id: restore-pixi-lock
