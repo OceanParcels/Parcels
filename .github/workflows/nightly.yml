@@ -17,14 +17,10 @@ jobs:
         with:
           recipe-path: .github/ci/recipe.yaml
 
-      - name: Upload all packages
-        shell: bash
-        run: |
-          shopt -s nullglob
-          EXIT_CODE=0
+      - run: |
           for pkg in $(find output -type f \( -name "*.conda" -o -name "*.tar.bz2" \) ); do
-            if ! rattler-build upload prefix -c parcels "${pkg}"; then
-              EXIT_CODE=1
-            fi
+            echo "Uploading ${pkg}"
+            rattler-build upload prefix -c parcels "${pkg}"
           done
-          exit $EXIT_CODE
+        env:
+          PREFIX_API_KEY: ${{ secrets.PREFIX_API_KEY }}
