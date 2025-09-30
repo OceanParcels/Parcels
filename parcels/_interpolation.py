@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from parcels._typing import GridIndexingType
-from parcels.tools._helpers import should_calculate_next_ti
+from parcels.utils._helpers import should_calculate_next_ti
 
 
 @dataclass
