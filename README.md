@@ -8,6 +8,7 @@
 [![Xarray](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydata/xarray/refs/heads/main/doc/badge.json)](https://xarray.dev)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml)
+[![asv](https://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat)](https://github.com/OceanParcels/parcels-benchmarks)
 [![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/main/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/main?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
