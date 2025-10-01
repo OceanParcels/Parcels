@@ -468,7 +468,7 @@ class ParticleSet:
         pyfunc :
             Kernel function to execute. This can be the name of a
             defined Python function or a :class:`parcels.kernel.Kernel` object.
-            Kernels can be concatenated using the + operator (Default value = AdvectionRK4)
+            Kernels can be concatenated using the + operator.
         dt (np.timedelta64):
             Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
             Use a negative value for a backward-in-time simulation.
