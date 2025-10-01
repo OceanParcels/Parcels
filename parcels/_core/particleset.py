@@ -452,10 +452,10 @@ class ParticleSet:
 
     def execute(
         self,
+        dt: datetime.timedelta | np.timedelta64,
         pyfunc=AdvectionRK4,
         endtime: np.timedelta64 | np.datetime64 | None = None,
         runtime: datetime.timedelta | np.timedelta64 | None = None,
-        dt: datetime.timedelta | np.timedelta64 | None = None,
         output_file=None,
         verbose_progress=True,
     ):
@@ -466,6 +466,9 @@ class ParticleSet:
 
         Parameters
         ----------
+        dt (np.timedelta64):
+            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
+            Use a negative value for a backward-in-time simulation.
         pyfunc :
             Kernel function to execute. This can be the name of a
             defined Python function or a :class:`parcels.kernel.Kernel` object.
@@ -477,9 +480,6 @@ class ParticleSet:
         runtime (np.timedelta64):
             The duration of the simuulation execution. Must be a np.timedelta64 object and is required to be set when the `fieldset.time_interval` is not defined.
             If the `fieldset.time_interval` is defined and the runtime is provided, the end time will be the start of the fieldset's time interval plus the runtime.
-        dt (np.timedelta64):
-            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
-            Use a negative value for a backward-in-time simulation. (Default value = 1 second)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
         verbose_progress : bool
@@ -501,9 +501,6 @@ class ParticleSet:
         if output_file is not None:
             output_file.set_metadata(self.fieldset.gridset[0]._mesh)
             output_file.metadata["parcels_kernels"] = self._kernel.funcname
-
-        if dt is None:
-            dt = np.timedelta64(1, "s")
 
         try:
             dt = maybe_convert_python_timedelta_to_numpy(dt)
