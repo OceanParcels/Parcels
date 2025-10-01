@@ -17,7 +17,6 @@ from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelt
 from parcels._core.warnings import ParticleSetWarning
 from parcels._logger import logger
 from parcels._reprs import particleset_repr
-from parcels.kernels import AdvectionRK4
 
 __all__ = ["ParticleSet"]
 
@@ -452,8 +451,8 @@ class ParticleSet:
 
     def execute(
         self,
+        pyfunc,
         dt: datetime.timedelta | np.timedelta64,
-        pyfunc=AdvectionRK4,
         endtime: np.timedelta64 | np.datetime64 | None = None,
         runtime: datetime.timedelta | np.timedelta64 | None = None,
         output_file=None,
@@ -466,13 +465,13 @@ class ParticleSet:
 
         Parameters
         ----------
-        dt (np.timedelta64):
-            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
-            Use a negative value for a backward-in-time simulation.
         pyfunc :
             Kernel function to execute. This can be the name of a
             defined Python function or a :class:`parcels.kernel.Kernel` object.
             Kernels can be concatenated using the + operator (Default value = AdvectionRK4)
+        dt (np.timedelta64):
+            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
+            Use a negative value for a backward-in-time simulation.
         endtime (np.datetime64 or np.timedelta64): :
             End time for the timestepping loop. If a np.timedelta64 is provided, it is interpreted as the total simulation time. In this case,
             the absolute end time is the start of the fieldset's time interval plus the np.timedelta64.
