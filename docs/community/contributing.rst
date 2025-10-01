@@ -67,7 +67,7 @@ Environment setup
 
 To get started contributing to Parcels:
 
-**Step 1:** `Install Pixi <https://pixi.sh/latest/>`_.
+**Step 1:** `Install Pixi <https://pixi.sh/latest/installation/>`_.
 
 **Step 2:** `Fork the repository <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository>`_
 
