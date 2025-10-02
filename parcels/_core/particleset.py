@@ -517,7 +517,7 @@ class ParticleSet:
             self._data["dt"][:] = dt
         else:
             raise ValueError(
-                f"The dtype of dt ({dt.dtype}) is coarser than the dtype of the particle dt ({self._data['dt'].dtype}). Please use ParticleSet.set_dt_dtype() to provide a dt with at least the same precision as the particle dt."
+                f"The dtype of dt ({dt.dtype}) is coarser than the dtype of the particle dt ({self._data['dt'].dtype}). Please use ParticleSet.update_dt_dtype() to provide a dt with at least the same precision as the particle dt."
             )
 
         if runtime is not None:
