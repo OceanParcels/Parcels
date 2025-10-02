@@ -215,7 +215,7 @@ html_context = {
     "github_user": "OceanParcels",
     "github_repo": "parcels",
     "github_version": "main",
-    "doc_path": "docs"
+    "doc_path": "docs",
 }
 
 
