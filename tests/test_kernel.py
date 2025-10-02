@@ -30,7 +30,7 @@ def test_unknown_var_in_kernel(fieldset):
         particles.unknown_varname += 0.2
 
     with pytest.raises(KeyError, match="'unknown_varname'"):
-        pset.execute(ErrorKernel, runtime=np.timedelta64(2, "s"))
+        pset.execute(ErrorKernel, runtime=np.timedelta64(2, "s"), dt=np.timedelta64(1, "s"))
 
 
 def test_kernel_init(fieldset):
