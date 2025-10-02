@@ -215,7 +215,7 @@ html_context = {
     "github_user": "OceanParcels",
     "github_repo": "parcels",
     "github_version": "main",
-    "doc_path": "docs",
+    "doc_path": "docs"
 }
 
 
@@ -383,6 +383,26 @@ nbsphinx_thumbnails = {
 }
 nbsphinx_execute = "never"
 # -- Options for LaTeX output ---------------------------------------------
+
+# -- Detect branch name -----------------------------------
+# Works on GitHub Actions, ReadTheDocs, and local fallback
+BRANCH = (
+    os.environ.get("GITHUB_REF_NAME")        # GitHub Actions
+    or os.environ.get("READTHEDOCS_VERSION") # ReadTheDocs
+    or "main"                                # fallback
+)
+
+nbsphinx_prolog = f"""
+.. raw:: html
+
+    <a href="https://mybinder.org/v2/gh/OceanParcels/Parcels/{BRANCH}?urlpath=lab/tree/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">
+        <img alt="Binder badge" src="https://mybinder.org/badge_logo.svg">
+    </a> 
+    or view it
+    <a href="https://github.com/OceanParcels/Parcels/blob/{BRANCH}/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">
+        on GitHub
+    </a>
+"""
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
