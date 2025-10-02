@@ -4,7 +4,7 @@
 # Adapted from the conda forge recipe
 context:
   name: parcels
-  version: 4.0.0alpha1 # The last number here needs to be bumped for each new alpha release
+  version: 4.0.0alpha2 # The last number here needs to be bumped for each new alpha release
 
 package:
   name: ${{ name|lower }}
