@@ -566,6 +566,7 @@ class ParticleSet:
                         next_output += outputdt
 
             if verbose_progress:
+                pbar.set_description("Integration time: " + str(time))
                 pbar.update((next_time - time) / np.timedelta64(1, "s"))
 
             time = next_time
