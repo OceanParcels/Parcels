@@ -84,7 +84,19 @@ Now you have a development installation of Parcels, as well as a bunch of develo
 Pixi workflows
 ~~~~~~~~~~~~~~
 
-You can use the following Pixi commands to run common development tasks.
+**Typical development workflow**
+
+1. Make your code changes
+2. Run ``pixi run lint`` to ensure code formatting and style compliance
+3. Run ``pixi run tests`` to verify your changes don't break existing functionality
+4. If you've added new features, run ``pixi run typing`` to check type annotations
+5. If you've modified documentation, run ``pixi run docs`` to build and verify the docs
+
+.. tip::
+
+    You can run ``pixi info`` to see all available environments and ``pixi task list`` to see all available tasks across environments.
+
+See below for more Pixi commands relevant to development.
 
 **Testing**
 
@@ -111,18 +123,6 @@ Parcels supports testing against different environments (e.g., different Python 
 - ``pixi run -e test-py312 tests`` - Run tests using Python 3.12
 
 The name of the workflow on GitHub contains the command you have to run locally to recreate the workflow - making it super easy to reproduce CI failures locally.
-
-**Typical development workflow**
-
-1. Make your code changes
-2. Run ``pixi run lint`` to ensure code formatting and style compliance
-3. Run ``pixi run tests`` to verify your changes don't break existing functionality
-4. If you've added new features, run ``pixi run typing`` to check type annotations
-5. If you've modified documentation, run ``pixi run docs`` to build and verify the docs
-
-.. tip::
-
-    You can run ``pixi info`` to see all available environments and ``pixi task list`` to see all available tasks across environments.
 
 
 Changing code
