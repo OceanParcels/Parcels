@@ -22,8 +22,8 @@ from parcels import (
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
-from parcels.interpolators import UXPiecewiseConstantFace
-from parcels.kernels import AdvectionEE, AdvectionRK4
+from parcels.interpolators import UXPiecewiseConstantFace, UXPiecewiseLinearNode
+from parcels.kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D
 from tests import utils
 from tests.common_kernels import DoNothing
 
@@ -477,6 +477,50 @@ def test_uxstommelgyre_pset_execute():
     )
     assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1165396086
     assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1142124776
+
+
+def test_uxstommelgyre_multiparticle_pset_execute():
+    ds = datasets_unstructured["stommel_gyre_delaunay"]
+    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh="spherical")
+    U = Field(
+        name="U",
+        data=ds.U,
+        grid=grid,
+        interp_method=UXPiecewiseConstantFace,
+    )
+    V = Field(
+        name="V",
+        data=ds.V,
+        grid=grid,
+        interp_method=UXPiecewiseConstantFace,
+    )
+    W = Field(
+        name="W",
+        data=ds.W,
+        grid=grid,
+        interp_method=UXPiecewiseLinearNode,
+    )
+    P = Field(
+        name="P",
+        data=ds.p,
+        grid=grid,
+        interp_method=UXPiecewiseConstantFace,
+    )
+    UVW = VectorField(name="UVW", U=U, V=V, W=W)
+    fieldset = FieldSet([UVW, UVW.U, UVW.V, UVW.W, P])
+    pset = ParticleSet(
+        fieldset,
+        lon=[30.0, 32.0],
+        lat=[5.0, 5.0],
+        depth=[50.0, 50.0],
+        time=[np.timedelta64(0, "s")],
+        pclass=Particle,
+    )
+    pset.execute(
+        runtime=np.timedelta64(10, "m"),
+        dt=np.timedelta64(60, "s"),
+        pyfunc=AdvectionRK4_3D,
+    )
 
 
 @pytest.mark.xfail(reason="Output file not implemented yet")
