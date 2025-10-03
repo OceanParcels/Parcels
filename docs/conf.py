@@ -395,8 +395,9 @@ BRANCH = (
 nbsphinx_prolog = f"""
 .. raw:: html
 
-    Run this notebook interactively at 
-    <a href="https://mybinder.org/v2/gh/OceanParcels/Parcels/{BRANCH}?urlpath=lab/tree/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
+    <a href="https://mybinder.org/v2/gh/OceanParcels/Parcels/{BRANCH}?urlpath=lab/tree/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">
+        <img alt="Binder badge" src="https://mybinder.org/badge_logo.svg">
+    </a>
     or view it
     <a href="https://github.com/OceanParcels/Parcels/blob/{BRANCH}/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">on GitHub</a>
 
