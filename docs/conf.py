@@ -353,7 +353,7 @@ nbsphinx_execute = "never"
 # -- Options for LaTeX output ---------------------------------------------
 
 BRANCH = (
-    os.environ.get("READTHEDOCS_VERSION")  # ReadTheDocs
+    os.environ.get("READTHEDOCS_GIT_IDENTIFIER")  # ReadTheDocs
     or "main"  # fallback
 )
 
