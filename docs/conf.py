@@ -353,8 +353,6 @@ nbsphinx_thumbnails = {
 nbsphinx_execute = "never"
 # -- Options for LaTeX output ---------------------------------------------
 
-# -- Detect branch name -----------------------------------
-# Works on GitHub Actions, ReadTheDocs, and local fallback
 BRANCH = (
     os.environ.get("READTHEDOCS_VERSION")  # ReadTheDocs
     or "main"  # fallback
