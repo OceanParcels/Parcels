@@ -387,8 +387,7 @@ nbsphinx_execute = "never"
 # -- Detect branch name -----------------------------------
 # Works on GitHub Actions, ReadTheDocs, and local fallback
 BRANCH = (
-    os.environ.get("GITHUB_REF_NAME")  # GitHub Actions
-    or os.environ.get("READTHEDOCS_VERSION")  # ReadTheDocs
+    os.environ.get("READTHEDOCS_VERSION")  # ReadTheDocs
     or "main"  # fallback
 )
 
@@ -396,7 +395,7 @@ nbsphinx_prolog = f"""
 .. raw:: html
 
     Run this notebook in the cloud <a href="https://mybinder.org/v2/gh/OceanParcels/Parcels/{BRANCH}?urlpath=lab/tree/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
-    , or view it <a href="https://github.com/OceanParcels/Parcels/blob/{BRANCH}/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">on GitHub</a>
+    , or view it <a href="https://github.com/OceanParcels/Parcels/blob/{BRANCH}/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">on GitHub</a>. Notebook version corresponds with {BRANCH}.
 
     <p style="margin-bottom: 30px"></p>
 """
