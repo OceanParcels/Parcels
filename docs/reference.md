@@ -1,5 +1,5 @@
 # Parcels API
 
-.. note::
-
+```{note}
 This section is a work in progress.
+```
