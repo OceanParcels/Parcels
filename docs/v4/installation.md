@@ -1,6 +1,6 @@
 # Install an alpha version of Parcels v4
 
-During development of Parcels v4, we are uploading versions of the package to an [index on prefix.dev](https://prefix.dev/channels/parcels/packages/parcels). This allows users to easily install an unreleased version without having to do a [development install](../installation.rst)! Give it a spin!
+During development of Parcels v4, we are uploading versions of the package to an [index on prefix.dev](https://prefix.dev/channels/parcels/packages/parcels). This allows users to easily install an unreleased version without having to do a [development install](../installation.md)! Give it a spin!
 
 ```{warning}
 Before installing an alpha version of Parcels, we *highly* recommend creating a new environment so that doesn't affect package versions in your current environment (which you may be using for your research).
