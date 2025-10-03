@@ -17,7 +17,6 @@ from parcels._core.utils.time import TimeInterval, maybe_convert_python_timedelt
 from parcels._core.warnings import ParticleSetWarning
 from parcels._logger import logger
 from parcels._reprs import particleset_repr
-from parcels.kernels import AdvectionRK4
 
 __all__ = ["ParticleSet"]
 
@@ -452,10 +451,10 @@ class ParticleSet:
 
     def execute(
         self,
-        pyfunc=AdvectionRK4,
+        pyfunc,
+        dt: datetime.timedelta | np.timedelta64,
         endtime: np.timedelta64 | np.datetime64 | None = None,
         runtime: datetime.timedelta | np.timedelta64 | None = None,
-        dt: datetime.timedelta | np.timedelta64 | None = None,
         output_file=None,
         verbose_progress=True,
     ):
@@ -469,7 +468,10 @@ class ParticleSet:
         pyfunc :
             Kernel function to execute. This can be the name of a
             defined Python function or a :class:`parcels.kernel.Kernel` object.
-            Kernels can be concatenated using the + operator (Default value = AdvectionRK4)
+            Kernels can be concatenated using the + operator.
+        dt (np.timedelta64):
+            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
+            Use a negative value for a backward-in-time simulation.
         endtime (np.datetime64 or np.timedelta64): :
             End time for the timestepping loop. If a np.timedelta64 is provided, it is interpreted as the total simulation time. In this case,
             the absolute end time is the start of the fieldset's time interval plus the np.timedelta64.
@@ -477,9 +479,6 @@ class ParticleSet:
         runtime (np.timedelta64):
             The duration of the simuulation execution. Must be a np.timedelta64 object and is required to be set when the `fieldset.time_interval` is not defined.
             If the `fieldset.time_interval` is defined and the runtime is provided, the end time will be the start of the fieldset's time interval plus the runtime.
-        dt (np.timedelta64):
-            Timestep interval (as a np.timedelta64 object) to be passed to the kernel.
-            Use a negative value for a backward-in-time simulation. (Default value = 1 second)
         output_file :
             mod:`parcels.particlefile.ParticleFile` object for particle output (Default value = None)
         verbose_progress : bool
@@ -502,9 +501,6 @@ class ParticleSet:
             output_file.set_metadata(self.fieldset.gridset[0]._mesh)
             output_file.metadata["parcels_kernels"] = self._kernel.funcname
 
-        if dt is None:
-            dt = np.timedelta64(1, "s")
-
         try:
             dt = maybe_convert_python_timedelta_to_numpy(dt)
             assert not np.isnat(dt)
@@ -521,7 +517,7 @@ class ParticleSet:
             self._data["dt"][:] = dt
         else:
             raise ValueError(
-                f"The dtype of dt ({dt.dtype}) is coarser than the dtype of the particle dt ({self._data['dt'].dtype}). Please use ParticleSet.set_dt_dtype() to provide a dt with at least the same precision as the particle dt."
+                f"The dtype of dt ({dt.dtype}) is coarser than the dtype of the particle dt ({self._data['dt'].dtype}). Please use ParticleSet.update_dt_dtype() to provide a dt with at least the same precision as the particle dt."
             )
 
         if runtime is not None:
@@ -549,6 +545,7 @@ class ParticleSet:
 
         if verbose_progress:
             pbar = tqdm(total=(end_time - start_time) / np.timedelta64(1, "s"), file=sys.stdout)
+            pbar.set_description("Integration time: " + str(start_time))
 
         next_output = start_time + sign_dt * outputdt if output_file else None
 
@@ -570,6 +567,7 @@ class ParticleSet:
                         next_output += outputdt
 
             if verbose_progress:
+                pbar.set_description("Integration time: " + str(time))
                 pbar.update((next_time - time) / np.timedelta64(1, "s"))
 
             time = next_time
