@@ -190,6 +190,7 @@ numpydoc_validation_checks = {
 html_static_path = ["_static"]
 html_theme_options = {
     "logo": {
+        "alt_text": "Parcels - Home",
         "image_light": "logo-horo-transparent.png",
         "image_dark": "logo-horo-transparent-dark.png",
     },
