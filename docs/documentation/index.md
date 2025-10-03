@@ -1,6 +1,6 @@
 # Documentation and Tutorials
 
-Parcels has several documentation and tutorial Jupyter notebooks and scripts which go through various aspects of Parcels. Static versions of the notebooks are available below via the gallery in the site, with the interactive notebooks being available either completely online at the following [Binder link](https://mybinder.org/v2/gh/OceanParcels/parcels/main?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb). Following the gallery of notebooks is a list of scripts which provide additional examples to users. You can work with the example notebooks and scripts locally by downloading {download}`parcels_tutorials.zip </_downloads/parcels_tutorials.zip>` and running with your own Parcels installation.
+Shown below are several documentation and tutorial Jupyter notebooks and scripts which go through various aspects of Parcels.
 
 ```{nbgallery}
 :caption: Overview
