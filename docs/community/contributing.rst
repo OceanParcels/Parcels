@@ -119,10 +119,14 @@ See below for more Pixi commands relevant to development.
 
 Parcels supports testing against different environments (e.g., different Python versions) with different feature sets. In CI we test against these environments, and you can too locally. For example:
 
-- ``pixi run -e test-py311 tests`` - Run tests using Python 3.11
-- ``pixi run -e test-py312 tests`` - Run tests using Python 3.12
+- ``pixi run -e test-py311 tests`` - Run tests in the environment containing Python 3.11
+- ``pixi run -e test-py312 tests`` - Run tests in the environment containing Python 3.12
 
 The name of the workflow on GitHub contains the command you have to run locally to recreate the workflow - making it super easy to reproduce CI failures locally.
+
+.. tip::
+
+   For those familiar with Conda, you are used to activating an environment. With Pixi, you can do the same by doing ``pixi shell <env-name>``. For example, ``pixi shell test-latest`` will drop you into a shell where you can run commands such as ``pytest`` like normal. You can exit the shell with ``exit`` or ``Ctrl+D``.
 
 
 Changing code
