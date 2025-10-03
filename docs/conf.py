@@ -190,8 +190,8 @@ numpydoc_validation_checks = {
 html_static_path = ["_static"]
 html_theme_options = {
     "logo": {
-        "image_light": "logo-horo.svg",
-        "image_dark": "logo-horo_dia.svg",
+        "image_light": "logo-horo-transparent.png",
+        "image_dark": "logo-horo-transparent-dark.png",
     },
     "use_edit_page_button": True,
     "github_url": "https://github.com/Parcels-code/parcels",
