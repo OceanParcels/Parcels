@@ -17,6 +17,7 @@ setuptools_scm = "*"
 
 [environments]
 test-latest = { features = ["test"], solve-group = "test" }
+test-minimum = { features = ["test", "minimum"], solve-group = "test" }
 test-py311 = { features = ["test", "py311"] }
 test-py312 = { features = ["test", "py312"] }
 test-notebooks = { features = ["test", "notebooks"], solve-group = "test" }
@@ -37,8 +38,18 @@ zarr = ">=2.11.0,!=2.18.0,<3"
 xgcm = ">=0.9.0"
 cf_xarray = "*"
 cftime = ">=1.3.1"
-scipy = ">=0.16.0" #? Not sure if we rely on scipy internally anymore...
 pooch = "*"
+
+[feature.minimum.dependencies]
+python = "==3.11"
+netcdf4 = "==1.7.2"
+numpy = "==2.1.0"
+xarray = "==2024.5.0"
+uxarray = "==2025.3.0"
+dask = "==2024.5.1"
+zarr = "==2.15.0"
+xgcm = "==0.9.0"
+cftime = "==1.3.1"
 
 [feature.py311.dependencies]
 python = "3.11.*"
