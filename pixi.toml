@@ -87,7 +87,7 @@ sphinxcontrib-mermaid = "*"
 
 [feature.docs.tasks]
 docs = "sphinx-build docs docs/_build"
-docs-watch = 'sphinx-autobuild --ignore "*.zip" docs docs/_build'
+docs-watch = 'sphinx-autobuild docs docs/_build'
 docs-linkcheck = "sphinx-build -b linkcheck docs/ docs/_build/linkcheck"
 
 [feature.pre-commit.dependencies]
