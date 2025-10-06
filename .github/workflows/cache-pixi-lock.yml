@@ -33,7 +33,7 @@ jobs:
           run-install: false
       - name: Run pixi lock
         if: ${{ !steps.restore.outputs.cache-hit }}
-        run: pixi lock
+        run: pixi lock -vv
       - uses: actions/cache/save@v4
         if: ${{ !steps.restore.outputs.cache-hit }}
         id: cache
