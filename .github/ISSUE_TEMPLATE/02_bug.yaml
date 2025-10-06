@@ -1,6 +1,6 @@
 name: "🐛 Bug Report"
 description: Describe a bug in the parcels codebase. For support related to your specific use case, please post in Q&A in our Discussions tab.
-labels: ["bug"]
+labels: ["bug", "needs-triage"]
 body:
   - type: "input"
     attributes:
