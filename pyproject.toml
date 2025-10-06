@@ -42,10 +42,11 @@ Tracker = "https://github.com/OceanParcels/parcels/issues"
 
 
 [tool.setuptools]
+package-dir = { "" = "src" }
 packages = ["parcels"]
 
 [tool.setuptools_scm]
-write_to = "parcels/_version_setup.py"
+write_to = "src/parcels/_version_setup.py"
 local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
