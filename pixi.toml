@@ -7,7 +7,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 [package]
 name = "parcels"
 version = "dynamic" # dynamic versioning needs better support in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . Putting `version = "dynamic"` here for now until pixi recommends something else.
-license = "MIT"
+license = "MIT" # can remove this once https://github.com/prefix-dev/pixi-build-backends/issues/397 is resolved
 
 [package.build]
 backend = { name = "pixi-build-python", version = "==0.4.0" }
