@@ -28,22 +28,18 @@ def AdvectionDiffusionM1(particles, fieldset):  # pragma: no cover
     dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
     dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    Kxp1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon + fieldset.dres, particles]
-    Kxm1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon - fieldset.dres, particles]
+    Kxp1 = fieldset.Kh_zonal[particles.time, particles.z, particles.lat, particles.lon + fieldset.dres, particles]
+    Kxm1 = fieldset.Kh_zonal[particles.time, particles.z, particles.lat, particles.lon - fieldset.dres, particles]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
 
-    u, v = fieldset.UV[particles.time, particles.depth, particles.lat, particles.lon, particles]
-    bx = np.sqrt(2 * fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon, particles])
+    u, v = fieldset.UV[particles.time, particles.z, particles.lat, particles.lon, particles]
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particles.time, particles.z, particles.lat, particles.lon, particles])
 
-    Kyp1 = fieldset.Kh_meridional[
-        particles.time, particles.depth, particles.lat + fieldset.dres, particles.lon, particles
-    ]
-    Kym1 = fieldset.Kh_meridional[
-        particles.time, particles.depth, particles.lat - fieldset.dres, particles.lon, particles
-    ]
+    Kyp1 = fieldset.Kh_meridional[particles.time, particles.z, particles.lat + fieldset.dres, particles.lon, particles]
+    Kym1 = fieldset.Kh_meridional[particles.time, particles.z, particles.lat - fieldset.dres, particles.lon, particles]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
 
-    by = np.sqrt(2 * fieldset.Kh_meridional[particles.time, particles.depth, particles.lat, particles.lon, particles])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particles.time, particles.z, particles.lat, particles.lon, particles])
 
     # Particle positions are updated only after evaluating all terms.
     particles.dlon += u * dt + 0.5 * dKdx * (dWx**2 + dt) + bx * dWx
@@ -68,23 +64,19 @@ def AdvectionDiffusionEM(particles, fieldset):  # pragma: no cover
     dWx = np.random.normal(0, np.sqrt(np.fabs(dt)))
     dWy = np.random.normal(0, np.sqrt(np.fabs(dt)))
 
-    u, v = fieldset.UV[particles.time, particles.depth, particles.lat, particles.lon, particles]
+    u, v = fieldset.UV[particles.time, particles.z, particles.lat, particles.lon, particles]
 
-    Kxp1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon + fieldset.dres, particles]
-    Kxm1 = fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon - fieldset.dres, particles]
+    Kxp1 = fieldset.Kh_zonal[particles.time, particles.z, particles.lat, particles.lon + fieldset.dres, particles]
+    Kxm1 = fieldset.Kh_zonal[particles.time, particles.z, particles.lat, particles.lon - fieldset.dres, particles]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
     ax = u + dKdx
-    bx = np.sqrt(2 * fieldset.Kh_zonal[particles.time, particles.depth, particles.lat, particles.lon, particles])
+    bx = np.sqrt(2 * fieldset.Kh_zonal[particles.time, particles.z, particles.lat, particles.lon, particles])
 
-    Kyp1 = fieldset.Kh_meridional[
-        particles.time, particles.depth, particles.lat + fieldset.dres, particles.lon, particles
-    ]
-    Kym1 = fieldset.Kh_meridional[
-        particles.time, particles.depth, particles.lat - fieldset.dres, particles.lon, particles
-    ]
+    Kyp1 = fieldset.Kh_meridional[particles.time, particles.z, particles.lat + fieldset.dres, particles.lon, particles]
+    Kym1 = fieldset.Kh_meridional[particles.time, particles.z, particles.lat - fieldset.dres, particles.lon, particles]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
     ay = v + dKdy
-    by = np.sqrt(2 * fieldset.Kh_meridional[particles.time, particles.depth, particles.lat, particles.lon, particles])
+    by = np.sqrt(2 * fieldset.Kh_meridional[particles.time, particles.z, particles.lat, particles.lon, particles])
 
     # Particle positions are updated only after evaluating all terms.
     particles.dlon += ax * dt + bx * dWx

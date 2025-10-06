@@ -39,14 +39,14 @@ class ParticleSet:
         List of initial longitude values for particles
     lat :
         List of initial latitude values for particles
-    depth :
-        Optional list of initial depth values for particles. Default is 0m
+    z :
+        Optional list of initial z values for particles. Default is 0m
     time :
         Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     repeatdt : datetime.timedelta or float, optional
         Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
-    lonlatdepth_dtype :
-        Floating precision for lon, lat, depth particle coordinates.
+    lonlatz_dtype :
+        Floating precision for lon, lat, z particle coordinates.
         It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
         and np.float64 if the interpolation method is 'cgrid_velocity'
     trajectory_ids :
@@ -66,7 +66,7 @@ class ParticleSet:
         pclass=Particle,
         lon=None,
         lat=None,
-        depth=None,
+        z=None,
         time=None,
         trajectory_ids=None,
         **kwargs,
@@ -84,15 +84,15 @@ class ParticleSet:
         if trajectory_ids is None:
             trajectory_ids = np.arange(lon.size)
 
-        if depth is None:
-            mindepth = 0
+        if z is None:
+            minz = 0
             for field in self.fieldset.fields.values():
                 if field.grid.depth is not None:
-                    mindepth = min(mindepth, field.grid.depth[0])
-            depth = np.ones(lon.size) * mindepth
+                    minz = min(minz, field.grid.depth[0])
+            z = np.ones(lon.size) * minz
         else:
-            depth = _convert_to_flat_array(depth)
-        assert lon.size == lat.size and lon.size == depth.size, "lon, lat, depth don't all have the same lenghts"
+            z = _convert_to_flat_array(z)
+        assert lon.size == lat.size and lon.size == z.size, "lon, lat, z don't all have the same lenghts"
 
         if time is None or len(time) == 0:
             # do not set a time yet (because sign_dt not known)
@@ -106,7 +106,7 @@ class ParticleSet:
             raise TypeError("particle time must be a datetime, timedelta, or date object")
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
-        assert lon.size == time.size, "time and positions (lon, lat, depth) do not have the same lengths."
+        assert lon.size == time.size, "time and positions (lon, lat, z) do not have the same lengths."
 
         if fieldset.time_interval:
             _warn_particle_times_outside_fieldset_time_bounds(time, fieldset.time_interval)
@@ -115,7 +115,7 @@ class ParticleSet:
             if kwvar not in ["partition_function"]:
                 kwargs[kwvar] = _convert_to_flat_array(kwargs[kwvar])
                 assert lon.size == kwargs[kwvar].size, (
-                    f"{kwvar} and positions (lon, lat, depth) don't have the same lengths."
+                    f"{kwvar} and positions (lon, lat, z) don't have the same lengths."
                 )
 
         self._data = create_particle_data(
@@ -126,7 +126,7 @@ class ParticleSet:
             initial=dict(
                 lon=lon,
                 lat=lat,
-                depth=depth,
+                z=z,
                 time=time,
                 time_nextloop=time,
                 trajectory=trajectory_ids,
@@ -183,7 +183,7 @@ class ParticleSet:
             object.__setattr__(self, name, value)
 
     @staticmethod
-    def lonlatdepth_dtype_from_field_interp_method(field):
+    def lonlatz_dtype_from_field_interp_method(field):
         # TODO update this when now interp methods are implemented
         if field.interp_method == "cgrid_velocity":
             return np.float64
@@ -277,7 +277,7 @@ class ParticleSet:
 
         self._values = np.vstack(
             (
-                self._data["depth"],
+                self._data["z"],
                 self._data["lat"],
                 self._data["lon"],
             )
@@ -306,7 +306,7 @@ class ParticleSet:
     def populate_indices(self):
         """Pre-populate guesses of particle ei (element id) indices"""
         for i, grid in enumerate(self.fieldset.gridset):
-            position = grid.search(self.depth, self.lat, self.lon)
+            position = grid.search(self.z, self.lat, self.lon)
             self._data["ei"][:, i] = grid.ravel_index(
                 {
                     "X": position["X"][0],
