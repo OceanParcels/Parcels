@@ -205,7 +205,7 @@ def test_interp_regression_v3(interp_name):
     x, y, z = np.meshgrid(np.linspace(0, 1, 7), np.linspace(0, 1, 13), np.linspace(0, 1, 5))
 
     TestP = Particle.add_variable(Variable("pid", dtype=np.int32, initial=0))
-    pset = ParticleSet(fieldset, pclass=TestP, lon=x, lat=y, depth=z, pid=np.arange(x.size))
+    pset = ParticleSet(fieldset, pclass=TestP, lon=x, lat=y, z=z, pid=np.arange(x.size))
 
     def DeleteParticle(particle, fieldset, time):
         if particle.state >= 50:

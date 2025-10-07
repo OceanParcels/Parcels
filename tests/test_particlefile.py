@@ -464,7 +464,7 @@ def test_pfile_write_custom_particle():
 def test_pfile_set_towrite_False(fieldset, tmp_zarrfile):
     npart = 10
     pset = ParticleSet(fieldset, pclass=Particle, lon=np.linspace(0, 1, npart), lat=0.5 * np.ones(npart))
-    pset.set_variable_write_status("depth", False)
+    pset.set_variable_write_status("z", False)
     pset.set_variable_write_status("lat", False)
     pfile = pset.ParticleFile(tmp_zarrfile, outputdt=1)
 
@@ -480,5 +480,5 @@ def test_pfile_set_towrite_False(fieldset, tmp_zarrfile):
     ds.close()
 
     # For pytest purposes, we need to reset to original status
-    pset.set_variable_write_status("depth", True)
+    pset.set_variable_write_status("z", True)
     pset.set_variable_write_status("lat", True)
