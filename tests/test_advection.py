@@ -108,7 +108,7 @@ def test_advection_zonal_periodic():
 
 
 def test_horizontal_advection_in_3D_flow(npart=10):
-    """Flat 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s."""
+    """Flat 2D zonal flow that increases linearly with z from 0 m/s to 1 m/s."""
     ds = simple_UV_dataset(mesh="flat")
     ds["U"].data[:] = 1.0
     grid = XGrid.from_dataset(ds)
@@ -118,10 +118,10 @@ def test_horizontal_advection_in_3D_flow(npart=10):
     UV = VectorField("UV", U, V)
     fieldset = FieldSet([U, V, UV])
 
-    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.linspace(0.1, 0.9, npart))
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart), z=np.linspace(0.1, 0.9, npart))
     pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
 
-    expected_lon = pset.depth * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
+    expected_lon = pset.z * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
     np.testing.assert_allclose(pset.lon, expected_lon, atol=1.0e-1)
 
 
@@ -155,8 +155,8 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
         (u, v) = fieldset.UV[particles[inds]]
         particles[inds].dlon = u * dt
         particles[inds].dlat = v * dt
-        particles[inds].ddepth = 0.0
-        particles[inds].depth = 0
+        particles[inds].dz = 0.0
+        particles[inds].z = 0
         particles[inds].state = StatusCode.Evaluate
 
     kernels = [AdvectionRK4_3D]
@@ -164,12 +164,12 @@ def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
         kernels.append(SubmergeParticle)
     kernels.append(DeleteParticle)
 
-    pset = ParticleSet(fieldset=fieldset, lon=0.5, lat=0.5, depth=0.9)
+    pset = ParticleSet(fieldset=fieldset, lon=0.5, lat=0.5, z=0.9)
     pset.execute(kernels, runtime=np.timedelta64(11, "s"), dt=np.timedelta64(1, "s"))
 
     if direction == "up" and wErrorThroughSurface:
         np.testing.assert_allclose(pset.lon[0], 0.6, atol=1e-5)
-        np.testing.assert_allclose(pset.depth[0], 0, atol=1e-5)
+        np.testing.assert_allclose(pset.z[0], 0, atol=1e-5)
     else:
         assert len(pset) == 0
 
@@ -220,7 +220,7 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     fieldset = FieldSet(fields)
 
     x0, y0, z0 = 2, 8, -4
-    pset = ParticleSet(fieldset, lon=x0, lat=y0, depth=z0)
+    pset = ParticleSet(fieldset, lon=x0, lat=y0, z=z0)
     kernel = AdvectionRK4 if w is None else AdvectionRK4_3D
     pset.execute(kernel, runtime=np.timedelta64(5, "s"), dt=np.timedelta64(1, "s"))
 
@@ -228,7 +228,7 @@ def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more read
     np.testing.assert_allclose(np.array([p.lon - x0 for p in pset]), 4 * u, atol=1e-6)
     np.testing.assert_allclose(np.array([p.lat - y0 for p in pset]), 4 * v, atol=1e-6)
     if w:
-        np.testing.assert_allclose(np.array([p.depth - z0 for p in pset]), 4 * w, atol=1e-6)
+        np.testing.assert_allclose(np.array([p.z - z0 for p in pset]), 4 * w, atol=1e-6)
 
 
 def test_radialrotation(npart=10):
@@ -286,13 +286,13 @@ def test_moving_eddy(method, rtol):
         fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XLinear), "Kh_meridional")
         fieldset.add_constant("dres", 0.1)
 
-    start_lon, start_lat, start_depth = 12000, 12500, 12500
+    start_lon, start_lat, start_z = 12000, 12500, 12500
     dt = np.timedelta64(30, "m")
 
     if method == "RK45":
         fieldset.add_constant("RK45_tol", rtol)
 
-    pset = ParticleSet(fieldset, lon=start_lon, lat=start_lat, depth=start_depth, time=np.timedelta64(0, "s"))
+    pset = ParticleSet(fieldset, lon=start_lon, lat=start_lat, z=start_z, time=np.timedelta64(0, "s"))
     pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "h"))
 
     def truth_moving(x_0, y_0, t):
@@ -305,7 +305,7 @@ def test_moving_eddy(method, rtol):
     np.testing.assert_allclose(pset.lon, exp_lon, rtol=rtol)
     np.testing.assert_allclose(pset.lat, exp_lat, rtol=rtol)
     if method == "RK4_3D":
-        np.testing.assert_allclose(pset.depth, exp_lat, rtol=rtol)
+        np.testing.assert_allclose(pset.z, exp_lat, rtol=rtol)
 
 
 @pytest.mark.parametrize(
@@ -385,7 +385,7 @@ def test_stommelgyre_fieldset(method, rtol, grid_type):
     )
 
     def UpdateP(particles, fieldset):  # pragma: no cover
-        particles.p = fieldset.P[particles.time, particles.depth, particles.lat, particles.lon]
+        particles.p = fieldset.P[particles.time, particles.z, particles.lat, particles.lon]
         particles.p_start = np.where(particles.time == 0, particles.p, particles.p_start)
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
@@ -424,7 +424,7 @@ def test_peninsula_fieldset(method, rtol, grid_type):
     )
 
     def UpdateP(particles, fieldset):  # pragma: no cover
-        particles.p = fieldset.P[particles.time, particles.depth, particles.lat, particles.lon]
+        particles.p = fieldset.P[particles.time, particles.z, particles.lat, particles.lon]
         particles.p_start = np.where(particles.time == 0, particles.p, particles.p_start)
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
@@ -551,7 +551,7 @@ def test_nemo_3D_curvilinear_fieldset(method):
     npart = 10
     lons = np.linspace(1.9, 3.4, npart)
     lats = np.linspace(52.5, 51.6, npart)
-    pset = parcels.ParticleSet(fieldset, lon=lons, lat=lats, depth=np.ones_like(lons))
+    pset = parcels.ParticleSet(fieldset, lon=lons, lat=lats, z=np.ones_like(lons))
 
     pset.execute(kernel[method], runtime=np.timedelta64(4, "D"), dt=np.timedelta64(6, "h"))
 
@@ -559,6 +559,4 @@ def test_nemo_3D_curvilinear_fieldset(method):
         np.testing.assert_equal(round_and_hash_float_array([p.lon for p in pset], decimals=5), 29977383852960156017546)
     elif method == "RK4_3D":
         # TODO check why decimals needs to be so low in RK4_3D (compare to v3)
-        np.testing.assert_equal(
-            round_and_hash_float_array([p.depth for p in pset], decimals=1), 29747210774230389239432
-        )
+        np.testing.assert_equal(round_and_hash_float_array([p.z for p in pset], decimals=1), 29747210774230389239432)
