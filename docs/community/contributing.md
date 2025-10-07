@@ -6,17 +6,17 @@
 
 The Parcels code, for which development started in 2015, is now one of the most widely used tools for Lagrangian Ocean Analysis. It's used by dozens of groups around the world - see [this list](https://oceanparcels.org/papers-citing-parcels#papers-citing-parcels) for a full list of the peer-reviewed articles using Parcels. Its flexibility for users to create new, custom 'behaviours' (i.e. let virtual particles be controlled by other mechanics than only the ocean flow) and its compatibility with many different types of hydrodynamic input data are the two key features.
 
-> **Note**
->
-> Want to learn more about Lagrangian ocean analysis? Then look at [Lagrangian ocean analysis: Fundamentals and practices](https://www.sciencedirect.com/science/article/pii/S1463500317301853) for a review of the literature.
+```{note}
+Want to learn more about Lagrangian ocean analysis? Then look at [Lagrangian ocean analysis: Fundamentals and practices](https://www.sciencedirect.com/science/article/pii/S1463500317301853) for a review of the literature.
+```
 
 ---
 
 There are two primary groups that contribute to Parcels; oceanographers who bring domain specific understanding about the physical processes and modelling approaches, as well as software developers who bring their experience working with code. **All contributions are welcome no matter your background or level of experience**.
 
-> **Note**
->
-> The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to the [Development](#development) section.
+```{note}
+The first component of this documentation is geared to those new to open source. Already familiar with GitHub and open source? Skip ahead to the [Development](#development) section.
+```
 
 ## What is open source?
 
@@ -37,8 +37,8 @@ Exactly how to use Git and GitHub is beyond the scope of this documentation, and
 There are many ways that you can contribute to Parcels. You can:
 
 - Participate in discussion about Parcels, either through the [issues](https://github.com/OceanParcels/parcels/issues) or [discussions](https://github.com/OceanParcels/parcels/discussions) tab
-- Suggest improvements to [tutorials](../documentation/index.rst)
-- Suggest improvements to [documentation](../index.rst)
+- Suggest improvements to [tutorials](../documentation/index.md)
+- Suggest improvements to [documentation](../index.md)
 - Write code (fix bugs, implement features, codebase improvements, etc)
 
 All of these require you to [make an account on GitHub](https://github.com/signup), so that should be your first step.
@@ -53,9 +53,9 @@ In the [Projects panel](https://github.com/OceanParcels/parcels/projects?query=i
 
 ### Environment setup
 
-> **Note**
->
-> Parcels, alongside popular projects like [Xarray](https://github.com/pydata/xarray), uses [Pixi](https://pixi.sh) to manage environments and run developer tooling. Pixi is a modern alternative to Conda and also includes other powerful tooling useful for a project like Parcels ([read more](https://github.com/OceanParcels/Parcels/issues/2205)). It is our sole development workflow - we do not offer a Conda development workflow. Give Pixi a try, you won't regret it!
+```{note}
+Parcels, alongside popular projects like [Xarray](https://github.com/pydata/xarray), uses [Pixi](https://pixi.sh) to manage environments and run developer tooling. Pixi is a modern alternative to Conda and also includes other powerful tooling useful for a project like Parcels ([read more](https://github.com/OceanParcels/Parcels/issues/2205)). It is our sole development workflow - we do not offer a Conda development workflow. Give Pixi a try, you won't regret it!
+```
 
 To get started contributing to Parcels:
 
@@ -83,9 +83,9 @@ Now you have a development installation of Parcels, as well as a bunch of develo
 4. If you've added new features, run `pixi run typing` to check type annotations
 5. If you've modified documentation, run `pixi run docs` to build and verify the docs
 
-> **Tip**
->
-> You can run `pixi info` to see all available environments and `pixi task list` to see all available tasks across environments.
+```{tip}
+You can run `pixi info` to see all available environments and `pixi task list` to see all available tasks across environments.
+```
 
 See below for more Pixi commands relevant to development.
 
@@ -114,9 +114,9 @@ Parcels supports testing against different environments (e.g., different Python 
 
 The name of the workflow on GitHub contains the command you have to run locally to recreate the workflow - making it super easy to reproduce CI failures locally.
 
-> **Tip**
->
-> For those familiar with Conda, you are used to activating an environment. With Pixi, you can do the same by doing `pixi shell <env-name>`. For example, `pixi shell test-latest` will drop you into a shell where you can run commands such as `pytest` like normal. You can exit the shell with `exit` or `Ctrl+D`.
+```{tip}
+For those familiar with Conda, you are used to activating an environment. With Pixi, you can do the same by doing `pixi shell <env-name>`. For example, `pixi shell test-latest` will drop you into a shell where you can run commands such as `pytest` like normal. You can exit the shell with `exit` or `Ctrl+D`.
+```
 
 ### Changing code
 
@@ -127,9 +127,9 @@ From there:
 
 ### Code guidelines
 
-> **Note**
->
-> These guidelines are here to promote Python best practices, as well as standardise the Parcels code. If you're not sure what some of these guidelines mean, don't worry! Your contribution is still appreciated. When you create your pull request, maintainers can modify your code to comply with these guidelines.
+```{note}
+These guidelines are here to promote Python best practices, as well as standardise the Parcels code. If you're not sure what some of these guidelines mean, don't worry! Your contribution is still appreciated. When you create your pull request, maintainers can modify your code to comply with these guidelines.
+```
 
 - Write clear commit messages that explain the changes you've made.
 - Include tests for any new code you write. Tests are implemented using pytest and are located in the `tests` directory.
