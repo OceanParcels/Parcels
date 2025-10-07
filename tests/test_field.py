@@ -129,7 +129,7 @@ def test_vectorfield_invalid_interpolator():
     ds = datasets_structured["ds_2d_left"]
     grid = XGrid.from_dataset(ds)
 
-    def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, applyConversion, invalid):
+    def invalid_interpolator_wrong_signature(self, ti, position, tau, t, z, y, invalid):
         return 0.0
 
     # Create component fields
