@@ -22,8 +22,8 @@ from parcels import (
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
-from parcels.interpolators import UXPiecewiseConstantFace
-from parcels.kernels import AdvectionEE
+from parcels.interpolators import UXPiecewiseConstantFace, UXPiecewiseLinearNode
+from parcels.kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D
 from tests import utils
 from tests.common_kernels import DoNothing
 
@@ -61,64 +61,62 @@ def zonal_flow_fieldset() -> FieldSet:
     return FieldSet([U, V, UV])
 
 
-def test_pset_execute_implicit_dt_one_second(fieldset):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle)
-    pset.execute(DoNothing, runtime=np.timedelta64(1, "s"))
-
-    time = pset.time.copy()
-
-    pset.execute(DoNothing, runtime=np.timedelta64(1, "s"))
-    np.testing.assert_array_equal(pset.time, time + np.timedelta64(1, "s"))
-
-
 def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
     for dt in [1, np.timedelta64(0, "s"), np.timedelta64(None)]:
         with pytest.raises(
             ValueError,
             match="dt must be a non-zero datetime.timedelta or np.timedelta64 object, got .*",
         ):
-            ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(dt=dt)
+            ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(AdvectionRK4, dt=dt)
 
     with pytest.raises(
         ValueError,
         match="runtime and endtime are mutually exclusive - provide one or the other. Got .*",
     ):
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
-            runtime=np.timedelta64(1, "s"), endtime=np.datetime64("2100-01-01")
+            AdvectionRK4, runtime=np.timedelta64(1, "s"), endtime=np.datetime64("2100-01-01"), dt=np.timedelta64(1, "s")
         )
 
     with pytest.raises(
         ValueError,
         match="The runtime must be a datetime.timedelta or np.timedelta64 object. Got .*",
     ):
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(runtime=1)
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            AdvectionRK4, runtime=1, dt=np.timedelta64(1, "s")
+        )
 
     msg = """Calculated/provided end time of .* is not in fieldset time interval .* Either reduce your runtime, modify your provided endtime, or change your release timing.*"""
     with pytest.raises(
         ValueError,
         match=msg,
     ):
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=np.datetime64("1990-01-01"))
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            AdvectionRK4, endtime=np.datetime64("1990-01-01"), dt=np.timedelta64(1, "s")
+        )
 
     with pytest.raises(
         ValueError,
         match=msg,
     ):
         ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
-            endtime=np.datetime64("2100-01-01"), dt=np.timedelta64(-1, "s")
+            AdvectionRK4, endtime=np.datetime64("2100-01-01"), dt=np.timedelta64(-1, "s")
         )
 
     with pytest.raises(
         ValueError,
         match="The endtime must be of the same type as the fieldset.time_interval start time. Got .*",
     ):
-        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(endtime=12345)
+        ParticleSet(fieldset, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            AdvectionRK4, endtime=12345, dt=np.timedelta64(1, "s")
+        )
 
     with pytest.raises(
         ValueError,
         match="The runtime must be provided when the time_interval is not defined for a fieldset.",
     ):
-        ParticleSet(fieldset_no_time_interval, lon=[0.2], lat=[5.0], pclass=Particle).execute()
+        ParticleSet(fieldset_no_time_interval, lon=[0.2], lat=[5.0], pclass=Particle).execute(
+            AdvectionRK4, dt=np.timedelta64(1, "s")
+        )
 
 
 @pytest.mark.parametrize(
@@ -222,13 +220,12 @@ def test_pset_multi_execute(fieldset, with_delete, npart=10, n=5):
 
 @pytest.mark.parametrize(
     "starttime, endtime, dt",
-    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
+    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, 1)],
 )
 def test_execution_endtime(fieldset, starttime, endtime, dt):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
     endtime = fieldset.time_interval.left + np.timedelta64(endtime, "s")
-    if dt is not None:
-        dt = np.timedelta64(dt, "s")
+    dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=0, lat=0)
     pset.execute(DoNothing, endtime=endtime, dt=dt)
     assert abs(pset.time_nextloop - endtime) < np.timedelta64(1, "ms")
@@ -348,15 +345,14 @@ def test_execution_recover_out_of_bounds(fieldset):
 
 @pytest.mark.parametrize(
     "starttime, runtime, dt",
-    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, None)],
+    [(0, 10, 1), (0, 10, 3), (2, 16, 3), (20, 10, -1), (20, 0, -2), (5, 15, 1)],
 )
 @pytest.mark.parametrize("npart", [1, 10])
 def test_execution_runtime(fieldset, starttime, runtime, dt, npart):
     starttime = fieldset.time_interval.left + np.timedelta64(starttime, "s")
     runtime = np.timedelta64(runtime, "s")
-    sign_dt = 1 if dt is None else np.sign(dt)
-    if dt is not None:
-        dt = np.timedelta64(dt, "s")
+    sign_dt = np.sign(dt)
+    dt = np.timedelta64(dt, "s")
     pset = ParticleSet(fieldset, time=starttime, lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(DoNothing, runtime=runtime, dt=dt)
     assert all([abs(p.time_nextloop - starttime - runtime * sign_dt) < np.timedelta64(1, "ms") for p in pset])
@@ -475,12 +471,56 @@ def test_uxstommelgyre_pset_execute():
         pclass=Particle,
     )
     pset.execute(
+        AdvectionEE,
         runtime=np.timedelta64(10, "m"),
         dt=np.timedelta64(60, "s"),
-        pyfunc=AdvectionEE,
     )
     assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1165396086
     assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1142124776
+
+
+def test_uxstommelgyre_multiparticle_pset_execute():
+    ds = datasets_unstructured["stommel_gyre_delaunay"]
+    grid = UxGrid(grid=ds.uxgrid, z=ds.coords["nz"], mesh="spherical")
+    U = Field(
+        name="U",
+        data=ds.U,
+        grid=grid,
+        interp_method=UXPiecewiseConstantFace,
+    )
+    V = Field(
+        name="V",
+        data=ds.V,
+        grid=grid,
+        interp_method=UXPiecewiseConstantFace,
+    )
+    W = Field(
+        name="W",
+        data=ds.W,
+        grid=grid,
+        interp_method=UXPiecewiseLinearNode,
+    )
+    P = Field(
+        name="P",
+        data=ds.p,
+        grid=grid,
+        interp_method=UXPiecewiseConstantFace,
+    )
+    UVW = VectorField(name="UVW", U=U, V=V, W=W)
+    fieldset = FieldSet([UVW, UVW.U, UVW.V, UVW.W, P])
+    pset = ParticleSet(
+        fieldset,
+        lon=[30.0, 32.0],
+        lat=[5.0, 5.0],
+        depth=[50.0, 50.0],
+        time=[np.timedelta64(0, "s")],
+        pclass=Particle,
+    )
+    pset.execute(
+        runtime=np.timedelta64(10, "m"),
+        dt=np.timedelta64(60, "s"),
+        pyfunc=AdvectionRK4_3D,
+    )
 
 
 @pytest.mark.xfail(reason="Output file not implemented yet")

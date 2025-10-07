@@ -4,7 +4,7 @@
 # Adapted from the conda forge recipe
 context:
   name: parcels
-  version: 4.0.0alpha0 # The last number here needs to be bumped for each new alpha release
+  version: 4.0.0alpha2 # The last number here needs to be bumped for each new alpha release
 
 package:
   name: ${{ name|lower }}
@@ -40,6 +40,8 @@ requirements:
     - trajan
     - tqdm
     - xarray >=0.10.8
+    - cf_xarray
+    - xgcm
     - zarr >=2.11.0,!=2.18.0,<3
     - uxarray>=2025.3.0
     - pyogrio # needed for geopandas (uxarray -> geoviews -> geopandas -> pyogrio, but for some reason conda doesn't pick it up automatically)

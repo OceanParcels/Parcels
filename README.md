@@ -4,6 +4,7 @@
 [![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
 [![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.823561.svg)](https://doi.org/10.5281/zenodo.823561)
+[![EffVer Versioning](https://img.shields.io/badge/version_scheme-EffVer-0097a7)](https://jacobtomlinson.dev/effver)
 [![Xarray](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydata/xarray/refs/heads/main/doc/badge.json)](https://xarray.dev)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml)
