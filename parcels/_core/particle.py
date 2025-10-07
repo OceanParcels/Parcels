@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import enum
 import operator
-
 from typing import Literal
 
 import numpy as np
 
 from parcels._compat import _attrgetter_helper
 from parcels._core.statuscodes import StatusCode
-from parcels._core.utils.time import TimeInterval
 from parcels._core.utils.string import _assert_valid_python_varname
+from parcels._core.utils.time import TimeInterval
 from parcels._reprs import _format_list_items_multiline
 
 __all__ = ["KernelParticle", "Particle", "ParticleClass", "Variable"]
@@ -153,6 +152,7 @@ def _assert_no_duplicate_variable_names(*, existing_vars: list[Variable], new_va
     for var in new_vars:
         if var.name in existing_names:
             raise ValueError(f"Variable name already exists: {var.name}")
+
 
 def get_default_particle(spatial_dtype: np.float32 | np.float64) -> ParticleClass:
     if spatial_dtype not in [np.float32, np.float64]:

@@ -18,8 +18,8 @@ from parcels._core.statuscodes import (
     AllParcelsErrorCodes,
     StatusCode,
 )
-from parcels._core.utils.time import TimeInterval
 from parcels._core.utils.string import _assert_valid_python_varname
+from parcels._core.utils.time import TimeInterval
 from parcels._core.uxgrid import UxGrid
 from parcels._core.xgrid import XGrid, _transpose_xfield_data_to_tzyx
 from parcels._reprs import default_repr
