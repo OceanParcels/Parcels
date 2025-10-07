@@ -45,10 +45,6 @@ class ParticleSet:
         Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     repeatdt : datetime.timedelta or float, optional
         Optional interval on which to repeat the release of the ParticleSet. Either timedelta object, or float in seconds.
-    lonlatz_dtype :
-        Floating precision for lon, lat, z particle coordinates.
-        It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-        and np.float64 if the interpolation method is 'cgrid_velocity'
     trajectory_ids :
         Optional list of "trajectory" values (integers) for the particle IDs
     partition_function :
@@ -181,13 +177,6 @@ class ParticleSet:
             self._data[name][:] = value
         else:
             object.__setattr__(self, name, value)
-
-    @staticmethod
-    def lonlatz_dtype_from_field_interp_method(field):
-        # TODO update this when now interp methods are implemented
-        if field.interp_method == "cgrid_velocity":
-            return np.float64
-        return np.float32
 
     @property
     def size(self):
