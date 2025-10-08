@@ -9,6 +9,8 @@ from parcels._core.statuscodes import StatusCode
 __all__ = [
     "AdvectionAnalytical",
     "AdvectionEE",
+    "AdvectionRK2",
+    "AdvectionRK2_3D",
     "AdvectionRK4",
     "AdvectionRK4_3D",
     "AdvectionRK4_3D_CROCO",
