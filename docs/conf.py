@@ -57,8 +57,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "Parcels"
-copyright = f"{datetime.datetime.now().year}, The OceanParcels Team"
-author = "The OceanParcels Team"
+copyright = f"{datetime.datetime.now().year}, The Parcels Team"
+author = "The Parcels Team"
 
 linkcheck_ignore = [
     r"http://localhost:\d+/",
@@ -75,7 +75,7 @@ linkcheck_ignore = [
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
     r"https://mybinder\.org/",  # 2023-09-02 Site non-responsive
     r"https://ariane-code.cnrs.fr/",  # 2024-04-30 Site non-responsive
-    r"https://github.com/OceanParcels/parcels/blob/daa4b062ed8ae0b2be3d87367d6b45599d6f95db/parcels/.*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
+    r"https://github.com/Parcels-code/parcels/blob/daa4b062ed8ae0b2be3d87367d6b45599d6f95db/parcels/.*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 ]
 
 # Define the canonical URL using custom domain on Read the Docs
@@ -194,7 +194,7 @@ html_theme_options = {
         "image_dark": "logo-horo_dia.svg",
     },
     "use_edit_page_button": True,
-    "github_url": "https://github.com/OceanParcels/parcels",
+    "github_url": "https://github.com/Parcels-code/parcels",
     "icon_links": [
         {
             "name": "Conda Forge",
@@ -203,11 +203,11 @@ html_theme_options = {
             "type": "fontawesome",
         }
     ],
-    "announcement": "WARNING: This documentation is built for v4 of Parcels, which is unreleased and in active development. Use the version switcher in the bottom right to select your version of Parcels, or see <a href='https://docs.oceanparcels.org/'>stable docs</a>.",
+    "announcement": "WARNING: This documentation is built for v4 of Parcels, which is unreleased and in active development. Use the version switcher in the bottom right to select your version of Parcels, or see <a href='https://docs.parcels-code.org/'>stable docs</a>.",
 }
 
 html_context = {
-    "github_user": "OceanParcels",
+    "github_user": "Parcels-code",
     "github_repo": "parcels",
     "github_version": "main",
     "doc_path": "docs",
@@ -266,11 +266,11 @@ def linkcode_resolve(domain, info):
 
     if "-" in parcels.__version__:
         return (
-            f"https://github.com/OceanParcels/parcels/blob/main/parcels/{fn}{linespec}"
+            f"https://github.com/Parcels-code/parcels/blob/main/parcels/{fn}{linespec}"
         )
     else:
         return (
-            f"https://github.com/OceanParcels/parcels/blob/"
+            f"https://github.com/Parcels-code/parcels/blob/"
             f"{parcels.__version__}/parcels/{fn}{linespec}"
         )
 
@@ -360,8 +360,8 @@ BRANCH = (
 nbsphinx_prolog = f"""
 .. raw:: html
 
-    Run this notebook in the cloud <a href="https://mybinder.org/v2/gh/OceanParcels/Parcels/{BRANCH}?urlpath=lab/tree/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
-    , or view it <a href="https://github.com/OceanParcels/Parcels/blob/{BRANCH}/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">on GitHub</a>. Notebook version corresponds with {BRANCH}.
+    Run this notebook in the cloud <a href="https://mybinder.org/v2/gh/Parcels-code/Parcels/{BRANCH}?urlpath=lab/tree/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
+    , or view it <a href="https://github.com/Parcels-code/Parcels/blob/{BRANCH}/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">on GitHub</a>. Notebook version corresponds with {BRANCH}.
 
     <p style="margin-bottom: 30px"></p>
 """

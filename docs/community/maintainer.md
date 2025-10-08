@@ -24,9 +24,9 @@
   - Approve PR and merge on green
 - Update version, DOI, and release date in `CITATION.cff` file (use [Parcels Zenodo entry](https://zenodo.org/records/14001000) as reference)
 - Check "publish to PyPI" workflow succeeded
-- Update oceanparcels.org
+- Update parcels-code.org
   - Parcels development status
   - Check feature tiles
-  - Check for broken links on oceanparcels using [this tracking issue](https://github.com/OceanParcels/oceanparcels_website/issues/85)
+  - Check for broken links on oceanparcels using [this tracking issue](https://github.com/Parcels-code/oceanparcels_website/issues/85)
 - (once package is available on conda) Re-build the Binder
 - Ask for the shared parcels environment on [Lorenz](https://github.com/IMAU-oceans/Lorenz) to be updated

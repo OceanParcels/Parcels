@@ -14,9 +14,9 @@ authors:
     given-names: "Philippe"
     orcid: "https://orcid.org/0000-0003-0100-5834"
   - name: "The Parcels contributors"
-    website: "https://github.com/OceanParcels/parcels/graphs/contributors"
+    website: "https://github.com/Parcels-code/parcels/graphs/contributors"
 title: "Parcels"
 version: 3.1.2
 doi: 10.5281/zenodo.14845686
 date-released: 2025-02-10
-url: "https://github.com/OceanParcels/parcels"
+url: "https://github.com/Parcels-code/parcels"
