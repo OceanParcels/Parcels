@@ -20,19 +20,18 @@ classifiers = [
   "Intended Audience :: Science/Research",
 ]
 dependencies = [
-  "cftime",
-  "numpy >=1.11",
-  "dask",
-  "netCDF4 >=1.1.9",
-  "zarr >=2.11.0,!=2.18.0,<3",
-  "tqdm",
+  "cftime >=1.6.3",
+  "numpy >=2.1.0",
+  "dask >=2024.5.1",
+  "netCDF4 >=1.7.2",
+  "zarr >=2.15.0,!=2.18.0,<3",
+  "tqdm >=4.50.0",
   "pytest",
-  "scipy >=0.16.0",
-  "xarray >=0.10.8",
-  "uxarray",
-  "pooch",
+  "xarray >=2024.5.0",
+  "uxarray >=2025.3.0",
+  "pooch >=1.8.0",
   "xgcm >=0.9.0",
-  "cf_xarray",
+  "cf_xarray >=0.8.6",
 ]
 
 [project.urls]
