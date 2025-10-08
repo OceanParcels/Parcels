@@ -52,7 +52,7 @@ jobs:
         run: |
           pixi run -e ${{ matrix.pixi-environment }} tests -v -s --cov=parcels --cov-report=xml --html="${{ env.COVERAGE_REPORT }}" --self-contained-html
       - name: Codecov
-        uses: codecov/codecov-action@v5.3.1
+        uses: codecov/codecov-action@v5.5.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -96,7 +96,7 @@ jobs:
         run: |
           pixi run test-notebooks -v -s --html="${{ env.COVERAGE_REPORT }}" --self-contained-html --cov=parcels --cov-report=xml
       - name: Codecov
-        uses: codecov/codecov-action@v5.3.1
+        uses: codecov/codecov-action@v5.5.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
