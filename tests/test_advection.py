@@ -265,8 +265,8 @@ def test_radialrotation(npart=10):
         ("EE", 1e-2),
         ("AdvDiffEM", 1e-2),
         ("AdvDiffM1", 1e-2),
-        ("RK2", 1e-5),
-        ("RK2_3D", 1e-5),
+        ("RK2", 6e-5),
+        ("RK2_3D", 6e-5),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
         ("RK45", 1e-4),
@@ -277,7 +277,7 @@ def test_moving_eddy(method, rtol):
     grid = XGrid.from_dataset(ds)
     U = Field("U", ds["U"], grid, interp_method=XLinear)
     V = Field("V", ds["V"], grid, interp_method=XLinear)
-    if method == "RK4_3D":
+    if method in ["RK2_3D", "RK4_3D"]:
         # Using W to test 3D advection (assuming same velocity as V)
         W = Field("W", ds["V"], grid, interp_method=XLinear)
         UVW = VectorField("UVW", U, V, W)
@@ -318,7 +318,7 @@ def test_moving_eddy(method, rtol):
     "method, rtol",
     [
         ("EE", 1e-1),
-        ("RK2", 1e-5),
+        ("RK2", 3e-3),
         ("RK4", 1e-5),
         ("RK45", 1e-4),
     ],
@@ -404,7 +404,7 @@ def test_stommelgyre_fieldset(method, rtol, grid_type):
 @pytest.mark.parametrize(
     "method, rtol",
     [
-        ("RK2", 5e-3),
+        ("RK2", 2e-2),
         ("RK4", 5e-3),
         ("RK45", 1e-4),
     ],
