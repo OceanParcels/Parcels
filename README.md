@@ -7,20 +7,20 @@
 [![EffVer Versioning](https://img.shields.io/badge/version_scheme-EffVer-0097a7)](https://jacobtomlinson.dev/effver)
 [![Xarray](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydata/xarray/refs/heads/main/doc/badge.json)](https://xarray.dev)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![unit-tests](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml/badge.svg)](https://github.com/OceanParcels/parcels/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/OceanParcels/parcels/branch/main/graph/badge.svg)](https://codecov.io/gh/OceanParcels/parcels)
+[![unit-tests](https://github.com/Parcels-code/parcels/actions/workflows/ci.yml/badge.svg)](https://github.com/Parcels-code/parcels/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Parcels-code/parcels/branch/main/graph/badge.svg)](https://codecov.io/gh/Parcels-code/parcels)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5353/badge)](https://bestpractices.coreinfrastructure.org/projects/5353)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels/main?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Parcels-code/parcels/main?labpath=docs%2Fexamples%2Fparcels_tutorial.ipynb)
 [![LinkedIn](https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff)](https://www.linkedin.com/company/parcelscode/)
 
 > [!WARNING]
 > This branch is `v4-dev` - version 4 of Parcels which is in active development. See `main` (or the tags) to browse stable versions of Parcels.
 
-**Parcels** (**P**robably **A** **R**eally **C**omputationally **E**fficient **L**agrangian **S**imulator) is a set of Python classes and methods to create customisable particle tracking simulations using output from Ocean Circulation models. Parcels can be used to track passive and active particulates such as water, plankton, [plastic](http://www.topios.org/) and [fish](https://github.com/Jacketless/IKAMOANA).
+**Parcels** provides a set of Python classes and methods to create customisable particle tracking simulations using gridded output from (ocean) circulation models. Parcels can be used to track passive and active particulates such as water, plankton, [plastic](http://www.topios.org/) and [fish](https://github.com/Jacketless/IKAMOANA).
 
-![Arctic-SO-medusaParticles](https://github.com/OceanParcels/oceanparcels_website/blob/main/images/homepage.gif)
+![Arctic-SO-medusaParticles](https://github.com/Parcels-code/oceanparcels_website/blob/main/images/homepage.gif)
 
-_Animation of virtual particles carried by ocean surface flow in the global oceans. The particles are advected with [Parcels](http://oceanparcels.org/) in data from the [NEMO Ocean Model](https://www.nemo-ocean.eu/)._
+_Animation of virtual particles carried by ocean surface flow in the global oceans. The particles are advected with [Parcels](http://parcels-code.org/) in data from the [NEMO Ocean Model](https://www.nemo-ocean.eu/)._
 
 ### Parcels manuscript and code
 
@@ -38,13 +38,13 @@ _Kehl, C, PD Nooteboom, MLA Kaandorp and E van Sebille (2023) Efficiently simula
 
 ### Further information
 
-See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](https://docs.oceanparcels.org/en/latest/installation.html) and [running](https://docs.oceanparcels.org/en/latest/documentation.html) the Parcels code, as well as extended [documentation](https://docs.oceanparcels.org/en/latest/reference.html) of the methods and classes.
+See [parcels-code.org](http://parcels-code.org/) for further information about [installing](https://docs.parcels-code.org/en/latest/installation.html) and [running](https://docs.parcels-code.org/en/latest/documentation.html) the Parcels code, as well as extended [documentation](https://docs.parcels-code.org/en/latest/reference.html) of the methods and classes.
 
 ### Contributors
 
-<a href="https://github.com/oceanparcels/parcels/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=oceanparcels/parcels" />
+<a href="https://github.com/parcels-code/parcels/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=parcels-code/parcels" />
 </a>
 
-**All contributions are welcome! See the [contributing page](https://docs.oceanparcels.org/en/latest/contributing.html) in our documentation to see how to get involved.**
+**All contributions are welcome! See the [contributing page](https://docs.parcels-code.org/en/latest/contributing.html) in our documentation to see how to get involved.**
 Image made with [contrib.rocks](https://contrib.rocks).

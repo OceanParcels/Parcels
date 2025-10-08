@@ -77,18 +77,18 @@ def _get_corner_data_Agrid(
         ti_1 = np.clip(ti + 1, 0, data.shape[0] - 1)
         ti = np.concatenate([np.repeat(ti, lenZ * 4), np.repeat(ti_1, lenZ * 4)])
 
-    # Depth coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
+    # Z coordinates: 4 points at zi, 4 at zi+1, repeated for both time levels
     if lenZ == 1:
         zi = np.repeat(zi, lenT * 4)
     else:
         zi_1 = np.clip(zi + 1, 0, data.shape[1] - 1)
         zi = np.tile(np.array([zi, zi, zi, zi, zi_1, zi_1, zi_1, zi_1]).flatten(), lenT)
 
-    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
+    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/z
     yi_1 = np.clip(yi + 1, 0, data.shape[2] - 1)
     yi = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT) * (lenZ))
 
-    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
+    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/z
     xi_1 = np.clip(xi + 1, 0, data.shape[3] - 1)
     xi = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT) * (lenZ))
 
@@ -211,17 +211,17 @@ def CGrid_Velocity(
         ti_1 = np.clip(ti + 1, 0, tdim - 1)
         ti_full = np.concatenate([np.repeat(ti, 4), np.repeat(ti_1, 4)])
 
-    # Depth coordinates: 4 points at zi, repeated for both time levels
+    # Z coordinates: 4 points at zi, repeated for both time levels
     zi_full = np.repeat(zi, lenT * 4)
 
-    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/depth
+    # Y coordinates: [yi, yi, yi+1, yi+1] for each spatial point, repeated for time/z
     yi_1 = np.clip(yi + 1, 0, ydim - 1)
     yi_full = np.tile(np.repeat(np.column_stack([yi, yi_1]), 2), (lenT))
     # # TODO check why in some cases minus needed here!!!
     # yi_minus_1 = np.clip(yi - 1, 0, ydim - 1)
     # yi = np.tile(np.repeat(np.column_stack([yi_minus_1, yi]), 2), (lenT))
 
-    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/depth
+    # X coordinates: [xi, xi+1, xi, xi+1] for each spatial point, repeated for time/z
     xi_1 = np.clip(xi + 1, 0, xdim - 1)
     xi_full = np.tile(np.column_stack([xi, xi_1, xi, xi_1]).flatten(), (lenT))
 
@@ -313,15 +313,15 @@ def CGrid_Velocity(
             ti_1 = np.clip(ti + 1, 0, tdim - 1)
             ti_full = np.concatenate([np.repeat(ti, 2), np.repeat(ti_1, 2)])
 
-        # Depth coordinates: 1 points at zi, repeated for both time levels
+        # Z coordinates: 1 points at zi, repeated for both time levels
         zi_1 = np.clip(zi + 1, 0, zdim - 1)
         zi_full = np.tile(np.array([zi, zi_1]).flatten(), lenT)
 
-        # Y coordinates: yi+1 for each spatial point, repeated for time/depth
+        # Y coordinates: yi+1 for each spatial point, repeated for time/z
         yi_1 = np.clip(yi + 1, 0, ydim - 1)
         yi_full = np.tile(yi_1, (lenT) * 2)
 
-        # X coordinates: xi+1 for each spatial point, repeated for time/depth
+        # X coordinates: xi+1 for each spatial point, repeated for time/z
         xi_1 = np.clip(xi + 1, 0, xdim - 1)
         xi_full = np.tile(xi_1, (lenT) * 2)
 

@@ -237,7 +237,7 @@ class Field:
         self._check_velocitysampling()
         try:
             if isinstance(key, KernelParticle):
-                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+                return self.eval(key.time, key.z, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:
@@ -343,7 +343,7 @@ class VectorField:
     def __getitem__(self, key):
         try:
             if isinstance(key, KernelParticle):
-                return self.eval(key.time, key.depth, key.lat, key.lon, key)
+                return self.eval(key.time, key.z, key.lat, key.lon, key)
             else:
                 return self.eval(*key)
         except tuple(AllParcelsErrorCodes.keys()) as error:

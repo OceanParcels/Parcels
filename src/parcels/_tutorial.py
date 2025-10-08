@@ -13,7 +13,7 @@ __all__ = ["download_example_dataset", "list_example_datasets"]
 # make a new release in the repo and update the DATA_REPO_TAG to the new tag
 DATA_REPO_TAG = "main"
 
-DATA_URL = f"https://github.com/OceanParcels/parcels-data/raw/{DATA_REPO_TAG}/data"
+DATA_URL = f"https://github.com/Parcels-code/parcels-data/raw/{DATA_REPO_TAG}/data"
 
 # Keys are the dataset names. Values are the filenames in the dataset folder. Note that
 # you can specify subfolders in the dataset folder putting slashes in the filename list.
@@ -26,7 +26,7 @@ DATA_URL = f"https://github.com/OceanParcels/parcels-data/raw/{DATA_REPO_TAG}/da
 # └── folder2/
 #     └── file2.nc
 #
-# See instructions at https://github.com/OceanParcels/parcels-data for adding new datasets
+# See instructions at https://github.com/Parcels-code/parcels-data for adding new datasets
 EXAMPLE_DATA_FILES: dict[str, list[str]] = {
     "MovingEddies_data": [
         "moving_eddiesP.nc",

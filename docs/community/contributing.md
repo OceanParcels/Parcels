@@ -4,7 +4,7 @@
 
 [Lagrangian Ocean Analysis](https://doi.org/10.1016/j.ocemod.2017.11.008) is one of the primary modelling tools available to oceanographers to understand how ocean currents transport material. This modelling approach allows researchers to model the ocean and understand the [movement of water](https://doi.org/10.1029/2023GL105662) in the ocean itself (or even [on other planets](https://doi.org/10.3847/1538-4357/ac9d94)), as well as the transport of [nutrients](https://doi.org/10.1029/2023GL108001), [marine organisms](https://doi.org/10.3354/meps14526), [oil](https://doi.org/10.1590/0001-3765202220210391), [plastic](https://doi.org/10.1038/s41561-023-01216-0), as well as [almost](https://doi.org/10.1016/j.robot.2024.104730) [anything](https://doi.org/10.1111/cobi.14295) [else](https://doi.org/10.1016/j.marpolbul.2023.115254) that would be adrift at sea. Since ocean currents play a key role in climate by storing heat and carbon, and also in the formation of the 'plastic soup', understanding transport phenomena in the ocean is crucial to support a more sustainable future.
 
-The Parcels code, for which development started in 2015, is now one of the most widely used tools for Lagrangian Ocean Analysis. It's used by dozens of groups around the world - see [this list](https://oceanparcels.org/papers-citing-parcels#papers-citing-parcels) for a full list of the peer-reviewed articles using Parcels. Its flexibility for users to create new, custom 'behaviours' (i.e. let virtual particles be controlled by other mechanics than only the ocean flow) and its compatibility with many different types of hydrodynamic input data are the two key features.
+The Parcels code, for which development started in 2015, is now one of the most widely used tools for Lagrangian Ocean Analysis. It's used by dozens of groups around the world - see [this list](https://parcels-code.org/papers-citing-parcels#papers-citing-parcels) for a full list of the peer-reviewed articles using Parcels. Its flexibility for users to create new, custom 'behaviours' (i.e. let virtual particles be controlled by other mechanics than only the ocean flow) and its compatibility with many different types of hydrodynamic input data are the two key features.
 
 ```{note}
 Want to learn more about Lagrangian ocean analysis? Then look at [Lagrangian ocean analysis: Fundamentals and practices](https://www.sciencedirect.com/science/article/pii/S1463500317301853) for a review of the literature.
@@ -22,7 +22,7 @@ The first component of this documentation is geared to those new to open source.
 
 Open source is a category of software that is open to the public, meaning that anyone is able to look at, modify, and improve the software. Compare this to closed source software (e.g., Microsoft Word, or Gmail) where only those working for the company on the product are able to look at the source code, or make improvements.
 
-Software being open source allows bugs in the code to be quickly identified and fixed, as well as fosters communities of people involved on projects. Most open source software have permissible licenses making them free to modify, and use even in commercial settings. Parcels, for example, is open source and [licensed under the MIT License](https://github.com/OceanParcels/parcels/blob/main/LICENSE.md).
+Software being open source allows bugs in the code to be quickly identified and fixed, as well as fosters communities of people involved on projects. Most open source software have permissible licenses making them free to modify, and use even in commercial settings. Parcels, for example, is open source and [licensed under the MIT License](https://github.com/Parcels-code/parcels/blob/main/LICENSE.md).
 
 This visibility of the codebase results in a higher quality, as well as a more transparent and stable product. This is important in research for reproducibility, as well as in industry where stability is crucial. Open source is not some niche category of software, but in fact [forms the backbone of modern computing and computing infrastructure](https://www.newstatesman.com/science-tech/2016/08/how-linux-conquered-world-without-anyone-noticing) and is used widely in industry. A lot of the digital services that you use (paid, or free) depend on open source code in one way or another.
 
@@ -36,27 +36,25 @@ Exactly how to use Git and GitHub is beyond the scope of this documentation, and
 
 There are many ways that you can contribute to Parcels. You can:
 
-- Participate in discussion about Parcels, either through the [issues](https://github.com/OceanParcels/parcels/issues) or [discussions](https://github.com/OceanParcels/parcels/discussions) tab
+- Participate in discussion about Parcels, either through the [issues](https://github.com/Parcels-code/parcels/issues) or [discussions](https://github.com/Parcels-code/parcels/discussions) tab
 - Suggest improvements to [tutorials](../documentation/index.md)
 - Suggest improvements to [documentation](../index.md)
 - Write code (fix bugs, implement features, codebase improvements, etc)
 
 All of these require you to [make an account on GitHub](https://github.com/signup), so that should be your first step.
 
-If you want to suggest quick edits to the documentation, it's as easy as going to the page and clicking "Edit on GitHub" in the righthand panel. For other changes, it's a matter of looking through the [issue tracker](https://github.com/OceanParcels/parcels/issues) which documents tasks that are being considered. Pay particular attention to [issues tagged with "good first issue"](https://github.com/OceanParcels/parcels/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22), as these are tasks that don't require deep familiarity with the codebase. Once you've chosen an issue you would like to contribute towards, comment on it to flag your interest in working on it. This allows the community to know who's interested, and provide any guidance in its implementation (maybe the scope has changed since the issue was last updated).
+If you want to suggest quick edits to the documentation, it's as easy as going to the page and clicking "Edit on GitHub" in the righthand panel. For other changes, it's a matter of looking through the [issue tracker](https://github.com/Parcels-code/parcels/issues) which documents tasks that are being considered. Pay particular attention to [issues tagged with "good first issue"](https://github.com/Parcels-code/parcels/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22), as these are tasks that don't require deep familiarity with the codebase. Once you've chosen an issue you would like to contribute towards, comment on it to flag your interest in working on it. This allows the community to know who's interested, and provide any guidance in its implementation (maybe the scope has changed since the issue was last updated).
 
-If you're having trouble using Parcels, feel free to create a discussion in our Discussions tab and we'll be happy to support. Want to suggest a feature, or have encountered a problem that is a result of a bug in Parcels, then search for an issue in the tracker or [create a new one](https://github.com/OceanParcels/parcels/issues/new/choose) with the relevant details.
+If you're having trouble using Parcels, feel free to create a discussion in our Discussions tab and we'll be happy to support. Want to suggest a feature, or have encountered a problem that is a result of a bug in Parcels, then search for an issue in the tracker or [create a new one](https://github.com/Parcels-code/parcels/issues/new/choose) with the relevant details.
 
-In the [Projects panel](https://github.com/OceanParcels/parcels/projects?query=is%3Aopen), you'll see the "Parcels development" project. This is used by the core development team for project management, as well as drafting up new ideas for the codebase that aren't mature enough to be issues themselves. Everything in "backlog" is not being actively worked on and is fair game for open source contributions.
-
-(editing-parcels-code)=
+In the [Projects panel](https://github.com/Parcels-code/parcels/projects?query=is%3Aopen), you'll see the "Parcels development" project. This is used by the core development team for project management, as well as drafting up new ideas for the codebase that aren't mature enough to be issues themselves. Everything in "backlog" is not being actively worked on and is fair game for open source contributions.
 
 ## Development
 
 ### Environment setup
 
 ```{note}
-Parcels, alongside popular projects like [Xarray](https://github.com/pydata/xarray), uses [Pixi](https://pixi.sh) to manage environments and run developer tooling. Pixi is a modern alternative to Conda and also includes other powerful tooling useful for a project like Parcels ([read more](https://github.com/OceanParcels/Parcels/issues/2205)). It is our sole development workflow - we do not offer a Conda development workflow. Give Pixi a try, you won't regret it!
+Parcels, alongside popular projects like [Xarray](https://github.com/pydata/xarray), uses [Pixi](https://pixi.sh) to manage environments and run developer tooling. Pixi is a modern alternative to Conda and also includes other powerful tooling useful for a project like Parcels ([read more](https://github.com/Parcels-code/Parcels/issues/2205)). It is our sole development workflow - we do not offer a Conda development workflow. Give Pixi a try, you won't regret it!
 ```
 
 To get started contributing to Parcels:
@@ -77,7 +75,19 @@ Now you have a development installation of Parcels, as well as a bunch of develo
 
 ### Pixi workflows
 
-You can use the following Pixi commands to run common development tasks.
+**Typical development workflow**
+
+1. Make your code changes
+2. Run `pixi run lint` to ensure code formatting and style compliance
+3. Run `pixi run tests` to verify your changes don't break existing functionality
+4. If you've added new features, run `pixi run typing` to check type annotations
+5. If you've modified documentation, run `pixi run docs` to build and verify the docs
+
+```{tip}
+You can run `pixi info` to see all available environments and `pixi task list` to see all available tasks across environments.
+```
+
+See below for more Pixi commands relevant to development.
 
 **Testing**
 
@@ -99,21 +109,13 @@ You can use the following Pixi commands to run common development tasks.
 
 Parcels supports testing against different environments (e.g., different Python versions) with different feature sets. In CI we test against these environments, and you can too locally. For example:
 
-- `pixi run -e test-py311 tests` - Run tests using Python 3.11
-- `pixi run -e test-py312 tests` - Run tests using Python 3.12
+- `pixi run -e test-py311 tests` - Run tests in the environment containing Python 3.11
+- `pixi run -e test-py312 tests` - Run tests in the environment containing Python 3.12
 
 The name of the workflow on GitHub contains the command you have to run locally to recreate the workflow - making it super easy to reproduce CI failures locally.
 
-**Typical development workflow**
-
-1. Make your code changes
-2. Run `pixi run lint` to ensure code formatting and style compliance
-3. Run `pixi run tests` to verify your changes don't break existing functionality
-4. If you've added new features, run `pixi run typing` to check type annotations
-5. If you've modified documentation, run `pixi run docs` to build and verify the docs
-
 ```{tip}
-You can run `pixi info` to see all available environments and `pixi task list` to see all available tasks across environments.
+For those familiar with Conda, you are used to activating an environment. With Pixi, you can do the same by doing `pixi shell <env-name>`. For example, `pixi shell test-latest` will drop you into a shell where you can run commands such as `pytest` like normal. You can exit the shell with `exit` or `Ctrl+D`.
 ```
 
 ### Changing code
