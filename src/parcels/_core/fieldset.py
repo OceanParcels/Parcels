@@ -282,6 +282,16 @@ class FieldSet:
         grid = UxGrid(ds.uxgrid, z=ds.coords["nz"])
         ds = _discover_fesom2_U_and_V(ds)
 
+        for var in ds.data_vars:
+            if "location" not in ds[var].attrs:
+                raise ValueError(
+                    f"Variable {var!r} missing required attribute 'location' to indicate its placement on the mesh."
+                )
+            if ds[var].attrs["location"] not in location_to_interpmethod:
+                raise ValueError(
+                    f"Variable {var!r} has attribute 'location' with unexpected value {ds[var].attrs['location']!r}. Expected one of {list(location_to_interpmethod.keys())}"
+                )
+
         fields = {}
         if "U" in ds.data_vars and "V" in ds.data_vars:
             fields["U"] = Field("U", ds["U"], grid, location_to_interpmethod[ds["U"].attrs.get("location")])
