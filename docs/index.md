@@ -22,5 +22,5 @@ Installation <installation>
 Tutorials & Documentation <documentation/index>
 API reference <reference>
 Contributing, Release Notes and more <community/index>
-OceanParcels website <https://parcels-code.org/>
+Parcels website <https://parcels-code.org/>
 ```
