@@ -36,9 +36,9 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://oceanparcels.org/"
-repository = "https://github.com/OceanParcels/parcels"
-Tracker = "https://github.com/OceanParcels/parcels/issues"
+homepage = "https://parcels-code.org/"
+repository = "https://github.com/Parcels-code/parcels"
+Tracker = "https://github.com/Parcels-code/parcels/issues"
 
 
 [tool.setuptools]

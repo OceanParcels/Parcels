@@ -12,7 +12,7 @@ The key goals of this update are
 
 The timeline for the release of Parcels v4 is not yet fixed, but we are aiming for a release of an 'alpha' version in September 2025. This v4-alpha will have support for unstructured grids and user-defined interpolation methods, but is not yet performance-optimised.
 
-Collaboration on v4 development is happening on the [Parcels v4 Project Board](https://github.com/orgs/OceanParcels/projects/5).
+Collaboration on v4 development is happening on the [Parcels v4 Project Board](https://github.com/orgs/Parcels-code/projects/5).
 
 The pages below provide further background on the development of Parcels v4. You can think of this page as a "living" document as we work towards the release of v4.
 
@@ -21,6 +21,6 @@ installation
 api
 nojit
 TODO
-Parcels v4 Project Board <https://github.com/orgs/OceanParcels/projects/5>
+Parcels v4 Project Board <https://github.com/orgs/Parcels-code/projects/5>
 Parcels v4 migration guide <../community/v4-migration>
 ```

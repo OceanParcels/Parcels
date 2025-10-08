@@ -9,7 +9,7 @@ See the sections in the primary sidebar and below to explore.
 
 contributing
 Versioning Policy <policies>
-Release Notes <https://github.com/OceanParcels/Parcels/releases>
+Release Notes <https://github.com/Parcels-code/Parcels/releases>
 Parcels v4.0 Migration Guide <v4-migration>
 ```
 

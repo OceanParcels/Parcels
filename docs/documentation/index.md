@@ -4,7 +4,7 @@ Shown below are several documentation and tutorial Jupyter notebooks and scripts
 
 ```{note}
 The tutorials written for Parcels v3 are currently being updated for Parcels v4. Shown below are only the notebooks which have been updated.
-[Feel free to post a Discussion on GitHub](https://github.com/OceanParcels/Parcels/discussions/categories/ideas) if you feel like v4 needs a specific tutorial that wasn't in v3, or [post an issue](https://github.com/OceanParcels/Parcels/issues/new?template=01_feature.md) if you feel that the notebooks below can be improved!
+[Feel free to post a Discussion on GitHub](https://github.com/Parcels-code/Parcels/discussions/categories/ideas) if you feel like v4 needs a specific tutorial that wasn't in v3, or [post an issue](https://github.com/Parcels-code/Parcels/issues/new?template=01_feature.md) if you feel that the notebooks below can be improved!
 ```
 
 ```{nbgallery}
