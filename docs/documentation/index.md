@@ -42,7 +42,7 @@ The tutorials written for Parcels v3 are currently being updated for Parcels v4.
 :name: tutorial-kernels
 
 <!-- ../examples/tutorial_diffusion.ipynb -->
-<!-- ../examples/tutorial_sampling.ipynb -->
+../examples/tutorial_sampling.ipynb
 <!-- ../examples/tutorial_particle_field_interaction.ipynb -->
 <!-- ../examples/tutorial_interaction.ipynb -->
 <!-- ../examples/tutorial_analyticaladvection.ipynb -->
