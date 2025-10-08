@@ -52,7 +52,7 @@ def deprecated_made_private(func: Callable) -> Callable:
     return deprecated(
         "It has moved to the internal API as it is not expected to be directly used by "
         "the end-user. If you feel that you use this code directly in your scripts, please "
-        "comment on our tracking issue at https://github.com/OceanParcels/Parcels/issues/1695.",
+        "comment on our tracking issue at https://github.com/Parcels-code/Parcels/issues/1695.",
     )(func)
 
 

@@ -20,7 +20,7 @@ Profile.prof
 .eggs/*
 parcels.egg-info/*
 dist/parcels*.egg
-parcels/_version_setup.py
+src/parcels/_version_setup.py
 .pytest_cache
 .hypothesis
 .coverage

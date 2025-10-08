@@ -52,19 +52,16 @@ tests:
         - parcels
 
 about:
-  homepage: https://github.com/OceanParcels/parcels
+  homepage: https://github.com/Parcels-code/parcels
   license: MIT
   license_file: LICENSE.md
-  summary: Probably A Really Computationally Efficient Lagrangian Simulator
+  summary: Parcels - A highly customisable Lagrangian simulation framework
   description: |
-    Parcels (Probably A Really Computationally Efficient Lagrangian Simulator)
-    is a set of Python classes and methods to create customisable particle
-    tracking simulations using output from Ocean Circulation models.
-    Parcels can be used to track passive and active particulates such as
-    water, nutrients, plankton, plastic and fish.
-  documentation: https://oceanparcels.org/
-  repository: https://github.com/OceanParcels/parcels
+    Parcels provides a set of Python classes and methods to create customisable particle tracking simulations using gridded output from (ocean) circulation models.
+  documentation: https://parcels-code.org/
+  repository: https://github.com/Parcels-code/parcels
 
 extra:
   recipe-maintainers:
     - VeckoTheGecko
+    - erikvansebille

@@ -1,1 +1,1 @@
-See https://docs.oceanparcels.org/en/latest/contributing.html
+See https://docs.parcels-code.org/en/latest/contributing.html

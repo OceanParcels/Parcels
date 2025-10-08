@@ -35,16 +35,17 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://oceanparcels.org/"
-repository = "https://github.com/OceanParcels/parcels"
-Tracker = "https://github.com/OceanParcels/parcels/issues"
+homepage = "https://parcels-code.org/"
+repository = "https://github.com/Parcels-code/parcels"
+Tracker = "https://github.com/Parcels-code/parcels/issues"
 
 
 [tool.setuptools]
+package-dir = { "" = "src" }
 packages = ["parcels"]
 
 [tool.setuptools_scm]
-write_to = "parcels/_version_setup.py"
+write_to = "src/parcels/_version_setup.py"
 local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
