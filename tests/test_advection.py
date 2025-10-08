@@ -18,6 +18,8 @@ from parcels.kernels import (
     AdvectionDiffusionEM,
     AdvectionDiffusionM1,
     AdvectionEE,
+    AdvectionRK2,
+    AdvectionRK2_3D,
     AdvectionRK4,
     AdvectionRK4_3D,
     AdvectionRK45,
@@ -26,6 +28,8 @@ from tests.utils import round_and_hash_float_array
 
 kernel = {
     "EE": AdvectionEE,
+    "RK2": AdvectionRK2,
+    "RK2_3D": AdvectionRK2_3D,
     "RK4": AdvectionRK4,
     "RK4_3D": AdvectionRK4_3D,
     "RK45": AdvectionRK45,
@@ -261,6 +265,8 @@ def test_radialrotation(npart=10):
         ("EE", 1e-2),
         ("AdvDiffEM", 1e-2),
         ("AdvDiffM1", 1e-2),
+        ("RK2", 1e-5),
+        ("RK2_3D", 1e-5),
         ("RK4", 1e-5),
         ("RK4_3D", 1e-5),
         ("RK45", 1e-4),
@@ -312,6 +318,7 @@ def test_moving_eddy(method, rtol):
     "method, rtol",
     [
         ("EE", 1e-1),
+        ("RK2", 1e-5),
         ("RK4", 1e-5),
         ("RK45", 1e-4),
     ],
@@ -356,6 +363,7 @@ def test_decaying_moving_eddy(method, rtol):
 @pytest.mark.parametrize(
     "method, rtol",
     [
+        ("RK2", 0.1),
         ("RK4", 0.1),
         ("RK45", 0.1),
     ],
@@ -396,6 +404,7 @@ def test_stommelgyre_fieldset(method, rtol, grid_type):
 @pytest.mark.parametrize(
     "method, rtol",
     [
+        ("RK2", 5e-3),
         ("RK4", 5e-3),
         ("RK45", 1e-4),
     ],
