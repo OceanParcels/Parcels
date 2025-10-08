@@ -30,7 +30,7 @@ src/parcels/_version_setup.py
 *.egg-info
 
 # Ignore pixi.lock file for this project. The con of 22k lines of noise it adds to diffs is not worth
-# the benefit of perfectly reproducible environments for all developers (and all the tooling that would
+# the minor benefit of perfectly reproducible environments for all developers (and all the tooling that would
 # be required to support that - see https://github.com/pydata/xarray/issues/10732#issuecomment-3327780806
 # for more details)
 pixi.lock
