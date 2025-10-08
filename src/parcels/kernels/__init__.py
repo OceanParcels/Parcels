@@ -1,6 +1,8 @@
 from .advection import (
     AdvectionAnalytical,
     AdvectionEE,
+    AdvectionRK2,
+    AdvectionRK2_3D,
     AdvectionRK4,
     AdvectionRK4_3D,
     AdvectionRK4_3D_CROCO,
@@ -21,6 +23,8 @@ __all__ = [  # noqa: RUF022
     # advection
     "AdvectionAnalytical",
     "AdvectionEE",
+    "AdvectionRK2",
+    "AdvectionRK2_3D",
     "AdvectionRK4_3D_CROCO",
     "AdvectionRK4_3D",
     "AdvectionRK4",
