@@ -93,4 +93,4 @@ lxml = "*" # in CI
 types-tqdm = "*"
 
 [feature.typing.tasks]
-typing = "mypy parcels --install-types"
+typing = "mypy src/parcels --install-types"
