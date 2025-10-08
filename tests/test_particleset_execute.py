@@ -130,7 +130,7 @@ def test_pset_execute_invalid_arguments(fieldset, fieldset_no_time_interval):
     ],
 )
 def test_particleset_runtime_type(fieldset, runtime, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], z=[50.0], pclass=Particle)
     with expectation:
         pset.execute(runtime=runtime, dt=np.timedelta64(10, "s"), pyfunc=DoNothing)
 
@@ -146,7 +146,7 @@ def test_particleset_runtime_type(fieldset, runtime, expectation):
     ],
 )
 def test_particleset_endtime_type(fieldset, endtime, expectation):
-    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], depth=[50.0], pclass=Particle)
+    pset = ParticleSet(fieldset, lon=[0.2], lat=[5.0], z=[50.0], pclass=Particle)
     with expectation:
         pset.execute(endtime=endtime, dt=np.timedelta64(10, "m"), pyfunc=DoNothing)
 
@@ -270,7 +270,7 @@ def test_some_particles_throw_outofbounds(zonal_flow_fieldset):
 def test_delete_on_all_errors(fieldset):
     def MoveRight(particles, fieldset):  # pragma: no cover
         particles.dlon += 1
-        fieldset.U[particles.time, particles.depth, particles.lat, particles.lon, particles]
+        fieldset.U[particles.time, particles.z, particles.lat, particles.lon, particles]
 
     def DeleteAllErrorParticles(particles, fieldset):  # pragma: no cover
         particles[particles.state > 20].state = StatusCode.Delete
@@ -285,7 +285,7 @@ def test_some_particles_throw_outoftime(fieldset):
     pset = ParticleSet(fieldset, lon=np.zeros_like(time), lat=np.zeros_like(time), time=time)
 
     def FieldAccessOutsideTime(particles, fieldset):  # pragma: no cover
-        fieldset.U[particles.time + np.timedelta64(400, "D"), particles.depth, particles.lat, particles.lon, particles]
+        fieldset.U[particles.time + np.timedelta64(400, "D"), particles.z, particles.lat, particles.lon, particles]
 
     with pytest.raises(TimeExtrapolationError):
         pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(1, "D"), dt=np.timedelta64(10, "D"))
@@ -302,7 +302,7 @@ def test_errorinterpolation(fieldset):
         return np.nan * np.zeros_like(x)
 
     def SampleU(particles, fieldset):  # pragma: no cover
-        fieldset.U[particles.time, particles.depth, particles.lat, particles.lon, particles]
+        fieldset.U[particles.time, particles.z, particles.lat, particles.lon, particles]
 
     fieldset.U.interp_method = NaNInterpolator
     pset = ParticleSet(fieldset, lon=[0, 2], lat=[0, 0])
@@ -325,7 +325,7 @@ def test_execution_recover_out_of_bounds(fieldset):
     npart = 2
 
     def MoveRight(particles, fieldset):  # pragma: no cover
-        fieldset.U[particles.time, particles.depth, particles.lat, particles.lon + 0.1, particles]
+        fieldset.U[particles.time, particles.z, particles.lat, particles.lon + 0.1, particles]
         particles.dlon += 0.1
 
     def MoveLeft(particles, fieldset):  # pragma: no cover
@@ -466,7 +466,7 @@ def test_uxstommelgyre_pset_execute():
         fieldset,
         lon=[30.0],
         lat=[5.0],
-        depth=[50.0],
+        z=[50.0],
         time=[np.timedelta64(0, "s")],
         pclass=Particle,
     )
@@ -512,7 +512,7 @@ def test_uxstommelgyre_multiparticle_pset_execute():
         fieldset,
         lon=[30.0, 32.0],
         lat=[5.0, 5.0],
-        depth=[50.0, 50.0],
+        z=[50.0, 50.0],
         time=[np.timedelta64(0, "s")],
         pclass=Particle,
     )
@@ -551,7 +551,7 @@ def test_uxstommelgyre_pset_execute_output():
         fieldset,
         lon=[30.0],
         lat=[5.0],
-        depth=[50.0],
+        z=[50.0],
         time=[0.0],
         pclass=Particle,
     )

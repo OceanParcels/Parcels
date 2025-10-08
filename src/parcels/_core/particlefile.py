@@ -126,12 +126,6 @@ class ParticleFile:
     def create_new_zarrfile(self):
         return self._create_new_zarrfile
 
-    def _convert_varout_name(self, var):
-        if var == "depth":
-            return "z"
-        else:
-            return var
-
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
             a = np.full((Z.shape[0], self.chunks[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
@@ -214,8 +208,7 @@ class ParticleFile:
             obs = np.zeros((self._maxids), dtype=np.int32)
             for var in vars_to_write:
                 dtype = _maybe_convert_time_dtype(var.dtype)
-                varout = self._convert_varout_name(var.name)
-                if varout not in ["trajectory"]:  # because 'trajectory' is written as coordinate
+                if var.name not in ["trajectory"]:  # because 'trajectory' is written as coordinate
                     if var.to_write == "once":
                         data = np.full(
                             (arrsize[0],),
@@ -228,8 +221,8 @@ class ParticleFile:
                         data = np.full(arrsize, _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
                         data[ids, 0] = particle_data[var.name][indices_to_write]
                         dims = ["trajectory", "obs"]
-                    ds[varout] = xr.DataArray(data=data, dims=dims, attrs=attrs[var.name])
-                    ds[varout].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks  # type: ignore[index]
+                    ds[var.name] = xr.DataArray(data=data, dims=dims, attrs=attrs[var.name])
+                    ds[var.name].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks  # type: ignore[index]
             ds.to_zarr(store, mode="w")
             self._create_new_zarrfile = False
         else:
@@ -237,16 +230,15 @@ class ParticleFile:
             obs = particle_data["obs_written"][indices_to_write]
             for var in vars_to_write:
                 dtype = _maybe_convert_time_dtype(var.dtype)
-                varout = self._convert_varout_name(var.name)
-                if self._maxids > Z[varout].shape[0]:
-                    self._extend_zarr_dims(Z[varout], store, dtype=dtype, axis=0)
+                if self._maxids > Z[var.name].shape[0]:
+                    self._extend_zarr_dims(Z[var.name], store, dtype=dtype, axis=0)
                 if var.to_write == "once":
                     if len(once_ids) > 0:
-                        Z[varout].vindex[ids_once] = particle_data[var.name][indices_to_write_once]
+                        Z[var.name].vindex[ids_once] = particle_data[var.name][indices_to_write_once]
                 else:
-                    if max(obs) >= Z[varout].shape[1]:  # type: ignore[type-var]
-                        self._extend_zarr_dims(Z[varout], store, dtype=dtype, axis=1)
-                    Z[varout].vindex[ids, obs] = particle_data[var.name][indices_to_write]
+                    if max(obs) >= Z[var.name].shape[1]:  # type: ignore[type-var]
+                        self._extend_zarr_dims(Z[var.name], store, dtype=dtype, axis=1)
+                    Z[var.name].vindex[ids, obs] = particle_data[var.name][indices_to_write]
 
         particle_data["obs_written"][indices_to_write] = obs + 1
 
@@ -262,7 +254,7 @@ class ParticleFile:
         time :
             Time at which to write ParticleSet. Note that typically this would be pset.time_nextloop
         """
-        for var in ["lon", "lat", "depth"]:
+        for var in ["lon", "lat", "z"]:
             pset._data[f"{var}"] += pset._data[f"d{var}"]
         pset._data["time"] = pset._data["time_nextloop"]
         self.write(pset, time)

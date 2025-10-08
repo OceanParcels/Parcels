@@ -44,12 +44,12 @@ def test_fieldset_add_constant_field(fieldset):
 
     # Get a point in the domain
     time = ds["time"].mean()
-    depth = ds["depth"].mean()
+    z = ds["depth"].mean()
     lat = ds["lat"].mean()
     lon = ds["lon"].mean()
 
     pytest.xfail(reason="Not yet implemented interpolation.")
-    assert fieldset.test_constant_field[time, depth, lat, lon] == 1.0
+    assert fieldset.test_constant_field[time, z, lat, lon] == 1.0
 
 
 def test_fieldset_add_field(fieldset):

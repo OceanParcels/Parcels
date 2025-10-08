@@ -96,16 +96,16 @@ def test_randomexponential(lambd):
     # Set random seed
     np.random.seed(1234)
 
-    pset = ParticleSet(fieldset=fieldset, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
+    pset = ParticleSet(fieldset=fieldset, lon=np.zeros(npart), lat=np.zeros(npart), z=np.zeros(npart))
 
     def vertical_randomexponential(particles, fieldset):  # pragma: no cover
-        # Kernel for random exponential variable in depth direction
-        particles.depth = np.random.exponential(scale=1 / fieldset.lambd, size=len(particles))
+        # Kernel for random exponential variable in z direction
+        particles.z = np.random.exponential(scale=1 / fieldset.lambd, size=len(particles))
 
     pset.execute(vertical_randomexponential, runtime=np.timedelta64(1, "s"), dt=np.timedelta64(1, "s"))
 
     expected_mean = 1.0 / fieldset.lambd
-    assert np.allclose(np.mean(pset.depth), expected_mean, rtol=0.1)
+    assert np.allclose(np.mean(pset.z), expected_mean, rtol=0.1)
 
 
 @pytest.mark.parametrize("mu", [0.8 * np.pi, np.pi])
@@ -123,7 +123,7 @@ def test_randomvonmises(mu, kappa):
 
     AngleParticle = Particle.add_variable(Variable("angle"))
     pset = ParticleSet(
-        fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart)
+        fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), z=np.zeros(npart)
     )
 
     def vonmises(particles, fieldset):  # pragma: no cover

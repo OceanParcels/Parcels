@@ -7,9 +7,10 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 [package]
 name = "parcels"
 version = "dynamic" # dynamic versioning needs better support in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . Putting `version = "dynamic"` here for now until pixi recommends something else.
+license = "MIT" # can remove this once https://github.com/prefix-dev/pixi-build-backends/issues/397 is resolved
 
 [package.build]
-backend = { name = "pixi-build-python", version = "==0.3.2" }
+backend = { name = "pixi-build-python", version = "==0.4.0" }
 
 [package.host-dependencies]
 setuptools = "*"
@@ -26,6 +27,7 @@ pre-commit = { features = ["pre-commit"], no-default-feature = true }
 
 [dependencies] # keep section in sync with pyproject.toml dependencies
 python = ">=3.11,<3.13"
+parcels = { path = "." }
 netcdf4 = ">=1.1.9"
 numpy = ">=1.9.1"
 tqdm = "*"
@@ -92,4 +94,4 @@ lxml = "*" # in CI
 types-tqdm = "*"
 
 [feature.typing.tasks]
-typing = "mypy parcels --install-types"
+typing = "mypy src/parcels --install-types"
