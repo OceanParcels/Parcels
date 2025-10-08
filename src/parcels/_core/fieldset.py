@@ -10,7 +10,6 @@ import uxarray as ux
 import xarray as xr
 import xgcm
 
-from parcels import interpolators
 from parcels._core.converters import Geographic, GeographicPolar
 from parcels._core.field import Field, VectorField
 from parcels._core.utils.time import get_datetime_type_calendar
@@ -268,11 +267,6 @@ class FieldSet:
             FieldSet object containing the fields from the dataset that can be used for a Parcels simulation.
 
         """
-        location_to_interpmethod = {
-            "face": interpolators.UXPiecewiseConstantFace,
-            "node": interpolators.UXPiecewiseLinearNode,
-        }  # TODO : Edge registered interpolator, independent vertical grid detection from lateral node placement
-
         ds = ds.copy()
         ds_dims = list(ds.dims)
         if not all(dim in ds_dims for dim in ["time", "nz", "nz1"]):
@@ -282,20 +276,10 @@ class FieldSet:
         grid = UxGrid(ds.uxgrid, z=ds.coords["nz"])
         ds = _discover_fesom2_U_and_V(ds)
 
-        for var in ds.data_vars:
-            if "location" not in ds[var].attrs:
-                raise ValueError(
-                    f"Variable {var!r} missing required attribute 'location' to indicate its placement on the mesh."
-                )
-            if ds[var].attrs["location"] not in location_to_interpmethod:
-                raise ValueError(
-                    f"Variable {var!r} has attribute 'location' with unexpected value {ds[var].attrs['location']!r}. Expected one of {list(location_to_interpmethod.keys())}"
-                )
-
         fields = {}
         if "U" in ds.data_vars and "V" in ds.data_vars:
-            fields["U"] = Field("U", ds["U"], grid, location_to_interpmethod[ds["U"].attrs.get("location")])
-            fields["V"] = Field("V", ds["V"], grid, location_to_interpmethod[ds["V"].attrs.get("location")])
+            fields["U"] = Field("U", ds["U"], grid)
+            fields["V"] = Field("V", ds["V"])
             fields["U"].units = GeographicPolar()
             fields["V"].units = Geographic()
 
@@ -303,7 +287,7 @@ class FieldSet:
                 ds["W"] -= ds[
                     "W"
                 ]  # Negate W to convert from up positive to down positive (as that's the direction of positive z)
-                fields["W"] = Field("W", ds["W"], grid, location_to_interpmethod[ds["W"].attrs.get("location")])
+                fields["W"] = Field("W", ds["W"], grid)
                 fields["UVW"] = VectorField("UVW", fields["U"], fields["V"], fields["W"])
             else:
                 fields["UV"] = VectorField("UV", fields["U"], fields["V"])
