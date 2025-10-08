@@ -6,13 +6,16 @@ from typing import TYPE_CHECKING
 
 import cf_xarray  # noqa: F401
 import numpy as np
+import uxarray as ux
 import xarray as xr
 import xgcm
 
+from parcels import interpolators
 from parcels._core.converters import Geographic, GeographicPolar
 from parcels._core.field import Field, VectorField
 from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
+from parcels._core.uxgrid import UxGrid
 from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
 from parcels._logger import logger
 from parcels._typing import Mesh
@@ -251,6 +254,55 @@ class FieldSet:
 
         return FieldSet(list(fields.values()))
 
+    def from_fesom2(ds: ux.UxDataset):
+        """Create a FieldSet from a FESOM2 uxarray.UxDataset.
+
+        Parameters
+        ----------
+        ds : uxarray.UxDataset
+            uxarray.UxDataset as obtained from the uxarray package.
+
+        Returns
+        -------
+        FieldSet
+            FieldSet object containing the fields from the dataset that can be used for a Parcels simulation.
+
+        """
+        location_to_interpmethod = {
+            "face": interpolators.UXPiecewiseConstantFace,
+            "node": interpolators.UXPiecewiseLinearNode,
+        }  # TODO : Edge registered interpolator, independent vertical grid detection from lateral node placement
+
+        ds = ds.copy()
+        ds_dims = list(ds.dims)
+        if not all(dim in ds_dims for dim in ["time", "nz", "nz1"]):
+            raise ValueError(
+                f"Dataset missing one of the required dimensions 'time', 'nz', or 'nz1'. Found dimensions {ds_dims}"
+            )
+        grid = UxGrid(ds.uxgrid, z=ds.coords["nz"])
+        ds = _discover_fesom2_U_and_V(ds)
+
+        fields = {}
+        if "U" in ds.data_vars and "V" in ds.data_vars:
+            fields["U"] = Field("U", ds["U"], grid, location_to_interpmethod[ds["U"].attrs.get("location")])
+            fields["V"] = Field("V", ds["V"], grid, location_to_interpmethod[ds["V"].attrs.get("location")])
+            fields["U"].units = GeographicPolar()
+            fields["V"].units = Geographic()
+
+            if "W" in ds.data_vars:
+                ds["W"] -= ds[
+                    "W"
+                ]  # Negate W to convert from up positive to down positive (as that's the direction of positive z)
+                fields["W"] = Field("W", ds["W"], grid, location_to_interpmethod[ds["W"].attrs.get("location")])
+                fields["UVW"] = VectorField("UVW", fields["U"], fields["V"], fields["W"])
+            else:
+                fields["UV"] = VectorField("UV", fields["U"], fields["V"])
+
+        for varname in set(ds.data_vars) - set(fields.keys()):
+            fields[varname] = Field(varname, ds[varname], grid)
+
+        return FieldSet(list(fields.values()))
+
 
 class CalendarError(Exception):  # TODO: Move to a parcels errors module
     """Exception raised when the calendar of a field is not compatible with the rest of the Fields. The user should ensure that they only add fields to a FieldSet that have compatible CFtime calendars."""
@@ -359,7 +411,42 @@ def _discover_copernicusmarine_U_and_V(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-def _ds_rename_using_standard_names(ds: xr.Dataset, name_dict: dict[str, str]) -> xr.Dataset:
+def _discover_fesom2_U_and_V(ds: ux.UxDataset) -> ux.UxDataset:
+    # Assumes that the dataset has U and V data
+
+    cf_UV_standard_name_fallbacks = [("unod", "vnod"), ("u", "v")]
+    cf_W_standard_name_fallbacks = ["w"]
+
+    if "W" not in ds:
+        for cf_standard_name_W in cf_W_standard_name_fallbacks:
+            if cf_standard_name_W in ds.cf.standard_names:
+                ds = _ds_rename_using_standard_names(ds, {cf_standard_name_W: "W"})
+                break
+
+    if "U" in ds and "V" in ds:
+        return ds  # U and V already present
+    elif "U" in ds or "V" in ds:
+        raise ValueError(
+            "Dataset has only one of the two variables 'U' and 'V'. Please rename the appropriate variable in your dataset to have both 'U' and 'V' for Parcels simulation."
+        )
+
+    for cf_standard_name_U, cf_standard_name_V in cf_UV_standard_name_fallbacks:
+        if cf_standard_name_U in ds.cf.standard_names:
+            if cf_standard_name_V not in ds.cf.standard_names:
+                raise ValueError(
+                    f"Dataset has variable with CF standard name {cf_standard_name_U!r}, "
+                    f"but not the matching variable with CF standard name {cf_standard_name_V!r}. "
+                    "Please rename the appropriate variables in your dataset to have both 'U' and 'V' for Parcels simulation."
+                )
+        else:
+            continue
+
+        ds = _ds_rename_using_standard_names(ds, {cf_standard_name_U: "U", cf_standard_name_V: "V"})
+        break
+    return ds
+
+
+def _ds_rename_using_standard_names(ds: xr.Dataset | ux.UxDataset, name_dict: dict[str, str]) -> xr.Dataset:
     for standard_name, rename_to in name_dict.items():
         name = ds.cf[standard_name].name
         ds = ds.rename({name: rename_to})
