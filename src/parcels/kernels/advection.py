@@ -16,6 +16,29 @@ __all__ = [
 ]
 
 
+def AdvectionRK2(particles, fieldset):  # pragma: no cover
+    """Advection of particles using second-order Runge-Kutta integration."""
+    dt = particles.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
+    (u1, v1) = fieldset.UV[particles]
+    lon1, lat1 = (particles.lon + u1 * 0.5 * dt, particles.lat + v1 * 0.5 * dt)
+    (u2, v2) = fieldset.UV[particles.time + 0.5 * particles.dt, particles.z, lat1, lon1, particles]
+    particles.dlon += u2 * dt
+    particles.dlat += v2 * dt
+
+
+def AdvectionRK2_3D(particles, fieldset):  # pragma: no cover
+    """Advection of particles using second-order Runge-Kutta integration including vertical velocity."""
+    dt = particles.dt / np.timedelta64(1, "s")
+    (u1, v1, w1) = fieldset.UVW[particles]
+    lon1 = particles.lon + u1 * 0.5 * dt
+    lat1 = particles.lat + v1 * 0.5 * dt
+    z1 = particles.z + w1 * 0.5 * dt
+    (u2, v2, w2) = fieldset.UVW[particles.time + 0.5 * particles.dt, z1, lat1, lon1, particles]
+    particles.dlon += u2 * dt
+    particles.dlat += v2 * dt
+    particles.dz += w2 * dt
+
+
 def AdvectionRK4(particles, fieldset):  # pragma: no cover
     """Advection of particles using fourth-order Runge-Kutta integration."""
     dt = particles.dt / np.timedelta64(1, "s")  # TODO: improve API for converting dt to seconds
