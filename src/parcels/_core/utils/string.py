@@ -1,5 +1,6 @@
 from keyword import iskeyword, kwlist
 
+
 def _assert_str_and_python_varname(name):
     if not isinstance(name, str):
         raise TypeError(f"Expected a string for variable name, got {type(name).__name__} instead.")
