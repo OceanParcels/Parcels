@@ -8,8 +8,8 @@ import numpy as np
 
 from parcels._compat import _attrgetter_helper
 from parcels._core.statuscodes import StatusCode
-from parcels._core.utils.string import _assert_valid_python_varname
 from parcels._core.utils.time import TimeInterval
+from parcels._core.utils.string import _assert_str_and_python_varname
 from parcels._reprs import _format_list_items_multiline
 
 __all__ = ["KernelParticle", "Particle", "ParticleClass", "Variable"]
@@ -45,10 +45,7 @@ class Variable:
         to_write: bool | Literal["once"] = True,
         attrs: dict | None = None,
     ):
-        if not isinstance(name, str):
-            raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
-        else:
-            _assert_valid_python_varname(name)
+        _assert_str_and_python_varname(name)
 
         try:
             dtype = np.dtype(dtype)
