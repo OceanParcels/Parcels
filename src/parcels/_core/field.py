@@ -18,8 +18,8 @@ from parcels._core.statuscodes import (
     AllParcelsErrorCodes,
     StatusCode,
 )
-from parcels._core.utils.time import TimeInterval
 from parcels._core.utils.string import _assert_str_and_python_varname
+from parcels._core.utils.time import TimeInterval
 from parcels._core.uxgrid import UxGrid
 from parcels._core.xgrid import XGrid, _transpose_xfield_data_to_tzyx
 from parcels._reprs import default_repr
@@ -102,7 +102,7 @@ class Field:
             raise ValueError(
                 f"Expected `data` to be a uxarray.UxDataArray or xarray.DataArray object, got {type(data)}."
             )
-        
+
         _assert_str_and_python_varname(name)
 
         if not isinstance(grid, (UxGrid, XGrid)):

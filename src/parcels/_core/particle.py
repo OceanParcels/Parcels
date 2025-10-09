@@ -8,8 +8,8 @@ import numpy as np
 
 from parcels._compat import _attrgetter_helper
 from parcels._core.statuscodes import StatusCode
-from parcels._core.utils.time import TimeInterval
 from parcels._core.utils.string import _assert_str_and_python_varname
+from parcels._core.utils.time import TimeInterval
 from parcels._reprs import _format_list_items_multiline
 
 __all__ = ["KernelParticle", "Particle", "ParticleClass", "Variable"]
