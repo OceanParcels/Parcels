@@ -279,7 +279,7 @@ class FieldSet:
         fields = {}
         if "U" in ds.data_vars and "V" in ds.data_vars:
             fields["U"] = Field("U", ds["U"], grid)
-            fields["V"] = Field("V", ds["V"])
+            fields["V"] = Field("V", ds["V"], grid)
             fields["U"].units = GeographicPolar()
             fields["V"].units = Geographic()
 
