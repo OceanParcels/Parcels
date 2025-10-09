@@ -10,7 +10,7 @@ from keyword import iskeyword, kwlist
 #             raise ValueError(f"Received invalid Python variable name {name!r}: not a valid identifier.")
 #     except Exception as e:
 #         raise ValueError(f"Error validating variable name {name!r}: {e}")
-    
+
 
 def _assert_str_and_python_varname(name):
     if not isinstance(name, str):
