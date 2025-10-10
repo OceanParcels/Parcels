@@ -11,6 +11,7 @@ from parcels._core.fieldset import CalendarError, FieldSet, _datetime_to_msg
 from parcels._datasets.structured.circulation_models import datasets as datasets_circulation_models
 from parcels._datasets.structured.generic import T as T_structured
 from parcels._datasets.structured.generic import datasets as datasets_structured
+from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from tests import utils
 
 ds = datasets_structured["ds_2d_left"]
@@ -270,3 +271,11 @@ def test_fieldset_from_copernicusmarine_with_W(caplog):
     assert "UV" not in fieldset.fields
     assert "UVW" in fieldset.fields
     assert "renamed it to 'W'" in caplog.text
+
+
+def test_fieldset_from_fesom2():
+    ds = datasets_unstructured["stommel_gyre_delaunay"]
+    fieldset = FieldSet.from_fesom2(ds)
+    assert "U" in fieldset.fields
+    assert "V" in fieldset.fields
+    assert "UVW" in fieldset.fields
