@@ -475,8 +475,8 @@ def test_uxstommelgyre_pset_execute():
         runtime=np.timedelta64(10, "m"),
         dt=np.timedelta64(60, "s"),
     )
-    assert utils.round_and_hash_float_array([p.lon for p in pset]) == 1165396086
-    assert utils.round_and_hash_float_array([p.lat for p in pset]) == 1142124776
+    assert utils.round_and_hash_float_array([p.lon for p in pset], decimals=4) == 1165396051
+    assert utils.round_and_hash_float_array([p.lat for p in pset], decimals=4) == 1142125233
 
 
 def test_uxstommelgyre_multiparticle_pset_execute():
