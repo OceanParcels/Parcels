@@ -11,6 +11,7 @@ import xgcm
 
 from parcels._core.converters import Geographic, GeographicPolar
 from parcels._core.field import Field, VectorField
+from parcels._core.utils.string import _assert_str_and_python_varname
 from parcels._core.utils.time import get_datetime_type_calendar
 from parcels._core.utils.time import is_compatible as datetime_is_compatible
 from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS, XGrid
@@ -163,6 +164,8 @@ class FieldSet:
         `Diffusion <../examples/tutorial_diffusion.ipynb>`__
         `Periodic boundaries <../examples/tutorial_periodic_boundaries.ipynb>`__
         """
+        _assert_str_and_python_varname(name)
+
         if name in self.constants:
             raise ValueError(f"FieldSet already has a constant with name '{name}'")
         if not isinstance(value, (float, np.floating, int, np.integer)):

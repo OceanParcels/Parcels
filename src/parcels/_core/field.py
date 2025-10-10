@@ -18,6 +18,7 @@ from parcels._core.statuscodes import (
     AllParcelsErrorCodes,
     StatusCode,
 )
+from parcels._core.utils.string import _assert_str_and_python_varname
 from parcels._core.utils.time import TimeInterval
 from parcels._core.uxgrid import UxGrid
 from parcels._core.xgrid import XGrid, _transpose_xfield_data_to_tzyx
@@ -101,8 +102,9 @@ class Field:
             raise ValueError(
                 f"Expected `data` to be a uxarray.UxDataArray or xarray.DataArray object, got {type(data)}."
             )
-        if not isinstance(name, str):
-            raise ValueError(f"Expected `name` to be a string, got {type(name)}.")
+
+        _assert_str_and_python_varname(name)
+
         if not isinstance(grid, (UxGrid, XGrid)):
             raise ValueError(f"Expected `grid` to be a parcels UxGrid, or parcels XGrid object, got {type(grid)}.")
 
@@ -246,6 +248,8 @@ class VectorField:
     def __init__(
         self, name: str, U: Field, V: Field, W: Field | None = None, vector_interp_method: Callable | None = None
     ):
+        _assert_str_and_python_varname(name)
+
         self.name = name
         self.U = U
         self.V = V
