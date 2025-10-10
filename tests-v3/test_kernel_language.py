@@ -6,19 +6,11 @@ import pytest
 
 from parcels import (
     Field,
-    FieldSet,
     Kernel,
     Particle,
     ParticleSet,
     Variable,
 )
-from parcels.application_kernels.EOSseawaterproperties import (
-    PressureFromLatDepth,
-    PtempFromTemp,
-    TempFromPtemp,
-    UNESCODensity,
-)
-from parcels.application_kernels.TEOSseawaterdensity import PolyTEOS10_bsq
 from tests.common_kernels import DoNothing
 from tests.utils import create_fieldset_unit_mesh
 
@@ -307,96 +299,3 @@ def test_small_dt(dt, expectation):
     with expectation:
         pset.execute(DoNothing, dt=dt, runtime=dt * 101)
         assert np.allclose([p.time for p in pset], dt * 100)
-
-
-def test_TEOSdensity_kernels():
-    def generate_fieldset(xdim=2, ydim=2, zdim=2, tdim=1):
-        lon = np.linspace(0.0, 10.0, xdim, dtype=np.float32)
-        lat = np.linspace(0.0, 10.0, ydim, dtype=np.float32)
-        depth = np.linspace(0, 2000, zdim, dtype=np.float32)
-        time = np.zeros(tdim, dtype=np.float64)
-        U = np.ones((tdim, zdim, ydim, xdim))
-        V = np.ones((tdim, zdim, ydim, xdim))
-        abs_salinity = 30 * np.ones((tdim, zdim, ydim, xdim))
-        cons_temperature = 10 * np.ones((tdim, zdim, ydim, xdim))
-        dimensions = {"lat": lat, "lon": lon, "depth": depth, "time": time}
-        data = {
-            "U": np.array(U, dtype=np.float32),
-            "V": np.array(V, dtype=np.float32),
-            "abs_salinity": np.array(abs_salinity, dtype=np.float32),
-            "cons_temperature": np.array(cons_temperature, dtype=np.float32),
-        }
-        return (data, dimensions)
-
-    data, dimensions = generate_fieldset()
-    fieldset = FieldSet.from_data(data, dimensions)
-
-    DensParticle = Particle.add_variable("density", dtype=np.float32)
-
-    pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
-
-    pset.execute(PolyTEOS10_bsq, runtime=1)
-    assert np.allclose(pset[0].density, 1027.45140)
-
-
-def test_EOSseawaterproperties_kernels():
-    fieldset = FieldSet.from_data(
-        data={"U": 0, "V": 0, "psu_salinity": 40, "temperature": 40, "potemperature": 36.89073},
-        dimensions={"lat": 0, "lon": 0, "depth": 0},
-    )
-    fieldset.add_constant("refpressure", float(0))
-
-    PoTempParticle = Particle.add_variables(
-        [Variable("potemp", dtype=np.float32), Variable("pressure", dtype=np.float32, initial=10000)]
-    )
-    pset = ParticleSet(fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
-    pset.execute(PtempFromTemp, runtime=1)
-    assert np.allclose(pset[0].potemp, 36.89073)
-
-    TempParticle = Particle.add_variables(
-        [Variable("temp", dtype=np.float32), Variable("pressure", dtype=np.float32, initial=10000)]
-    )
-    pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
-    pset.execute(TempFromPtemp, runtime=1)
-    assert np.allclose(pset[0].temp, 40)
-
-    pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
-    pset.execute(PressureFromLatDepth, runtime=1)
-    assert np.allclose(pset[0].pressure, 7500, atol=1e-2)
-
-
-@pytest.mark.parametrize("pressure", [0, 10])
-def test_UNESCOdensity_kernel(pressure):
-    def generate_fieldset(p, xdim=2, ydim=2, zdim=2, tdim=1):
-        lon = np.linspace(0.0, 10.0, xdim, dtype=np.float32)
-        lat = np.linspace(0.0, 10.0, ydim, dtype=np.float32)
-        depth = np.linspace(0, 2000, zdim, dtype=np.float32)
-        time = np.zeros(tdim, dtype=np.float64)
-        U = np.ones((tdim, zdim, ydim, xdim))
-        V = np.ones((tdim, zdim, ydim, xdim))
-        psu_salinity = 8 * np.ones((tdim, zdim, ydim, xdim))
-        cons_temperature = 10 * np.ones((tdim, zdim, ydim, xdim))
-        cons_pressure = p * np.ones((tdim, zdim, ydim, xdim))
-        dimensions = {"lat": lat, "lon": lon, "depth": depth, "time": time}
-        data = {
-            "U": np.array(U, dtype=np.float32),
-            "V": np.array(V, dtype=np.float32),
-            "psu_salinity": np.array(psu_salinity, dtype=np.float32),
-            "cons_pressure": np.array(cons_pressure, dtype=np.float32),
-            "cons_temperature": np.array(cons_temperature, dtype=np.float32),
-        }
-        return (data, dimensions)
-
-    data, dimensions = generate_fieldset(pressure)
-    fieldset = FieldSet.from_data(data, dimensions)
-
-    DensParticle = Particle.add_variable("density", dtype=np.float32)
-
-    pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
-
-    pset.execute(UNESCODensity, runtime=1)
-
-    if pressure == 0:
-        assert np.allclose(pset[0].density, 1005.9465)
-    elif pressure == 10:
-        assert np.allclose(pset[0].density, 1006.4179)
