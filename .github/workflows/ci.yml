@@ -34,6 +34,8 @@ jobs:
           - os: ubuntu
             pixi-environment: "test-py311"
           - os: ubuntu
+            pixi-environment: "test-py313"
+          - os: ubuntu
             pixi-environment: "test-minimum"
     steps:
       - uses: actions/checkout@v4
