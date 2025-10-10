@@ -130,7 +130,7 @@ def test_globcurrent_time_extrapolation_error():
         lat=[-35],
         time=fieldset.U.grid.time[0] - timedelta(days=1).total_seconds(),
     )
-    with pytest.raises(parcels.TimeExtrapolationError):
+    with pytest.raises(parcels.OutsideTimeInterval):
         pset.execute(
             parcels.AdvectionRK4, runtime=timedelta(days=1), dt=timedelta(minutes=5)
         )
@@ -177,7 +177,7 @@ def test_globcurrent_startparticles_between_time_arrays(dt, with_starttime):
         pset = parcels.ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35])
 
     if with_starttime:
-        with pytest.raises(parcels.TimeExtrapolationError):
+        with pytest.raises(parcels.OutsideTimeInterval):
             pset.execute(
                 pset.Kernel(parcels.AdvectionRK4) + SampleP,
                 runtime=timedelta(days=1),

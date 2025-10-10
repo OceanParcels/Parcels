@@ -33,7 +33,7 @@ __all__ = ["Kernel"]
 
 
 ErrorsToThrow = {
-    StatusCode.ErrorTimeExtrapolation: _raise_time_extrapolation_error,
+    StatusCode.ErrorOutsideTimeInterval: _raise_time_extrapolation_error,
     StatusCode.ErrorOutOfBounds: _raise_field_out_of_bound_error,
     StatusCode.ErrorThroughSurface: _raise_field_out_of_bound_surface_error,
     StatusCode.ErrorInterpolation: _raise_field_interpolation_error,
@@ -283,7 +283,7 @@ class Kernel:
             for error_code, error_func in ErrorsToThrow.items():
                 if np.any(pset.state == error_code):
                     inds = pset.state == error_code
-                    if error_code == StatusCode.ErrorTimeExtrapolation:
+                    if error_code == StatusCode.ErrorOutsideTimeInterval:
                         error_func(pset[inds].time)
                     else:
                         error_func(pset[inds].depth, pset[inds].lat, pset[inds].lon)

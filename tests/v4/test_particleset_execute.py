@@ -18,7 +18,7 @@ from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.particlefile import ParticleFile
-from parcels.tools.statuscodes import FieldInterpolationError, FieldOutOfBoundError, TimeExtrapolationError
+from parcels.tools.statuscodes import FieldInterpolationError, FieldOutOfBoundError, OutsideTimeInterval
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
 from tests import utils
@@ -266,7 +266,7 @@ def test_some_particles_throw_outoftime(fieldset):
     def FieldAccessOutsideTime(particles, fieldset):  # pragma: no cover
         fieldset.U[particles.time + np.timedelta64(400, "D"), particles.depth, particles.lat, particles.lon, particles]
 
-    with pytest.raises(TimeExtrapolationError):
+    with pytest.raises(OutsideTimeInterval):
         pset.execute(FieldAccessOutsideTime, runtime=np.timedelta64(1, "D"), dt=np.timedelta64(10, "D"))
 
 
