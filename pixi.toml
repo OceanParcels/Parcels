@@ -77,6 +77,7 @@ tests-notebooks = "pytest --nbval-lax -k 'argo' docs/examples"
 jupyter = "*"
 trajan = "*"
 matplotlib-base = ">=2.0.2"
+gsw = "*"
 
 [feature.docs.dependencies]
 numpydoc = "!=1.9.0"
