@@ -22,7 +22,7 @@ class FileWarning(UserWarning):
 
     These warnings can be related to file chunking, naming, or decoding issues.
     Chunking issues in particular may negatively impact performance
-    (see also https://docs.oceanparcels.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask)
+    (see also https://docs.parcels-code.org/en/latest/examples/documentation_MPI.html#Chunking-the-FieldSet-with-dask)
     """
 
     pass

@@ -9,7 +9,7 @@ This subpackage uses xarray to generate *idealised* structured and unstructured 
 
 Note that this subpackage is part of the private API for Parcels. Users should not rely directly on the functions defined within this module. Instead, if you want to generate your own datasets, copy the functions from this module into your own code.
 
-Developers, note that you should only add functions that create idealised datasets to this subpackage if they are (a) quick to generate, and (b) only use dependencies already shipped with Parcels. No data files should be added to this subpackage. Real world data files should be added to the `OceanParcels/parcels-data` repository on GitHub.
+Developers, note that you should only add functions that create idealised datasets to this subpackage if they are (a) quick to generate, and (b) only use dependencies already shipped with Parcels. No data files should be added to this subpackage. Real world data files should be added to the `Parcels-code/parcels-data` repository on GitHub.
 
 Parcels Dataset Philosophy
 -------------------------

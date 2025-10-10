@@ -29,23 +29,18 @@ requirements:
     - wheel
   run:
     - python >=3.11
-    - cftime
-    - dask
-    - matplotlib-base >=2.0.2
-    - netcdf4 >=1.1.9
-    - numpy >=1.11
-    - platformdirs
-    - pytest
-    - scipy >=0.16.0
-    - trajan
-    - tqdm
-    - xarray >=0.10.8
-    - cf_xarray
-    - xgcm
-    - zarr >=2.11.0,!=2.18.0,<3
+    - cftime >=1.6.3
+    - dask >=2024.5.1
+    - netcdf4 >=1.7.2
+    - numpy >=2.1.0
+    - tqdm >=4.50.0
+    - xarray >=2024.5.0
+    - cf_xarray >=0.8.6
+    - xgcm >=0.9.0
+    - zarr >=2.15.0,!=2.18.0,<3
     - uxarray>=2025.3.0
     - pyogrio # needed for geopandas (uxarray -> geoviews -> geopandas -> pyogrio, but for some reason conda doesn't pick it up automatically)
-    - pooch
+    - pooch >=1.8.0
 
 tests:
   - python:
@@ -53,19 +48,16 @@ tests:
         - parcels
 
 about:
-  homepage: https://github.com/OceanParcels/parcels
+  homepage: https://github.com/Parcels-code/parcels
   license: MIT
   license_file: LICENSE.md
-  summary: Probably A Really Computationally Efficient Lagrangian Simulator
+  summary: Parcels - A highly customisable Lagrangian simulation framework
   description: |
-    Parcels (Probably A Really Computationally Efficient Lagrangian Simulator)
-    is a set of Python classes and methods to create customisable particle
-    tracking simulations using output from Ocean Circulation models.
-    Parcels can be used to track passive and active particulates such as
-    water, nutrients, plankton, plastic and fish.
-  documentation: https://oceanparcels.org/
-  repository: https://github.com/OceanParcels/parcels
+    Parcels provides a set of Python classes and methods to create customisable particle tracking simulations using gridded output from (ocean) circulation models.
+  documentation: https://parcels-code.org/
+  repository: https://github.com/Parcels-code/parcels
 
 extra:
   recipe-maintainers:
     - VeckoTheGecko
+    - erikvansebille
