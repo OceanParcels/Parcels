@@ -1,20 +1,21 @@
 [workspace]
 name = "Parcels"
-preview = ["pixi-build"]
 channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
-[package]
-name = "parcels"
-version = "dynamic" # dynamic versioning needs better support in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . Putting `version = "dynamic"` here for now until pixi recommends something else.
-license = "MIT" # can remove this once https://github.com/prefix-dev/pixi-build-backends/issues/397 is resolved
-
-[package.build]
-backend = { name = "pixi-build-python", version = "==0.4.0" }
-
-[package.host-dependencies]
-setuptools = "*"
-setuptools_scm = "*"
+# TODO: Re-enable pixi-build once https://github.com/prefix-dev/pixi-build-backends/issues/411 is fixed, and remove pypi install of Parcels
+# preview = ["pixi-build"]
+# [package]
+# name = "parcels"
+# version = "dynamic" # dynamic versioning needs better support in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . Putting `version = "dynamic"` here for now until pixi recommends something else.
+# license = "MIT" # can remove this once https://github.com/prefix-dev/pixi-build-backends/issues/397 is resolved
+#
+# [package.build]
+# backend = { name = "pixi-build-python", version = "==0.4.0" }
+#
+# [package.host-dependencies]
+# setuptools = "*"
+# setuptools_scm = "*"
 
 [environments]
 test-latest = { features = ["test"], solve-group = "test" }
@@ -28,7 +29,7 @@ pre-commit = { features = ["pre-commit"], no-default-feature = true }
 
 [dependencies] # keep section in sync with pyproject.toml dependencies
 python = ">=3.11,<3.13"
-parcels = { path = "." }
+# parcels = { path = "." }
 netcdf4 = ">=1.7.2"
 numpy = ">=2.1.0"
 tqdm = ">=4.50.0"
@@ -40,6 +41,9 @@ xgcm = ">=0.9.0"
 cf_xarray = ">=0.8.6"
 cftime = ">=1.6.3"
 pooch = ">=1.8.0"
+
+[pypi-dependencies]
+parcels = { path = ".", editable = true }
 
 [feature.minimum.dependencies]
 python = "==3.11"
