@@ -21,14 +21,14 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 test-latest = { features = ["test"], solve-group = "test" }
 test-minimum = { features = ["test", "minimum"], solve-group = "test" }
 test-py311 = { features = ["test", "py311"] }
-test-py312 = { features = ["test", "py312"] }
+test-py313 = { features = ["test", "py313"] }
 test-notebooks = { features = ["test", "notebooks"], solve-group = "test" }
 docs = { features = ["docs"], solve-group = "docs" }
 typing = { features = ["typing"], solve-group = "typing" }
 pre-commit = { features = ["pre-commit"], no-default-feature = true }
 
 [dependencies] # keep section in sync with pyproject.toml dependencies
-python = ">=3.11,<3.13"
+python = ">=3.11"
 # parcels = { path = "." }
 netcdf4 = ">=1.7.2"
 numpy = ">=2.1.0"
@@ -62,8 +62,8 @@ pooch = "==1.8.0"
 [feature.py311.dependencies]
 python = "3.11.*"
 
-[feature.py312.dependencies]
-python = "3.12.*"
+[feature.py313.dependencies]
+python = "3.13.*"
 
 [feature.test.dependencies]
 nbval = "*"
