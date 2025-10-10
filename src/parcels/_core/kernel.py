@@ -116,8 +116,6 @@ class Kernel:
     def add_positionupdate_kernels(self):
         # Adding kernels that set and update the coordinate changes
         def Setcoords(particles, fieldset):  # pragma: no cover
-            import numpy as np  # noqa
-
             particles.lon += particles.dlon
             particles.lat += particles.dlat
             particles.z += particles.dz
