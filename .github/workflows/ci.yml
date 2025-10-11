@@ -17,29 +17,40 @@ defaults:
     shell: bash -el {0}
 
 jobs:
+  cache-pixi-lock:
+    uses: ./.github/workflows/cache-pixi-lock.yml
   unit-test:
-    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | unit tests"
+    name: "Unit tests: ${{ matrix.os }} | pixi run -e ${{ matrix.pixi-environment }} tests"
     runs-on: ${{ matrix.os }}-latest
+    needs: [cache-pixi-lock]
+    env:
+      COVERAGE_REPORT: "${{ matrix.os }}_${{ matrix.pixi-environment }}_unit_test_report.html"
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu] #, mac, windows] # TODO v4: Re-enable windows and mac
-        python-version: ["3.12"]
+        pixi-environment: [test-latest]
         include:
           - os: ubuntu
-            python-version: "3.11"
+            pixi-environment: "test-py311"
+          - os: ubuntu
+            pixi-environment: "test-minimum"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Conda and parcels
-        uses: ./.github/actions/install-parcels
+      - uses: actions/checkout@v4
+      - name: Restore cached pixi lockfile
+        uses: actions/cache/restore@v4
+        id: restore-pixi-lock
         with:
-          environment-file: environment.yml
-          python-version: ${{ matrix.python-version }}
+          path: |
+            pixi.lock
+          key: ${{ needs.cache-pixi-lock.outputs.cache-id }}
+      - uses: prefix-dev/setup-pixi@v0.9.0
+        with:
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'v4-dev' }} # TODO: Update v4-dev to main when v4 is released
       - name: Unit test
         run: |
-          coverage run -m pytest -v -s --html=${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html --self-contained-html
-          coverage xml
+          pixi run -e ${{ matrix.pixi-environment }} tests -v -s --cov=parcels --cov-report=xml --html="${{ env.COVERAGE_REPORT }}" --self-contained-html
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
         env:
@@ -50,13 +61,16 @@ jobs:
         if: ${{ always() }} # Always run this step, even if tests fail
         uses: actions/upload-artifact@v4
         with:
-          name: Unittest report ${{ matrix.os }}-${{ matrix.python-version }}
-          path: ${{ matrix.os }}_${{ matrix.python-version }}_unit_test_report.html
+          name: Unittest report ${{ matrix.os }}-${{ matrix.pixi-environment }}
+          path: ${{ env.COVERAGE_REPORT }}
   integration-test:
     # TODO v4: Re-enable the workflow once development has stabilized and we want to run integration tests again
     if: false
-    name: "py${{ matrix.python-version }} | ${{ matrix.os }} | integration tests"
+    name: "Integration: ${{ matrix.os }} | pixi run -e ${{ matrix.pixi-environment }} tests-notebooks"
     runs-on: ${{ matrix.os }}-latest
+    needs: [cache-pixi-lock]
+    env:
+      COVERAGE_REPORT: "${{ matrix.os }}_${{ matrix.pixi-environment }}_integration_test_report.html"
     strategy:
       fail-fast: false
       matrix:
@@ -66,22 +80,21 @@ jobs:
           - os: ubuntu
             python-version: "3.11"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Conda and parcels
-        uses: ./.github/actions/install-parcels
+      - uses: actions/checkout@v4
+      - name: Restore cached pixi lockfile
+        uses: actions/cache/restore@v4
+        id: restore-pixi-lock
         with:
-          environment-file: environment.yml
+          path: |
+            pixi.lock
+          key: ${{ needs.cache-pixi-lock.outputs.cache-id }}
+      - uses: prefix-dev/setup-pixi@v0.9.0
+        with:
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'v4-dev' }} # TODO: Update v4-dev to main when v4 is released
       - name: Integration test
-        # TODO v4: Re-enable `tutorial_periodic_boundaries`
-        # TODO v4: Re-enable `tutorial_timevaryingdepthdimensions`
-        # TODO v4: Re-enable `tutorial_particle_field_interaction`
-        # TODO v4: Re-enable `tutorial_croco_3D`
-        # TODO v4: Re-enable `tutorial_nemo_3D` (https://github.com/OceanParcels/Parcels/pull/1936#issuecomment-2717666705)
-        # TODO v4: Re-enable `tutorial_analyticaladvection`
         run: |
-          coverage run -m pytest -v -s --nbval-lax -k "not documentation and not tutorial_periodic_boundaries and not tutorial_timevaryingdepthdimensions and not tutorial_particle_field_interaction and not tutorial_croco_3D and not tutorial_nemo_3D and not tutorial_analyticaladvection" --html="${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html" --self-contained-html docs/examples
-          coverage xml
+          pixi run test-notebooks -v -s --html="${{ env.COVERAGE_REPORT }}" --self-contained-html --cov=parcels --cov-report=xml
       - name: Codecov
         uses: codecov/codecov-action@v5.3.1
         env:
@@ -92,8 +105,8 @@ jobs:
         if: ${{ always() }} # Always run this step, even if tests fail
         uses: actions/upload-artifact@v4
         with:
-          name: Integration test report ${{ matrix.os }}-${{ matrix.python-version }}
-          path: ${{ matrix.os }}_${{ matrix.python-version }}_integration_test_report.html
+          name: Integration test report ${{ matrix.os }}-${{ matrix.pixi-environment }}
+          path: ${{ env.COVERAGE_REPORT }}
   merge-test-artifacts:
     runs-on: ubuntu-latest
     needs:
@@ -107,21 +120,28 @@ jobs:
           name: Testing reports
           pattern: "* report *"
   typechecking:
-    name: mypy
+    name: "TypeChecking: pixi run typing"
     # TODO v4: Enable typechecking again
     if: false
     runs-on: ubuntu-latest
+    needs: [cache-pixi-lock]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Conda and parcels
-        uses: ./.github/actions/install-parcels
+      - name: Restore cached pixi lockfile
+        uses: actions/cache/restore@v4
+        id: restore-pixi-lock
         with:
-          environment-file: environment.yml
-      - run: conda install lxml # dep for report generation
+          path: |
+            pixi.lock
+          key: ${{ needs.cache-pixi-lock.outputs.cache-id }}
+      - uses: prefix-dev/setup-pixi@v0.9.0
+        with:
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'v4-dev' }} # TODO: Update v4-dev to main when v4 is released
       - name: Typechecking
         run: |
-          mypy --install-types --non-interactive parcels --html-report mypy-report
+          pixi run typing --non-interactive --html-report mypy-report
       - name: Upload test results
         if: ${{ always() }} # Upload even on mypy error
         uses: actions/upload-artifact@v4

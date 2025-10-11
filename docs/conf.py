@@ -14,12 +14,8 @@
 import datetime
 import inspect
 import os
-import re
-import shutil
 import sys
-import tempfile
 import warnings
-from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -51,8 +47,7 @@ templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
-# source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
+source_suffix = [".rst", ".md"]
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
@@ -62,8 +57,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "Parcels"
-copyright = f"{datetime.datetime.now().year}, The OceanParcels Team"
-author = "The OceanParcels Team"
+copyright = f"{datetime.datetime.now().year}, The Parcels Team"
+author = "The Parcels Team"
 
 linkcheck_ignore = [
     r"http://localhost:\d+/",
@@ -80,7 +75,7 @@ linkcheck_ignore = [
     r"https://www\.nodc\.noaa\.gov/",  # 2023-06-23 Site non-responsive
     r"https://mybinder\.org/",  # 2023-09-02 Site non-responsive
     r"https://ariane-code.cnrs.fr/",  # 2024-04-30 Site non-responsive
-    r"https://github.com/OceanParcels/parcels/blob/daa4b062ed8ae0b2be3d87367d6b45599d6f95db/parcels/.*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
+    r"https://github.com/Parcels-code/parcels/blob/daa4b062ed8ae0b2be3d87367d6b45599d6f95db/parcels/.*",  # ignore GitHub anchors to blobs because of https://github.com/sphinx-doc/sphinx/issues/6779
 ]
 
 # Define the canonical URL using custom domain on Read the Docs
@@ -195,11 +190,12 @@ numpydoc_validation_checks = {
 html_static_path = ["_static"]
 html_theme_options = {
     "logo": {
-        "image_light": "logo-horo.svg",
-        "image_dark": "logo-horo_dia.svg",
+        "alt_text": "Parcels - Home",
+        "image_light": "logo-horo-transparent.png",
+        "image_dark": "logo-horo-transparent-dark.png",
     },
     "use_edit_page_button": True,
-    "github_url": "https://github.com/OceanParcels/parcels",
+    "github_url": "https://github.com/Parcels-code/parcels",
     "icon_links": [
         {
             "name": "Conda Forge",
@@ -208,42 +204,15 @@ html_theme_options = {
             "type": "fontawesome",
         }
     ],
-    "announcement": "WARNING: This documentation is built for v4 of Parcels, which is unreleased and in active development. Use the version switcher in the bottom right to select your version of Parcels, or see <a href='https://docs.oceanparcels.org/'>stable docs</a>.",
+    "announcement": "WARNING: This documentation is built for v4 of Parcels, which is unreleased and in active development. Use the version switcher in the bottom right to select your version of Parcels, or see <a href='https://docs.parcels-code.org/'>stable docs</a>.",
 }
 
 html_context = {
-    "github_user": "OceanParcels",
+    "github_user": "Parcels-code",
     "github_repo": "parcels",
     "github_version": "main",
     "doc_path": "docs",
 }
-
-
-# Copy code examples to download directory
-downloads_folder = Path("_downloads")
-downloads_folder.mkdir(exist_ok=True)
-
-
-def make_filename_safe(filename: str, safe_char: str = "_") -> str:
-    """Make a filename safe for saving to disk."""
-    # Replace any characters that are not allowed in a filename with the safe character
-    safe_filename = re.sub(r'[\\/:*?"<>|]', safe_char, filename)
-    return safe_filename
-
-
-with tempfile.TemporaryDirectory() as temp_dir:
-    temp_dir = Path(temp_dir)
-
-    # Copy examples folder to temp directory (with a folder name matching parcels version)
-    examples_folder = temp_dir / make_filename_safe(f"parcels_tutorials ({version})")
-    shutil.copytree("examples", examples_folder)
-
-    # Zip contents of temp directory and save to _downloads folder
-    shutil.make_archive(
-        "_downloads/parcels_tutorials",
-        "zip",
-        temp_dir,
-    )
 
 
 # based on pandas doc/source/conf.py
@@ -298,11 +267,11 @@ def linkcode_resolve(domain, info):
 
     if "-" in parcels.__version__:
         return (
-            f"https://github.com/OceanParcels/parcels/blob/main/parcels/{fn}{linespec}"
+            f"https://github.com/Parcels-code/parcels/blob/main/parcels/{fn}{linespec}"
         )
     else:
         return (
-            f"https://github.com/OceanParcels/parcels/blob/"
+            f"https://github.com/Parcels-code/parcels/blob/"
             f"{parcels.__version__}/parcels/{fn}{linespec}"
         )
 
@@ -383,6 +352,20 @@ nbsphinx_thumbnails = {
 }
 nbsphinx_execute = "never"
 # -- Options for LaTeX output ---------------------------------------------
+
+BRANCH = (
+    os.environ.get("READTHEDOCS_GIT_IDENTIFIER")  # ReadTheDocs
+    or "main"  # fallback
+)
+
+nbsphinx_prolog = f"""
+.. raw:: html
+
+    Run this notebook in the cloud <a href="https://mybinder.org/v2/gh/Parcels-code/Parcels/{BRANCH}?urlpath=lab/tree/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
+    , or view it <a href="https://github.com/Parcels-code/Parcels/blob/{BRANCH}/docs/{{{{  env.doc2path(env.docname, base=None)  }}}}" target="_blank">on GitHub</a>. Notebook version corresponds with {BRANCH}.
+
+    <p style="margin-bottom: 30px"></p>
+"""
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').

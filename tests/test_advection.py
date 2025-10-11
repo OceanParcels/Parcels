@@ -1,179 +1,562 @@
 import numpy as np
 import pytest
 import xarray as xr
+import xgcm
 
-from parcels import (
-    AdvectionAnalytical,
+import parcels
+from parcels import Field, FieldSet, Particle, ParticleFile, ParticleSet, StatusCode, Variable, VectorField, XGrid
+from parcels._datasets.structured.generated import (
+    decaying_moving_eddy_dataset,
+    moving_eddy_dataset,
+    peninsula_dataset,
+    radial_rotation_dataset,
+    simple_UV_dataset,
+    stommel_gyre_dataset,
+)
+from parcels.interpolators import CGrid_Velocity, XLinear
+from parcels.kernels import (
     AdvectionDiffusionEM,
     AdvectionDiffusionM1,
     AdvectionEE,
     AdvectionRK4,
     AdvectionRK4_3D,
     AdvectionRK45,
-    FieldSet,
-    Particle,
-    ParticleSet,
-    Variable,
 )
-from tests.utils import TEST_DATA
+from tests.utils import round_and_hash_float_array
 
 kernel = {
     "EE": AdvectionEE,
     "RK4": AdvectionRK4,
+    "RK4_3D": AdvectionRK4_3D,
     "RK45": AdvectionRK45,
-    "AA": AdvectionAnalytical,
+    # "AA": AdvectionAnalytical,
     "AdvDiffEM": AdvectionDiffusionEM,
     "AdvDiffM1": AdvectionDiffusionM1,
 }
 
 
-@pytest.fixture
-def lon():
-    xdim = 200
-    return np.linspace(-170, 170, xdim, dtype=np.float32)
+@pytest.mark.parametrize("mesh", ["spherical", "flat"])
+def test_advection_zonal(mesh, npart=10):
+    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
+    ds = simple_UV_dataset(mesh=mesh)
+    ds["U"].data[:] = 1.0
+    grid = XGrid.from_dataset(ds, mesh=mesh)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    pset = ParticleSet(fieldset, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
+    pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
+
+    if mesh == "spherical":
+        assert (np.diff(pset.lon) > 1.0e-4).all()
+    else:
+        assert (np.diff(pset.lon) < 1.0e-4).all()
 
 
-@pytest.fixture
-def lat():
-    ydim = 100
-    return np.linspace(-80, 80, ydim, dtype=np.float32)
+def test_advection_zonal_with_particlefile(tmp_store):
+    """Particles at high latitude move geographically faster due to the pole correction in `GeographicPolar`."""
+    npart = 10
+    ds = simple_UV_dataset(mesh="flat")
+    ds["U"].data[:] = 1.0
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    pset = ParticleSet(fieldset, lon=np.zeros(npart) + 20.0, lat=np.linspace(0, 80, npart))
+    pfile = ParticleFile(tmp_store, outputdt=np.timedelta64(30, "m"))
+    pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"), output_file=pfile)
+
+    assert (np.diff(pset.lon) < 1.0e-4).all()
+    ds = xr.open_zarr(tmp_store)
+    np.testing.assert_allclose(ds.isel(obs=-1).lon.values, pset.lon)
 
 
-@pytest.fixture
-def depth():
-    zdim = 2
-    return np.linspace(0, 30, zdim, dtype=np.float32)
+def periodicBC(particles, fieldset):
+    particles.total_dlon += particles.dlon
+    particles.lon = np.fmod(particles.lon, 2)
 
 
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
-def test_conversion_3DCROCO():
-    """Test of the (SciPy) version of the conversion from depth to sigma in CROCO
+def test_advection_zonal_periodic():
+    ds = simple_UV_dataset(dims=(2, 2, 2, 2), mesh="flat")
+    ds["U"].data[:] = 0.1
+    ds["lon"].data = np.array([0, 2])
+    ds["lat"].data = np.array([0, 2])
 
-    Values below are retrieved using xroms and hardcoded in the method (to avoid dependency on xroms):
-    ```py
-    x, y = 10, 20
-    s_xroms = ds.s_w.values
-    z_xroms = ds.z_w.isel(time=0).isel(eta_rho=y).isel(xi_rho=x).values
-    lat, lon = ds.y_rho.values[y, x], ds.x_rho.values[y, x]
-    ```
-    """
-    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
+    # add a halo
+    halo = ds.isel(XG=0)
+    halo.lon.values = ds.lon.values[1] + 1
+    halo.XG.values = ds.XG.values[1] + 2
+    ds = xr.concat([ds, halo], dim="XG")
 
-    lat, lon = 78000.0, 38000.0
-    s_xroms = np.array([-1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0], dtype=np.float32)
-    z_xroms = np.array(
-        [
-            -1.26000000e02,
-            -1.10585846e02,
-            -9.60985413e01,
-            -8.24131317e01,
-            -6.94126511e01,
-            -5.69870148e01,
-            -4.50318756e01,
-            -3.34476166e01,
-            -2.21383114e01,
-            -1.10107975e01,
-            2.62768921e-02,
-        ],
-        dtype=np.float32,
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    PeriodicParticle = Particle.add_variable(Variable("total_dlon", initial=0))
+    startlon = np.array([0.5, 0.4])
+    pset = ParticleSet(fieldset, pclass=PeriodicParticle, lon=startlon, lat=[0.5, 0.5])
+    pset.execute([AdvectionEE, periodicBC], runtime=np.timedelta64(40, "s"), dt=np.timedelta64(1, "s"))
+    np.testing.assert_allclose(pset.total_dlon, 4, atol=1e-5)
+    np.testing.assert_allclose(pset.lon + pset.dlon, startlon, atol=1e-5)
+    np.testing.assert_allclose(pset.lat, 0.5, atol=1e-5)
+
+
+def test_horizontal_advection_in_3D_flow(npart=10):
+    """Flat 2D zonal flow that increases linearly with z from 0 m/s to 1 m/s."""
+    ds = simple_UV_dataset(mesh="flat")
+    ds["U"].data[:] = 1.0
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    U.data[:, 0, :, :] = 0.0  # Set U to 0 at the surface
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart), z=np.linspace(0.1, 0.9, npart))
+    pset.execute(AdvectionRK4, runtime=np.timedelta64(2, "h"), dt=np.timedelta64(15, "m"))
+
+    expected_lon = pset.z * (pset.time - fieldset.time_interval.left) / np.timedelta64(1, "s")
+    np.testing.assert_allclose(pset.lon, expected_lon, atol=1.0e-1)
+
+
+@pytest.mark.parametrize("direction", ["up", "down"])
+@pytest.mark.parametrize("wErrorThroughSurface", [True, False])
+def test_advection_3D_outofbounds(direction, wErrorThroughSurface):
+    ds = simple_UV_dataset(mesh="flat")
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    U.data[:] = 0.01  # Set U to small value (to avoid horizontal out of bounds)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    W = Field("W", ds["V"], grid, interp_method=XLinear)  # Use V as W for testing
+    W.data[:] = -1.0 if direction == "up" else 1.0
+    UVW = VectorField("UVW", U, V, W)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, W, UVW, UV])
+
+    def DeleteParticle(particles, fieldset):  # pragma: no cover
+        particles.state = np.where(particles.state == StatusCode.ErrorOutOfBounds, StatusCode.Delete, particles.state)
+        particles.state = np.where(
+            particles.state == StatusCode.ErrorThroughSurface, StatusCode.Delete, particles.state
+        )
+
+    def SubmergeParticle(particles, fieldset):  # pragma: no cover
+        if len(particles.state) == 0:
+            return
+        inds = np.argwhere(particles.state == StatusCode.ErrorThroughSurface).flatten()
+        if len(inds) == 0:
+            return
+        dt = particles.dt / np.timedelta64(1, "s")
+        (u, v) = fieldset.UV[particles[inds]]
+        particles[inds].dlon = u * dt
+        particles[inds].dlat = v * dt
+        particles[inds].dz = 0.0
+        particles[inds].z = 0
+        particles[inds].state = StatusCode.Evaluate
+
+    kernels = [AdvectionRK4_3D]
+    if wErrorThroughSurface:
+        kernels.append(SubmergeParticle)
+    kernels.append(DeleteParticle)
+
+    pset = ParticleSet(fieldset=fieldset, lon=0.5, lat=0.5, z=0.9)
+    pset.execute(kernels, runtime=np.timedelta64(11, "s"), dt=np.timedelta64(1, "s"))
+
+    if direction == "up" and wErrorThroughSurface:
+        np.testing.assert_allclose(pset.lon[0], 0.6, atol=1e-5)
+        np.testing.assert_allclose(pset.z[0], 0, atol=1e-5)
+    else:
+        assert len(pset) == 0
+
+
+@pytest.mark.parametrize("u", [-0.3, np.array(0.2)])
+@pytest.mark.parametrize("v", [0.2, np.array(1)])
+@pytest.mark.parametrize("w", [None, -0.2, np.array(0.7)])
+def test_length1dimensions(u, v, w):  # TODO: Refactor this test to be more readable (and isolate test setup)
+    (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (np.array([0]), 1)
+    (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (np.array([-4]), 1)
+    (depth, zdim) = (
+        (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (np.array([3]), 1)
     )
 
-    sigma = np.zeros_like(z_xroms)
-    from parcels.field import _croco_from_z_to_sigma_scipy
-
-    for zi, z in enumerate(z_xroms):
-        sigma[zi] = _croco_from_z_to_sigma_scipy(fieldset, 0, z, lat, lon, None)
-
-    assert np.allclose(sigma, s_xroms, atol=1e-3)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="CROCO 3D interpolation is not yet implemented correctly in v4. ")
-def test_advection_3DCROCO():
-    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO3D.py")
-
-    runtime = 1e4
-    X, Z = np.meshgrid([40e3, 80e3, 120e3], [-10, -130])
-    Y = np.ones(X.size) * 100e3
-
-    pclass = Particle.add_variable(Variable("w"))
-    pset = ParticleSet(fieldset=fieldset, pclass=pclass, lon=X, lat=Y, depth=Z)
-
-    def SampleW(particle, fieldset, time):  # pragma: no cover
-        particle.w = fieldset.W[time, particle.depth, particle.lat, particle.lon]
-
-    pset.execute([AdvectionRK4_3D, SampleW], runtime=runtime, dt=100)
-    assert np.allclose(pset.depth, Z.flatten(), atol=5)  # TODO lower this atol
-    assert np.allclose(pset.lon_nextloop, [x + runtime for x in X.flatten()], atol=1e-3)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="When refactoring fieldfilebuffer croco support was dropped. This will be fixed in v4.")
-def test_advection_2DCROCO():
-    fieldset = FieldSet.from_modulefile(TEST_DATA / "fieldset_CROCO2D.py")
-
-    runtime = 1e4
-    X = np.array([40e3, 80e3, 120e3])
-    Y = np.ones(X.size) * 100e3
-    Z = np.zeros(X.size)
-    pset = ParticleSet(fieldset=fieldset, pclass=Particle, lon=X, lat=Y, depth=Z)
-
-    pset.execute([AdvectionRK4], runtime=runtime, dt=100)
-    assert np.allclose(pset.depth, Z.flatten(), atol=1e-3)
-    assert np.allclose(pset.lon_nextloop, [x + runtime for x in X], atol=1e-3)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1946")
-def test_analyticalAgrid():
-    lon = np.arange(0, 15, dtype=np.float32)
-    lat = np.arange(0, 15, dtype=np.float32)
-    U = np.ones((lat.size, lon.size), dtype=np.float32)
-    V = np.ones((lat.size, lon.size), dtype=np.float32)
-    fieldset = FieldSet.from_data({"U": U, "V": V}, {"lon": lon, "lat": lat}, mesh="flat")
-    pset = ParticleSet(fieldset, pclass=Particle, lon=1, lat=1)
-
-    with pytest.raises(NotImplementedError):
-        pset.execute(AdvectionAnalytical, runtime=1)
-
-
-@pytest.mark.v4alpha
-@pytest.mark.xfail(reason="GH1927")
-@pytest.mark.parametrize("u", [1, -0.2, -0.3, 0])
-@pytest.mark.parametrize("v", [1, -0.3, 0, -1])
-@pytest.mark.parametrize("w", [None, 1, -0.3, 0, -1])
-@pytest.mark.parametrize("direction", [1, -1])
-def test_uniform_analytical(u, v, w, direction, tmp_zarrfile):
-    lon = np.arange(0, 15, dtype=np.float32)
-    lat = np.arange(0, 15, dtype=np.float32)
+    tdim = 2  # TODO make this also work for length-1 time dimensions
+    dims = (tdim, zdim, ydim, xdim)
+    U = u * np.ones(dims, dtype=np.float32)
+    V = v * np.ones(dims, dtype=np.float32)
     if w is not None:
-        depth = np.arange(0, 40, 2, dtype=np.float32)
-        U = u * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
-        V = v * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
-        W = w * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
-        fieldset = FieldSet.from_data({"U": U, "V": V, "W": W}, {"lon": lon, "lat": lat, "depth": depth}, mesh="flat")
-        fieldset.W.interp_method = "cgrid_velocity"
+        W = w * np.ones(dims, dtype=np.float32)
+
+    ds = xr.Dataset(
+        {
+            "U": (["time", "depth", "YG", "XG"], U),
+            "V": (["time", "depth", "YG", "XG"], V),
+        },
+        coords={
+            "time": (["time"], [np.timedelta64(0, "s"), np.timedelta64(10, "s")], {"axis": "T"}),
+            "depth": (["depth"], depth, {"axis": "Z"}),
+            "YC": (["YC"], np.arange(ydim) + 0.5, {"axis": "Y"}),
+            "YG": (["YG"], np.arange(ydim), {"axis": "Y", "c_grid_axis_shift": -0.5}),
+            "XC": (["XC"], np.arange(xdim) + 0.5, {"axis": "X"}),
+            "XG": (["XG"], np.arange(xdim), {"axis": "X", "c_grid_axis_shift": -0.5}),
+            "lat": (["YG"], lat, {"axis": "Y", "c_grid_axis_shift": 0.5}),
+            "lon": (["XG"], lon, {"axis": "X", "c_grid_axis_shift": -0.5}),
+        },
+    )
+    if w:
+        ds["W"] = (["time", "depth", "YG", "XG"], W)
+
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    fields = [U, V, VectorField("UV", U, V)]
+    if w:
+        W = Field("W", ds["W"], grid, interp_method=XLinear)
+        fields.append(VectorField("UVW", U, V, W))
+    fieldset = FieldSet(fields)
+
+    x0, y0, z0 = 2, 8, -4
+    pset = ParticleSet(fieldset, lon=x0, lat=y0, z=z0)
+    kernel = AdvectionRK4 if w is None else AdvectionRK4_3D
+    pset.execute(kernel, runtime=np.timedelta64(5, "s"), dt=np.timedelta64(1, "s"))
+
+    assert len(pset.lon) == len([p.lon for p in pset])
+    np.testing.assert_allclose(np.array([p.lon - x0 for p in pset]), 4 * u, atol=1e-6)
+    np.testing.assert_allclose(np.array([p.lat - y0 for p in pset]), 4 * v, atol=1e-6)
+    if w:
+        np.testing.assert_allclose(np.array([p.z - z0 for p in pset]), 4 * w, atol=1e-6)
+
+
+def test_radialrotation(npart=10):
+    ds = radial_rotation_dataset()
+    grid = XGrid.from_dataset(ds, mesh="flat")
+    U = parcels.Field("U", ds["U"], grid, interp_method=XLinear)
+    V = parcels.Field("V", ds["V"], grid, interp_method=XLinear)
+    UV = parcels.VectorField("UV", U, V)
+    fieldset = parcels.FieldSet([U, V, UV])
+
+    dt = np.timedelta64(30, "s")
+    lon = np.linspace(32, 50, npart)
+    lat = np.ones(npart) * 30
+    starttime = np.arange(np.timedelta64(0, "s"), npart * dt, dt)
+
+    pset = parcels.ParticleSet(fieldset, lon=lon, lat=lat, time=starttime)
+    pset.execute(parcels.kernels.AdvectionRK4, endtime=np.timedelta64(10, "m"), dt=dt)
+
+    theta = 2 * np.pi * (pset.time - starttime) / np.timedelta64(24 * 3600, "s")
+    true_lon = (lon - 30.0) * np.cos(theta) + 30.0
+    true_lat = -(lon - 30.0) * np.sin(theta) + 30.0
+
+    np.testing.assert_allclose(pset.lon, true_lon, atol=5e-2)
+    np.testing.assert_allclose(pset.lat, true_lat, atol=5e-2)
+
+
+@pytest.mark.parametrize(
+    "method, rtol",
+    [
+        ("EE", 1e-2),
+        ("AdvDiffEM", 1e-2),
+        ("AdvDiffM1", 1e-2),
+        ("RK4", 1e-5),
+        ("RK4_3D", 1e-5),
+        ("RK45", 1e-4),
+    ],
+)
+def test_moving_eddy(method, rtol):
+    ds = moving_eddy_dataset()
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    if method == "RK4_3D":
+        # Using W to test 3D advection (assuming same velocity as V)
+        W = Field("W", ds["V"], grid, interp_method=XLinear)
+        UVW = VectorField("UVW", U, V, W)
+        fieldset = FieldSet([U, V, W, UVW])
     else:
-        U = u * np.ones((lat.size, lon.size), dtype=np.float32)
-        V = v * np.ones((lat.size, lon.size), dtype=np.float32)
-        fieldset = FieldSet.from_data({"U": U, "V": V}, {"lon": lon, "lat": lat}, mesh="flat")
-    fieldset.U.interp_method = "cgrid_velocity"
-    fieldset.V.interp_method = "cgrid_velocity"
+        UV = VectorField("UV", U, V)
+        fieldset = FieldSet([U, V, UV])
+    if method in ["AdvDiffEM", "AdvDiffM1"]:
+        # Add zero diffusivity field for diffusion kernels
+        ds["Kh"] = (["time", "depth", "YG", "XG"], np.full(ds["U"].shape, 0))
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XLinear), "Kh_zonal")
+        fieldset.add_field(Field("Kh", ds["Kh"], grid, interp_method=XLinear), "Kh_meridional")
+        fieldset.add_constant("dres", 0.1)
 
-    x0, y0, z0 = 6.1, 6.2, 20
-    pset = ParticleSet(fieldset, pclass=Particle, lon=x0, lat=y0, depth=z0)
+    start_lon, start_lat, start_z = 12000, 12500, 12500
+    dt = np.timedelta64(30, "m")
 
-    outfile = pset.ParticleFile(name=tmp_zarrfile, outputdt=1, chunks=(1, 1))
-    pset.execute(AdvectionAnalytical, runtime=4, dt=direction, output_file=outfile)
-    assert np.abs(pset.lon - x0 - pset.time * u) < 1e-6
-    assert np.abs(pset.lat - y0 - pset.time * v) < 1e-6
-    if w is not None:
-        assert np.abs(pset.depth - z0 - pset.time * w) < 1e-4
+    if method == "RK45":
+        fieldset.add_constant("RK45_tol", rtol)
 
-    ds = xr.open_zarr(tmp_zarrfile)
-    times = (direction * ds["time"][:]).values.astype("timedelta64[s]")[0]
-    timeref = np.arange(1, 5).astype("timedelta64[s]")
-    assert np.allclose(times, timeref, atol=np.timedelta64(1, "ms"))
-    lons = ds["lon"][:].values
-    assert np.allclose(lons, x0 + direction * u * np.arange(1, 5))
+    pset = ParticleSet(fieldset, lon=start_lon, lat=start_lat, z=start_z, time=np.timedelta64(0, "s"))
+    pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "h"))
+
+    def truth_moving(x_0, y_0, t):
+        t /= np.timedelta64(1, "s")
+        lat = y_0 - (ds.u_0 - ds.u_g) / ds.f * (1 - np.cos(ds.f * t))
+        lon = x_0 + ds.u_g * t + (ds.u_0 - ds.u_g) / ds.f * np.sin(ds.f * t)
+        return lon, lat
+
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
+    np.testing.assert_allclose(pset.lon, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat, exp_lat, rtol=rtol)
+    if method == "RK4_3D":
+        np.testing.assert_allclose(pset.z, exp_lat, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "method, rtol",
+    [
+        ("EE", 1e-1),
+        ("RK4", 1e-5),
+        ("RK45", 1e-4),
+    ],
+)
+def test_decaying_moving_eddy(method, rtol):
+    ds = decaying_moving_eddy_dataset()
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, UV])
+
+    start_lon, start_lat = 10000, 10000
+    dt = np.timedelta64(60, "m")
+
+    if method == "RK45":
+        fieldset.add_constant("RK45_tol", rtol)
+        fieldset.add_constant("RK45_min_dt", 10 * 60)
+
+    pset = ParticleSet(fieldset, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset.execute(kernel[method], dt=dt, endtime=np.timedelta64(1, "D"))
+
+    def truth_moving(x_0, y_0, t):
+        t /= np.timedelta64(1, "s")
+        lon = (
+            x_0
+            + (ds.u_g / ds.gamma_g) * (1 - np.exp(-ds.gamma_g * t))
+            + ds.f
+            * ((ds.u_0 - ds.u_g) / (ds.f**2 + ds.gamma**2))
+            * ((ds.gamma / ds.f) + np.exp(-ds.gamma * t) * (np.sin(ds.f * t) - (ds.gamma / ds.f) * np.cos(ds.f * t)))
+        )
+        lat = y_0 - ((ds.u_0 - ds.u_g) / (ds.f**2 + ds.gamma**2)) * ds.f * (
+            1 - np.exp(-ds.gamma * t) * (np.cos(ds.f * t) + (ds.gamma / ds.f) * np.sin(ds.f * t))
+        )
+        return lon, lat
+
+    exp_lon, exp_lat = truth_moving(start_lon, start_lat, pset.time[0])
+    np.testing.assert_allclose(pset.lon, exp_lon, rtol=rtol)
+    np.testing.assert_allclose(pset.lat, exp_lat, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "method, rtol",
+    [
+        ("RK4", 0.1),
+        ("RK45", 0.1),
+    ],
+)
+@pytest.mark.parametrize("grid_type", ["A", "C"])
+def test_stommelgyre_fieldset(method, rtol, grid_type):
+    npart = 2
+    ds = stommel_gyre_dataset(grid_type=grid_type)
+    grid = XGrid.from_dataset(ds)
+    vector_interp_method = None if grid_type == "A" else CGrid_Velocity
+    U = Field("U", ds["U"], grid)
+    V = Field("V", ds["V"], grid)
+    P = Field("P", ds["P"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V, vector_interp_method=vector_interp_method)
+    fieldset = FieldSet([U, V, P, UV])
+
+    dt = np.timedelta64(30, "m")
+    runtime = np.timedelta64(1, "D")
+    start_lon = np.linspace(10e3, 100e3, npart)
+    start_lat = np.ones_like(start_lon) * 5000e3
+
+    if method == "RK45":
+        fieldset.add_constant("RK45_tol", rtol)
+
+    SampleParticle = Particle.add_variable(
+        [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
+    )
+
+    def UpdateP(particles, fieldset):  # pragma: no cover
+        particles.p = fieldset.P[particles.time, particles.z, particles.lat, particles.lon]
+        particles.p_start = np.where(particles.time == 0, particles.p, particles.p_start)
+
+    pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
+    np.testing.assert_allclose(pset.p, pset.p_start, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "method, rtol",
+    [
+        ("RK4", 5e-3),
+        ("RK45", 1e-4),
+    ],
+)
+@pytest.mark.parametrize("grid_type", ["A"])  # TODO also implement C-grid once available
+def test_peninsula_fieldset(method, rtol, grid_type):
+    npart = 2
+    ds = peninsula_dataset(grid_type=grid_type)
+    grid = XGrid.from_dataset(ds)
+    U = Field("U", ds["U"], grid, interp_method=XLinear)
+    V = Field("V", ds["V"], grid, interp_method=XLinear)
+    P = Field("P", ds["P"], grid, interp_method=XLinear)
+    UV = VectorField("UV", U, V)
+    fieldset = FieldSet([U, V, P, UV])
+
+    dt = np.timedelta64(30, "m")
+    runtime = np.timedelta64(1, "D")
+    start_lat = np.linspace(3e3, 47e3, npart)
+    start_lon = 3e3 * np.ones_like(start_lat)
+
+    if method == "RK45":
+        fieldset.add_constant("RK45_tol", rtol)
+
+    SampleParticle = Particle.add_variable(
+        [Variable("p", initial=0.0, dtype=np.float32), Variable("p_start", initial=0.0, dtype=np.float32)]
+    )
+
+    def UpdateP(particles, fieldset):  # pragma: no cover
+        particles.p = fieldset.P[particles.time, particles.z, particles.lat, particles.lon]
+        particles.p_start = np.where(particles.time == 0, particles.p, particles.p_start)
+
+    pset = ParticleSet(fieldset, pclass=SampleParticle, lon=start_lon, lat=start_lat, time=np.timedelta64(0, "s"))
+    pset.execute([kernel[method], UpdateP], dt=dt, runtime=runtime)
+    np.testing.assert_allclose(pset.p, pset.p_start, rtol=rtol)
+
+
+def test_nemo_curvilinear_fieldset():
+    data_folder = parcels.download_example_dataset("NemoCurvilinear_data")
+    files = data_folder.glob("*.nc4")
+    ds = xr.open_mfdataset(files, combine="nested", data_vars="minimal", coords="minimal", compat="override")
+    ds = (
+        ds.isel(time_counter=0, drop=True)
+        .isel(time=0, drop=True)
+        .isel(z_a=0, drop=True)
+        .rename({"glamf": "lon", "gphif": "lat", "z": "depth"})
+    )
+
+    xgcm_grid = xgcm.Grid(
+        ds,
+        coords={
+            "X": {"left": "x"},
+            "Y": {"left": "y"},
+        },
+        periodic=False,
+        autoparse_metadata=False,
+    )
+    grid = XGrid(xgcm_grid, mesh="spherical")
+
+    U = parcels.Field("U", ds["U"], grid)
+    V = parcels.Field("V", ds["V"], grid)
+    U.units = parcels.GeographicPolar()
+    V.units = parcels.Geographic()
+    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
+    fieldset = parcels.FieldSet([U, V, UV])
+
+    npart = 20
+    lonp = 30 * np.ones(npart)
+    latp = np.linspace(-70, 88, npart)
+    runtime = np.timedelta64(12, "h")  # TODO increase to 160 days
+
+    def periodicBC(particles, fieldset):  # pragma: no cover
+        particles.dlon = np.where(particles.lon > 180, particles.dlon - 360, particles.dlon)
+
+    pset = parcels.ParticleSet(fieldset, lon=lonp, lat=latp)
+    pset.execute([AdvectionEE, periodicBC], runtime=runtime, dt=np.timedelta64(6, "h"))
+    np.testing.assert_allclose(pset.lat, latp, atol=1e-1)
+
+
+@pytest.mark.parametrize("method", ["RK4", "RK4_3D"])
+def test_nemo_3D_curvilinear_fieldset(method):
+    download_dir = parcels.download_example_dataset("NemoNorthSeaORCA025-N006_data")
+    ufiles = download_dir.glob("*U.nc")
+    dsu = xr.open_mfdataset(ufiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsu = dsu.rename({"time_counter": "time", "uo": "U"})
+
+    vfiles = download_dir.glob("*V.nc")
+    dsv = xr.open_mfdataset(vfiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsv = dsv.rename({"time_counter": "time", "vo": "V"})
+
+    wfiles = download_dir.glob("*W.nc")
+    dsw = xr.open_mfdataset(wfiles, decode_times=False, drop_variables=["nav_lat", "nav_lon"])
+    dsw = dsw.rename({"time_counter": "time", "depthw": "depth", "wo": "W"})
+
+    dsu = dsu.assign_coords(depthu=dsw.depth.values)
+    dsu = dsu.rename({"depthu": "depth"})
+
+    dsv = dsv.assign_coords(depthv=dsw.depth.values)
+    dsv = dsv.rename({"depthv": "depth"})
+
+    coord_file = f"{download_dir}/coordinates.nc"
+    dscoord = xr.open_dataset(coord_file, decode_times=False).rename({"glamf": "lon", "gphif": "lat"})
+    dscoord = dscoord.isel(time=0, drop=True)
+
+    ds = xr.merge([dsu, dsv, dsw, dscoord])
+    ds = ds.drop_vars(
+        [
+            "uos",
+            "vos",
+            "nav_lev",
+            "nav_lon",
+            "nav_lat",
+            "tauvo",
+            "tauuo",
+            "time_steps",
+            "gphiu",
+            "gphiv",
+            "gphit",
+            "glamu",
+            "glamv",
+            "glamt",
+            "time_centered_bounds",
+            "time_counter_bounds",
+            "time_centered",
+        ]
+    )
+    ds = ds.drop_vars(["e1f", "e1t", "e1u", "e1v", "e2f", "e2t", "e2u", "e2v"])
+    ds["time"] = [np.timedelta64(int(t), "s") + np.datetime64("1900-01-01") for t in ds["time"]]
+
+    ds["W"] *= -1  # Invert W velocity
+
+    xgcm_grid = xgcm.Grid(
+        ds,
+        coords={
+            "X": {"left": "x"},
+            "Y": {"left": "y"},
+            "Z": {"left": "depth"},
+            "T": {"center": "time"},
+        },
+        periodic=False,
+        autoparse_metadata=False,
+    )
+    grid = XGrid(xgcm_grid, mesh="spherical")
+
+    U = parcels.Field("U", ds["U"], grid)
+    V = parcels.Field("V", ds["V"], grid)
+    W = parcels.Field("W", ds["W"], grid)
+    U.units = parcels.GeographicPolar()
+    V.units = parcels.Geographic()
+    UV = parcels.VectorField("UV", U, V, vector_interp_method=CGrid_Velocity)
+    UVW = parcels.VectorField("UVW", U, V, W, vector_interp_method=CGrid_Velocity)
+    fieldset = parcels.FieldSet([U, V, W, UV, UVW])
+
+    npart = 10
+    lons = np.linspace(1.9, 3.4, npart)
+    lats = np.linspace(52.5, 51.6, npart)
+    pset = parcels.ParticleSet(fieldset, lon=lons, lat=lats, z=np.ones_like(lons))
+
+    pset.execute(kernel[method], runtime=np.timedelta64(4, "D"), dt=np.timedelta64(6, "h"))
+
+    if method == "RK4":
+        np.testing.assert_equal(round_and_hash_float_array([p.lon for p in pset], decimals=5), 29977383852960156017546)
+    elif method == "RK4_3D":
+        # TODO check why decimals needs to be so low in RK4_3D (compare to v3)
+        np.testing.assert_equal(round_and_hash_float_array([p.z for p in pset], decimals=1), 29747210774230389239432)

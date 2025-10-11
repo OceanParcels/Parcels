@@ -1,0 +1,114 @@
+[workspace]
+name = "Parcels"
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+# TODO: Re-enable pixi-build once https://github.com/prefix-dev/pixi-build-backends/issues/411 is fixed, and remove pypi install of Parcels
+# preview = ["pixi-build"]
+# [package]
+# name = "parcels"
+# version = "dynamic" # dynamic versioning needs better support in pixi https://github.com/prefix-dev/pixi/issues/2923#issuecomment-2598460666 . Putting `version = "dynamic"` here for now until pixi recommends something else.
+# license = "MIT" # can remove this once https://github.com/prefix-dev/pixi-build-backends/issues/397 is resolved
+#
+# [package.build]
+# backend = { name = "pixi-build-python", version = "==0.4.0" }
+#
+# [package.host-dependencies]
+# setuptools = "*"
+# setuptools_scm = "*"
+
+[environments]
+test-latest = { features = ["test"], solve-group = "test" }
+test-minimum = { features = ["test", "minimum"], solve-group = "test" }
+test-py311 = { features = ["test", "py311"] }
+test-py312 = { features = ["test", "py312"] }
+test-notebooks = { features = ["test", "notebooks"], solve-group = "test" }
+docs = { features = ["docs"], solve-group = "docs" }
+typing = { features = ["typing"], solve-group = "typing" }
+pre-commit = { features = ["pre-commit"], no-default-feature = true }
+
+[dependencies] # keep section in sync with pyproject.toml dependencies
+python = ">=3.11,<3.13"
+# parcels = { path = "." }
+netcdf4 = ">=1.7.2"
+numpy = ">=2.1.0"
+tqdm = ">=4.50.0"
+xarray = ">=2024.5.0"
+uxarray = ">=2025.3.0"
+dask = ">=2024.5.1"
+zarr = ">=2.15.0,!=2.18.0,<3"
+xgcm = ">=0.9.0"
+cf_xarray = ">=0.8.6"
+cftime = ">=1.6.3"
+pooch = ">=1.8.0"
+
+[pypi-dependencies]
+parcels = { path = ".", editable = true }
+
+[feature.minimum.dependencies]
+python = "==3.11"
+netcdf4 = "==1.7.2"
+numpy = "==2.1.0"
+tqdm = "==4.50.0"
+xarray = "==2024.5.0"
+uxarray = "==2025.3.0"
+dask = "==2024.5.1"
+zarr = "==2.15.0"
+xgcm = "==0.9.0"
+cf_xarray = "==0.8.6"
+cftime = "==1.6.3"
+pooch = "==1.8.0"
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.test.dependencies]
+nbval = "*"
+pytest = "*"
+hypothesis = "*"
+pytest-html = "*"
+pytest-cov = "*"
+
+[feature.test.tasks]
+tests = "pytest"
+tests-notebooks = "pytest --nbval-lax -k 'argo' docs/examples"
+
+
+[feature.notebooks.dependencies]
+jupyter = "*"
+trajan = "*"
+matplotlib-base = ">=2.0.2"
+gsw = "*"
+
+[feature.docs.dependencies]
+numpydoc = "!=1.9.0"
+nbsphinx = "*"
+ipython = "*"
+sphinx = "*"
+pandoc = "*"
+pydata-sphinx-theme = "*"
+sphinx-autobuild = "*"
+myst-parser = "*"
+sphinxcontrib-mermaid = "*"
+
+[feature.docs.tasks]
+docs = "sphinx-build docs docs/_build"
+docs-watch = 'sphinx-autobuild docs docs/_build'
+docs-linkcheck = "sphinx-build -b linkcheck docs/ docs/_build/linkcheck"
+
+[feature.pre-commit.dependencies]
+pre_commit = "*"
+
+[feature.pre-commit.tasks]
+lint = "pre-commit run --all-files"
+
+[feature.typing.dependencies]
+mypy = "*"
+lxml = "*" # in CI
+types-tqdm = "*"
+
+[feature.typing.tasks]
+typing = "mypy src/parcels --install-types"
