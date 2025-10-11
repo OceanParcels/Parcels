@@ -13,7 +13,6 @@ from parcels import (
     ParticleFile,
     ParticleSet,
     StatusCode,
-    TimeExtrapolationError,
     UxGrid,
     Variable,
     VectorField,
@@ -22,12 +21,12 @@ from parcels import (
 from parcels._datasets.structured.generated import simple_UV_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
+from parcels.interpolators import UXPiecewiseConstantFace, UXPiecewiseLinearNode
+from parcels.kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D
 from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import FieldInterpolationError, FieldOutOfBoundError, OutsideTimeInterval
 from parcels.uxgrid import UxGrid
 from parcels.xgrid import XGrid
-from parcels.interpolators import UXPiecewiseConstantFace, UXPiecewiseLinearNode
-from parcels.kernels import AdvectionEE, AdvectionRK4, AdvectionRK4_3D
 from tests import utils
 from tests.common_kernels import DoNothing
 
