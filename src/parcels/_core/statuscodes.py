@@ -5,8 +5,8 @@ __all__ = [
     "FieldOutOfBoundError",
     "FieldSamplingError",
     "KernelError",
+    "OutsideTimeInterval",
     "StatusCode",
-    "TimeExtrapolationError",
     "_raise_field_interpolation_error",
     "_raise_field_out_of_bound_error",
     "_raise_field_out_of_bound_surface_error",
@@ -30,7 +30,7 @@ class StatusCode:
     ErrorGridSearching = 52
     ErrorOutOfBounds = 60
     ErrorThroughSurface = 61
-    ErrorTimeExtrapolation = 70
+    ErrorOutsideTimeInterval = 70
 
 
 class FieldInterpolationError(RuntimeError):
@@ -94,7 +94,7 @@ def _raise_general_error(z, y, x):
     raise GeneralError(f"General error occurred at (z={z}, lat={y}, lon={x})")
 
 
-class TimeExtrapolationError(RuntimeError):
+class OutsideTimeInterval(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling."""
 
     def __init__(self, time, field=None):
@@ -106,7 +106,7 @@ class TimeExtrapolationError(RuntimeError):
 
 
 def _raise_time_extrapolation_error(time: float, field=None):
-    raise TimeExtrapolationError(time, field)
+    raise OutsideTimeInterval(time, field)
 
 
 class KernelError(RuntimeError):
@@ -124,7 +124,7 @@ AllParcelsErrorCodes = {
     FieldOutOfBoundError: StatusCode.ErrorOutOfBounds,
     FieldOutOfBoundSurfaceError: StatusCode.ErrorThroughSurface,
     GridSearchingError: StatusCode.ErrorGridSearching,
-    TimeExtrapolationError: StatusCode.ErrorTimeExtrapolation,
+    OutsideTimeInterval: StatusCode.ErrorOutsideTimeInterval,
     KernelError: StatusCode.Error,
     GeneralError: StatusCode.Error,
 }
